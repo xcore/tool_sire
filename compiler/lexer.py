@@ -3,6 +3,7 @@ import ply.lex as lex
 # Reserved tokens
 reserved = {
     'aliases' : 'ALIASES',
+    'chan'    : 'CHAN',
     'chanend' : 'CHANEND',
     'connect' : 'CONNECT',
     'do'      : 'DO',
@@ -27,26 +28,21 @@ reserved = {
 
 # All tokens
 tokens = (
-    # Whitespace
-    'IGNORE',
     # Operators
     'PLUS','MINUS','MULT','DIV','MOD','OR','AND','NOT','XOR',
-    'LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','GT','LE','GE','EQ','NE',
+    'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
     # Assignment operators
     'ASS','IN','OUT',
     # Delimiters
-    'LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA',
-    'PERIOD', 'COLON',
+    'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
+    'COLON', 'DOTS',
     # Separators
     'SEMI','BAR',
     # Literals
-    'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING','COMMENT',
+    'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING',
     # Identifiers
     'ID',
 ) + tuple(reserved.values())
-
-# Whitespace
-t_IGNORE   = r'[ \t]+'
 
 # Operators
 t_PLUS     = r'\+'
@@ -60,9 +56,6 @@ t_NOT      = r'~'
 t_XOR      = r'\^'
 t_LSHIFT   = r'<<'
 t_RSHIFT   = r'>>'
-t_LOR      = r'lor'
-t_LAND     = r'&&'
-t_LNOT     = r'!'
 t_LT       = r'<'
 t_GT       = r'>'
 t_LE       = r'<='
@@ -80,15 +73,20 @@ t_LPAREN   = r'\('
 t_RPAREN   = r'\)'
 t_LBRACKET = r'\['
 t_RBRACKET = r'\]'
-t_LBRACE   = r'\{'
-t_RBRACE   = r'\}'
+t_START    = r'\{'
+t_END      = r'\}'
 t_COMMA    = r','
-t_PERIOD   = r'\.'
 t_COLON    = r':'
+t_DOTS     = r'\.\.'
 
 # Separators
 t_SEMI     = r';'
 t_BAR      = r'\|'
+
+# Whitespace
+def t_IGNORE(t):
+    r'[ \t]+'
+    pass
 
 # Newline
 def t_NEWLINE(t):
@@ -140,6 +138,4 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-#lexer = lex.lex()
-lex.lex(debug=0)
-
+lexer = lex.lex(debug=False)
