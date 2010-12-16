@@ -34,10 +34,10 @@ tokens = [
     'PLUS','MINUS','TIMES','DIVIDE','MODULO','OR','AND','NOT','XOR',
     'LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','GT','LE','GE','EQ','NE',
     # Assignment operators
-    'EQUALS','INPUT','OUTPUT',
+    'ASS','IN','OUT',
     # Delimiters
-    'LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA','PERIOD',
-    'COLON',
+    'LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA',
+    'PERIOD', 'COLON',
     # Separators
     'SEMI','BAR',
     # Literals
@@ -72,9 +72,9 @@ t_EQ       = r'='
 t_NE       = r'~='
 
 # Assignment operators
-t_EQUALS   = r'='
-t_INPUT    = r'\?'
-t_OUTPUT   = r'\!'
+t_ASS      = r':='
+t_IN       = r'\?'
+t_OUT      = r'!'
 
 # Delimeters
 t_LPAREN   = r'\('
