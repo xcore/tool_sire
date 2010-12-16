@@ -1,11 +1,10 @@
 import ply.lex as lex
 
-# Declare all tokens
+# Declare reserved tokens
 reserved = {
     'aliases' : 'ALIASES',
     'chanend' : 'CHANEND',
     'connect' : 'CONNECT',
-    'const'   : 'CONST',
     'do'      : 'DO',
     'to'      : 'TO',
     'else'    : 'ELSE',
@@ -13,7 +12,6 @@ reserved = {
     'for'     : 'FOR',
     'func'    : 'FUNC',
     'if'      : 'IF',
-    'int'     : 'INT',
     'is'      : 'IS',
     'on'      : 'ON',
     'proc'    : 'PROC',
@@ -22,29 +20,40 @@ reserved = {
     'skip'    : 'SKIP',
     'then'    : 'THEN',
     'true'    : 'TRUE',
+    'val'     : 'VAL',
     'var'     : 'VAR',
     'while'   : 'WHILE'
 }   
     
+# All tokens
 tokens = (
-    'HEXLITERAL',
-    'DECLITERAL',
-    'BINLITERAL',
-    'CHARCONST',
-    'STRINGLITERAL',
-    'COMMENT',
+    # Whitespace
+    'IGNORE',
+    # Operators
+    'PLUS','MINUS','MULT','DIV','MOD','OR','AND','NOT','XOR',
+    'LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','GT','LE','GE','EQ','NE',
+    # Assignment operators
+    'EQUALS','INPUT','OUTPUT',
+    # Delimiters
+    'LPAREN','RPAREN','LBRACKET','RBRACKET','LBRACE','RBRACE','COMMA','PERIOD',
+    'COLON',
+    # Separators
+    'SEMI','BAR',
+    # Literals
+    'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING','COMMENT',
+    # Identifiers
     'ID',
-) + list(reserved.values())
+) + tuple(reserved.values())
 
 # Define regular expressions for simple tokens
-t_ignore  = r'[ \t]+'
+t_IGNORE           = r'[ \t]+'
 
 # Operators
 t_PLUS             = r'\+'
 t_MINUS            = r'-'
-t_TIMES            = r'\*'
-t_DIVIDE           = r'/'
-t_MODULO           = r'%'
+t_MULT             = r'\*'
+t_DIV              = r'/'
+t_MOD              = r'%'
 t_OR               = r'or'
 t_AND              = r'&'
 t_NOT              = r'~'
@@ -52,8 +61,8 @@ t_XOR              = r'\^'
 t_LSHIFT           = r'<<'
 t_RSHIFT           = r'>>'
 t_LOR              = r'lor'
-t_LAND             = r'&&'
-t_LNOT             = r'!'
+t_LAND             = r'land'
+t_LNOT             = r'lnot'
 t_LT               = r'<'
 t_GT               = r'>'
 t_LE               = r'<='
@@ -63,7 +72,7 @@ t_NE               = r'~='
 
 # Assignment operators
 t_EQUALS           = r'='
-t_INPUT            = r'?'
+t_INPUT            = r'\?'
 t_OUTPUT           = r'!'
 
 # Delimeters
@@ -84,7 +93,7 @@ t_BAR              = r'\|'
 # Define tokens
 def t_NEWLINE(t):
     r'[\n\r]'
-    t.lexer.lineno += len(t.value)
+    t.lexer.lineno += 1
 
 def t_COMMENT(t):
     r'%.*'
@@ -119,24 +128,11 @@ def t_ID(t):
     return t
 
 # Error handling rule
-t_error(t):
+def t_error(t):
     print "Illegal character '%s'" % t.value[0]
     t.lexer.skip(1)
 
 # Build the lexer
-lexer = lex.lex()
+#lexer = lex.lex()
+lex.lex(debug=0)
 
-# Test it out
-data = '''
-3 + 4 * 10
-  + -20 *2
-  '''
-
-# Give the lexer some input
-lexer.input(data)
-
-# Tokenize
-while True:
-    tok = lexer.token()
-    if not tok: break
-    print tok
