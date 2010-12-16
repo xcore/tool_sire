@@ -4,14 +4,14 @@ val THRESHOLD := 1000;
 var a[LENGTH];
 
 % Merge
-proc merge(var a[], var b[], var c[], val la, val lb: int) is
+proc merge(a[], b[], c[], val m, val m) is
   var i;
   var j;
   var k;
 { i:=0 
 ; j:=0 
 ; k:=0
-; while i<la and j<lb do 
+; while i<m and j<n do 
   { if(a[i] <= b[j])
     then 
     { c[k] := a[i] 
@@ -22,12 +22,12 @@ proc merge(var a[], var b[], var c[], val la, val lb: int) is
     ; j:=j+1 ; k:=k+1
     }
   }
-; if i<la then c[k] := a[i] else skip
-; if j<lb then c[k] := b[j] else skip
+; if i<m then c[k] := a[i] else skip
+; if j<n then c[k] := b[j] else skip
 }
 
 % Merge sort
-proc msort(var t, var n, var array[], var len) is
+proc msort(t, n, array[], val len) is
   var a[];
   var b[]; 
   var i;

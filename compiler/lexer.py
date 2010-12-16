@@ -5,7 +5,6 @@ reserved = {
     'aliases' : 'ALIASES',
     'chanend' : 'CHANEND',
     'connect' : 'CONNECT',
-    'const'   : 'CONST',
     'do'      : 'DO',
     'to'      : 'TO',
     'else'    : 'ELSE',
@@ -13,7 +12,6 @@ reserved = {
     'for'     : 'FOR',
     'func'    : 'FUNC',
     'if'      : 'IF',
-    'int'     : 'INT',
     'is'      : 'IS',
     'on'      : 'ON',
     'proc'    : 'PROC',
@@ -22,16 +20,17 @@ reserved = {
     'skip'    : 'SKIP',
     'then'    : 'THEN',
     'true'    : 'TRUE',
+    'val'     : 'VAL',
     'var'     : 'VAR',
     'while'   : 'WHILE',
 }
 
 # All tokens
-tokens = [
+tokens = (
     # Whitespace
     'IGNORE',
     # Operators
-    'PLUS','MINUS','TIMES','DIVIDE','MODULO','OR','AND','NOT','XOR',
+    'PLUS','MINUS','MULT','DIV','MOD','OR','AND','NOT','XOR',
     'LSHIFT','RSHIFT','LOR','LAND','LNOT','LT','GT','LE','GE','EQ','NE',
     # Assignment operators
     'ASS','IN','OUT',
@@ -44,7 +43,7 @@ tokens = [
     'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING','COMMENT',
     # Identifiers
     'ID',
-] + list(reserved.values())
+) + tuple(reserved.values())
 
 # Whitespace
 t_IGNORE   = r'[ \t]+'
@@ -52,9 +51,9 @@ t_IGNORE   = r'[ \t]+'
 # Operators
 t_PLUS     = r'\+'
 t_MINUS    = r'-'
-t_TIMES    = r'\*'
-t_DIVIDE   = r'/'
-t_MODULO   = r'%'
+t_MULT     = r'\*'
+t_DIV      = r'/'
+t_MOD      = r'%'
 t_OR       = r'or'
 t_AND      = r'&'
 t_NOT      = r'~'
@@ -94,7 +93,7 @@ t_BAR      = r'\|'
 # Newline
 def t_NEWLINE(t):
     r'[\n\r]'
-    t.lexer.lineno += len(t.value)
+    t.lexer.lineno += 1
 
 # Comment
 def t_COMMENT(t):
@@ -141,19 +140,6 @@ def t_error(t):
     t.lexer.skip(1)
 
 # Build the lexer
-lexer = lex.lex()
+#lexer = lex.lex()
+lex.lex(debug=0)
 
-# Test it out
-data = '''
-3 + 4 * 10
-  + -20 *2
-  '''
-
-# Give the lexer some input
-lexer.input(data)
-
-# Tokenize
-while True:
-    tok = lexer.token()
-    if not tok: break
-    print tok
