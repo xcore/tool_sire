@@ -1,0 +1,15 @@
+To install vim syntax file for "x" language:
+
+(instructions in vim > :help new-filetype)
+
+mkdir ~/.vim
+mkdir ~/.vim/syntax/
+mkdir ~/.vim/ftdetect/
+
+cp x.vim ~/.vim/syntax/
+vim ~/.vim/ftdetect/x.vim
+
+and add
+
+au BufRead,BufNewFile *.x set filetype=x
+

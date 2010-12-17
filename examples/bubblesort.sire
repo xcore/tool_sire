@@ -1,0 +1,23 @@
+val LENGTH := 10;
+var a[LENGTH];
+
+proc bsort(a[], val len) is
+  var i;
+  var j;
+  var tmp;
+{ for i:=0 to len-1 do 
+    for j:=0 to len-1 do 
+      if a[j] > a[j+1] then 
+      { tmp := a[j]
+      ; a[j] := a[j+1]
+      ; a[j+1] := tmp
+      }
+      else skip
+}
+
+proc main() is
+  var i;
+{ for i:=0 to LENGTH-1 do 
+    a[i] := LENGTH-i
+; bsort(a, LENGTH)
+}

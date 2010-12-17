@@ -1,0 +1,58 @@
+val LENGTH:=50;
+val THRESHOLD:=10; 
+val NUMCORES:=16;
+var a[LENGTH]
+
+% Partition
+proc partition(array[]; val len) is
+  var storeIndex;
+  var pivot;
+  var pivotValue;
+  var hold;
+  var i;
+{ pivot      := len/2
+; pivotValue := array[pivot]
+; storeIndex := 0
+  
+  % Move pivot to end
+; array[pivot] := array[len-1]
+; array[len-1] := pivotValue
+
+  % Reorder list (upto the pivot)
+; for i:=0 to len-2 do 
+    if array[i] <= pivotValue then 
+    { hold := array[i]
+    ; array[i] := array[storeIndex]
+    ; array[storeIndex] := hold
+    ; storeIndex := storeIndex + 1
+    }
+    else skip
+
+  % Move pivot to its final place: swap(storeIndex,pivot)
+; hold := array[storeIndex]
+; array[storeIndex] := array[len-1]
+; array[len-1] := hold
+
+; return storeIndex
+}
+
+% Quicksort
+proc qsort(array[], val len) is
+  var a[];
+  var b[]; 
+  var pivot;
+{ if len > 10 then 
+  { pivot := partition(array, len)
+  ; a aliases array[0..]
+  ; b aliases array[pivot+1..]
+  ; qsort(a, pivot)
+  ; qsort(b, len-(pivot+1))
+  }
+  else skip
+}
+
+proc main() is
+  var i: int
+{ for i:=0 to LENGTH-1 do a[i] := LENGTH-i
+; qsort(0, NUMCORES, a, LENGTH)
+}

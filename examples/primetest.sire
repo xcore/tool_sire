@@ -1,0 +1,19 @@
+val MAX:=10;
+
+func testPrime (val x) is
+  var n;
+  var result;
+{ result := true
+; if (x rem 2) = 0 then return false else skip
+; n := 3
+; while n < (x >> 1) do 
+  { if (x rem n) = 0 then result := false else skip
+  ; n := n + 2
+  }
+; return result
+}
+
+proc main() is
+  var i;
+{  for i:=1 to MAX do testPrime(i)
+}

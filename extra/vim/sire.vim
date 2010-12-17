@@ -1,5 +1,5 @@
 " Vim syntax file
-" Language:     x
+" Language: sire
 
 if version < 600
   syntax clear
@@ -8,17 +8,13 @@ elseif exists("b:current_syntax")
 endif
 
 syn case match
-syn keyword	xType	       module var port chanend int of const
-
+syn keyword	xType	       module var val port chanend chan
 syn keyword	xKeyword       proc func return skip aliases connect
-"syn keyword xKeyword       chan core
-syn keyword	xKeyword       true false
-syn keyword	xKeyword       on
-syn keyword	xKeyword       bit ext is rem with
-
+syn keyword	xKeyword       true false skip
+syn keyword	xKeyword       on is with
 
 syn keyword	xStructure     if then else
-syn keyword xRepeat        while do to for when
+syn keyword     xRepeat        while do to for when
 
 syn match       xBrackets       /\[\|\]/
 syn match       xParentheses    /(\|)/
@@ -28,13 +24,8 @@ syn match       xOperator      /:=\|!\|?\|!!\|??\|::=/
 syn match       xOperator      /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
 syn match       xOperator      /<<\|>>\|^\|&\||/
 
-"syn match       xSpecialChar
-"syn match       xChar
-
-"syn match       xNumber        "0\+[1-7]\=[\t\n$,; ]"
-"syn match       xNumber        "[1-9]\d*"
-"syn match       xNumber        "0[0-7][0-7]\+"
-syn match       xNumber        "0[xX][0-9a-fA-F]\+"
+syn match       xNumber        "[0-9]+"
+syn match       xNumber        "0[xX][0-9a-fA-F]+"
 syn match       xNumber        "0[bB][0-1]*"
 
 syn match       xSpecialChar	/\\'\|\\\|*#\(\[0-9A-F\]\+\)/ contained
@@ -72,6 +63,6 @@ if version >= 508 || !exists("did_x_syntax_inits")
   delcommand HiLink
 endif
 
-let b:current_syntax = "x"
+let b:current_syntax = "sire"
 
 " vim: ts=8
