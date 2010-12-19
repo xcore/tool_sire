@@ -17,7 +17,8 @@ start = 'program'
 # Program declaration ====================================================
 def p_program(p):
     'program : var_decls proc_decls'
-    p[0] = Node("program", None, [p[1], p[2]])
+    p[0] = Node("program", p.lineno(1), find_col(lexer.lexdata, p), 
+            None, [p[1], p[2]])
 
 def p_program_error(p):
     'program : error'
@@ -329,7 +330,7 @@ def find_col(input,token):
 # Error rule for syntax errors
 def p_error(p):
     print "Syntax error: token {0} '{1}' at {2}:{3}".format(
-        p.type, p.value, p.lineno, find_col(lexer.lexdata,p))
+        p.type, p.value, p.lineno, find_col(lexer.lexdata, p))
     pass
 
 # Build the parser

@@ -1,11 +1,19 @@
+# Generic AST node class
 class Node:
-    def __init__(self, type, leaf=None, children=None):
-         self.type = type
-         self.leaf = leaf
-         if children:
-              self.children = children
-         else:
-              self.children = [ ]
+    def __init__(self, lineno=0, coloff=0, feilds=None, children=None):
+        self.lineno = lineno
+        self.coloff = coloff
+        self.feilds = feilds
+        if children:
+             self.children = children
+        else:
+             self.children = [ ]
+
+class Program(Node):
+    def __init__(self, lineno=0, coloff=0, feilds=None, children=None):
+        super(Program, self).__init__(self, lineno, coloff, fields, children)
+
+class VarDecls(Node):
 
 #class NodeVisitor(object):
 #    
