@@ -5,6 +5,7 @@ import lexer
 import parser
 
 from ply import *
+import dump
 
 if len(sys.argv) == 1:
     print "Usage: sire.py <input-file>"
@@ -32,7 +33,8 @@ if len(sys.argv) == 2:
         raise
     file.close()
     log = logging.getLogger()
-    prog = parser.parse(input,debug=log)
-#    prog = parser.parse(input)
-#    print prog
-    #if not prog raise SystemExit
+#    prog = parser.parse(input,debug=log)
+    prog = parser.parse(input)
+#    dump.Dump().visit_program(prog)
+    visitor = dump.Dump()
+    prog.accept(visitor)
