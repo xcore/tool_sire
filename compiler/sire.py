@@ -32,7 +32,7 @@ if len(sys.argv) == 2:
         raise
     file.close()
     log = logging.getLogger()
-    prog = parser.parse(input,debug=log)
-#    prog = parser.parse(input)
-#    print prog
+#    prog = parser.parse(input,debug=log)
+    prog = parser.parse(input)
+    print prog
     #if not prog raise SystemExit
