@@ -1,4 +1,4 @@
-val LENGTH := 10;
+val LENGTH:=10;
 var a[LENGTH];
 
 proc bsort(a[], val len) is
