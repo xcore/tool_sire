@@ -1,15 +1,10 @@
 import sys
 sys.path.insert(0,"../..")
 
-import lexer
-import parser
+from parser import Parser
 
 from ply import *
-import dump
-
-if len(sys.argv) == 1:
-    print "Usage: sire.py <input-file>"
-    raise SystemExit
+import show
 
 # Set up a logging object
 import logging
@@ -21,10 +16,15 @@ logging.basicConfig(
 )
 log = logging.getLogger()
 
+if len(sys.argv) == 1:
+    print "Usage: sire.py <input-file>"
+    raise SystemExit
+
 # Open file specified
-if len(sys.argv) == 2:
+elif len(sys.argv) == 2:
     try:
-        file = open(sys.argv[1])
+        filename = sys.argv[1]
+        file = open(filename)
         input = file.read()
     except IOError, (errno, stderror):
         print "I/O error({0}): {1}".format(errno, stderror)
@@ -32,9 +32,8 @@ if len(sys.argv) == 2:
         print "Unexpected error:", sys.exc_info()[0]
         raise
     file.close()
+
     log = logging.getLogger()
-#    prog = parser.parse(input,debug=log)
-    prog = parser.parse(input)
-#    dump.Dump().visit_program(prog)
-    visitor = dump.Dump()
-    prog.accept(visitor)
+    parser = Parser(lex_optimise=True, yacc_debug=False, yacc_optimise=False)
+    prog = parser.parse(input, filename, debug=0)
+    prog.accept(show.Show())

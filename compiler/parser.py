@@ -1,388 +1,395 @@
 import ply.yacc as yacc
 import ast
+from lexer import Lexer
 
-from ast import Node
-from lexer import tokens, lexer
+class Parser(object):
+    """ A parser object for the sire langauge
+    """
+    def __init__(self, lex_optimise=True, lextab='lextab', 
+            yacc_optimise=True, yacctab='yacctab', yacc_debug=False):
+        """ Create a new parser
+        """
 
-precedence = (
-    ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
-    ('left', 'LSHIFT', 'RSHIFT'),
-    ('left', 'AND', 'OR', 'XOR', 'MOD'),
-    ('left', 'PLUS', 'MINUS'),
-    ('left', 'MULT', 'DIV'),
-    ('right', 'UMINUS', 'UNOT')
-)
+        # Instantiate and build the lexer
+        self.lexer = Lexer(error_func=self._lex_error)
+        self.lexer.build(optimize=lex_optimise, lextab=lextab)
+        self.tokens = self.lexer.tokens
 
-start = 'program'
+        # Create and instantiate the parser
+        self.parser = yacc.yacc(module=self, debug=yacc_debug, 
+                optimize=yacc_optimise)
 
-# Program declaration ====================================================
-def p_program(p):
-    'program : var_decls proc_decls'
-    p[0] = ast.Program(line(p), col(p), p[1], p[2])
+    def parse(self, text, filename='', debug=0):
+        """ Parse a file and return the AST
+        """
+        self.lexer.filename = filename
+        self.lexer.reset()
+        return self.parser.parse(text, lexer=self.lexer, debug=debug)
 
-def p_program_error(p):
-    'program : error'
-    print "Syntax error"
-    p[0] = None
-    p.parser.error = 1
+    def coord(self, p):
+        """ Return a coordinate for a production
+        """
+        return Coord(file=self.lexer.filename, line=p.lineno(1), 
+                column=self.lexer.findcol(self.lexer.data(), p.lexpos(1)))
 
-# Variable declarations ==================================================
-def p_var_decls(p):
-    '''var_decls : empty
-                 | var_decl_seq'''
-    p[0] = p[1] if len(p)==2 else None
-               
-def p_var_decl_seq(p):
-    '''var_decl_seq : var_decl SEMI
-                    | var_decl SEMI var_decl_seq'''
-    p[0] = ast.VarDecls(line(p), col(p), 
-            p[1], p[3] if len(p)==4 else None)
+    def _lex_error(self, msg, line, col):
+        self._parse_error(msg, self._coord(line, col))
 
-def p_var_decl_seq_err(p):
-    'var_decl_seq : error SEMI'
-    print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-    parser.errok()
+    def _parse_error(self, msg, coord):
+        raise ParseError('%s: %s' % (coord, msg))
 
-def p_var_decl_var(p):
-    'var_decl : type name'
-    p[0] = ast.VarDecl(p.lineno(1), col(p), "var", None, p[1], p[2])
+    # Define operator presidence
+    precedence = (
+        ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
+        ('left', 'LSHIFT', 'RSHIFT'),
+        ('left', 'AND', 'OR', 'XOR', 'MOD'),
+        ('left', 'PLUS', 'MINUS'),
+        ('left', 'MULT', 'DIV'),
+        ('right', 'UMINUS', 'UNOT')
+    )
 
-def p_var_decl_array(p):
-    '''var_decl : type name LBRACKET RBRACKET
-                | type name LBRACKET expr RBRACKET'''
-    p[0] = ast.VarDecl(p.lineno(1), col(p),
-            "array", p[1], p[2], p[4] if len(p)==6 else None)
+    start = 'program'
 
-def p_var_decl_val(p):
-    'var_decl : VAL name ASS expr'
-    p[0] = ast.VarDecl(p.lineno(1), col(p), "val", None, p[2], p[4])
+    # Program declaration ====================================================
+    def p_program(self, p):
+        'program : var_decls proc_decls'
+        p[0] = ast.Program(p[1], p[2], self.coord(p))
 
-def p_var_decl_port(p):
-    'var_decl : PORT name COLON expr'
-    p[0] = ast.VarDecl(p.lineno(1), col(p), "port", None, p[2], p[4])
+    # Program declaration error
+    def p_program_error(self, p):
+        'program : error'
+        print "Syntax error"
+        p[0] = None
+        p.parser.error = 1
 
-# Types
-def p_type_id(p):
-    '''type : VAR
-            | CHAN'''
-    p[0] = p[1]
+    # Variable declarations ==================================================
+    def p_var_decls(self, p):
+        '''var_decls : empty
+                     | var_decl_seq'''
+        p[0] = ast.VarDecls(p[1] if len(p)==2 else None, self.coord(p))
 
-# Procedure declarations =================================================
-def p_proc_decls(p):
-    '''proc_decls : proc_decl_seq
-                  | empty'''
-    p[0] = p[1] if len(p)==2 else None
+    # Variable declaration sequence (return a single list)
+    def p_var_decl_seq(self, p):
+        '''var_decl_seq : var_decl SEMI
+                        | var_decl SEMI var_decl_seq'''
+        p[0] = [p[1]] if len(p)==3 else [p[1]] + p[3]
 
-def p_proc_decl_seq(p):
-    '''proc_decl_seq : proc_decl
-                     | proc_decl proc_decl_seq'''
-    p[0] = ast.ProcDecls(p.lineno(1), col(p), 
-            p[1], p[2] if len(p)==3 else None)
+    # Variable declaration sequence error
+    def p_var_decl_seq_err(self, p):
+        'var_decl_seq : error SEMI'
+        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
+        parser.errok()
 
-def p_proc_decl_proc(p):
-    'proc_decl : PROC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.ProcDecl(p.lineno(1), col(p), 
-            "proc", p[2], p[4], p[7], p[8]) 
+    # Var declaration
+    def p_var_decl_var(self, p):
+        'var_decl : type name'
+        p[0] = ast.VarDecl("var", None, p[1], p[2], self.coord(p))
 
-# Proc error
-def p_proc_decl_proc_err(p):
-    '''proc_decl : PROC error IS var_decls stmt'''
-    print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-    parser.errok()
+    # Array declaration
+    def p_var_decl_array(self, p):
+        '''var_decl : type name LBRACKET RBRACKET
+                    | type name LBRACKET expr RBRACKET'''
+        p[0] = ast.VarDecl("array", p[1], p[2], p[4] if len(p)==6 else None,
+                self.coord(p))
 
-def p_proc_decl_func(p):
-    'proc_decl : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.ProcDecl(p.lineno(1), col(p), 
-            "func", p[2], p[4], p[7], p[8]) 
+    # Val declaration
+    def p_var_decl_val(self, p):
+        'var_decl : VAL name ASS expr'
+        p[0] = ast.VarDecl("val", None, p[2], p[4], self.coord(p))
 
-# Func error
-def p_proc_decl_func_err(p):
-    '''proc_decl : FUNC error IS var_decls stmt'''
-    print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-    parser.errok()
+    # Port declaration
+    def p_var_decl_port(self, p):
+        'var_decl : PORT name COLON expr'
+        p[0] = ast.VarDecl("port", None, p[2], p[4], self.coord(p))
 
-# Formal declarations ====================================================
-def p_formals(p):
-    '''formals : empty
-               | formals_seq'''
-    p[0] = p[1] if len(p)==2 else None
+    # Variable types
+    def p_type_id(self, p):
+        '''type : VAR
+                | CHAN'''
+        p[0] = p[1]
 
-def p_formals_seq(p):
-    '''formals_seq : param_decl
-                   | param_decl COMMA formals_seq'''
-#    p[0] = Node("formals_seq", p[1], p[3] if len(p)>2 else None)
-    p[0] = Node
+    # Procedure declarations =================================================
+    def p_proc_decls(self, p):
+        '''proc_decls : proc_decl_seq
+                      | empty'''
+        p[0] = ast.ProcDecls(p[1] if len(p)==2 else None, self.coord(p))
 
-def p_param_decl_var(p):
-    'param_decl : name'
-#    p[0] = Node("var", p[1])
-    p[0] = Node
+    # Procedure sequence (return a single list)
+    def p_proc_decl_seq(self, p):
+        '''proc_decl_seq : proc_decl
+                         | proc_decl proc_decl_seq'''
+        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[2]
 
-def p_param_decl_val(p):
-    'param_decl : VAL name'
-#    p[0] = Node("val", p[1])
-    p[0] = Node
+    # Process
+    def p_proc_decl_proc(self, p):
+        'proc_decl : PROC name LPAREN formals RPAREN IS var_decls stmt'
+        p[0] = ast.ProcDecl("proc", p[2], p[4], p[7], p[8], self.coord(p)) 
 
-def p_param_decl_chanend(p):
-    'param_decl : CHANEND name'
-#    p[0] = Node("chanend", p[1])
-    p[0] = Node
+    # Function
+    def p_proc_decl_func(self, p):
+        'proc_decl : FUNC name LPAREN formals RPAREN IS var_decls stmt'
+        p[0] = ast.ProcDecl("func", p[2], p[4], p[7], p[8], self.coord(p)) 
 
-def p_param_decl_alias(p):
-    'param_decl : name LBRACKET RBRACKET'
-#    p[0] = Node("alias", p[1])
-    p[0] = Node
+    # Procedure error
+    def p_proc_decl_proc_err(self, p):
+        '''proc_decl : PROC error IS var_decls stmt'''
+        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
+        parser.errok()
 
-# Statements =============================================================
-def p_stmt_skip(p):
-    'stmt : SKIP'
-#    p[0] = Node("stmt_skip")
-    p[0] = Node
+    # Function error
+    def p_proc_decl_func_err(self, p):
+        '''proc_decl : FUNC error IS var_decls stmt'''
+        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
+        parser.errok()
 
-def p_stmt_pcall(p):
-    'stmt : name LPAREN expr_list RPAREN'
-#    p[0] = Node("stmt_pcall", [p[1], p[3]])
-    p[0] = Node
+    # Formal declarations ====================================================
+    def p_formals(self, p):
+        '''formals : empty
+                   | formals_seq'''
+        p[0] = ast.Formals(p[1] if len(p)==2 else None, self.coord(p))
 
-def p_stmt_ass(p):
-    'stmt : left ASS expr'
-#    p[0] = Node("stmt_ass", [p[1], p[3]])
-    p[0] = Node
+    # Formal parameter sequence (return a single list)
+    def p_formals_seq(self, p):
+        '''formals_seq : param_decl
+                       | param_decl COMMA formals_seq'''
+        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-def p_stmt_in(p):
-    'stmt : left IN expr'
-#    p[0] = Node("stmt_in", [p[1], p[3]])
-    p[0] = Node
+    # Var parameter
+    def p_param_decl_var(self, p):
+        'param_decl : name'
+        p[0] = ast.Param("var", p[1], self.coord(p))
 
-def p_stmt_out(p):
-    'stmt : left OUT expr'
-#    p[0] = Node("stmt_out", [p[1], p[3]])
-    p[0] = Node
+    # Val parameter
+    def p_param_decl_val(self, p):
+        'param_decl : VAL name'
+        p[0] = ast.Param("val", p[2], self.coord(p))
 
-def p_stmt_if(p):
-    'stmt : IF expr THEN stmt ELSE stmt'
-#    p[0] = Node("stmt_if", [p[2], p[4], p[6]])
-    p[0] = Node
+    # Chanend parameter
+    def p_param_decl_chanend(self, p):
+        'param_decl : CHANEND name'
+        p[0] = ast.Param("chanend", p[2], self.coord(p))
 
-def p_stmt_while(p):
-    'stmt : WHILE expr DO stmt'
-#    p[0] = Node("stmt_while", [p[2], p[4]])
-    p[0] = Node
+    # Array alias parameter
+    def p_param_decl_alias(self, p):
+        'param_decl : name LBRACKET RBRACKET'
+        p[0] = ast.Param("alias", p[1], self.coord(p))
 
-def p_stmt_for(p):
-    'stmt : FOR left ASS expr TO expr DO stmt'
-#    p[0] = Node("stmt_for", [p[2], p[4], p[6], p[8]])
-    p[0] = Node
+    # Statements =============================================================
+    def p_stmt_skip(self, p):
+        'stmt : SKIP'
+        p[0] = ast.Skip(self.coord(p))
 
-def p_stmt_on(p):
-    'stmt : ON left COLON name LPAREN expr_list RPAREN'
-#    p[0] = Node("stmt_on", p[2], Node("pcall", [p[4], p[6]]))
-    p[0] = Node
+    def p_stmt_pcall(self, p):
+        'stmt : name LPAREN expr_list RPAREN'
+        p[0] = ast.Pcall(p[1], p[3], self.coord(p))
 
-def p_stmt_connect(p):
-    'stmt : CONNECT left TO left COLON left'
-#    p[0] = Node("stmt_connect", [p[2], p[4], p[6]])
-    p[0] = Node
+    def p_stmt_ass(self, p):
+        'stmt : left ASS expr'
+        p[0] = ast.Ass(p[1], p[3], self.coord(p))
 
-def p_stmt_aliases(p):
-    'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
-#    p[0] = Node("stmt_aliases", [p[1], p[3], p[5]])
-    p[0] = Node
+    def p_stmt_in(self, p):
+        'stmt : left IN expr'
+        p[0] = ast.In(p[1], p[3], self.coord(p))
 
-def p_stmt_return(p):
-    'stmt : RETURN expr'
-#    p[0] = Node("stmt_return", p[2])
-    p[0] = Node
+    def p_stmt_out(self, p):
+        'stmt : left OUT expr'
+        p[0] = ast.Out(p[1], p[3], self.coord(p))
 
-# Seq block
-def p_stmt_seq_block(p):
-    'stmt : START stmt_seq END'
-    p[0] = p[2]
+    def p_stmt_if(self, p):
+        'stmt : IF expr THEN stmt ELSE stmt'
+        p[0] = ast.If(p[2], p[4], p[6], self.coord(p))
 
-# Seq
-def p_stmt_seq(p):
-    '''stmt_seq : stmt
-                | stmt SEMI stmt_seq'''
-#    p[0] = Node("stmt_seq", p[1], p[3] if len(p)==4 else None)
-    p[0] = Node
+    def p_stmt_while(self, p):
+        'stmt : WHILE expr DO stmt'
+        p[0] = ast.While(p[2], p[4], self.coord(p))
 
-# Seq error
-def p_stmt_seq_err(p):
-    'stmt_seq : error SEMI'
-    print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
-    parser.errok()
+    def p_stmt_for(self, p):
+        'stmt : FOR left ASS expr TO expr DO stmt'
+        p[0] = ast.For(p[2], p[4], p[6], p[8])
 
-# Par block
-def p_stmt_par_block(p):
-    'stmt : START stmt_par END'
-    p[0] = p[2]
+    def p_stmt_on(self, p):
+        'stmt : ON left COLON name LPAREN expr_list RPAREN'
+        p[0] = ast.On(p[2], Pcall(p[4], p[6], self.coord(p)), self.coord(p))
 
-# Par
-def p_stmt_par(p):
-    '''stmt_par : stmt BAR stmt
-                | stmt BAR stmt_par'''
-#    p[0] = Node("stmt_par", p[1], p[3] if len(p)==4 else None)
-    p[0] = Node
+    def p_stmt_connect(self, p):
+        'stmt : CONNECT left TO left COLON left'
+        p[0] = ast.Connect(p[2], p[4], p[6], self.coord(p))
 
-# Par error
-def p_stmt_par_err(p):
-    'stmt_par : error BAR'
-    print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
-    parser.errok()
+    def p_stmt_aliases(self, p):
+        'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
+        p[0] = ast.Aliases(p[1], p[3], p[5], self.coord(p))
 
-# Expressions ============================================================
-def p_expr_list(p):
-    '''expr_list : expr_seq
-                 | empty'''
-    p[0] = p[1] if len(p)==2 else None
+    def p_stmt_return(self, p):
+        'stmt : RETURN expr'
+        p[0] = ast.Return(p[2], self.coord(p))
 
-def p_expr_seq(p):
-    '''expr_seq : expr
-                | expr COMMA expr_seq'''
-#    p[0] = Node("expr_seq", p[1], p[3] if len(p)>2 else None)
-    p[0] = Node
+    # Seq block
+    def p_stmt_seq_block(self, p):
+        'stmt : START stmt_seq END'
+        p[0] = ast.Seq(p[2], self.coord(p))
 
-def p_expr_sinle(p):
-    'expr : elem' 
-    p[0] = p[1]
+    # Seq
+    def p_stmt_seq(self, p):
+        '''stmt_seq : stmt
+                    | stmt SEMI stmt_seq'''
+        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-def p_expr_unary(p):
-    '''expr : MINUS elem %prec UMINUS
-            | NOT elem %prec UNOT'''
-#    p[0] = Node("unary", p[1], p[2] if len(p)>2 else None)
-    p[0] = Node
+    # Seq error
+    def p_stmt_seq_err(self, p):
+        'stmt_seq : error SEMI'
+        print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
+        parser.errok()
 
-def p_expr_binary_arithmetic(p):
-    '''expr : elem PLUS right
-            | elem MINUS right
-            | elem MULT right
-            | elem DIV right
-            | elem MOD right
-            | elem OR right
-            | elem AND right
-            | elem XOR right
-            | elem LSHIFT right
-            | elem RSHIFT right'''
-#    p[0] = Node("binop", p[2], [p[1], p[3]])
-    p[0] = Node
+    # Par block
+    def p_stmt_par_block(self, p):
+        'stmt : START stmt_par END'
+        p[0] = ast.Par(p[2], self.coord(p))
 
-def p_expr_binary_relational(p):
-    '''expr : elem LT right
-            | elem GT right
-            | elem LE right
-            | elem GE right
-            | elem EQ right
-            | elem NE right'''
-#    p[0] = Node("binop", p[2], [p[1], p[3]])
-    p[0] = Node
+    # Par
+    def p_stmt_par(self, p):
+        '''stmt_par : stmt BAR stmt
+                    | stmt BAR stmt_par'''
+        p[0] = p[1] if len(p)==3 else p[1] + p[3]
 
-def p_right_sinle(p):
-    'right : elem'
-    p[0] = p[1]
+    # Par error
+    def p_stmt_par_err(self, p):
+        'stmt_par : error BAR'
+        print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
+        parser.errok()
 
-def p_right(p):
-    '''right : elem AND right
-             | elem OR right
-             | elem XOR right
-             | elem PLUS right
-             | elem MULT right'''
-#    p[0] = Node("binop", p[2], [p[1], p[3]])
-    p[0] = Node
+    # Expressions ============================================================
+    def p_expr_list(self, p):
+        '''expr_list : empty
+                     | expr_seq'''
+        p[0] = ast.ExprList(p[1] if len(p)==2 else None, self.coord(p))
 
-# Elements ===============================================================
-def p_left_name(p):
-    'left : name'
-    p[0] = p[1]
- 
-def p_left_sub(p):
-    'left : name LBRACKET expr RBRACKET'
-#    p[0] = Node("sub", [p[1], p[3]])
-    p[0] = Node
+    def p_expr_seq(self, p):
+        '''expr_seq : expr
+                    | expr COMMA expr_seq'''
+        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-def p_elem_name(p):
-    'elem : name'
-    p[0] = p[1]
+    def p_expr_sinle(self, p):
+        'expr : elem' 
+        p[0] = p[1]
 
-def p_elem_sub(p):
-    'elem : name LBRACKET expr RBRACKET'
-#    p[0] = Node("sub", [p[1], p[3]])
-    p[0] = Node
+    def p_expr_unary(self, p):
+        '''expr : MINUS elem %prec UMINUS
+                | NOT elem %prec UNOT'''
+        p[0] = ast.Unary(p[1], p[2] if len(p)>2 else None, self.coord(p))
 
-def p_elem_fcall(p):
-    'elem : name LPAREN expr_list RPAREN'
-#    p[0] = Node("fcall", [p[1], p[3]])
-    p[0] = Node
+    def p_expr_binary_arithmetic(self, p):
+        '''expr : elem PLUS right
+                | elem MINUS right
+                | elem MULT right
+                | elem DIV right
+                | elem MOD right
+                | elem OR right
+                | elem AND right
+                | elem XOR right
+                | elem LSHIFT right
+                | elem RSHIFT right'''
+        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
 
-def p_elem_number(p):
-    '''elem : HEXLITERAL
-            | DECLITERAL
-            | BINLITERAL'''
-#    p[0] = Node("number", p[1])
-    p[0] = Node
+    def p_expr_binary_relational(self, p):
+        '''expr : elem LT right
+                | elem GT right
+                | elem LE right
+                | elem GE right
+                | elem EQ right
+                | elem NE right'''
+        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
 
-def p_elem_boolean_true(p):
-    'elem : TRUE'
-#    p[0] = Node("boolean", "true")
-    p[0] = Node
+    def p_right_sinle(self, p):
+        'right : elem'
+        p[0] = p[1]
 
-def p_elem_boolean_false(p):
-    'elem : FALSE'
-#    p[0] = Node("boolean", "false")
-    p[0] = Node
+    def p_right(self, p):
+        '''right : elem AND right
+                 | elem OR right
+                 | elem XOR right
+                 | elem PLUS right
+                 | elem MULT right'''
+        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
 
-def p_elem_string(p):
-    'elem : STRING'
-#    p[0] = Node("string", p[1][1:-1])
-    p[0] = Node
+    # Elements ===============================================================
+    def p_left_name(self, p):
+        'left : name'
+        p[0] = p[1]
+     
+    def p_left_sub(self, p):
+        'left : name LBRACKET expr RBRACKET'
+        p[0] = ast.Sub(p[1], p[3], self.coord(p))
 
-def p_elem_char(p):
-    'elem : CHAR'
-#    p[0] = Node("char", p[1])
-    p[0] = Node
+    def p_elem_group(self, p):
+        'elem : LPAREN expr RPAREN'
+        p[0] = ast.Group(p[2], self.coord(p))
 
-def p_elem_group(p):
-    'elem : LPAREN expr RPAREN'
-#    p[0] = Node("group", p[2])
-    p[0] = Node
+    def p_elem_name(self, p):
+        'elem : name'
+        p[0] = p[1]
 
-# Identifier
-def p_name(p):
-    'name : ID'
-#    p[0] = Node("id", p[1])
-    p[0] = ast.Node()
+    def p_elem_sub(self, p):
+        'elem : name LBRACKET expr RBRACKET'
+        p[0] = ast.Sub(p[1], p[3], self.coord(p))
 
-# Empty rule
-def p_empty(p):
-    'empty :'
+    def p_elem_fcall(self, p):
+        'elem : name LPAREN expr_list RPAREN'
+        p[0] = ast.Fcall(p[1], p[3], self.coord(p))
+
+    def p_elem_number(self, p):
+        '''elem : HEXLITERAL
+                | DECLITERAL
+                | BINLITERAL'''
+        p[0] = ast.Number(p[1], self.coord(p))
+
+    def p_elem_boolean_true(self, p):
+        'elem : TRUE'
+        p[0] = ast.Boolean(p[1], self.coord(p))
+
+    def p_elem_boolean_false(self, p):
+        'elem : FALSE'
+        p[0] = ast.Boolean(p[1], self.coord(p))
+
+    def p_elem_string(self, p):
+        'elem : STRING'
+        p[0] = ast.String(p[1], self.coord(p))
+
+    def p_elem_char(self, p):
+        'elem : CHAR'
+        p[0] = ast.Char(p[1], self.coord(p))
+
+    # Identifier
+    def p_name(self, p):
+        'name : ID'
+        p[0] = ast.Id(p[1], self.coord(p)) 
+
+    # Empty rule
+    def p_empty(self, p):
+        'empty :'
+        pass
+    
+    # Error rule for syntax errors
+    def p_error(self, p):
+        if p:
+            self._parse_error('before: %s' % p.value, self._coord(p.lineno(o), 
+                find_col(lexer.lexdata, p.lexpos(0))))
+        else:
+            self._parse_error('At end of input', '')
+
+class ParseError(Exception):
     pass
 
-# Return the line number for a parse rule
-def line(p):
-    return p.lineno(1)
+class Coord(object):
+    """ Coordinates (file, line, col) of a syntactic element.
+    """
 
-# Return the column position for a parse rule
-def col(p):
-    return find_col(lexer.lexdata, p.lexpos(1))
+    def __init__(self, file, line, column=None):
+        self.file = file
+        self.line = line
+        self.column = column
 
-# Compute column 
-def find_col(input, lexpos):
-    last_cr = input.rfind('\n', 0, lexpos)
-    if last_cr < 0:
-        last_cr = 0
-    column = (lexpos - last_cr) + 1
-    return column
+    def __str__(self):
+        str = "%s:%s" % (self.file, self.line)
+        if self.column: str += ":%s" % self.column
+        return str
 
-# Error rule for syntax errors
-def p_error(p):
-    print "Syntax error: token {0} '{1}' at {2}:{3}".format(
-        p.type, p.value, p.lineno, find_col(lexer.lexdata, p.lexpos(0)))
-    pass
-
-# Build the parser
-parser = yacc.yacc(debug=False)
-
-def parse(data, debug=0):
-    parser.error = 0
-    p = parser.parse(data, debug=debug)
-    if parser.error: return None
-    return p
