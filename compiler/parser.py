@@ -3,15 +3,13 @@ import ast
 from lexer import Lexer
 
 class Parser(object):
-    """ A parser object for the sire langauge
-    """
+    """ A parser object for the sire langauge """
+
     def __init__(self, lex_optimise=True, lextab='lextab', 
             yacc_optimise=True, yacctab='yacctab', yacc_debug=False):
-        """ Create a new parser
-        """
-
+        """ Create a new parser """
         # Instantiate and build the lexer
-        self.lexer = Lexer(error_func=self._lex_error)
+        self.lexer = Lexer(error_func=self.lex_error)
         self.lexer.build(optimize=lex_optimise, lextab=lextab)
         self.tokens = self.lexer.tokens
 
@@ -20,23 +18,26 @@ class Parser(object):
                 optimize=yacc_optimise)
 
     def parse(self, text, filename='', debug=0):
-        """ Parse a file and return the AST
-        """
+        """ Parse a file and return the AST """
         self.lexer.filename = filename
         self.lexer.reset()
         return self.parser.parse(text, lexer=self.lexer, debug=debug)
 
-    def coord(self, p):
-        """ Return a coordinate for a production
-        """
-        return Coord(file=self.lexer.filename, line=p.lineno(1), 
-                column=self.lexer.findcol(self.lexer.data(), p.lexpos(1)))
+    def coord(self, p, index=1):
+        """ Return a coordinate for a production """
+        return Coord(file=self.lexer.filename, line=p.lineno(index), 
+                column=self.lexer.findcol(self.lexer.data(), p.lexpos(index)))
 
-    def _lex_error(self, msg, line, col):
+    def lex_error(self, msg, line, col):
         self._parse_error(msg, self._coord(line, col))
 
-    def _parse_error(self, msg, coord):
-        raise ParseError('%s: %s' % (coord, msg))
+    def parse_error(self, msg, t=None):
+        if t: 
+            print '%s:%s: error: %s' % (t.lineno,
+                    self.lexer.findcol(self.lexer.data(), t.lexpos), msg)
+        else:
+            print 'Error: %s' % (msg)
+        self.parser.errok()
 
     # Define operator presidence
     precedence = (
@@ -58,9 +59,8 @@ class Parser(object):
     # Program declaration error
     def p_program_error(self, p):
         'program : error'
-        print "Syntax error"
+        self.parse_error('Syntax error', p[1])
         p[0] = None
-        p.parser.error = 1
 
     # Variable declarations ==================================================
     def p_var_decls(self, p):
@@ -78,7 +78,7 @@ class Parser(object):
     def p_var_decl_seq_err(self, p):
         'var_decl_seq : error SEMI'
         print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-        parser.errok()
+       
 
     # Var declaration
     def p_var_decl_var(self, p):
@@ -133,14 +133,12 @@ class Parser(object):
     # Procedure error
     def p_proc_decl_proc_err(self, p):
         '''proc_decl : PROC error IS var_decls stmt'''
-        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-        parser.errok()
+        self.parse_error('process declaration', p[2])
 
     # Function error
     def p_proc_decl_func_err(self, p):
         '''proc_decl : FUNC error IS var_decls stmt'''
-        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-        parser.errok()
+        self.parse_error('function declaration', p[2])
 
     # Formal declarations ====================================================
     def p_formals(self, p):
@@ -209,7 +207,7 @@ class Parser(object):
 
     def p_stmt_on(self, p):
         'stmt : ON left COLON name LPAREN expr_list RPAREN'
-        p[0] = ast.On(p[2], Pcall(p[4], p[6], self.coord(p)), self.coord(p))
+        p[0] = ast.On(p[2], ast.Pcall(p[4], p[6], self.coord(p)), self.coord(p))
 
     def p_stmt_connect(self, p):
         'stmt : CONNECT left TO left COLON left'
@@ -234,12 +232,6 @@ class Parser(object):
                     | stmt SEMI stmt_seq'''
         p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-    # Seq error
-    def p_stmt_seq_err(self, p):
-        'stmt_seq : error SEMI'
-        print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
-        parser.errok()
-
     # Par block
     def p_stmt_par_block(self, p):
         'stmt : START stmt_par END'
@@ -247,15 +239,22 @@ class Parser(object):
 
     # Par
     def p_stmt_par(self, p):
-        '''stmt_par : stmt BAR stmt
-                    | stmt BAR stmt_par'''
-        p[0] = p[1] if len(p)==3 else p[1] + p[3]
+        '''stmt_par : stmt BAR stmt'''
+        p[0] = [p[1]] + [p[3]]
+
+    def p_stmt_par_seq(self, p):
+        '''stmt_par : stmt BAR stmt_par'''
+        p[0] = [p[1]] + p[3]
+
+    # Seq error
+    def p_stmt_seq_err(self, p):
+        'stmt_seq : error SEMI'
+        self.parse_error('sequential block', p[1])
 
     # Par error
     def p_stmt_par_err(self, p):
         'stmt_par : error BAR'
-        print "Syntax error at {0} {1}".format(p.lineno(1), p.lexpos(1))
-        parser.errok()
+        self.parse_error('parallel block', p[1])
 
     # Expressions ============================================================
     def p_expr_list(self, p):
@@ -369,20 +368,14 @@ class Parser(object):
         pass
     
     # Error rule for syntax errors
-    def p_error(self, p):
-        if p:
-            self._parse_error('before: %s' % p.value, self._coord(p.lineno(o), 
-                find_col(lexer.lexdata, p.lexpos(0))))
+    def p_error(self, t):
+        if t:
+            self.parse_error('before: %s' % t.value, t)
         else:
-            self._parse_error('At end of input', '')
-
-class ParseError(Exception):
-    pass
+            self.parse_error('At end of input')
 
 class Coord(object):
-    """ Coordinates (file, line, col) of a syntactic element.
-    """
-
+    """ Coordinates (file, line, col) of a syntactic element. """
     def __init__(self, file, line, column=None):
         self.file = file
         self.line = line

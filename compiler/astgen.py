@@ -116,9 +116,12 @@ class NodeCfg(object):
 
     def gen_accept(self):
         src = '    def accept(self, visitor):\n'
-        src += '        visitor.visit_%s(self)\n' % (self.name.lower())
-        src += "        for c in self.children():\n"
-        src += "            c.accept(visitor)\n"
+        src += '        end = visitor.visit_%s(self)\n' % (self.name.lower())
+        src += '        visitor.down(end)\n'
+        if self.all_entries:
+            src += "        for c in self.children():\n"
+            src += "            c.accept(visitor)\n"
+        src += '        visitor.up()\n'
         return src
 
 

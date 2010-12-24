@@ -41,9 +41,11 @@ class Program(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_program(self)
+        end = visitor.visit_program(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class VarDecls(Node):
@@ -57,9 +59,11 @@ class VarDecls(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_vardecls(self)
+        end = visitor.visit_vardecls(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class VarDecl(Node):
@@ -76,9 +80,11 @@ class VarDecl(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_vardecl(self)
+        end = visitor.visit_vardecl(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class ProcDecls(Node):
@@ -92,9 +98,11 @@ class ProcDecls(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_procdecls(self)
+        end = visitor.visit_procdecls(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class ProcDecl(Node):
@@ -114,9 +122,11 @@ class ProcDecl(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_procdecl(self)
+        end = visitor.visit_procdecl(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Formals(Node):
@@ -130,9 +140,11 @@ class Formals(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_formals(self)
+        end = visitor.visit_formals(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Param(Node):
@@ -146,9 +158,11 @@ class Param(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_param(self)
+        end = visitor.visit_param(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Skip(Node):
@@ -159,9 +173,9 @@ class Skip(Node):
         return ()
 
     def accept(self, visitor):
-        visitor.visit_skip(self)
-        for c in self.children():
-            c.accept(visitor)
+        end = visitor.visit_skip(self)
+        visitor.down(end)
+        visitor.up()
 
 
 class Pcall(Node):
@@ -176,9 +190,11 @@ class Pcall(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_pcall(self)
+        end = visitor.visit_pcall(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Ass(Node):
@@ -194,9 +210,11 @@ class Ass(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_ass(self)
+        end = visitor.visit_ass(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class In(Node):
@@ -212,9 +230,11 @@ class In(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_in(self)
+        end = visitor.visit_in(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Out(Node):
@@ -230,9 +250,11 @@ class Out(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_out(self)
+        end = visitor.visit_out(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class If(Node):
@@ -250,9 +272,11 @@ class If(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_if(self)
+        end = visitor.visit_if(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class While(Node):
@@ -267,9 +291,11 @@ class While(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_while(self)
+        end = visitor.visit_while(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class For(Node):
@@ -289,9 +315,11 @@ class For(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_for(self)
+        end = visitor.visit_for(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class On(Node):
@@ -307,9 +335,11 @@ class On(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_on(self)
+        end = visitor.visit_on(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Connect(Node):
@@ -327,9 +357,11 @@ class Connect(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_connect(self)
+        end = visitor.visit_connect(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Aliases(Node):
@@ -347,9 +379,11 @@ class Aliases(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_aliases(self)
+        end = visitor.visit_aliases(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Return(Node):
@@ -363,9 +397,11 @@ class Return(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_return(self)
+        end = visitor.visit_return(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Seq(Node):
@@ -379,9 +415,11 @@ class Seq(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_seq(self)
+        end = visitor.visit_seq(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Par(Node):
@@ -395,9 +433,11 @@ class Par(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_par(self)
+        end = visitor.visit_par(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class ExprList(Node):
@@ -411,9 +451,11 @@ class ExprList(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_exprlist(self)
+        end = visitor.visit_exprlist(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Unary(Node):
@@ -428,9 +470,11 @@ class Unary(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_unary(self)
+        end = visitor.visit_unary(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Binop(Node):
@@ -447,9 +491,11 @@ class Binop(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_binop(self)
+        end = visitor.visit_binop(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Group(Node):
@@ -463,9 +509,11 @@ class Group(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_group(self)
+        end = visitor.visit_group(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Sub(Node):
@@ -481,9 +529,11 @@ class Sub(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_sub(self)
+        end = visitor.visit_sub(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Fcall(Node):
@@ -499,9 +549,11 @@ class Fcall(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_fcall(self)
+        end = visitor.visit_fcall(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Number(Node):
@@ -514,9 +566,11 @@ class Number(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_number(self)
+        end = visitor.visit_number(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Boolean(Node):
@@ -529,9 +583,11 @@ class Boolean(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_boolean(self)
+        end = visitor.visit_boolean(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class String(Node):
@@ -544,9 +600,11 @@ class String(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_string(self)
+        end = visitor.visit_string(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Char(Node):
@@ -559,9 +617,11 @@ class Char(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_char(self)
+        end = visitor.visit_char(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 
 class Id(Node):
@@ -574,8 +634,10 @@ class Id(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        visitor.visit_id(self)
+        end = visitor.visit_id(self)
+        visitor.down(end)
         for c in self.children():
             c.accept(visitor)
+        visitor.up()
 
 

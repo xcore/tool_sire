@@ -30,7 +30,7 @@ proc merge(a[], b[], c[], val m, val n) is
 }
 
 % Merge sort
-proc msort(val t, val n, array[] val len, val int) is
+proc msort(val t, val n, array[], val len, val int) is
   var a[];
   var b[];
   var i;
