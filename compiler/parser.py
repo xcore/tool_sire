@@ -51,7 +51,7 @@ class Parser(object):
 
     start = 'program'
 
-    # Program declaration ====================================================
+    # Program declaration ===========================================
     def p_program(self, p):
         'program : var_decls proc_decls'
         p[0] = ast.Program(p[1], p[2], self.coord(p))
@@ -78,7 +78,6 @@ class Parser(object):
     def p_var_decl_seq_err(self, p):
         'var_decl_seq : error SEMI'
         print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
-       
 
     # Var declaration
     def p_var_decl_var(self, p):
@@ -269,7 +268,7 @@ class Parser(object):
 
     def p_expr_sinle(self, p):
         'expr : elem' 
-        p[0] = p[1]
+        p[0] = ast.Unary(".", p[1])
 
     def p_expr_unary(self, p):
         '''expr : MINUS elem %prec UMINUS
@@ -357,7 +356,6 @@ class Parser(object):
         'elem : CHAR'
         p[0] = ast.Char(p[1], self.coord(p))
 
-    # Identifier
     def p_name(self, p):
         'name : ID'
         p[0] = ast.Id(p[1], self.coord(p)) 

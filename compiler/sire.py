@@ -36,4 +36,6 @@ elif len(sys.argv) == 2:
     log = logging.getLogger()
     parser = Parser(lex_optimise=True, yacc_debug=False, yacc_optimise=False)
     prog = parser.parse(input, filename, debug=0)
-    prog.accept(show.Show())
+    #prog.accept(show.Show())
+    visitor = show.Show()
+    visitor.visit_program(prog)
