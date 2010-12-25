@@ -27,14 +27,18 @@ class Parser(object):
         """ Return a coordinate for a production """
         return Coord(file=self.lexer.filename, line=p.lineno(index), 
                 column=self.lexer.findcol(self.lexer.data(), p.lexpos(index)))
+    
+    def tcoord(self, t):
+        """ Return a coordinate for a token """
+        return Coord(file=self.lexer.filename, line=t.lineno, 
+                column=self.lexer.findcol(self.lexer.data(), t.lexpos))
 
     def lex_error(self, msg, line, col):
-        self._parse_error(msg, self._coord(line, col))
+        self.parse_error(msg, Coord(line, col))
 
-    def parse_error(self, msg, t=None):
-        if t: 
-            print '%s:%s: error: %s' % (t.lineno,
-                    self.lexer.findcol(self.lexer.data(), t.lexpos), msg)
+    def parse_error(self, msg, coord=None):
+        if coord: 
+            print '%s: error: %s' % (coord, msg)
         else:
             print 'Error: %s' % (msg)
         self.parser.errok()
@@ -43,7 +47,7 @@ class Parser(object):
     precedence = (
         ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
         ('left', 'LSHIFT', 'RSHIFT'),
-        ('left', 'AND', 'OR', 'XOR', 'MOD'),
+        ('left', 'AND', 'OR', 'XOR', 'REM'),
         ('left', 'PLUS', 'MINUS'),
         ('left', 'MULT', 'DIV'),
         ('right', 'UMINUS', 'UNOT')
@@ -59,7 +63,7 @@ class Parser(object):
     # Program declaration error
     def p_program_error(self, p):
         'program : error'
-        self.parse_error('Syntax error', p[1])
+        self.parse_error('Syntax error', p, 1)
         p[0] = None
 
     # Variable declarations ==================================================
@@ -132,12 +136,12 @@ class Parser(object):
     # Procedure error
     def p_proc_decl_proc_err(self, p):
         '''proc_decl : PROC error IS var_decls stmt'''
-        self.parse_error('process declaration', p[2])
+        self.parse_error('process declaration', p, 2)
 
     # Function error
     def p_proc_decl_func_err(self, p):
         '''proc_decl : FUNC error IS var_decls stmt'''
-        self.parse_error('function declaration', p[2])
+        self.parse_error('function declaration', p, 2)
 
     # Formal declarations ====================================================
     def p_formals(self, p):
@@ -248,12 +252,12 @@ class Parser(object):
     # Seq error
     def p_stmt_seq_err(self, p):
         'stmt_seq : error SEMI'
-        self.parse_error('sequential block', p[1])
+        self.parse_error('sequential block', p, 1)
 
     # Par error
     def p_stmt_par_err(self, p):
         'stmt_par : error BAR'
-        self.parse_error('parallel block', p[1])
+        self.parse_error('parallel block', p, 1)
 
     # Expressions ============================================================
     def p_expr_list(self, p):
@@ -268,7 +272,7 @@ class Parser(object):
 
     def p_expr_sinle(self, p):
         'expr : elem' 
-        p[0] = ast.Unary(".", p[1])
+        p[0] = ast.Unary('', p[1])
 
     def p_expr_unary(self, p):
         '''expr : MINUS elem %prec UMINUS
@@ -280,7 +284,7 @@ class Parser(object):
                 | elem MINUS right
                 | elem MULT right
                 | elem DIV right
-                | elem MOD right
+                | elem REM right
                 | elem OR right
                 | elem AND right
                 | elem XOR right
@@ -312,7 +316,7 @@ class Parser(object):
     # Elements ===============================================================
     def p_left_name(self, p):
         'left : name'
-        p[0] = p[1]
+        p[0] = ast.Unary('', p[1])
      
     def p_left_sub(self, p):
         'left : name LBRACKET expr RBRACKET'
@@ -324,7 +328,7 @@ class Parser(object):
 
     def p_elem_name(self, p):
         'elem : name'
-        p[0] = p[1]
+        p[0] = ast.Unary('', p[1])
 
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'
@@ -368,7 +372,7 @@ class Parser(object):
     # Error rule for syntax errors
     def p_error(self, t):
         if t:
-            self.parse_error('before: %s' % t.value, t)
+            self.parse_error('before: %s' % t.value, self.tcoord(t))
         else:
             self.parse_error('At end of input')
 

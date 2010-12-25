@@ -11,7 +11,7 @@ proc merge(a[], b[], c[], val m, val m) is
 { i:=0 
 ; j:=0 
 ; k:=0
-; while (i<m) & (j<n) do 
+; while (i<m) and (j<n) do 
   { if(a[i] <= b[j])
     then 
     { c[k] := a[i] 

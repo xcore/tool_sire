@@ -39,9 +39,8 @@ class Lexer(object):
     def _error(self, msg, token):
         """ Generic lexer error
         """
-        location = self._make_tok_location(token)
         self.error_func(msg, token.lineno, 
-                findcol(self.lexer.lexdata, token.lexpos))
+                self.findcol(self.lexer.lexdata, token.lexpos))
         self.lexer.skip(1)
  
     # Reserved tokens
@@ -73,7 +72,7 @@ class Lexer(object):
     # All tokens
     tokens = (
         # Operators
-        'PLUS','MINUS','MULT','DIV','MOD','OR','AND','NOT','XOR',
+        'PLUS','MINUS','MULT','DIV','REM','OR','AND','NOT','XOR',
         'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
         # Assignment operators
         'ASS','IN','OUT',
@@ -93,11 +92,11 @@ class Lexer(object):
     t_MINUS    = r'-'
     t_MULT     = r'\*'
     t_DIV      = r'/'
-    t_MOD      = r'%'
+    t_REM      = r'rem'
     t_OR       = r'or'
-    t_AND      = r'&'
+    t_AND      = r'and'
     t_NOT      = r'~'
-    t_XOR      = r'\^'
+    t_XOR      = r'xor'
     t_LSHIFT   = r'<<'
     t_RSHIFT   = r'>>'
     t_LT       = r'<'
