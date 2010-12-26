@@ -83,12 +83,16 @@ class Show(object):
 
     def visit_seq(self, node, d):
         self.buf.write((' '*d)+'{')
-        self.buf.write(';\n'.join([self.stmt(x, d) for x in node.children()]))
+        #self.buf.write(';\n'.join([self.stmt(x, d) for x in node.children()]))
+        for x in node.children(): 
+            self.stmt(x, d)
         self.buf.write((' '*d)+'}')
 
     def visit_par(self, node, d):
         self.buf.write((' '*d)+'{')
-        self.buf.write('|\n'.join([self.stmt(x, d) for x in node.children()]))
+        #self.buf.write('|\n'.join([self.stmt(x, d) for x in node.children()]))
+        for x in node.children():
+            self.stmt(x, d)
         self.buf.write((' '*d)+'}')
 
     def visit_skip(self, node, d):
@@ -135,7 +139,7 @@ class Show(object):
     def expr(self, node):
         if   isinstance(node, ast.Unary): return self.visit_unary(node)
         elif isinstance(node, ast.Binop): return self.visit_binop(node)
-        else: raise Exception('Invalid expression')
+        else: raise Exception('Invalid expression %s' % node)
 
     def visit_unary(self, node):
         return '%s%s' % (node.op, self.elem(node.elem))
@@ -155,7 +159,8 @@ class Show(object):
         elif isinstance(node, ast.String):  return self.visit_string(node)
         elif isinstance(node, ast.Char):    return self.visit_char(node)
         elif isinstance(node, ast.Id):      return self.visit_id(node)
-        else: raise Exception('Invalid element.')
+        else: 
+            raise Exception('Invalid element: %s' % node)
 
     def visit_group(self, node):
         return '(%s)' % self.expr(node.expr)

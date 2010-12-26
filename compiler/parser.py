@@ -86,7 +86,7 @@ class Parser(object):
     # Var declaration
     def p_var_decl_var(self, p):
         'var_decl : type name'
-        p[0] = ast.VarDecl("var", None, p[1], p[2], self.coord(p))
+        p[0] = ast.VarDecl("var", p[1], p[2], None, self.coord(p))
 
     # Array declaration
     def p_var_decl_array(self, p):
@@ -175,7 +175,45 @@ class Parser(object):
         'param_decl : name LBRACKET RBRACKET'
         p[0] = ast.Param("alias", p[1], self.coord(p))
 
-    # Statements =============================================================
+    # Statement blocks ====================================
+    
+    # Seq block
+    def p_stmt_seq_block(self, p):
+        'stmt : START stmt_seq END'
+        p[0] = ast.Seq(p[2], self.coord(p))
+
+    # Seq
+    def p_stmt_seq(self, p):
+        '''stmt_seq : stmt
+                    | stmt SEMI stmt_seq'''
+        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
+
+    # Par block
+    def p_stmt_par_block(self, p):
+        'stmt : START stmt_par END'
+        p[0] = ast.Par(p[2], self.coord(p))
+
+    # Par
+    def p_stmt_par(self, p):
+        '''stmt_par : stmt BAR stmt'''
+        p[0] = [p[1]] + [p[3]]
+
+    def p_stmt_par_seq(self, p):
+        '''stmt_par : stmt BAR stmt_par'''
+        p[0] = [p[1]] + p[3]
+
+    # Seq error
+    def p_stmt_seq_err(self, p):
+        'stmt_seq : error SEMI'
+        self.parse_error('sequential block', p, 1)
+
+    # Par error
+    def p_stmt_par_err(self, p):
+        'stmt_par : error BAR'
+        self.parse_error('parallel block', p, 1)
+
+    # Statements ==========================================
+
     def p_stmt_skip(self, p):
         'stmt : SKIP'
         p[0] = ast.Skip(self.coord(p))
@@ -223,41 +261,6 @@ class Parser(object):
     def p_stmt_return(self, p):
         'stmt : RETURN expr'
         p[0] = ast.Return(p[2], self.coord(p))
-
-    # Seq block
-    def p_stmt_seq_block(self, p):
-        'stmt : START stmt_seq END'
-        p[0] = ast.Seq(p[2], self.coord(p))
-
-    # Seq
-    def p_stmt_seq(self, p):
-        '''stmt_seq : stmt
-                    | stmt SEMI stmt_seq'''
-        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
-
-    # Par block
-    def p_stmt_par_block(self, p):
-        'stmt : START stmt_par END'
-        p[0] = ast.Par(p[2], self.coord(p))
-
-    # Par
-    def p_stmt_par(self, p):
-        '''stmt_par : stmt BAR stmt'''
-        p[0] = [p[1]] + [p[3]]
-
-    def p_stmt_par_seq(self, p):
-        '''stmt_par : stmt BAR stmt_par'''
-        p[0] = [p[1]] + p[3]
-
-    # Seq error
-    def p_stmt_seq_err(self, p):
-        'stmt_seq : error SEMI'
-        self.parse_error('sequential block', p, 1)
-
-    # Par error
-    def p_stmt_par_err(self, p):
-        'stmt_par : error BAR'
-        self.parse_error('parallel block', p, 1)
 
     # Expressions ============================================================
     def p_expr_list(self, p):
