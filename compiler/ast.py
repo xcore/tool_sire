@@ -217,15 +217,15 @@ class Skip(Node):
 
 
 class Pcall(Node):
-    def __init__(self, name, expr, coord=None):
+    def __init__(self, name, args, coord=None):
         self.name = name
-        self.expr = expr
+        self.args = args
         self.coord = coord
 
     def children(self):
         c = []
         if self.name is not None: c.append(self.name)
-        if self.expr is not None: c.append(self.expr)
+        if self.args is not None: c.append(self.args)
         return tuple(c)
 
     def accept(self, visitor):
@@ -456,6 +456,24 @@ class ExprList(Node):
 
     def accept(self, visitor):
         visitor.visit_exprlist(self)
+        visitor.down()
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up()
+
+
+class Single(Node):
+    def __init__(self, elem, coord=None):
+        self.elem = elem
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.elem is not None: c.append(self.elem)
+        return tuple(c)
+
+    def accept(self, visitor):
+        visitor.visit_single(self)
         visitor.down()
         for c in self.children():
             c.accept(visitor)

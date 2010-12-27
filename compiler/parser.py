@@ -38,9 +38,9 @@ class Parser(object):
 
     def parse_error(self, msg, coord=None):
         if coord: 
-            print '%s: error: %s' % (coord, msg)
+            print('%s: error: %s' % (coord, msg))
         else:
-            print 'Error: %s' % (msg)
+            print('Error: %s' % (msg))
         self.parser.errok()
 
     # Define operator presidence
@@ -81,7 +81,7 @@ class Parser(object):
     # Variable declaration sequence error
     def p_var_decl_seq_err(self, p):
         'var_decl_seq : error SEMI'
-        print "Syntax error at line {0}:{1}".format(p.lineno(1), p.lexpos(1))
+        print('Syntax error at line {}:{}'.format(p.lineno(1), p.lexpos(1)))
 
     # Var declaration
     def p_var_decl_var(self, p):
@@ -160,6 +160,11 @@ class Parser(object):
         'param_decl : name'
         p[0] = ast.Param("var", p[1], self.coord(p))
 
+    # Array alias parameter
+    def p_param_decl_alias(self, p):
+        'param_decl : name LBRACKET RBRACKET'
+        p[0] = ast.Param("alias", p[1], self.coord(p))
+
     # Val parameter
     def p_param_decl_val(self, p):
         'param_decl : VAL name'
@@ -169,11 +174,6 @@ class Parser(object):
     def p_param_decl_chanend(self, p):
         'param_decl : CHANEND name'
         p[0] = ast.Param("chanend", p[2], self.coord(p))
-
-    # Array alias parameter
-    def p_param_decl_alias(self, p):
-        'param_decl : name LBRACKET RBRACKET'
-        p[0] = ast.Param("alias", p[1], self.coord(p))
 
     # Statement blocks ====================================
     
@@ -266,7 +266,7 @@ class Parser(object):
     def p_expr_list(self, p):
         '''expr_list : empty
                      | expr_seq'''
-        p[0] = ast.ExprList(p[1] if len(p)==2 else None, self.coord(p))
+        p[0] = ast.ExprList(p[1] if p[1] else None, self.coord(p))
 
     def p_expr_seq(self, p):
         '''expr_seq : expr
@@ -275,7 +275,7 @@ class Parser(object):
 
     def p_expr_sinle(self, p):
         'expr : elem' 
-        p[0] = ast.Unary('', p[1])
+        p[0] = ast.Single(p[1])
 
     def p_expr_unary(self, p):
         '''expr : MINUS elem %prec UMINUS
@@ -306,7 +306,7 @@ class Parser(object):
 
     def p_right_sinle(self, p):
         'right : elem'
-        p[0] = p[1]
+        p[0] = ast.Single(p[1])
 
     def p_right(self, p):
         '''right : elem AND right
@@ -317,9 +317,10 @@ class Parser(object):
         p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
 
     # Elements ===============================================================
+    
     def p_left_name(self, p):
         'left : name'
-        p[0] = ast.Unary('', p[1])
+        p[0] = p[1]
      
     def p_left_sub(self, p):
         'left : name LBRACKET expr RBRACKET'
@@ -331,7 +332,7 @@ class Parser(object):
 
     def p_elem_name(self, p):
         'elem : name'
-        p[0] = ast.Unary('', p[1])
+        p[0] = p[1]
 
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'
