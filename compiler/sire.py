@@ -68,9 +68,9 @@ def show_ast(program):
     visitor = dump.Dump()
     program.accept(visitor)
 
-def translate(program):
+def translate_ast(program, buf):
     """ Transform an AST into XC """
-    walker = translate.Translate()
+    walker = translate.Translate(buf)
     walker.walk_program(program)
 
 def main(args):
@@ -91,6 +91,15 @@ def main(args):
     if a.pprint: 
         pprint_ast(program)
         return
+
+    try:
+        file = open('out.xc', 'w')
+        translate_ast(program, file)
+        file.close()
+    except IOError as err:
+        print('I/O error({}): {}'.format(err.errno, err.stderror))
+    except:
+        raise Exception('Unexpected error:', sys.exc_info()[0])
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
