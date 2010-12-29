@@ -1,53 +1,97 @@
+#!/usr/bin/env python3.1
+
 import sys
 sys.path.insert(0,"../..")
 
+import argparse
+
 from ply import *
 from parser import Parser
-
 import semantics
 import printer
 import translate
 import dump
-
-# Set up a logging object
 import logging
-logging.basicConfig(
-    level = logging.DEBUG,
-    filename = "parselog.txt",
-    filemode = "w",
-    format = "%(filename)10s:%(lineno)4d:%(message)s"
-)
-log = logging.getLogger()
 
-if len(sys.argv) == 1:
-    print('Usage: sire.py <input-file>')
-    raise SystemExit
+def setup_argparse():
+    """ Configure an argument parser object """
+    p = argparse.ArgumentParser(description='sire compiler')
+    p.add_argument('infile', metavar='input-file')
+    p.add_argument('outfile', metavar='output-file', nargs='?')
+    p.add_argument('-s', '--sem', action='store_true', dest='sem_only', 
+            help='perform semantic analysis and quit')
+    p.add_argument('-a', '--ast', action='store_true', dest='show_ast',
+            help='display the AST and quit')
+    p.add_argument('-p', '--pprint', action='store_true', dest='pprint',
+            help='pretty-print the AST and quit')
+    return p
 
-# Open file specified
-elif len(sys.argv) == 2:
+def read_input(filename):
+    """ Read a file and return its contents as a string """
     try:
-        filename = sys.argv[1]
-        file = open(filename)
-        input = file.read()
+        file = open(filename, 'r')
+        contents = file.read()
+        file.close()
     except(IOError, (errno, stderror)):
         print('I/O error({}): {}'.format(errno, stderror))
     except:
-        print('Unexpected error:', sys.exc_info()[0])
-        raise
-    file.close()
+        raise Exception('Unexpected error:', sys.exc_info()[0])
+    return contents
 
-    log = logging.getLogger()
+def parse(input, filename, logging=False):
+    """ Parse an input string to produce an AST """
+    if logging:
+        logging.basicConfig(
+            level = logging.DEBUG,
+            filename = "parselog.txt",
+            filemode = "w",
+            format = "%(filename)10s:%(lineno)4d:%(message)s")
+        log = logging.getLogger()
+    else:
+        log = 0
     parser = Parser(lex_optimise=True, yacc_debug=False, yacc_optimise=False)
-    prog = parser.parse(input, filename, debug=log)
+    program = parser.parse(input, filename, debug=log)
+    return program
 
-    #visitor = semantics.Semantics()
-    #prog.accept(visitor)
+def semantic_analysis(program):
+    """ Perform semantic analysis on an AST """
+    visitor = semantics.Semantics()
+    program.accept(visitor)
 
-    #visitor = dump.Dump()
-    #prog.accept(visitor)
-
+def pprint_ast(program):
+    """ Pretty-print an AST in sire syntax """
     walker = printer.Printer()
-    walker.walk_program(prog)
-   
-    #walker = translate.Translate()
-    #walker.walk_program(prog)
+    walker.walk_program(program)
+
+def show_ast(program):
+    """ Produce a formatted dump of an AST """
+    visitor = dump.Dump()
+    program.accept(visitor)
+
+def translate(program):
+    """ Transform an AST into XC """
+    walker = translate.Translate()
+    walker.walk_program(program)
+
+def main(args):
+    argp = setup_argparse()
+    a = argp.parse_args(args)
+
+    input = read_input(a.infile) 
+    program = parse(input, a.infile if a.infile else 'stdin')
+    semantic_analysis(program)
+    
+    if a.sem_only:
+        return
+
+    if a.show_ast:    
+        show_ast(program)
+        return
+
+    if a.pprint: 
+        pprint_ast(program)
+        return
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
+       

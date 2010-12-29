@@ -1,10 +1,10 @@
 val LENGTH:=50;
 val THRESHOLD:=10; 
 val NUMCORES:=16;
-var a[LENGTH]
+var a[LENGTH];
 
 % Partition
-proc partition(array[]; val len) is
+proc partition(array[], val len) is
   var storeIndex;
   var pivot;
   var pivotValue;
@@ -52,7 +52,8 @@ proc qsort(array[], val len) is
 }
 
 proc main() is
-  var i: int
-{ for i:=0 to LENGTH-1 do a[i] := LENGTH-i
+  var i;
+{ for i:=0 to LENGTH-1 do 
+    a[i] := LENGTH-i
 ; qsort(0, NUMCORES, a, LENGTH)
 }

@@ -1,0 +1,11 @@
+% Recursive calculation
+func fib(val n) is 
+{ if n > 1 
+  then return fibRec(n-1) + fibRec(n-2)
+  else if n = 0 then return 0 else return 1
+}
+
+proc main() is
+{ fib(10)
+; fib(17)
+}

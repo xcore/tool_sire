@@ -38,15 +38,15 @@ class Translate(NodeWalker):
 
     def vardecl(self, node):
         if node.form == "var":
-            return '%s %s' % (node.type, self.elem(node.name))
+            return 'int %s'.format(self.elem(node.name))
         elif node.form == "array":
-            return '{} {}[{}]'.format(node.type, self.elem(node.name), 
+            return 'int {}[{}]'.format(self.elem(node.name), 
                     self.expr(node.expr) if node.expr else '')
         elif node.form == "val":
-            return 'val {} := {}'.format(self.elem(node.name), 
+            return '#define {} {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
         elif node.form == "port":
-            return 'port {} : {}'.format(self.elem(node.name), 
+            return '#define {} {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
         else:
             raise Exception('Invalid variable declaration')
@@ -58,7 +58,7 @@ class Translate(NodeWalker):
             self.procdecl(p, d)
 
     def procdecl(self, node, d):
-        self.buf.write('{} {}({}) is\n'.format(
+        self.buf.write('unsigned {}({}) is\n'.format(
                 node.type, self.elem(node.name), self.formals(node.formals)))
         self.vardecls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
@@ -70,10 +70,10 @@ class Translate(NodeWalker):
         return ', '.join([self.param(x) for x in node.children()])
 
     def param(self, node):
-        if   node.type == "var":     return '{}'.format(self.elem(node.name))
-        elif node.type == "alias":   return '{}[]'.format(self.elem(node.name))
-        elif node.type == "val":     return 'val {}'.format(self.elem(node.name))
-        elif node.type == "chanend": return 'chanend {}'.format(self.elem(node.name))
+        if   node.type == "var":     return 'int &{}'.format(self.elem(node.name))
+        elif node.type == "alias":   return 'int {}[]'.format(self.elem(node.name))
+        elif node.type == "val":     return 'int {}'.format(self.elem(node.name))
+        elif node.type == "chanend": return 'unsigned {}'.format(self.elem(node.name))
         else:
             raise Exception('Invalid parameter {}'.format(node))
 

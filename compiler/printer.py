@@ -10,6 +10,7 @@ class Printer(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
     def __init__(self, buf=sys.stdout):
+        super(Printer, self).__init__()
         self.buf = buf
         self.indent = [' '*INDENT]
 
@@ -36,20 +37,20 @@ class Printer(NodeWalker):
                     [self.vardecl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def vardecl(self, node):
-        if node.form == "var":
-            return '%s %s' % (node.type, self.elem(node.name))
-        elif node.form == "array":
-            return '{} {}[{}]'.format(node.type, self.elem(node.name), 
+    def vardecl_var(self, node):
+        return '{} {}'.format(node.type, self.elem(node.name))
+    
+    def vardecl_array(self, node):
+        return '{} {}[{}]'.format(node.type, self.elem(node.name), 
                     self.expr(node.expr) if node.expr else '')
-        elif node.form == "val":
-            return 'val {} := {}'.format(self.elem(node.name), 
+    
+    def vardecl_val(self, node):
+        return 'val {} := {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
-        elif node.form == "port":
-            return 'port {} : {}'.format(self.elem(node.name), 
+    
+    def vardecl_port(self, node):
+        return 'port {} : {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
-        else:
-            raise Exception('Invalid variable declaration')
 
     # Procedure declarations ==============================
 
@@ -69,17 +70,21 @@ class Printer(NodeWalker):
     def formals(self, node):
         return ', '.join([self.param(x) for x in node.children()])
 
-    def param(self, node):
-        if   node.type == "var":     return '{}'.format(self.elem(node.name))
-        elif node.type == "alias":   return '{}[]'.format(self.elem(node.name))
-        elif node.type == "val":     return 'val {}'.format(self.elem(node.name))
-        elif node.type == "chanend": return 'chanend {}'.format(self.elem(node.name))
-        else:
-            raise Exception('Invalid parameter {}'.format(node))
+    def param_var(self, node):
+        return '{}'.format(self.elem(node.name))
+
+    def param_alias(self, node):
+        return '{}[]'.format(self.elem(node.name))
+
+    def param_val(self, node):
+        return 'val {}'.format(self.elem(node.name))
+    
+    def param_chanend(self, node):
+        return 'chanend {}'.format(self.elem(node.name))
 
     # Statements ==========================================
 
-    def v_seq(self, node, d):
+    def stmt_seq(self, node, d):
         self.buf.write(self.indt(d-1)+'{\n')
         self.indent.append(SEQ_INDENT)
         for x in node.children(): 
@@ -88,7 +93,7 @@ class Printer(NodeWalker):
         self.indent.pop()
         self.buf.write(self.indt(d-1)+'}')
 
-    def v_par(self, node, d):
+    def stmt_par(self, node, d):
         self.buf.write(self.indt(d-1)+'{\n')
         self.indent.append(PAR_INDENT)
         for x in node.children():
@@ -97,26 +102,26 @@ class Printer(NodeWalker):
         self.indent.pop()
         self.buf.write(self.indt(d-1)+'}')
 
-    def v_skip(self, node, d):
+    def stmt_skip(self, node, d):
         self.out(d, 'skip')
 
-    def v_pcall(self, node, d):
+    def stmt_pcall(self, node, d):
         self.out(d, '{}({})'.format(
-            self.elem(node.name), self.v_exprlist(node.args)))
+            self.elem(node.name), self.exprlist(node.args)))
 
-    def v_ass(self, node, d):
+    def stmt_ass(self, node, d):
         self.out(d, '{} := {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
-    def v_in(self, node, d):
+    def stmt_in(self, node, d):
         self.out(d, '{} ? {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
-    def v_out(self, node, d):
+    def stmt_out(self, node, d):
         self.out(d, '{} ! {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
-    def v_if(self, node, d):
+    def stmt_if(self, node, d):
         self.out(d, 'if {}\n'.format(self.expr(node.cond)))
         self.out(d, 'then\n')
         self.indent.append(' '*INDENT)
@@ -125,73 +130,73 @@ class Printer(NodeWalker):
         self.stmt(node.elsestmt, d+1)
         self.indent.pop()
 
-    def v_while(self, node, d):
+    def stmt_while(self, node, d):
         self.out(d, 'while {} do\n'.format(self.expr(node.cond)))
         self.indent.append(' '*INDENT)
         self.stmt(node.stmt, d+1)
         self.indent.pop()
 
-    def v_for(self, node, d):
+    def stmt_for(self, node, d):
         self.out(d, 'for {} to {} do\n'.format(self.elem(node.var),
             self.expr(node.init), self.expr(node.bound)))
         self.indent.append(' '*INDENT)
         self.stmt(node.stmt, d+1)
         self.indent.pop()
 
-    def v_on(self, node, d):
+    def stmt_on(self, node, d):
         self.out(d, 'on {}: '.format(self.elem(node.core)))
         self.stmt(node.pcall, d)
 
-    def v_connect(self, node, d):
+    def stmt_connect(self, node, d):
         self.out(d, 'connect {} to {} : {}'.format(
             self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
 
-    def v_aliases(self, node, d):
+    def stmt_aliases(self, node, d):
         self.out(d, '{} aliases {}[{}..]'.format(
             self.elem(node.left), self.elem(node.name), 
             self.expr(node.expr)))
 
-    def v_return(self, node, d):
+    def stmt_return(self, node, d):
         self.out(d, 'return {}'.format(self.expr(node.expr)))
 
     # Expressions =========================================
 
-    def v_exprlist(self, node):
+    def exprlist(self, node):
         return ', '.join([self.expr(x) for x in node.children()])
     
-    def v_single(self, node):
+    def expr_single(self, node):
         return self.elem(node.elem)
 
-    def v_unary(self, node):
+    def expr_unary(self, node):
         return '({}{})'.format(node.op, self.elem(node.elem))
 
-    def v_binop(self, node):
+    def expr_binop(self, node):
         return '{} {} {}'.format(self.elem(node.elem), 
                 node.op, self.expr(node.right))
     
     # Elements= ===========================================
 
-    def v_group(self, node):
+    def elem_group(self, node):
         return '({})'.format(self.expr(node.expr))
 
-    def v_sub(self, node):
+    def elem_sub(self, node):
         return '{}[{}]'.format(self.elem(node.name), self.expr(node.expr))
 
-    def v_fcall(self, node):
-        return '{}({})'.format(self.elem(node.name), self.v_exprlist(node.args))
+    def elem_fcall(self, node):
+        return '{}({})'.format(self.elem(node.name), self.exprlist(node.args))
 
-    def v_number(self, node):
+    def elem_number(self, node):
         return '{}'.format(node.value)
 
-    def v_boolean(self, node):
+    def elem_boolean(self, node):
         return '{}'.format(node.value)
 
-    def v_string(self, node):
+    def elem_string(self, node):
         return '{}'.format(node.value)
 
-    def v_char(self, node):
+    def elem_char(self, node):
         return '{}'.format(node.value)
 
-    def v_id(self, node):
+    def elem_id(self, node):
         return node.value
 

@@ -1,0 +1,21 @@
+% Calculate nth Fibonacci number
+
+func fib(val n) is 
+  var x;
+  var y;
+  var z;
+{ x := 0 
+; y := 1
+; while(n > 0) do 
+  { z := x + y
+  ; x := y
+  ; y := z
+  ; n := n - 1
+  }
+; return z
+}
+
+proc main() is
+{ fib(10)
+; fib(17)
+}

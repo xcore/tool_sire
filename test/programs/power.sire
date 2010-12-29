@@ -1,0 +1,15 @@
+% Calculate the power of a number
+
+func power(val base, val exp) is
+  var result;
+  var i;
+{ result := 1
+; for i:= 0 to exp-1 do
+    result := result * base
+; return result
+}
+
+proc main() is
+{ power(2, 5)
+; power(7, 9)
+}
