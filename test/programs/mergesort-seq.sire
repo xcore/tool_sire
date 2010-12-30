@@ -4,7 +4,7 @@ val THRESHOLD := 1000;
 var a[LENGTH];
 
 % Merge
-proc merge(a[], b[], c[], val m, val m) is
+proc merge(a[], b[], c[], val m, val n) is
   var i;
   var j;
   var k;

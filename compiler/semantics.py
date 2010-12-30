@@ -3,7 +3,7 @@ import symbol
 from ast import NodeVisitor
 
 class Semantics(NodeVisitor):
-    """ An AST visitor class to display the tree
+    """ An AST visitor to check the semantics of sire
     """
     def __init__(self, buf=sys.stdout):
         self.buf = buf
@@ -23,110 +23,131 @@ class Semantics(NodeVisitor):
     
     # Variable declarations ===============================
 
-    def visit_vardecls(self, node):
+    def visit_var_decls(self, node):
         pass
 
-    def visit_vardecl(self, node):
-        #        self.sym.insert(node.name)
+    def visit_decl_var(self, node):
+        # self.sym.insert(node.name)
+        pass
+
+    def visit_decl_array(self, node):
+        pass
+
+    def visit_decl_val(self, node):
+        pass
+
+    def visit_decl_port(self, node):
         pass
 
     # Procedure declarations ==============================
 
-    def visit_procdecls(self, node):
+    def visit_proc_decls(self, node):
         pass
 
-    def visit_procdecl(self, node):
-        return 'procdecl'
+    def visit_decl_proc(self, node):
+        return 'proc'
+    
+    def visit_decl_func(self, node):
+        return 'func'
     
     # Formals =============================================
     
     def visit_formals(self, node):
         pass
 
-    def visit_param(self, node):
+    def visit_param_var(self, node):
+        pass
+
+    def visit_param_alias(self, node):
+        pass
+
+    def visit_param_val(self, node):
+        pass
+
+    def visit_param_port(self, node):
         pass
 
     # Statements ==========================================
 
-    def visit_skip(self, node):
+    def visit_stmt_skip(self, node):
         pass
 
-    def visit_pcall(self, node):
+    def visit_stmt_pcall(self, node):
         return ' '
 
-    def visit_ass(self, node):
+    def visit_stmt_ass(self, node):
         return ' '
 
-    def visit_in(self, node):
+    def visit_stmt_in(self, node):
         return ' '
 
-    def visit_out(self, node):
+    def visit_stmt_out(self, node):
         return ' '
 
-    def visit_if(self, node):
+    def visit_stmt_if(self, node):
         return ' '
 
-    def visit_while(self, node):
+    def visit_stmt_while(self, node):
         return ' '
 
-    def visit_for(self, node):
+    def visit_stmt_for(self, node):
         return ' '
 
-    def visit_on(self, node):
+    def visit_stmt_on(self, node):
         return ' '
 
-    def visit_connect(self, node):
+    def visit_stmt_connect(self, node):
         return ' '
 
-    def visit_aliases(self, node):
+    def visit_stmt_aliases(self, node):
         return ' '
 
-    def visit_return(self, node):
+    def visit_stmt_return(self, node):
         return ' '
 
-    def visit_seq(self, node):
+    def visit_stmt_seq(self, node):
         return ' '
 
-    def visit_par(self, node):
+    def visit_stmt_par(self, node):
         return ' '
 
     # Expressions =========================================
 
-    def visit_exprlist(self, node):
+    def visit_expr_list(self, node):
         return '.'
 
-    def visit_single(self, node):
+    def visit_expr_single(self, node):
         return '.'
 
-    def visit_unary(self, node):
+    def visit_expr_unary(self, node):
         return ' '
 
-    def visit_binop(self, node):
+    def visit_expr_binop(self, node):
         return ' '
     
     # Elements= ===========================================
 
-    def visit_group(self, node):
+    def visit_elem_group(self, node):
         return '.'
 
-    def visit_sub(self, node):
+    def visit_elem_sub(self, node):
         return '.'
 
-    def visit_fcall(self, node):
+    def visit_elem_fcall(self, node):
         return '.'
 
-    def visit_number(self, node):
+    def visit_elem_number(self, node):
         return '.'
 
-    def visit_boolean(self, node):
+    def visit_elem_boolean(self, node):
         return '.'
 
-    def visit_string(self, node):
+    def visit_elem_string(self, node):
         return '.'
 
-    def visit_char(self, node):
+    def visit_elem_char(self, node):
         return '.'
 
-    def visit_id(self, node):
+    def visit_elem_id(self, node):
         return '.'
 

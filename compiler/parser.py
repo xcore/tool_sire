@@ -55,7 +55,7 @@ class Parser(object):
 
     start = 'program'
 
-    # Program declaration ===========================================
+    # Program declaration ======================================
     def p_program(self, p):
         'program : var_decls proc_decls'
         p[0] = ast.Program(p[1], p[2], self.coord(p))
@@ -66,7 +66,7 @@ class Parser(object):
         self.parse_error('Syntax error', p, 1)
         p[0] = None
 
-    # Variable declarations ==================================================
+    # Variable declarations ====================================
     def p_var_decls(self, p):
         '''var_decls : empty
                      | var_decl_seq'''
@@ -86,24 +86,24 @@ class Parser(object):
     # Var declaration
     def p_var_decl_var(self, p):
         'var_decl : type name'
-        p[0] = ast.VarDecl("var", p[1], p[2], None, self.coord(p))
+        p[0] = ast.DeclVar(p[1], p[2], None, self.coord(p))
 
     # Array declaration
     def p_var_decl_array(self, p):
         '''var_decl : type name LBRACKET RBRACKET
                     | type name LBRACKET expr RBRACKET'''
-        p[0] = ast.VarDecl("array", p[1], p[2], p[4] if len(p)==6 else None,
+        p[0] = ast.DeclArray(p[1], p[2], p[4] if len(p)==6 else None,
                 self.coord(p))
 
     # Val declaration
     def p_var_decl_val(self, p):
         'var_decl : VAL name ASS expr'
-        p[0] = ast.VarDecl("val", None, p[2], p[4], self.coord(p))
+        p[0] = ast.DeclVal(p[2], p[4], self.coord(p))
 
     # Port declaration
     def p_var_decl_port(self, p):
         'var_decl : PORT name COLON expr'
-        p[0] = ast.VarDecl("port", None, p[2], p[4], self.coord(p))
+        p[0] = ast.DeclPort(p[2], p[4], self.coord(p))
 
     # Variable types
     def p_type_id(self, p):
@@ -111,7 +111,8 @@ class Parser(object):
                 | CHAN'''
         p[0] = p[1]
 
-    # Procedure declarations =================================================
+    # Procedure declarations ===================================
+
     def p_proc_decls(self, p):
         '''proc_decls : proc_decl_seq
                       | empty'''
@@ -126,12 +127,12 @@ class Parser(object):
     # Process
     def p_proc_decl_proc(self, p):
         'proc_decl : PROC name LPAREN formals RPAREN IS var_decls stmt'
-        p[0] = ast.ProcDecl("proc", p[2], p[4], p[7], p[8], self.coord(p)) 
+        p[0] = ast.DeclProc(p[2], p[4], p[7], p[8], self.coord(p)) 
 
     # Function
     def p_proc_decl_func(self, p):
         'proc_decl : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-        p[0] = ast.ProcDecl("func", p[2], p[4], p[7], p[8], self.coord(p)) 
+        p[0] = ast.DeclFunc(p[2], p[4], p[7], p[8], self.coord(p)) 
 
     # Procedure error
     def p_proc_decl_proc_err(self, p):
@@ -143,7 +144,8 @@ class Parser(object):
         '''proc_decl : FUNC error IS var_decls stmt'''
         self.parse_error('function declaration', p, 2)
 
-    # Formal declarations ====================================================
+    # Formal declarations ======================================
+
     def p_formals(self, p):
         '''formals : empty
                    | formals_seq'''
@@ -158,29 +160,29 @@ class Parser(object):
     # Var parameter
     def p_param_decl_var(self, p):
         'param_decl : name'
-        p[0] = ast.Param("var", p[1], self.coord(p))
+        p[0] = ast.ParamVar(p[1], self.coord(p))
 
     # Array alias parameter
     def p_param_decl_alias(self, p):
         'param_decl : name LBRACKET RBRACKET'
-        p[0] = ast.Param("alias", p[1], self.coord(p))
+        p[0] = ast.ParamAlias(p[1], self.coord(p))
 
     # Val parameter
     def p_param_decl_val(self, p):
         'param_decl : VAL name'
-        p[0] = ast.Param("val", p[2], self.coord(p))
+        p[0] = ast.ParamVal(p[2], self.coord(p))
 
     # Chanend parameter
     def p_param_decl_chanend(self, p):
         'param_decl : CHANEND name'
-        p[0] = ast.Param("chanend", p[2], self.coord(p))
+        p[0] = ast.ParamChanend(p[2], self.coord(p))
 
-    # Statement blocks ====================================
+    # Statement blocks =========================================
     
     # Seq block
     def p_stmt_seq_block(self, p):
         'stmt : START stmt_seq END'
-        p[0] = ast.Seq(p[2], self.coord(p))
+        p[0] = ast.StmtSeq(p[2], self.coord(p))
 
     # Seq
     def p_stmt_seq(self, p):
@@ -191,7 +193,7 @@ class Parser(object):
     # Par block
     def p_stmt_par_block(self, p):
         'stmt : START stmt_par END'
-        p[0] = ast.Par(p[2], self.coord(p))
+        p[0] = ast.StmtPar(p[2], self.coord(p))
 
     # Par
     def p_stmt_par(self, p):
@@ -216,53 +218,54 @@ class Parser(object):
 
     def p_stmt_skip(self, p):
         'stmt : SKIP'
-        p[0] = ast.Skip(self.coord(p))
+        p[0] = ast.StmtSkip(self.coord(p))
 
     def p_stmt_pcall(self, p):
         'stmt : name LPAREN expr_list RPAREN'
-        p[0] = ast.Pcall(p[1], p[3], self.coord(p))
+        p[0] = ast.StmtPcall(p[1], p[3], self.coord(p))
 
     def p_stmt_ass(self, p):
         'stmt : left ASS expr'
-        p[0] = ast.Ass(p[1], p[3], self.coord(p))
+        p[0] = ast.StmtAss(p[1], p[3], self.coord(p))
 
     def p_stmt_in(self, p):
         'stmt : left IN expr'
-        p[0] = ast.In(p[1], p[3], self.coord(p))
+        p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
 
     def p_stmt_out(self, p):
         'stmt : left OUT expr'
-        p[0] = ast.Out(p[1], p[3], self.coord(p))
+        p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
 
     def p_stmt_if(self, p):
         'stmt : IF expr THEN stmt ELSE stmt'
-        p[0] = ast.If(p[2], p[4], p[6], self.coord(p))
+        p[0] = ast.StmtIf(p[2], p[4], p[6], self.coord(p))
 
     def p_stmt_while(self, p):
         'stmt : WHILE expr DO stmt'
-        p[0] = ast.While(p[2], p[4], self.coord(p))
+        p[0] = ast.StmtWhile(p[2], p[4], self.coord(p))
 
     def p_stmt_for(self, p):
         'stmt : FOR left ASS expr TO expr DO stmt'
-        p[0] = ast.For(p[2], p[4], p[6], p[8])
+        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8])
 
     def p_stmt_on(self, p):
         'stmt : ON left COLON name LPAREN expr_list RPAREN'
-        p[0] = ast.On(p[2], ast.Pcall(p[4], p[6], self.coord(p)), self.coord(p))
+        p[0] = ast.StmtOn(p[2], ast.Pcall(p[4], p[6], self.coord(p)), self.coord(p))
 
     def p_stmt_connect(self, p):
         'stmt : CONNECT left TO left COLON left'
-        p[0] = ast.Connect(p[2], p[4], p[6], self.coord(p))
+        p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
 
     def p_stmt_aliases(self, p):
         'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
-        p[0] = ast.Aliases(p[1], p[3], p[5], self.coord(p))
+        p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
 
     def p_stmt_return(self, p):
         'stmt : RETURN expr'
-        p[0] = ast.Return(p[2], self.coord(p))
+        p[0] = ast.StmtReturn(p[2], self.coord(p))
 
-    # Expressions ============================================================
+    # Expressions ==============================================
+
     def p_expr_list(self, p):
         '''expr_list : empty
                      | expr_seq'''
@@ -275,12 +278,12 @@ class Parser(object):
 
     def p_expr_sinle(self, p):
         'expr : elem' 
-        p[0] = ast.Single(p[1])
+        p[0] = ast.ExprSingle(p[1])
 
     def p_expr_unary(self, p):
         '''expr : MINUS elem %prec UMINUS
                 | NOT elem %prec UNOT'''
-        p[0] = ast.Unary(p[1], p[2] if len(p)>2 else None, self.coord(p))
+        p[0] = ast.ExprUnary(p[1], p[2] if len(p)>2 else None, self.coord(p))
 
     def p_expr_binary_arithmetic(self, p):
         '''expr : elem PLUS right
@@ -293,7 +296,7 @@ class Parser(object):
                 | elem XOR right
                 | elem LSHIFT right
                 | elem RSHIFT right'''
-        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
+        p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
     def p_expr_binary_relational(self, p):
         '''expr : elem LT right
@@ -302,11 +305,11 @@ class Parser(object):
                 | elem GE right
                 | elem EQ right
                 | elem NE right'''
-        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
+        p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
     def p_right_sinle(self, p):
         'right : elem'
-        p[0] = ast.Single(p[1])
+        p[0] = ast.ExprSingle(p[1])
 
     def p_right(self, p):
         '''right : elem AND right
@@ -314,9 +317,9 @@ class Parser(object):
                  | elem XOR right
                  | elem PLUS right
                  | elem MULT right'''
-        p[0] = ast.Binop(p[2], p[1], p[3], self.coord(p))
+        p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
-    # Elements ===============================================================
+    # Elements =================================================
     
     def p_left_name(self, p):
         'left : name'
@@ -324,11 +327,11 @@ class Parser(object):
      
     def p_left_sub(self, p):
         'left : name LBRACKET expr RBRACKET'
-        p[0] = ast.Sub(p[1], p[3], self.coord(p))
+        p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
 
     def p_elem_group(self, p):
         'elem : LPAREN expr RPAREN'
-        p[0] = ast.Group(p[2], self.coord(p))
+        p[0] = ast.ElemGroup(p[2], self.coord(p))
 
     def p_elem_name(self, p):
         'elem : name'
@@ -336,37 +339,37 @@ class Parser(object):
 
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'
-        p[0] = ast.Sub(p[1], p[3], self.coord(p))
+        p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
 
     def p_elem_fcall(self, p):
         'elem : name LPAREN expr_list RPAREN'
-        p[0] = ast.Fcall(p[1], p[3], self.coord(p))
+        p[0] = ast.ElemFcall(p[1], p[3], self.coord(p))
 
     def p_elem_number(self, p):
         '''elem : HEXLITERAL
                 | DECLITERAL
                 | BINLITERAL'''
-        p[0] = ast.Number(p[1], self.coord(p))
+        p[0] = ast.ElemNumber(p[1], self.coord(p))
 
     def p_elem_boolean_true(self, p):
         'elem : TRUE'
-        p[0] = ast.Boolean(p[1], self.coord(p))
+        p[0] = ast.ElemBoolean(p[1], self.coord(p))
 
     def p_elem_boolean_false(self, p):
         'elem : FALSE'
-        p[0] = ast.Boolean(p[1], self.coord(p))
+        p[0] = ast.ElemBoolean(p[1], self.coord(p))
 
     def p_elem_string(self, p):
         'elem : STRING'
-        p[0] = ast.String(p[1], self.coord(p))
+        p[0] = ast.ElemString(p[1], self.coord(p))
 
     def p_elem_char(self, p):
         'elem : CHAR'
-        p[0] = ast.Char(p[1], self.coord(p))
+        p[0] = ast.ElemChar(p[1], self.coord(p))
 
     def p_name(self, p):
         'name : ID'
-        p[0] = ast.Id(p[1], self.coord(p)) 
+        p[0] = ast.ElemId(p[1], self.coord(p)) 
 
     # Empty rule
     def p_empty(self, p):

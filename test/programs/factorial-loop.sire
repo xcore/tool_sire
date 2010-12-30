@@ -1,0 +1,17 @@
+% Calculate the factorial of a value
+
+func factorial(val x) is
+    var ans;
+    var y;
+{ ans := 1
+; y := 1
+; while y <= x do
+  { ans := ans * y
+  ; y := y + 1
+  }
+  return ans
+}
+
+proc main() is
+  factorial(5)
+

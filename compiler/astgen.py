@@ -1,3 +1,5 @@
+#!/usr/bin/env python3.1
+
 #-----------------------------------------------------------------
 # Generate ast module from a specification
 #
@@ -6,6 +8,7 @@
 #-----------------------------------------------------------------
 
 from string import Template
+import util
 
 class ASTGenerator(object):
     def __init__(self, cfg_filename='ast.cfg'):
@@ -74,6 +77,7 @@ class NodeCfg(object):
         src = self.gen_init()
         src += '\n' + self.gen_children()
         src += '\n' + self.gen_accept()
+        src += '\n' + self.gen_repr()
         return src
     
     def gen_init(self):
@@ -115,8 +119,9 @@ class NodeCfg(object):
         return src
 
     def gen_accept(self):
-        src = '    def accept(self, visitor):\n'
-        src += '        tag = visitor.visit_%s(self)\n' % (self.name.lower())
+        src =  '    def accept(self, visitor):\n'
+        src += '        tag = visitor.visit_{}(self)\n'.format(
+                (util.camel_to_under(self.name)))
         src += '        visitor.down(tag)\n'
         if self.all_entries:
             src += "        for c in self.children():\n"
@@ -124,6 +129,17 @@ class NodeCfg(object):
         src += '        visitor.up(tag)\n'
         return src
 
+    def gen_repr(self):
+        src =  '    def __repr__(self):\n'
+        src += "        s =  '{}('".format(self.name)+'\n'
+        if self.attr:
+            src += "        s += ', '.join('%s' % v for v in ["
+            src += ', '.join('self.%s' % v for v in self.attr)
+            src += "])\n"
+        src += "        s += ')'\n"
+        #src += "        s += ' at {}'.format(self.coord)\n"
+        src += '        return s'
+        return src
 
 _PROLOGUE_COMMENT = \
 r'''#-----------------------------------------------------------------

@@ -9,126 +9,147 @@ class Dump(NodeVisitor):
         self.buf = buf
         self.depth = 0
 
-    def down(self):
+    def down(self, tag):
         self.depth += 1
 
-    def up(self):
+    def up(self, tag):
         self.depth -= 1
 
-    def out(self, s):
+    def out(self, node):
         lead = '  ' * self.depth
-        self.buf.write(lead + s + '\n')
+        self.buf.write(lead + repr(node) + '\n')
 
     # Program ============================================
 
     def visit_program(self, node):
-        self.out('program')
-    
+        self.out(node)
+
     # Variable declarations ===============================
 
-    def visit_vardecls(self, node):
-        pass
+    def visit_var_decls(self, node):
+        self.out(node)
 
-    def visit_vardecl(self, node):
-        self.out('vardecl')
+    def visit_decl_var(self, node):
+        self.out(node)
+
+    def visit_decl_array(self, node):
+        self.out(node)
+
+    def visit_decl_val(self, node):
+        self.out(node)
+
+    def visit_decl_port(self, node):
+        self.out(node)
 
     # Procedure declarations ==============================
 
-    def visit_procdecls(self, node):
-        pass
+    def visit_proc_decls(self, node):
+        self.out(node)
             
-    def visit_procdecl(self, node):
-        self.out("procdecl")
+    def visit_decl_proc(self, node):
+        self.out(node)
+    
+    def visit_decl_func(self, node):
+        self.out(node)
     
     # Formals =============================================
     
     def visit_formals(self, node):
-        pass
+        self.out(node)
         
-    def visit_param(self, node):
-        self.out('param')
+    def visit_param_var(self, node):
+        self.out(node)
+
+    def visit_param_alias(self, node):
+        self.out(node)
+
+    def visit_param_val(self, node):
+        self.out(node)
+
+    def visit_param_chanend(self, node):
+        self.out(node)
 
     # Statements ==========================================
 
-    def visit_skip(self, node):
-        self.out('skip')
+    def visit_stmt_seq(self, node):
+        self.out(node)
 
-    def visit_pcall(self, node):
-        self.out('pcall')
+    def visit_stmt_par(self, node):
+        self.out(node)
 
-    def visit_ass(self, node):
-        self.out('ass')
+    def visit_stmt_skip(self, node):
+        self.out(node)
 
-    def visit_in(self, node):
-        self.out('in')
+    def visit_stmt_pcall(self, node):
+        self.out(node)
 
-    def visit_out(self, node):
-        self.out('out')
+    def visit_stmt_ass(self, node):
+        self.out(node)
 
-    def visit_if(self, node):
-        self.out('if')
+    def visit_stmt_in(self, node):
+        self.out(node)
 
-    def visit_while(self, node):
-        self.out('while')
+    def visit_stmt_out(self, node):
+        self.out(node)
 
-    def visit_for(self, node):
-        self.out('for')
+    def visit_stmt_if(self, node):
+        self.out(node)
 
-    def visit_on(self, node):
-        self.out('on')
+    def visit_stmt_while(self, node):
+        self.out(node)
 
-    def visit_connect(self, node):
-        self.out('connect')
+    def visit_stmt_for(self, node):
+        self.out(node)
 
-    def visit_aliases(self, node):
-        self.out('aliases')
+    def visit_stmt_on(self, node):
+        self.out(node)
 
-    def visit_return(self, node):
-        self.out('return')
+    def visit_stmt_connect(self, node):
+        self.out(node)
 
-    def visit_seq(self, node):
-        self.out('seq')
+    def visit_stmt_aliases(self, node):
+        self.out(node)
 
-    def visit_par(self, node):
-        self.out('par')
+    def visit_stmt_return(self, node):
+        self.out(node)
 
     # Expressions =========================================
 
-    def visit_exprlist(self, node):
-        pass
+    def visit_expr_list(self, node):
+        self.out(node)
 
-    def visit_single(self, node):
-        self.out('expr')
+    def visit_expr_single(self, node):
+        self.out(node)
 
-    def visit_unary(self, node):
-        self.out('expr')
+    def visit_expr_unary(self, node):
+        self.out(node)
 
-    def visit_binop(self, node):
-        self.out('expr')
+    def visit_expr_binop(self, node):
+        self.out(node)
     
     # Elements= ===========================================
 
-    def visit_group(self, node):
-        self.out('elem')
+    def visit_elem_group(self, node):
+        self.out(node)
 
-    def visit_sub(self, node):
-        self.out('elem')
+    def visit_elem_sub(self, node):
+        self.out(node)
 
-    def visit_fcall(self, node):
-        self.out('elem')
+    def visit_elem_fcall(self, node):
+        self.out(node)
 
-    def visit_number(self, node):
-        self.out('elem')
+    def visit_elem_number(self, node):
+        self.out(node)
 
-    def visit_boolean(self, node):
-        self.out('elem')
+    def visit_elem_boolean(self, node):
+        self.out(node)
 
-    def visit_string(self, node):
-        self.out('elem')
+    def visit_elem_string(self, node):
+        self.out(node)
 
-    def visit_char(self, node):
-        self.out('elem')
+    def visit_elem_char(self, node):
+        self.out(node)
 
-    def visit_id(self, node):
-        self.out('elem')
+    def visit_elem_id(self, node):
+        self.out(node)
 

@@ -1,40 +1,42 @@
 import ast
+import util
 
 class NodeWalker(object):
     
-    def __init__(self):
-        self.vardecl_type = {
-            'var'     : self.vardecl_var,
-            'array'   : self.vardecl_array,
-            'val'     : self.vardecl_val,
-            'port'    : self.vardecl_port
-        }
-
-        self.param_type = {
-            'var'     : self.param_var,
-            'alias'   : self.param_alias,
-            'val'     : self.param_val,
-            'chanend' : self.param_chanend
-        }
-
-    # Define function lookups for each variable declaration form
-    def vardecl_var  (self, node): pass
-    def vardecl_array(self, node): pass
-    def vardecl_val  (self, node): pass
-    def vardecl_port (self, node): pass
+    def vardecl(self, node, d):
+        'self.{}'.format(util.camel_to_under(node.__class__.__name__))(node, d)
     
-    vardecl = lambda self, node: self.vardecl_type[node.form](node)
-
-    # Define function lookups for each parameter form
-    def param_var    (self, node): pass
-    def param_alias  (self, node): pass
-    def param_val    (self, node): pass
-    def param_chanend(self, node): pass
-
-    param = lambda self, node: self.param_type[node.type](node)
-
-    # This should be implemented as double dispatch
+    def param(self, node):
+        'self.{}'.format(util.camel_to_under(node.__class__.__name__))(node)
+    
     def stmt(self, node, d):
+        'self.{}'.format(util.camel_to_under(node.__class__.__name__))(node, d)
+    
+    def expr(self, node):
+        'self.{}'.format(util.camel_to_under(node.__class__.__name__))(node)
+
+    def elem(self, node):
+        'self.{}'.format(util.camel_to_under(node.__class__.__name__))(node)
+
+
+
+    def vardecl_(self, node, d):
+        if   isinstance(node, ast.VarDecl):   return self.decl_var(node, d)
+        elif isinstance(node, ast.ArrayDecl): return self.decl_array(node, d)
+        elif isinstance(node, ast.ValDecl):   return self.decl_val(node, d)
+        elif isinstance(node, ast.PortDecl):  return self.decl_port(node, d)
+        else:
+            raise Exception('Invalid variable declaration')
+
+    def param_(self, node):
+        if   isinstance(node, ast.VarParam):     return self.param_var(node, d)
+        elif isinstance(node, ast.AliasParam):   return self.param_alias(node, d)
+        elif isinstance(node, ast.ValParam):     return self.param_val(node, d)
+        elif isinstance(node, ast.ChanendParam): return self.param_chanend(node, d)
+        else:
+            raise Exception('Invalid parameter')
+
+    def stmt_(self, node, d):
         if   isinstance(node, ast.Seq):     return self.stmt_seq(node, d)
         elif isinstance(node, ast.Par):     return self.stmt_par(node, d)
         elif isinstance(node, ast.Skip):    return self.stmt_skip(node, d)
@@ -52,14 +54,14 @@ class NodeWalker(object):
         else:
             raise Exception('Invalid statement')
 
-    def expr(self, node):
+    def expr_(self, node):
         if   isinstance(node, ast.Single): return self.expr_single(node)
         elif isinstance(node, ast.Unary):  return self.expr_unary(node)
         elif isinstance(node, ast.Binop):  return self.expr_binop(node)
         else:
             raise Exception('Invalid expression %s' % node)
 
-    def elem(self, node):
+    def elem_(self, node):
         if   isinstance(node, ast.Group):   return self.elem_group(node)
         elif isinstance(node, ast.Sub):     return self.elem_sub(node)
         elif isinstance(node, ast.Fcall):   return self.elem_fcall(node)

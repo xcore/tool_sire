@@ -37,18 +37,18 @@ class Printer(NodeWalker):
                     [self.vardecl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def vardecl_var(self, node):
+    def decl_var(self, node):
         return '{} {}'.format(node.type, self.elem(node.name))
     
-    def vardecl_array(self, node):
+    def decl_array(self, node):
         return '{} {}[{}]'.format(node.type, self.elem(node.name), 
                     self.expr(node.expr) if node.expr else '')
     
-    def vardecl_val(self, node):
+    def decl_val(self, node):
         return 'val {} := {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
     
-    def vardecl_port(self, node):
+    def decl_port(self, node):
         return 'port {} : {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
 
@@ -58,9 +58,16 @@ class Printer(NodeWalker):
         for p in node.children():
             self.procdecl(p, d)
 
-    def procdecl(self, node, d):
-        self.buf.write('{} {}({}) is\n'.format(
-                node.type, self.elem(node.name), self.formals(node.formals)))
+    def decl_proc(self, node, d):
+        self.buf.write('proc {}({}) is\n'.format(
+                self.elem(node.name), self.formals(node.formals)))
+        self.vardecls(node.vardecls, d+1)
+        self.stmt(node.stmt, d+1)
+        self.buf.write('\n\n')
+    
+    def decl_func(self, node, d):
+        self.buf.write('proc {}({}) is\n'.format(
+                self.elem(node.name), self.formals(node.formals)))
         self.vardecls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')

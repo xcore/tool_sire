@@ -47,6 +47,10 @@ class Program(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'Program('
+        s += ')'
+        return s
 
 class VarDecls(Node):
     def __init__(self, decl, coord=None):
@@ -59,16 +63,19 @@ class VarDecls(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_vardecls(self)
+        tag = visitor.visit_var_decls(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'VarDecls('
+        s += ')'
+        return s
 
-class VarDecl(Node):
-    def __init__(self, form, type, name, expr, coord=None):
-        self.form = form
+class DeclVar(Node):
+    def __init__(self, type, name, expr, coord=None):
         self.type = type
         self.name = name
         self.expr = expr
@@ -81,12 +88,91 @@ class VarDecl(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_vardecl(self)
+        tag = visitor.visit_decl_var(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'DeclVar('
+        s += ', '.join('%s' % v for v in [self.type])
+        s += ')'
+        return s
+
+class DeclArray(Node):
+    def __init__(self, type, name, expr, coord=None):
+        self.type = type
+        self.name = name
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.name is not None: c.append(self.name)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_decl_array(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'DeclArray('
+        s += ', '.join('%s' % v for v in [self.type])
+        s += ')'
+        return s
+
+class DeclVal(Node):
+    def __init__(self, name, expr, coord=None):
+        self.name = name
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.name is not None: c.append(self.name)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_decl_val(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'DeclVal('
+        s += ')'
+        return s
+
+class DeclPort(Node):
+    def __init__(self, name, expr, coord=None):
+        self.name = name
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.name is not None: c.append(self.name)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_decl_port(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'DeclPort('
+        s += ')'
+        return s
 
 class ProcDecls(Node):
     def __init__(self, decl, coord=None):
@@ -99,16 +185,19 @@ class ProcDecls(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_procdecls(self)
+        tag = visitor.visit_proc_decls(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ProcDecls('
+        s += ')'
+        return s
 
-class ProcDecl(Node):
-    def __init__(self, type, name, formals, vardecls, stmt, coord=None):
-        self.type = type
+class DeclProc(Node):
+    def __init__(self, name, formals, vardecls, stmt, coord=None):
         self.name = name
         self.formals = formals
         self.vardecls = vardecls
@@ -124,12 +213,44 @@ class ProcDecl(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_procdecl(self)
+        tag = visitor.visit_decl_proc(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'DeclProc('
+        s += ')'
+        return s
+
+class DeclFunc(Node):
+    def __init__(self, name, formals, vardecls, stmt, coord=None):
+        self.name = name
+        self.formals = formals
+        self.vardecls = vardecls
+        self.stmt = stmt
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.name is not None: c.append(self.name)
+        if self.formals is not None: c.append(self.formals)
+        if self.vardecls is not None: c.append(self.vardecls)
+        if self.stmt is not None: c.append(self.stmt)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_decl_func(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'DeclFunc('
+        s += ')'
+        return s
 
 class Formals(Node):
     def __init__(self, params, coord=None):
@@ -148,10 +269,13 @@ class Formals(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'Formals('
+        s += ')'
+        return s
 
-class Param(Node):
-    def __init__(self, type, name, coord=None):
-        self.type = type
+class ParamVar(Node):
+    def __init__(self, name, coord=None):
         self.name = name
         self.coord = coord
 
@@ -160,14 +284,85 @@ class Param(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_param(self)
+        tag = visitor.visit_param_var(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ParamVar('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
 
-class Seq(Node):
+class ParamAlias(Node):
+    def __init__(self, name, coord=None):
+        self.name = name
+        self.coord = coord
+
+    def children(self):
+        c = []
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_param_alias(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ParamAlias('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class ParamVal(Node):
+    def __init__(self, name, coord=None):
+        self.name = name
+        self.coord = coord
+
+    def children(self):
+        c = []
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_param_val(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ParamVal('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class ParamChanend(Node):
+    def __init__(self, name, coord=None):
+        self.name = name
+        self.coord = coord
+
+    def children(self):
+        c = []
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_param_chanend(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ParamChanend('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class StmtSeq(Node):
     def __init__(self, stmt, coord=None):
         self.stmt = stmt
         self.coord = coord
@@ -178,14 +373,18 @@ class Seq(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_seq(self)
+        tag = visitor.visit_stmt_seq(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtSeq('
+        s += ')'
+        return s
 
-class Par(Node):
+class StmtPar(Node):
     def __init__(self, stmt, coord=None):
         self.stmt = stmt
         self.coord = coord
@@ -196,14 +395,18 @@ class Par(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_par(self)
+        tag = visitor.visit_stmt_par(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtPar('
+        s += ')'
+        return s
 
-class Skip(Node):
+class StmtSkip(Node):
     def __init__(self, coord=None):
         self.coord = coord
 
@@ -211,12 +414,16 @@ class Skip(Node):
         return ()
 
     def accept(self, visitor):
-        tag = visitor.visit_skip(self)
+        tag = visitor.visit_stmt_skip(self)
         visitor.down(tag)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtSkip('
+        s += ')'
+        return s
 
-class Pcall(Node):
+class StmtPcall(Node):
     def __init__(self, name, args, coord=None):
         self.name = name
         self.args = args
@@ -229,14 +436,18 @@ class Pcall(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_pcall(self)
+        tag = visitor.visit_stmt_pcall(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtPcall('
+        s += ')'
+        return s
 
-class Ass(Node):
+class StmtAss(Node):
     def __init__(self, left, expr, coord=None):
         self.left = left
         self.expr = expr
@@ -249,14 +460,18 @@ class Ass(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_ass(self)
+        tag = visitor.visit_stmt_ass(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtAss('
+        s += ')'
+        return s
 
-class In(Node):
+class StmtIn(Node):
     def __init__(self, left, expr, coord=None):
         self.left = left
         self.expr = expr
@@ -269,14 +484,18 @@ class In(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_in(self)
+        tag = visitor.visit_stmt_in(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtIn('
+        s += ')'
+        return s
 
-class Out(Node):
+class StmtOut(Node):
     def __init__(self, left, expr, coord=None):
         self.left = left
         self.expr = expr
@@ -289,14 +508,18 @@ class Out(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_out(self)
+        tag = visitor.visit_stmt_out(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtOut('
+        s += ')'
+        return s
 
-class If(Node):
+class StmtIf(Node):
     def __init__(self, cond, thenstmt, elsestmt, coord=None):
         self.cond = cond
         self.thenstmt = thenstmt
@@ -311,14 +534,18 @@ class If(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_if(self)
+        tag = visitor.visit_stmt_if(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtIf('
+        s += ')'
+        return s
 
-class While(Node):
+class StmtWhile(Node):
     def __init__(self, cond, stmt, coord=None):
         self.cond = cond
         self.stmt = stmt
@@ -331,14 +558,18 @@ class While(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_while(self)
+        tag = visitor.visit_stmt_while(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtWhile('
+        s += ')'
+        return s
 
-class For(Node):
+class StmtFor(Node):
     def __init__(self, var, init, bound, stmt, coord=None):
         self.var = var
         self.init = init
@@ -355,14 +586,18 @@ class For(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_for(self)
+        tag = visitor.visit_stmt_for(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtFor('
+        s += ')'
+        return s
 
-class On(Node):
+class StmtOn(Node):
     def __init__(self, core, pcall, coord=None):
         self.core = core
         self.pcall = pcall
@@ -375,14 +610,18 @@ class On(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_on(self)
+        tag = visitor.visit_stmt_on(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtOn('
+        s += ')'
+        return s
 
-class Connect(Node):
+class StmtConnect(Node):
     def __init__(self, left, core, dest, coord=None):
         self.left = left
         self.core = core
@@ -397,14 +636,18 @@ class Connect(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_connect(self)
+        tag = visitor.visit_stmt_connect(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtConnect('
+        s += ')'
+        return s
 
-class Aliases(Node):
+class StmtAliases(Node):
     def __init__(self, left, name, expr, coord=None):
         self.left = left
         self.name = name
@@ -419,14 +662,18 @@ class Aliases(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_aliases(self)
+        tag = visitor.visit_stmt_aliases(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtAliases('
+        s += ')'
+        return s
 
-class Return(Node):
+class StmtReturn(Node):
     def __init__(self, expr, coord=None):
         self.expr = expr
         self.coord = coord
@@ -437,12 +684,16 @@ class Return(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_return(self)
+        tag = visitor.visit_stmt_return(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'StmtReturn('
+        s += ')'
+        return s
 
 class ExprList(Node):
     def __init__(self, expr, coord=None):
@@ -455,14 +706,18 @@ class ExprList(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_exprlist(self)
+        tag = visitor.visit_expr_list(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ExprList('
+        s += ')'
+        return s
 
-class Single(Node):
+class ExprSingle(Node):
     def __init__(self, elem, coord=None):
         self.elem = elem
         self.coord = coord
@@ -473,14 +728,18 @@ class Single(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_single(self)
+        tag = visitor.visit_expr_single(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ExprSingle('
+        s += ')'
+        return s
 
-class Unary(Node):
+class ExprUnary(Node):
     def __init__(self, op, elem, coord=None):
         self.op = op
         self.elem = elem
@@ -492,14 +751,19 @@ class Unary(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_unary(self)
+        tag = visitor.visit_expr_unary(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ExprUnary('
+        s += ', '.join('%s' % v for v in [self.op])
+        s += ')'
+        return s
 
-class Binop(Node):
+class ExprBinop(Node):
     def __init__(self, op, elem, right, coord=None):
         self.op = op
         self.elem = elem
@@ -513,14 +777,19 @@ class Binop(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_binop(self)
+        tag = visitor.visit_expr_binop(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ExprBinop('
+        s += ', '.join('%s' % v for v in [self.op])
+        s += ')'
+        return s
 
-class Group(Node):
+class ElemGroup(Node):
     def __init__(self, expr, coord=None):
         self.expr = expr
         self.coord = coord
@@ -531,14 +800,18 @@ class Group(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_group(self)
+        tag = visitor.visit_elem_group(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemGroup('
+        s += ')'
+        return s
 
-class Sub(Node):
+class ElemSub(Node):
     def __init__(self, name, expr, coord=None):
         self.name = name
         self.expr = expr
@@ -551,14 +824,18 @@ class Sub(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_sub(self)
+        tag = visitor.visit_elem_sub(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemSub('
+        s += ')'
+        return s
 
-class Fcall(Node):
+class ElemFcall(Node):
     def __init__(self, name, args, coord=None):
         self.name = name
         self.args = args
@@ -571,14 +848,18 @@ class Fcall(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_fcall(self)
+        tag = visitor.visit_elem_fcall(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemFcall('
+        s += ')'
+        return s
 
-class Number(Node):
+class ElemNumber(Node):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -588,14 +869,19 @@ class Number(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_number(self)
+        tag = visitor.visit_elem_number(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemNumber('
+        s += ', '.join('%s' % v for v in [self.value])
+        s += ')'
+        return s
 
-class Boolean(Node):
+class ElemBoolean(Node):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -605,14 +891,19 @@ class Boolean(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_boolean(self)
+        tag = visitor.visit_elem_boolean(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemBoolean('
+        s += ', '.join('%s' % v for v in [self.value])
+        s += ')'
+        return s
 
-class String(Node):
+class ElemString(Node):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -622,14 +913,19 @@ class String(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_string(self)
+        tag = visitor.visit_elem_string(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemString('
+        s += ', '.join('%s' % v for v in [self.value])
+        s += ')'
+        return s
 
-class Char(Node):
+class ElemChar(Node):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -639,14 +935,19 @@ class Char(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_char(self)
+        tag = visitor.visit_elem_char(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemChar('
+        s += ', '.join('%s' % v for v in [self.value])
+        s += ')'
+        return s
 
-class Id(Node):
+class ElemId(Node):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -656,10 +957,15 @@ class Id(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_id(self)
+        tag = visitor.visit_elem_id(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
+    def __repr__(self):
+        s =  'ElemId('
+        s += ', '.join('%s' % v for v in [self.value])
+        s += ')'
+        return s
 
