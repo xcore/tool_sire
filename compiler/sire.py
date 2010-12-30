@@ -8,8 +8,8 @@ import argparse
 from ply import *
 from parser import Parser
 import semantics
-#import printer
-#import translate
+import printer
+import translate
 import dump
 import logging
 
@@ -80,24 +80,21 @@ def main(args):
     input = read_input(a.infile) 
     program = parse(input, a.infile)
     semantic_analysis(program)
-    #return
 
-    #if a.sem_only:
-    #    return
+    if a.sem_only: return
 
-    #if a.show_ast:    
-    show_ast(program)
-    #    return
+    if a.show_ast:    
+        show_ast(program)
+        return
 
     if a.pprint: 
         pprint_ast(program)
         return
 
     try:
-        #        file = open('out.xc', 'w')
-#        translate_ast(program, file)
-      #  file.close()
-      pass
+        file = open('out.xc', 'w')
+        #translate_ast(program, file)
+        file.close()
     except IOError as err:
         print('I/O error({}): {}'.format(err.errno, err.stderror))
     except:

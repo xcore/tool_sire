@@ -1,14 +1,15 @@
 import sys
 import symbol
+import signature
 from ast import NodeVisitor
 
 class Semantics(NodeVisitor):
-    """ An AST visitor to check the semantics of sire
-    """
+    """ An AST visitor class to check the semantics of a sire program """
     def __init__(self, buf=sys.stdout):
         self.buf = buf
         self.depth = 0
         self.sym = symbol.Symbol()
+        self.sig = signature.Signature()
 
     def down(self, tag):
         if tag: self.sym.begin_scope(tag)
@@ -27,17 +28,16 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_decl_var(self, node):
-        # self.sym.insert(node.name)
-        pass
+        self.sym.insert("var", node.name)
 
     def visit_decl_array(self, node):
-        pass
+        self.sym.insert("array", node.name)
 
     def visit_decl_val(self, node):
-        pass
+        self.sym.insert("val", node.name)
 
     def visit_decl_port(self, node):
-        pass
+        self.sym.insert("port", node.name)
 
     # Procedure declarations ==============================
 
@@ -45,9 +45,11 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_decl_proc(self, node):
+        self.sig.insert("proc", node)
         return 'proc'
     
     def visit_decl_func(self, node):
+        self.sig.insert("func", node)
         return 'func'
     
     # Formals =============================================
@@ -56,16 +58,16 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_param_var(self, node):
-        pass
+        self.sym.insert("var", node.name)
 
     def visit_param_alias(self, node):
-        pass
+        self.sym.insert("array", node.name)
 
     def visit_param_val(self, node):
-        pass
+        self.sym.insert("val", node.name)
 
-    def visit_param_port(self, node):
-        pass
+    def visit_param_chanend(self, node):
+        self.sym.insert("chanend", node.name)
 
     # Statements ==========================================
 
@@ -73,81 +75,81 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_stmt_pcall(self, node):
-        return ' '
+        self.sig.check_def('proc', node)
 
     def visit_stmt_ass(self, node):
-        return ' '
+        self.sym.check_type(node.left, ('var'))
 
     def visit_stmt_in(self, node):
-        return ' '
+        self.sym.check_type(node.left, ('chanend', 'port'))
 
     def visit_stmt_out(self, node):
-        return ' '
+        self.sym.check_type(node.left, ('chanend', 'port'))
 
     def visit_stmt_if(self, node):
-        return ' '
+        pass
 
     def visit_stmt_while(self, node):
-        return ' '
+        pass
 
     def visit_stmt_for(self, node):
-        return ' '
+        pass
 
     def visit_stmt_on(self, node):
-        return ' '
+        self.sym.check_type(node.core, ('core'))
 
     def visit_stmt_connect(self, node):
-        return ' '
+        self.sym.check_type(node.core, ('core'))
 
     def visit_stmt_aliases(self, node):
-        return ' '
+        self.sym.check_type(node.name, ('alias'))
 
     def visit_stmt_return(self, node):
-        return ' '
+        pass
 
     def visit_stmt_seq(self, node):
-        return ' '
+        pass
 
     def visit_stmt_par(self, node):
-        return ' '
+        pass
 
     # Expressions =========================================
 
     def visit_expr_list(self, node):
-        return '.'
+        pass
 
     def visit_expr_single(self, node):
-        return '.'
+        pass
 
     def visit_expr_unary(self, node):
-        return ' '
+        pass
 
     def visit_expr_binop(self, node):
-        return ' '
+        pass
     
     # Elements= ===========================================
 
     def visit_elem_group(self, node):
-        return '.'
+        pass
 
     def visit_elem_sub(self, node):
-        return '.'
+        self.sym.check_def(node.name)
 
     def visit_elem_fcall(self, node):
-        return '.'
+        self.sig.check_def("func", node)
 
     def visit_elem_number(self, node):
-        return '.'
+        pass
 
     def visit_elem_boolean(self, node):
-        return '.'
+        pass
 
     def visit_elem_string(self, node):
-        return '.'
+        pass
 
     def visit_elem_char(self, node):
-        return '.'
+        pass
 
     def visit_elem_id(self, node):
-        return '.'
+        self.sym.check_def(node.value)
 

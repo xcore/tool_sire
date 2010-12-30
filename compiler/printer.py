@@ -25,13 +25,13 @@ class Printer(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        self.vardecls(node.vardecls, 0)
+        self.var_decls(node.vardecls, 0)
         self.buf.write('\n')
-        self.procdecls(node.procdecls, 0)
+        self.proc_decls(node.procdecls, 0)
     
     # Variable declarations ===============================
 
-    def vardecls(self, node, d):
+    def var_decls(self, node, d):
         self.buf.write((self.indt(d) if len(node.children())>0 else '') 
                 +(';\n'+self.indt(d)).join(
                     [self.vardecl(x) for x in node.children()]))
@@ -54,21 +54,21 @@ class Printer(NodeWalker):
 
     # Procedure declarations ==============================
 
-    def procdecls(self, node, d):
+    def proc_decls(self, node, d):
         for p in node.children():
             self.procdecl(p, d)
 
     def decl_proc(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
                 self.elem(node.name), self.formals(node.formals)))
-        self.vardecls(node.vardecls, d+1)
+        self.var_decls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
     def decl_func(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
                 self.elem(node.name), self.formals(node.formals)))
-        self.vardecls(node.vardecls, d+1)
+        self.var_decls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
@@ -114,7 +114,7 @@ class Printer(NodeWalker):
 
     def stmt_pcall(self, node, d):
         self.out(d, '{}({})'.format(
-            self.elem(node.name), self.exprlist(node.args)))
+            self.elem(node.name), self.expr_list(node.args)))
 
     def stmt_ass(self, node, d):
         self.out(d, '{} := {}'.format(
@@ -168,7 +168,7 @@ class Printer(NodeWalker):
 
     # Expressions =========================================
 
-    def exprlist(self, node):
+    def expr_list(self, node):
         return ', '.join([self.expr(x) for x in node.children()])
     
     def expr_single(self, node):

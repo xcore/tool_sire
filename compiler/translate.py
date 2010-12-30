@@ -6,10 +6,11 @@ INDENT = 2
 SEQ_INDENT = ';' + ' '*(INDENT-1)
 PAR_INDENT = '|' + ' '*(INDENT-1) 
 
-class Translate(NodeWalker):
-    """ A walker class to translate the AST into XC
+class Printer(NodeWalker):
+    """ A walker class to pretty-print the AST in the langauge syntax 
     """
     def __init__(self, buf=sys.stdout):
+        super(Printer, self).__init__()
         self.buf = buf
         self.indent = [' '*INDENT]
 
@@ -24,43 +25,50 @@ class Translate(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        self.vardecls(node.vardecls, 0)
+        self.var_decls(node.vardecls, 0)
         self.buf.write('\n')
-        self.procdecls(node.procdecls, 0)
+        self.proc_decls(node.procdecls, 0)
     
     # Variable declarations ===============================
 
-    def vardecls(self, node, d):
+    def var_decls(self, node, d):
         self.buf.write((self.indt(d) if len(node.children())>0 else '') 
                 +(';\n'+self.indt(d)).join(
                     [self.vardecl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def vardecl(self, node):
-        if node.form == "var":
-            return 'int %s'.format(self.elem(node.name))
-        elif node.form == "array":
-            return 'int {}[{}]'.format(self.elem(node.name), 
+    def decl_var(self, node):
+        return '{} {}'.format(node.type, self.elem(node.name))
+    
+    def decl_array(self, node):
+        return '{} {}[{}]'.format(node.type, self.elem(node.name), 
                     self.expr(node.expr) if node.expr else '')
-        elif node.form == "val":
-            return '#define {} {}'.format(self.elem(node.name), 
+    
+    def decl_val(self, node):
+        return 'val {} := {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
-        elif node.form == "port":
-            return '#define {} {}'.format(self.elem(node.name), 
+    
+    def decl_port(self, node):
+        return 'port {} : {}'.format(self.elem(node.name), 
                     self.expr(node.expr))
-        else:
-            raise Exception('Invalid variable declaration')
 
     # Procedure declarations ==============================
 
-    def procdecls(self, node, d):
+    def proc_decls(self, node, d):
         for p in node.children():
             self.procdecl(p, d)
 
-    def procdecl(self, node, d):
-        self.buf.write('unsigned {}({}) is\n'.format(
-                node.type, self.elem(node.name), self.formals(node.formals)))
-        self.vardecls(node.vardecls, d+1)
+    def decl_proc(self, node, d):
+        self.buf.write('proc {}({}) is\n'.format(
+                self.elem(node.name), self.formals(node.formals)))
+        self.var_decls(node.vardecls, d+1)
+        self.stmt(node.stmt, d+1)
+        self.buf.write('\n\n')
+    
+    def decl_func(self, node, d):
+        self.buf.write('proc {}({}) is\n'.format(
+                self.elem(node.name), self.formals(node.formals)))
+        self.var_decls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
@@ -69,13 +77,17 @@ class Translate(NodeWalker):
     def formals(self, node):
         return ', '.join([self.param(x) for x in node.children()])
 
-    def param(self, node):
-        if   node.type == "var":     return 'int &{}'.format(self.elem(node.name))
-        elif node.type == "alias":   return 'int {}[]'.format(self.elem(node.name))
-        elif node.type == "val":     return 'int {}'.format(self.elem(node.name))
-        elif node.type == "chanend": return 'unsigned {}'.format(self.elem(node.name))
-        else:
-            raise Exception('Invalid parameter {}'.format(node))
+    def param_var(self, node):
+        return '{}'.format(self.elem(node.name))
+
+    def param_alias(self, node):
+        return '{}[]'.format(self.elem(node.name))
+
+    def param_val(self, node):
+        return 'val {}'.format(self.elem(node.name))
+    
+    def param_chanend(self, node):
+        return 'chanend {}'.format(self.elem(node.name))
 
     # Statements ==========================================
 
@@ -102,7 +114,7 @@ class Translate(NodeWalker):
 
     def stmt_pcall(self, node, d):
         self.out(d, '{}({})'.format(
-            self.elem(node.name), self.exprlist(node.args)))
+            self.elem(node.name), self.expr_list(node.args)))
 
     def stmt_ass(self, node, d):
         self.out(d, '{} := {}'.format(
@@ -156,7 +168,7 @@ class Translate(NodeWalker):
 
     # Expressions =========================================
 
-    def exprlist(self, node):
+    def expr_list(self, node):
         return ', '.join([self.expr(x) for x in node.children()])
     
     def expr_single(self, node):
