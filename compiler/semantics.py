@@ -1,21 +1,84 @@
 import sys
 import symbol
 import signature
-from ast import NodeVisitor
+import ast
 
-class Semantics(NodeVisitor):
-    """ An AST visitor class to check the semantics of a sire program """
+# Declarations:
+types = ['var', 'val', 'chanend', 'chan', 'port', 'core']
+form  = ['single', 'array', 'alias', 'sub']
+
+elem_types = {
+    'fcall'   : 'var',
+    'number'  : 'var',
+    'boolean' : 'var',
+    'char'    : 'var',
+    'string'  : 'array'
+}
+
+SYS_CORE_ARRAY = 'core'
+SYS_CHAN_ARRAY = 'chan'
+
+class Semantics(ast.NodeVisitor):
+    """ An AST visitor class to check the semantics of a sire program
+    """
     def __init__(self, buf=sys.stdout):
         self.buf = buf
         self.depth = 0
-        self.sym = symbol.Symbol()
-        self.sig = signature.Signature()
+        self.sym = symbol.SymbolTab(self)
+        self.sig = signature.SignatureTab(self)
+
+        # Add system variables core, chan
+        self.sym.insert(SYS_CORE_ARRAY, 'core', None)
+        self.sym.insert(SYS_CHAN_ARRAY, 'chanend', None)
 
     def down(self, tag):
+        """ Begin a new scope """
         if tag: self.sym.begin_scope(tag)
 
     def up(self, tag):
+        """ End the current scope """
         if tag: self.sym.end_scope()
+
+    def get_type(self, expr):
+        """ Given an expression work out its type """
+        if isinstance(expr, ast.ExprSingle):
+            # If its an ID or subscript, look it up
+            if isinstance(expr.elem, ast.Id) or
+                isinstance(expr.elem, ast.Sub):
+                    return self.sym.lookup(expr.elem.name).type
+            # We know otherwise for each element
+            else:
+                return elem_types[expr.elem.__class__.__name__]
+        # Otherwise it must be a unary or binop, and hence a var
+        else:
+            return 'var'
+
+    # Errors and warnings =================================
+
+    def nodecl_error(self, name, coord):
+        """ No declaration error """
+        error.report_error("variable '{}' not declared"
+                .format(name, coord))
+
+    def nodef_error(self, name, coord):
+        """ No definition error """
+        error.report_error("procedure '{}' not defined"
+                .format(name, coord))
+
+    def redecl_error(self, name, coord):
+        """ Re-declaration error """
+        error.report_error("variable '{}' already declared in scope"
+                .format(name, coord))
+
+    def redef_error(self, name, coord):
+        """ Re-definition error """
+        error.report_error("procedure '{}' already declared"
+                .format(name, coord))
+
+    def unused_warning(self, name, coord):
+        """ Unused variable warning """
+        error.report_error("variable '{}' declared but not used"
+                .format(name, coord))
 
     # Program ============================================
 
@@ -24,32 +87,38 @@ class Semantics(NodeVisitor):
     
     # Variable declarations ===============================
 
-    def visit_var_decls(self, node):
+    def visit_decls(self, node):
         pass
 
-    def visit_decl_var(self, node):
-        self.sym.insert("var", node.name)
+    def visit_decl_single(self, node):
+        if not self.sym.insert(node.type, node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_decl_array(self, node):
-        self.sym.insert("array", node.name)
+        if not self.sym.insert(node.type, node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_decl_val(self, node):
-        self.sym.insert("val", node.name)
+        if not self.sym.insert('val', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_decl_port(self, node):
-        self.sym.insert("port", node.name)
+        is not self.sym.insert('port', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     # Procedure declarations ==============================
 
-    def visit_proc_decls(self, node):
+    def visit_defs(self, node):
         pass
 
-    def visit_decl_proc(self, node):
-        self.sig.insert("proc", node)
+    def visit_def_proc(self, node):
+        if not self.sig.insert('proc', node):
+            self.redef_error(node.name, node.coord)
         return 'proc'
     
-    def visit_decl_func(self, node):
-        self.sig.insert("func", node)
+    def visit_def_func(self, node):
+        if not self.sig.insert('func', node):
+            self.redef_error(node.name, node.coord)
         return 'func'
     
     # Formals =============================================
@@ -58,33 +127,47 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_param_var(self, node):
-        self.sym.insert("var", node.name)
+        if not self.sym.insert('var', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_param_alias(self, node):
-        self.sym.insert("array", node.name)
+        if not self.sym.insert('alias', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_param_val(self, node):
-        self.sym.insert("val", node.name)
+        if not self.sym.insert('val', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     def visit_param_chanend(self, node):
-        self.sym.insert("chanend", node.name)
+        if not self.sym.insert('chanend', node.name, node.coord):
+            self.redecl_error(node.name, node.coord)
 
     # Statements ==========================================
+
+    def visit_stmt_seq(self, node):
+        pass
+
+    def visit_stmt_par(self, node):
+        pass
 
     def visit_stmt_skip(self, node):
         pass
 
     def visit_stmt_pcall(self, node):
-        self.sig.check_def('proc', node)
+        if not self.sig.check_def('proc', node):
+            self.nodef_error(node.name, node.coord)
 
     def visit_stmt_ass(self, node):
-        self.sym.check_type(node.left, ('var'))
+        if not self.sym.check_type(node.left, ('var')):
+            self.type_error('assignment', node.left, node.coord)
 
     def visit_stmt_in(self, node):
-        self.sym.check_type(node.left, ('chanend', 'port'))
+        if not self.sym.check_type(node.left, ('chanend', 'port')):
+            self.type_error('input', node.left, node.coord)
 
     def visit_stmt_out(self, node):
-        self.sym.check_type(node.left, ('chanend', 'port'))
+        if not self.sym.check_type(node.left, ('chanend', 'port')):
+            self.type_error('output', node.left, node.coord)
 
     def visit_stmt_if(self, node):
         pass
@@ -96,10 +179,14 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_stmt_on(self, node):
-        self.sym.check_type(node.core, ('core'))
+        if not self.sym.check_type(node.core, ('core')):
+            self.type_error('on target', node.core, node.coord)
+        if not self.sig.check_def('proc', node.pcall):
+            self.undef_error(node.name, node.coord)
 
     def visit_stmt_connect(self, node):
-        self.sym.check_type(node.core, ('core'))
+        if not self.sym.check_type(node.core, ('core')):
+            self.type_error('connect target', node.core, node.coord)
 
     def visit_stmt_aliases(self, node):
         self.sym.check_type(node.name, ('alias'))
@@ -107,25 +194,24 @@ class Semantics(NodeVisitor):
     def visit_stmt_return(self, node):
         pass
 
-    def visit_stmt_seq(self, node):
-        pass
-
-    def visit_stmt_par(self, node):
-        pass
-
     # Expressions =========================================
+
+    # TODO: check ops only act on vars
 
     def visit_expr_list(self, node):
         pass
 
     def visit_expr_single(self, node):
-        pass
+        if not self.sym.check_type(node.right, ('var')):
+            self.type_error('single', node.left, node.coord)
 
     def visit_expr_unary(self, node):
-        pass
+        if not self.sym.check_type(node.left, ('var')):
+            self.type_error('unary', node.left, node.coord)
 
     def visit_expr_binop(self, node):
-        pass
+        if not self.sym.check_type(node.elem, ('var')):
+            self.type_error('binop dest', node.left, node.coord)
     
     # Elements= ===========================================
 
@@ -133,10 +219,12 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_elem_sub(self, node):
-        self.sym.check_def(node.name)
+        if not self.sym.check_decl(node.name, ('array','alias')):
+            self.decl_error(node.name)
+        self.sym.mark_decl(node.name)
 
     def visit_elem_fcall(self, node):
-        self.sig.check_def("func", node)
+        self.sig.check_def('func', node.name)
 
     def visit_elem_number(self, node):
         pass
@@ -151,5 +239,7 @@ class Semantics(NodeVisitor):
         pass
 
     def visit_elem_id(self, node):
-        self.sym.check_def(node.value)
+        if not self.sym.check_decl(node.value, ('single')):
+            self.decl_error(node.value)
+        self.sym.mark_decl(node.name)
 

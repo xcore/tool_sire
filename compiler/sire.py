@@ -1,10 +1,7 @@
 #!/usr/bin/env python3.1
 
 import sys
-sys.path.insert(0,"../..")
-
 import argparse
-
 from ply import *
 from parser import Parser
 import semantics
@@ -12,6 +9,7 @@ import printer
 import translate
 import dump
 import logging
+import error
 
 def setup_argparse():
     """ Configure an argument parser object """
@@ -38,7 +36,7 @@ def read_input(filename):
         raise Exception('Unexpected error:', sys.exc_info()[0])
     return contents
 
-def parse(input, filename, logging=False):
+def parse(input, filename, error, logging=False):
     """ Parse an input string to produce an AST """
     if logging:
         logging.basicConfig(
@@ -49,7 +47,8 @@ def parse(input, filename, logging=False):
         log = logging.getLogger()
     else:
         log = 0
-    parser = Parser(lex_optimise=True, yacc_debug=False, yacc_optimise=False)
+    parser = Parser(error, lex_optimise=True, 
+            yacc_debug=False, yacc_optimise=False)
     program = parser.parse(input, filename, debug=log)
     return program
 
@@ -74,13 +73,20 @@ def translate_ast(program, buf):
     walker.walk_program(program)
 
 def main(args):
+
+    # Setup parser and parse arguments
     argp = setup_argparse()
     a = argp.parse_args(args)
 
-    input = read_input(a.infile) 
-    program = parse(input, a.infile)
-    semantic_analysis(program)
+    # Setup the error object
+    error = error.Error()
 
+    # Read the input file and parse
+    input = read_input(a.infile) 
+    program = parse(input, a.infile, error)
+
+    # Perform semantic analysis
+    semantic_analysis(program, error)
     if a.sem_only: return
 
     if a.show_ast:    
@@ -91,6 +97,7 @@ def main(args):
         pprint_ast(program)
         return
 
+    # Write the output
     try:
         file = open('out.xc', 'w')
         #translate_ast(program, file)

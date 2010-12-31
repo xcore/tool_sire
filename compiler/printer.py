@@ -37,7 +37,7 @@ class Printer(NodeWalker):
                     [self.vardecl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def decl_var(self, node):
+    def decl_single(self, node):
         return '{} {}'.format(node.type, self.elem(node.name))
     
     def decl_array(self, node):
@@ -54,18 +54,18 @@ class Printer(NodeWalker):
 
     # Procedure declarations ==============================
 
-    def proc_decls(self, node, d):
+    def proc_defs(self, node, d):
         for p in node.children():
             self.procdecl(p, d)
 
-    def decl_proc(self, node, d):
+    def def_proc(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
                 self.elem(node.name), self.formals(node.formals)))
         self.var_decls(node.vardecls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
-    def decl_func(self, node, d):
+    def def_func(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
                 self.elem(node.name), self.formals(node.formals)))
         self.var_decls(node.vardecls, d+1)

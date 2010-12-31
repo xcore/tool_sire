@@ -1,13 +1,16 @@
 import ply.yacc as yacc
 import ast
+import error
 from lexer import Lexer
 
 class Parser(object):
     """ A parser object for the sire langauge """
 
-    def __init__(self, lex_optimise=True, lextab='lextab', 
+    def __init__(self, error, lex_optimise=True, lextab='lextab', 
             yacc_optimise=True, yacctab='yacctab', yacc_debug=False):
         """ Create a new parser """
+        self.error = error
+
         # Instantiate and build the lexer
         self.lexer = Lexer(error_func=self.lex_error)
         self.lexer.build(optimize=lex_optimise, lextab=lextab)
@@ -34,13 +37,11 @@ class Parser(object):
                 column=self.lexer.findcol(self.lexer.data(), t.lexpos))
 
     def lex_error(self, msg, line, col):
-        self.parse_error(msg, Coord(line, col))
+        self.error.report_error('lexing', Coord(line, col))
+        self.lexer.errok()
 
     def parse_error(self, msg, coord=None):
-        if coord: 
-            print('%s: error: %s' % (coord, msg))
-        else:
-            print('Error: %s' % (msg))
+        self.error.report_error('parsing', coord)
         self.parser.errok()
 
     # Define operator presidence
@@ -81,29 +82,30 @@ class Parser(object):
     # Variable declaration sequence error
     def p_var_decl_seq_err(self, p):
         'var_decl_seq : error SEMI'
-        print('Syntax error at line {}:{}'.format(p.lineno(1), p.lexpos(1)))
+        print('Syntax error at line {}:{}'.format(
+                p.lineno(1), p.lexpos(1)))
 
     # Var declaration
     def p_var_decl_var(self, p):
         'var_decl : type name'
-        p[0] = ast.DeclVar(p[1], p[2], None, self.coord(p))
+        p[0] = ast.DeclSingle(p[2], p[1], 'single', None, self.coord(p))
 
     # Array declaration
     def p_var_decl_array(self, p):
         '''var_decl : type name LBRACKET RBRACKET
                     | type name LBRACKET expr RBRACKET'''
-        p[0] = ast.DeclArray(p[1], p[2], p[4] if len(p)==6 else None,
-                self.coord(p))
+        p[0] = ast.DeclArray(p[2], p[1], 'array' if len(p)==6 else 'alias', 
+                p[4] if len(p)==6 else None, self.coord(p))
 
     # Val declaration
     def p_var_decl_val(self, p):
         'var_decl : VAL name ASS expr'
-        p[0] = ast.DeclVal(p[2], p[4], self.coord(p))
+        p[0] = ast.DeclVal(p[2], 'val', 'single', p[4], self.coord(p))
 
     # Port declaration
     def p_var_decl_port(self, p):
         'var_decl : PORT name COLON expr'
-        p[0] = ast.DeclPort(p[2], p[4], self.coord(p))
+        p[0] = ast.DeclPort(p[2], 'port', 'single', p[4], self.coord(p))
 
     # Variable types
     def p_type_id(self, p):
@@ -116,7 +118,7 @@ class Parser(object):
     def p_proc_decls(self, p):
         '''proc_decls : proc_decl_seq
                       | empty'''
-        p[0] = ast.ProcDecls(p[1] if len(p)==2 else None, self.coord(p))
+        p[0] = ast.ProcDefs(p[1] if len(p)==2 else None, self.coord(p))
 
     # Procedure sequence (return a single list)
     def p_proc_decl_seq(self, p):
@@ -127,12 +129,12 @@ class Parser(object):
     # Process
     def p_proc_decl_proc(self, p):
         'proc_decl : PROC name LPAREN formals RPAREN IS var_decls stmt'
-        p[0] = ast.DeclProc(p[2], p[4], p[7], p[8], self.coord(p)) 
+        p[0] = ast.DefProc(p[2], p[4], p[7], p[8], self.coord(p)) 
 
     # Function
     def p_proc_decl_func(self, p):
         'proc_decl : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-        p[0] = ast.DeclFunc(p[2], p[4], p[7], p[8], self.coord(p)) 
+        p[0] = ast.DefFunc(p[2], p[4], p[7], p[8], self.coord(p)) 
 
     # Procedure error
     def p_proc_decl_proc_err(self, p):
@@ -160,22 +162,22 @@ class Parser(object):
     # Var parameter
     def p_param_decl_var(self, p):
         'param_decl : name'
-        p[0] = ast.ParamVar(p[1], self.coord(p))
+        p[0] = ast.ParamVar(p[1], 'var', 'single', self.coord(p))
 
     # Array alias parameter
     def p_param_decl_alias(self, p):
         'param_decl : name LBRACKET RBRACKET'
-        p[0] = ast.ParamAlias(p[1], self.coord(p))
+        p[0] = ast.ParamAlias(p[1], 'var', 'alias', self.coord(p))
 
     # Val parameter
     def p_param_decl_val(self, p):
         'param_decl : VAL name'
-        p[0] = ast.ParamVal(p[2], self.coord(p))
+        p[0] = ast.ParamVal(p[2], 'val', 'single', self.coord(p))
 
     # Chanend parameter
     def p_param_decl_chanend(self, p):
         'param_decl : CHANEND name'
-        p[0] = ast.ParamChanend(p[2], self.coord(p))
+        p[0] = ast.ParamChanend(p[2], 'chanend', 'single', self.coord(p))
 
     # Statement blocks =========================================
     

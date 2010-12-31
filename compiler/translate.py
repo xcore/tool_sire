@@ -37,7 +37,7 @@ class Printer(NodeWalker):
                     [self.vardecl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def decl_var(self, node):
+    def decl_single(self, node):
         return '{} {}'.format(node.type, self.elem(node.name))
     
     def decl_array(self, node):
