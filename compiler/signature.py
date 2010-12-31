@@ -1,22 +1,23 @@
+import sys
 import semantics
 
 proc_types = ['proc', 'func']
 
-class SignatureTab(object):
+class SignatureTable(object):
     def __init__(self, semantics):
         self.semantics = semantics
         self.tab = {}
 
     def insert(self, type, node):
         """ Insert a procedure signature """
-        self.tab[node.name] = Signature(node.name, type node.formals.params)
+        self.tab[node.name] = Signature(node.name, type, node.formals.params)
 
     def check_def(self, type, node):
         """ Check if a procedure signature is defined """
         if not self.tab[name]:
             return False
-        for x, y in zip(self.tab[name].params, node.args)
-            if x.type != semantics.get_type(y)
+        for x, y in zip(self.tab[name].params, node.args):
+            if x.type != semantics.get_type(y):
                 return False
         return True
     

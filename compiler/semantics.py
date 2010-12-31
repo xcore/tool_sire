@@ -1,7 +1,8 @@
 import sys
+import error
+import ast
 import symbol
 import signature
-import ast
 
 # Declarations:
 types = ['var', 'val', 'chanend', 'chan', 'port', 'core']
@@ -21,13 +22,14 @@ SYS_CHAN_ARRAY = 'chan'
 class Semantics(ast.NodeVisitor):
     """ An AST visitor class to check the semantics of a sire program
     """
-    def __init__(self, buf=sys.stdout):
-        self.buf = buf
+    def __init__(self, error):
         self.depth = 0
-        self.sym = symbol.SymbolTab(self)
-        self.sig = signature.SignatureTab(self)
+        self.error = error
+        self.sym = symbol.SymbolTable(self)
+        self.sig = signature.SignatureTable(self)
 
         # Add system variables core, chan
+        self.sym.begin_scope('system')
         self.sym.insert(SYS_CORE_ARRAY, 'core', None)
         self.sym.insert(SYS_CHAN_ARRAY, 'chanend', None)
 
@@ -43,9 +45,8 @@ class Semantics(ast.NodeVisitor):
         """ Given an expression work out its type """
         if isinstance(expr, ast.ExprSingle):
             # If its an ID or subscript, look it up
-            if isinstance(expr.elem, ast.Id) or
-                isinstance(expr.elem, ast.Sub):
-                    return self.sym.lookup(expr.elem.name).type
+            if isinstance(expr.elem, ast.Id) or isinstance(expr.elem, ast.Sub):
+                return self.sym.lookup(expr.elem.name).type
             # We know otherwise for each element
             else:
                 return elem_types[expr.elem.__class__.__name__]
@@ -57,22 +58,22 @@ class Semantics(ast.NodeVisitor):
 
     def nodecl_error(self, name, coord):
         """ No declaration error """
-        error.report_error("variable '{}' not declared"
+        self.error.report_error("variable '{}' not declared"
                 .format(name, coord))
 
     def nodef_error(self, name, coord):
         """ No definition error """
-        error.report_error("procedure '{}' not defined"
+        self.error.report_error("procedure '{}' not defined"
                 .format(name, coord))
 
     def redecl_error(self, name, coord):
         """ Re-declaration error """
-        error.report_error("variable '{}' already declared in scope"
+        self.error.report_error("variable '{}' already declared in scope"
                 .format(name, coord))
 
     def redef_error(self, name, coord):
         """ Re-definition error """
-        error.report_error("procedure '{}' already declared"
+        self.error.report_error("procedure '{}' already declared"
                 .format(name, coord))
 
     def unused_warning(self, name, coord):
@@ -103,7 +104,7 @@ class Semantics(ast.NodeVisitor):
             self.redecl_error(node.name, node.coord)
 
     def visit_decl_port(self, node):
-        is not self.sym.insert('port', node.name, node.coord):
+        if not self.sym.insert('port', node.name, node.coord):
             self.redecl_error(node.name, node.coord)
 
     # Procedure declarations ==============================

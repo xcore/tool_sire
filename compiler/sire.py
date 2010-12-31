@@ -10,6 +10,7 @@ import translate
 import dump
 import logging
 import error
+import io
 
 def setup_argparse():
     """ Configure an argument parser object """
@@ -36,6 +37,17 @@ def read_input(filename):
         raise Exception('Unexpected error:', sys.exc_info()[0])
     return contents
 
+def write_output(buf, outfile):
+    """ Write the output to a file """
+    try:
+        file = open(outfile, 'w')
+        translate_ast(program, file)
+        file.close()
+    except IOError as err:
+        print('I/O error({}): {}'.format(err.errno, err.stderror))
+    except:
+        raise Exception('Unexpected error:', sys.exc_info()[0])
+
 def parse(input, filename, error, logging=False):
     """ Parse an input string to produce an AST """
     if logging:
@@ -52,9 +64,9 @@ def parse(input, filename, error, logging=False):
     program = parser.parse(input, filename, debug=log)
     return program
 
-def semantic_analysis(program):
+def semantic_analysis(program, error):
     """ Perform semantic analysis on an AST """
-    visitor = semantics.Semantics()
+    visitor = semantics.Semantics(error)
     program.accept(visitor)
 
 def pprint_ast(program):
@@ -71,7 +83,7 @@ def translate_ast(program, buf):
     """ Transform an AST into XC """
     walker = translate.Translate(buf)
     walker.walk_program(program)
-
+    
 def main(args):
 
     # Setup parser and parse arguments
@@ -79,14 +91,14 @@ def main(args):
     a = argp.parse_args(args)
 
     # Setup the error object
-    error = error.Error()
+    err = error.Error()
 
     # Read the input file and parse
     input = read_input(a.infile) 
-    program = parse(input, a.infile, error)
+    program = parse(input, a.infile, err)
 
     # Perform semantic analysis
-    semantic_analysis(program, error)
+    semantic_analysis(program, err)
     if a.sem_only: return
 
     if a.show_ast:    
@@ -96,16 +108,11 @@ def main(args):
     if a.pprint: 
         pprint_ast(program)
         return
-
-    # Write the output
-    try:
-        file = open('out.xc', 'w')
-        #translate_ast(program, file)
-        file.close()
-    except IOError as err:
-        print('I/O error({}): {}'.format(err.errno, err.stderror))
-    except:
-        raise Exception('Unexpected error:', sys.exc_info()[0])
+   
+    # Translate the ast and write the output to a file
+    buf = io.StringIO()
+    translate_ast(program, buf)
+    write_output(buf, 'out.xc')
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

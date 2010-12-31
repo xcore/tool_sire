@@ -71,7 +71,7 @@ class Parser(object):
     def p_var_decls(self, p):
         '''var_decls : empty
                      | var_decl_seq'''
-        p[0] = ast.VarDecls(p[1] if len(p)==2 else None, self.coord(p))
+        p[0] = ast.Decls(p[1] if len(p)==2 else None, self.coord(p))
 
     # Variable declaration sequence (return a single list)
     def p_var_decl_seq(self, p):
@@ -118,7 +118,7 @@ class Parser(object):
     def p_proc_decls(self, p):
         '''proc_decls : proc_decl_seq
                       | empty'''
-        p[0] = ast.ProcDefs(p[1] if len(p)==2 else None, self.coord(p))
+        p[0] = ast.Defs(p[1] if len(p)==2 else None, self.coord(p))
 
     # Procedure sequence (return a single list)
     def p_proc_decl_seq(self, p):

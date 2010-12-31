@@ -1,6 +1,7 @@
+import sys
 import semantics
 
-scopes = ['module', 'proc', 'func']
+scopes = ['system', 'module', 'proc', 'func']
 
 class SymbolTable(object):
     """ Symbol table
@@ -15,6 +16,7 @@ class SymbolTable(object):
         s = ScopeTag(tag)
         self.scope.append(s)
         self.curr_scope = tag
+        print('new scope {}'.format(tag))
 
     def end_scope(self):
         """ End a scope """
@@ -23,18 +25,19 @@ class SymbolTable(object):
             if not s.mark:
                 semantics.unused_warning(s.name, s.coord) 
         self.curr_scope = get_curr_scope()
+        print('end scope')
    
     def get_curr_scope(self):
         """ Traverse scope stack from top to bottom to find first scope tag """
         for x in reversed(self.scope):
-            if x.type == 'tag'
+            if x.type == 'tag':
                 self.curr_scope = x.type
                 break
         return
 
-    def insert_(self, name, type):
+    def insert_(self, name, type, coord):
         """ Insert a new symbol in the table """
-        self.tab[name] = Symbol(name, type, self.scope[-1])
+        self.tab[name] = Symbol(name, type, coord, self.scope[-1])
         self.scope.append(self.tab[name])
 
     def insert(self, name, type, coord):
