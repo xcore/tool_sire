@@ -9,7 +9,7 @@ func factorial(val x) is
   { ans := ans * y
   ; y := y + 1
   }
-  return ans
+; return ans
 }
 
 proc main() is

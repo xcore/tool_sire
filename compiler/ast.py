@@ -75,16 +75,14 @@ class Decls(Node):
         return s
 
 class DeclSingle(Node):
-    def __init__(self, name, type, form, expr, coord=None):
+    def __init__(self, name, type, expr, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -97,21 +95,19 @@ class DeclSingle(Node):
 
     def __repr__(self):
         s =  'DeclSingle('
-        s += ', '.join('%s' % v for v in [self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class DeclArray(Node):
-    def __init__(self, name, type, form, expr, coord=None):
+    def __init__(self, name, type, expr, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -124,21 +120,19 @@ class DeclArray(Node):
 
     def __repr__(self):
         s =  'DeclArray('
-        s += ', '.join('%s' % v for v in [self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class DeclVal(Node):
-    def __init__(self, name, type, form, expr, coord=None):
+    def __init__(self, name, type, expr, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -151,21 +145,19 @@ class DeclVal(Node):
 
     def __repr__(self):
         s =  'DeclVal('
-        s += ', '.join('%s' % v for v in [self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class DeclPort(Node):
-    def __init__(self, name, type, form, expr, coord=None):
+    def __init__(self, name, type, expr, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -178,7 +170,7 @@ class DeclPort(Node):
 
     def __repr__(self):
         s =  'DeclPort('
-        s += ', '.join('%s' % v for v in [self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
@@ -205,8 +197,9 @@ class Defs(Node):
         return s
 
 class DefProc(Node):
-    def __init__(self, name, formals, vardecls, stmt, coord=None):
+    def __init__(self, name, type, formals, vardecls, stmt, coord=None):
         self.name = name
+        self.type = type
         self.formals = formals
         self.vardecls = vardecls
         self.stmt = stmt
@@ -214,7 +207,6 @@ class DefProc(Node):
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.formals is not None: c.append(self.formals)
         if self.vardecls is not None: c.append(self.vardecls)
         if self.stmt is not None: c.append(self.stmt)
@@ -229,12 +221,14 @@ class DefProc(Node):
 
     def __repr__(self):
         s =  'DefProc('
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class DefFunc(Node):
-    def __init__(self, name, formals, vardecls, stmt, coord=None):
+    def __init__(self, name, type, formals, vardecls, stmt, coord=None):
         self.name = name
+        self.type = type
         self.formals = formals
         self.vardecls = vardecls
         self.stmt = stmt
@@ -242,7 +236,6 @@ class DefFunc(Node):
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.formals is not None: c.append(self.formals)
         if self.vardecls is not None: c.append(self.vardecls)
         if self.stmt is not None: c.append(self.stmt)
@@ -257,6 +250,7 @@ class DefFunc(Node):
 
     def __repr__(self):
         s =  'DefFunc('
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
@@ -282,11 +276,10 @@ class Formals(Node):
         s += ')'
         return s
 
-class ParamVar(Node):
-    def __init__(self, name, type, form, coord=None):
+class ParamSingle(Node):
+    def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.coord = coord
 
     def children(self):
@@ -294,23 +287,22 @@ class ParamVar(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_param_var(self)
+        tag = visitor.visit_param_single(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'ParamVar('
-        s += ', '.join('%s' % v for v in [self.name, self.type, self.form])
+        s =  'ParamSingle('
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class ParamAlias(Node):
-    def __init__(self, name, type, form, coord=None):
+    def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.coord = coord
 
     def children(self):
@@ -326,15 +318,14 @@ class ParamAlias(Node):
 
     def __repr__(self):
         s =  'ParamAlias('
-        s += ', '.join('%s' % v for v in [self.name, self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class ParamVal(Node):
-    def __init__(self, name, type, form, coord=None):
+    def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.coord = coord
 
     def children(self):
@@ -350,15 +341,14 @@ class ParamVal(Node):
 
     def __repr__(self):
         s =  'ParamVal('
-        s += ', '.join('%s' % v for v in [self.name, self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
 class ParamChanend(Node):
-    def __init__(self, name, type, form, coord=None):
+    def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
-        self.form = form
         self.coord = coord
 
     def children(self):
@@ -374,7 +364,7 @@ class ParamChanend(Node):
 
     def __repr__(self):
         s =  'ParamChanend('
-        s += ', '.join('%s' % v for v in [self.name, self.type, self.form])
+        s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
 
@@ -447,7 +437,6 @@ class StmtPcall(Node):
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.args is not None: c.append(self.args)
         return tuple(c)
 
@@ -460,6 +449,7 @@ class StmtPcall(Node):
 
     def __repr__(self):
         s =  'StmtPcall('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
@@ -673,7 +663,6 @@ class StmtAliases(Node):
     def children(self):
         c = []
         if self.left is not None: c.append(self.left)
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -686,6 +675,7 @@ class StmtAliases(Node):
 
     def __repr__(self):
         s =  'StmtAliases('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
@@ -835,7 +825,6 @@ class ElemSub(Node):
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -848,6 +837,7 @@ class ElemSub(Node):
 
     def __repr__(self):
         s =  'ElemSub('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
@@ -859,7 +849,6 @@ class ElemFcall(Node):
 
     def children(self):
         c = []
-        if self.name is not None: c.append(self.name)
         if self.args is not None: c.append(self.args)
         return tuple(c)
 
@@ -872,6 +861,7 @@ class ElemFcall(Node):
 
     def __repr__(self):
         s =  'ElemFcall('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
@@ -964,8 +954,8 @@ class ElemChar(Node):
         return s
 
 class ElemId(Node):
-    def __init__(self, value, coord=None):
-        self.value = value
+    def __init__(self, name, coord=None):
+        self.name = name
         self.coord = coord
 
     def children(self):
@@ -981,7 +971,7 @@ class ElemId(Node):
 
     def __repr__(self):
         s =  'ElemId('
-        s += ', '.join('%s' % v for v in [self.value])
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 

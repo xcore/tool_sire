@@ -41,7 +41,7 @@ def write_output(buf, outfile):
     """ Write the output to a file """
     try:
         file = open(outfile, 'w')
-        translate_ast(program, file)
+        file.write(buf.getvalue())
         file.close()
     except IOError as err:
         print('I/O error({}): {}'.format(err.errno, err.stderror))
@@ -111,7 +111,7 @@ def main(args):
    
     # Translate the ast and write the output to a file
     buf = io.StringIO()
-    translate_ast(program, buf)
+    #translate_ast(program, buf)
     write_output(buf, 'out.xc')
 
 if __name__ == '__main__':
