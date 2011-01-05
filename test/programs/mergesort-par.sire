@@ -25,12 +25,12 @@ proc merge(a[], b[], c[], val m, val n) is
     ; k:=k+1
     }
   }
-; if i<la then c[k] := a[i] else skip
-; if j<lb then c[k] := b[j] else skip
+; if i<m then c[k] := a[i] else skip
+; if j<n then c[k] := b[j] else skip
 }
 
 % Merge sort
-proc msort(val t, val n, array[], val len, val int) is
+proc msort(val t, val n, array[], val len) is
   var a[];
   var b[];
   var i;

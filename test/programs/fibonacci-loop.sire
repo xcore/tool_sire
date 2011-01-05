@@ -4,13 +4,15 @@ func fib(val n) is
   var x;
   var y;
   var z;
+  var i;
 { x := 0 
 ; y := 1
-; while(n > 0) do 
+; i := n
+; while(i > 0) do 
   { z := x + y
   ; x := y
   ; y := z
-  ; n := n - 1
+  ; i := i - 1
   }
 ; return z
 }

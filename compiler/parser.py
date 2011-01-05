@@ -25,7 +25,8 @@ class Parser(object):
         """ Parse a file and return the AST """
         self.lexer.filename = filename
         self.lexer.reset()
-        return self.parser.parse(text, lexer=self.lexer, debug=debug)
+        return self.parser.parse(text, lexer=self.lexer, debug=debug,
+                tracking=True)
 
     def coord(self, p, index=1):
         """ Return a coordinate for a production """
@@ -60,7 +61,7 @@ class Parser(object):
     # Program declaration ======================================
     def p_program(self, p):
         'program : var_decls proc_decls'
-        p[0] = ast.Program(p[1], p[2], self.coord(p))
+        p[0] = ast.Program(p[1], p[2], self.coord(p, 1))
 
     # Program declaration error
     def p_program_error(self, p):
@@ -169,7 +170,7 @@ class Parser(object):
     # Var parameter
     def p_param_decl_var(self, p):
         'param_decl : name'
-        p[0] = ast.ParamVar(p[1], Type('var', 'single'), 
+        p[0] = ast.ParamSingle(p[1], Type('var', 'single'), 
                 self.coord(p))
 
     # Array alias parameter
@@ -270,7 +271,7 @@ class Parser(object):
         p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
 
     def p_stmt_aliases(self, p):
-        'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
+        'stmt : elem_name ALIASES elem_name LBRACKET expr DOTS RBRACKET'
         p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
 
     def p_stmt_return(self, p):
@@ -334,6 +335,10 @@ class Parser(object):
 
     # Elements =================================================
     
+    def p_elem_group(self, p):
+        'elem : LPAREN expr RPAREN'
+        p[0] = ast.ElemGroup(p[2], self.coord(p))
+
     def p_left_name(self, p):
         'left : name'
         p[0] = ast.ElemId(p[1], self.coord(p)) 
@@ -342,12 +347,13 @@ class Parser(object):
         'left : name LBRACKET expr RBRACKET'
         p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
 
-    def p_elem_group(self, p):
-        'elem : LPAREN expr RPAREN'
-        p[0] = ast.ElemGroup(p[2], self.coord(p))
-
     def p_elem_name(self, p):
         'elem : name'
+        p[0] = ast.ElemId(p[1], self.coord(p)) 
+
+    # To force use of an identifier, e.g. with alias
+    def p_elem_name_(self, p):
+        'elem_name : name'
         p[0] = ast.ElemId(p[1], self.coord(p)) 
 
     def p_elem_sub(self, p):
@@ -404,6 +410,7 @@ class Coord(object):
         self.file = file
         self.line = line
         self.column = column
+        #print('new coord: {}:{}'.format(line, column))
 
     def __str__(self):
         str = "%s:%s" % (self.file, self.line)

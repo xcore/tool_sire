@@ -24,13 +24,18 @@ class SignatureTable(object):
             print("Inserted sig for '{}' ({})".format(node.name, type))
 
 
-    def check_def(self, type, node):
+    def check_args(self, type, node):
         """ Check if a procedure signature is defined """
-        if not self.tab[node.name]:
+        if not node.name in self.tab:
             return False
 
+        # Compare each param type to the type of each expr argument
         for (x, y) in zip(self.tab[node.name].params, node.args.expr):
             t = self.sem.get_expr_type(y)
+            # If argument y has no type, i.e. not defined
+            if not t:
+                return False
+            # Check it against each valid conversion
             if not any(t==z for z in param_conversions[x.type]):
                 return False
         return True

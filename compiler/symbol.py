@@ -72,15 +72,22 @@ class SymbolTable(object):
             if x.type.isTag(): return None
             if x.name == key: return x
 
+    def check_decl(self, key):
+        """ Check a symbol has been declared """
+        #return self.tab.haskey(key)
+        return key in self.tab
+
     def check_form(self, key, forms):
         """ Check a symbol has been declared with the correct form """
-        if self.tab[key]:
+        if key in self.tab:
             return any(x == self.tab[key].type.form for x in forms)
         return False
 
     def mark_decl(self, key):
-        """ Mark a symbol """
-        self.tab[key].mark = True
+        """ Mark the first symbol """
+        for x in reversed(self.scope):
+            if x.name == key:
+                x.mark = True
 
     def dump(self, buf=sys.stdout):
         """ Dump the contents of the table to buf """

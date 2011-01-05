@@ -8,6 +8,8 @@ class Lexer(object):
         """
         self.error_func = error_func
         self.filename = ''
+        self.lineno=0
+        self.lexpos=0
 
     def build(self, **kwargs):
         """ Build a lexer from the specification after it has been instantiated

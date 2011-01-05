@@ -1,7 +1,8 @@
-% Recursive calculation
+% Recursively calculate the nth Fibonacci number
+
 func fib(val n) is 
 { if n > 1 
-  then return fibRec(n-1) + fibRec(n-2)
+  then return fib(n-1) + fib(n-2)
   else if n = 0 then return 0 else return 1
 }
 

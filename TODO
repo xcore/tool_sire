@@ -1,0 +1,18 @@
+Todo
+====
+
+Small
+-----
+
+- Fix: parser can easilly fall into infinite loop, e.g. with missing ';' or mimsing
+  destination in asssignment.
+- Add more error cases to improve syntax error reporting.
+- Write tests for each rule of semantic analysis, check that it behaves well on
+  all cases that cause errors and warnings.
+- (Maybe?) Tidy up the AST tyes in class names by creating generic Decl/Param
+  classes and switching on types internally.
+
+Large
+-----
+
+- Write language feature test cases in a unittest framework.

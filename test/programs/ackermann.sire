@@ -1,18 +1,16 @@
 % Ackermann's funciton
 
-func ackermann(val m, val n):
+func ackermann(val m, val n) is
 { if m=0 
   then return n+1
-  else skip
-  if m>0 and n=0
+  else if (m>0) and (n=0)
   then return ackermann(m-1, 1)
-  else skip
-  if m>0 and n>0
+  else if (m>0) and (n>0)
   then return ackermann(m-1, ackermann(m, n-1))
   else skip
 }
 
-proc main():
-{ print(ackermann(3,4))
-; print(ackermann(4,0)) 
+proc main() is
+{ ackermann(3, 4)
+; ackermann(4, 0) 
 }

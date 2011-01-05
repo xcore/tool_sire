@@ -26,7 +26,7 @@ class Semantics(ast.NodeVisitor):
     def __init__(self, error):
         self.depth = 0
         self.error = error
-        self.sym = symbol.SymbolTable(self)
+        self.sym = symbol.SymbolTable(self, debug=False)
         self.sig = signature.SignatureTable(self)
 
         # Add system variables core, chan
@@ -44,12 +44,22 @@ class Semantics(ast.NodeVisitor):
 
     def get_elem_type(self, elem):
         """ Given an element, return its type """
-        if isinstance(elem, ast.ElemId) or isinstance(elem, ast.ElemSub):
-            return self.sym.lookup(elem.name).type
-        return elem_types[util.camel_to_under(elem.__class__.__name__)]
+        # If its an expression group, get_expr_type
+        if isinstance(elem, ast.ElemGroup):
+            return self.get_expr_type(elem.expr)
+        # If its an identifer, look it up (if it exists)
+        elif isinstance(elem, ast.ElemId) or isinstance(elem, ast.ElemSub):
+            if self.sym.check_decl(elem.name):
+                return self.sym.lookup(elem.name).type
+            else:
+                self.nodecl_error(elem.name, 'variable or array', None)
+        # Otherwise, return the specified elem type
+        else:
+            return elem_types[util.camel_to_under(elem.__class__.__name__)]
 
     def get_expr_type(self, expr):
         """ Given an expression work out its type """
+        #If it's a single value, lookup the type
         if isinstance(expr, ast.ExprSingle):
             return self.get_elem_type(expr.elem)    
         # Otherwise it must be a unary or binop, and hence a var
@@ -57,21 +67,21 @@ class Semantics(ast.NodeVisitor):
 
     def check_elem_types(self, elem, types):
         """ Given an elem and a set of types, check if one matches """
-        t = self.get_elem_type(elem)    
+        t = self.get_elem_type(elem)
         for x in types:
             if x == t: return True
         return False
 
     # Errors and warnings =================================
 
-    def nodecl_error(self, name, coord):
+    def nodecl_error(self, name, specifier, coord):
         """ No declaration error """
-        self.error.report_error("variable '{}' not declared"
-                .format(name), coord)
+        self.error.report_error("{} '{}' not declared"
+                .format(specifier, name), coord)
 
-    def nodef_error(self, name, coord):
+    def badargs_error(self, name, coord):
         """ No definition error """
-        self.error.report_error("procedure '{}' not defined"
+        self.error.report_error("invalid argumens for procedure '{}' "
                 .format(name), coord)
 
     def redecl_error(self, name, coord):
@@ -91,12 +101,11 @@ class Semantics(ast.NodeVisitor):
 
     def type_error(self, msg, name, coord):
         """ Mismatching type error """
-        self.error.report_error("type error in {} with {}"
-                .format(msg, name), coord)
+        self.error.report_error("type error in {} with '{}'".format(msg, name), coord)
 
     def form_error(self, msg, name, coord):
         """ Mismatching form error """
-        self.error.report_error("form error in {} with {}"
+        self.error.report_error("form error in {} with '{}'"
                 .format(msg, name), coord)
 
     # Program ============================================
@@ -149,7 +158,7 @@ class Semantics(ast.NodeVisitor):
     def visit_formals(self, node):
         pass
 
-    def visit_param_var(self, node):
+    def visit_param_single(self, node):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
@@ -177,25 +186,31 @@ class Semantics(ast.NodeVisitor):
         pass
 
     def visit_stmt_pcall(self, node):
-        if not self.sig.check_def('proc', node):
-            self.nodef_error(node.name, node.coord)
-        self.sym.mark_decl(node.name)
+        # Check the name is declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'process', node.coord)
+        else:
+            # Check the arguments are correct
+            if not self.sig.check_args('proc', node):
+                self.badargs_error(node.name, node.coord)
+            # And mark the symbol as used
+            self.sym.mark_decl(node.name)
 
     def visit_stmt_ass(self, node):
         if not self.check_elem_types(node.left, 
                 [Type('var', 'single'), Type('var', 'array'), 
                     Type('var', 'alias')]):
-            self.type_error('assignment', node.left, node.coord)
+            self.type_error('assignment', node.left.name, node.coord)
 
     def visit_stmt_in(self, node):
         if not self.check_elem_types(node.left, 
                 [Type('chanend', 'single'), Type('port', 'single')]):
-            self.type_error('input', node.left, node.coord)
+            self.type_error('input', node.left.name, node.coord)
 
     def visit_stmt_out(self, node):
         if not self.check_elem_types(node.left, 
                 [Type('chanend', 'single'), Type('port', 'single')]):
-            self.type_error('output', node.left, node.coord)
+            self.type_error('output', node.left.name, node.coord)
 
     def visit_stmt_if(self, node):
         pass
@@ -209,16 +224,17 @@ class Semantics(ast.NodeVisitor):
     def visit_stmt_on(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'array')]):
             self.type_error('on target', node.core, node.coord)
-        if not self.sig.check_def('proc', node.pcall):
-            self.undef_error(node.name, node.coord)
-        self.sym.mark_decl(node.pcall.name)
 
     def visit_stmt_connect(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):
             self.type_error('connect target', node.core, node.coord)
 
     def visit_stmt_aliases(self, node):
-        self.check_elem_types(node.name, [Type('var', 'alias')])
+        if not self.check_elem_types(node.left, [Type('var', 'alias')]):
+            self.type_error('alias', node.left, node.coord)
+        if not self.check_elem_types(node.name, 
+                [Type('var', 'array'), Type('var', 'alias')]):
+            self.type_error('alias', node.name, node.coord)
 
     def visit_stmt_return(self, node):
         pass
@@ -238,12 +254,14 @@ class Semantics(ast.NodeVisitor):
 
     def visit_expr_unary(self, node):
         if not self.check_elem_types(node.elem,
-                [Type('var', 'single'), Type('var', 'sub'), Type('val', 'single')]):
+                [Type('var', 'single'), Type('var', 'sub'), 
+                    Type('val', 'single')]):
             self.type_error('unary', node.elem, node.coord)
 
     def visit_expr_binop(self, node):
         if not self.check_elem_types(node.elem, 
-                [Type('var', 'single'), Type('var', 'sub'), Type('val', 'single')]):
+                [Type('var', 'single'), Type('var', 'array'), 
+                    Type('var', 'alias'), Type('val', 'single')]):
             self.type_error('binop dest', node.elem, node.coord)
     
     # Elements= ===========================================
@@ -251,14 +269,38 @@ class Semantics(ast.NodeVisitor):
     def visit_elem_group(self, node):
         pass
 
+    def visit_elem_id(self, node):
+        # Check the symbol has been declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'variable', node.coord)
+        # Mark it as used if it has
+        else:
+            self.sym.mark_decl(node.name)
+        # Check it has the right form
+        #if not self.sym.check_form(node.name, ['single']):
+        #    self.form_error('single', node.name, node.coord)
+
     def visit_elem_sub(self, node):
-        if not self.sym.check_form(node.name, ['array','alias']):
-            self.form_error('subscript', node.name, node.coord)
-        self.sym.mark_decl(node.name)
+        # Check the symbol has been declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'array', node.coord)
+        # Mark it as used if it has
+        else:
+            self.sym.mark_decl(node.name)
+        # Check it has the right form 
+        #if not self.sym.check_form(node.name, ['array','alias']):
+        #    self.form_error('subscript', node.name, node.coord)
 
     def visit_elem_fcall(self, node):
-        self.sig.check_def('func', node.name)
-        self.sym.mark_decl(node.name)
+        # Check the name is declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'function', node.coord)
+        else:
+            # Check the arguments are correct
+            if not self.sig.check_args('func', node):
+                self.badargs_error(node.name, node.coord)
+            # And mark the symbol as used
+            self.sym.mark_decl(node.name)
 
     def visit_elem_number(self, node):
         pass
@@ -271,9 +313,4 @@ class Semantics(ast.NodeVisitor):
 
     def visit_elem_char(self, node):
         pass
-
-    def visit_elem_id(self, node):
-        if not self.sym.check_form(node.name, ['single']):
-            self.form_error('single', node.name, node.coord)
-        self.sym.mark_decl(node.name)
 
