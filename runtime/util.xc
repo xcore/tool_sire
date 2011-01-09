@@ -11,11 +11,13 @@ unsigned getThreadId() {
 }
 
 // Create a channel resource identifier with a particular count
+static inline
 unsigned chanResId(unsigned id, int counter) {
     return destResId(id) | counter << 8;    
 }
 
 // Generate a configuration resource identifier
+static inline
 unsigned genCRI(unsigned nodeId) {
     return nodeId << 24 | XS1_CT_SSCTRL << 8 | 12;
 }
@@ -45,12 +47,43 @@ unsigned destResId(unsigned dest) {
     return n | (dest % CORES_PER_NODE) << 16 | 0x2;
 }
 
+static inline
+int TESTCT(unsigned c) {
+   int r;
+   asm("testct %0, res[%1]" : "=r"(r) : "r"(c));
+   return r;
+}
+
+static inline
+void OUTCT_END(unsigned c) {
+   asm("outct res[%0], %1" :: "r"(c), "r"(CT_END));
+}
+
+static inline
+void CHKCT_END(unsigned c) {
+   asm("chkct res[%0], %1" :: "r"(c), "r"(CT_END));
+}
+
+static inline
+void SETD(unsigned c, unsigned dest) {
+   asm("setd res[%0], %1" :: "r"(c), "r"(dest));
+}
+
+static inline
+unsigned GETR_CHANEND() {
+   unsigned c;
+   asm("getr %0, 2":"=r"(c));
+   return c;
+}
+
 // Raise an exception in the event of an error
+static inline
 void raiseException() {
     asm("ldc r11, 0\n\tecallf r11" ::: "r11");
 }
 
 // Exception error
+static inline
 void error() {
     asm("waiteu");
 }

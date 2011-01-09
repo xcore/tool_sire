@@ -1,6 +1,4 @@
 val LENGTH:=50;
-val THRESHOLD:=10; 
-val NUMCORES:=16;
 var a[LENGTH];
 
 % Partition
@@ -55,5 +53,5 @@ proc main() is
   var i;
 { for i:=0 to LENGTH-1 do 
     a[i] := LENGTH-i
-; qsort(0, NUMCORES, a, LENGTH)
+; qsort(a, LENGTH)
 }
