@@ -20,7 +20,7 @@ forms = {
 }
 
 class Type(object):
-    def __init__(self, specifier, form='undefined'):
+    def __init__(self, specifier, form='undefined', expr=None):
         if not specifier in specifiers:
             raise Exception("Invalid specifier '{}'".format(specifier))
         if not form in forms:
@@ -42,3 +42,9 @@ class Type(object):
 
     def __repr__(self):
         return "Type({}, {})".format(self.specifier, self.form)
+    
+    def decl_str(self, name):
+        return "{} {} {}".format(self.specifier, name, self.form)
+    
+    def param_str(self, name):
+        return "{} {}".format(self.specifier, name, self.form)

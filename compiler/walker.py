@@ -4,11 +4,11 @@ import util
 class NodeWalker(object):
     """ A base class for walking an AST """  
 
-    def vardecl(self, node):
+    def decl(self, node):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))
         return f(node)
     
-    def procdecl(self, node, d):
+    def defn(self, node, d):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))
         return f(node, d)
     

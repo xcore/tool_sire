@@ -6,11 +6,11 @@ INDENT = 2
 SEQ_INDENT = ';' + ' '*(INDENT-1)
 PAR_INDENT = '|' + ' '*(INDENT-1) 
 
-class Printer(NodeWalker):
+class Translate(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
-    def __init__(self, buf=sys.stdout):
-        super(Printer, self).__init__()
+    def __init__(self, buf):
+        super(Translate, self).__init__()
         self.buf = buf
         self.indent = [' '*INDENT]
 
@@ -25,50 +25,50 @@ class Printer(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        self.var_decls(node.vardecls, 0)
+        self.decls(node.decls, 0)
         self.buf.write('\n')
-        self.proc_decls(node.procdecls, 0)
+        self.defs(node.defs, 0)
     
     # Variable declarations ===============================
 
-    def var_decls(self, node, d):
+    def decls(self, node, d):
         self.buf.write((self.indt(d) if len(node.children())>0 else '') 
                 +(';\n'+self.indt(d)).join(
-                    [self.vardecl(x) for x in node.children()]))
+                    [self.decl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
     def decl_single(self, node):
-        return '{} {}'.format(node.type, self.elem(node.name))
+        return '{} {}'.format(node.type, node.name)
     
     def decl_array(self, node):
         return '{} {}[{}]'.format(node.type, self.elem(node.name), 
                     self.expr(node.expr) if node.expr else '')
     
     def decl_val(self, node):
-        return 'val {} := {}'.format(self.elem(node.name), 
+        return '{} := {}'.format(node.type.decl_str(node.name), 
                     self.expr(node.expr))
     
     def decl_port(self, node):
-        return 'port {} : {}'.format(self.elem(node.name), 
+        return 'port {} : {}'.format(node.name, 
                     self.expr(node.expr))
 
     # Procedure declarations ==============================
 
-    def proc_decls(self, node, d):
+    def defs(self, node, d):
         for p in node.children():
-            self.procdecl(p, d)
+            self.defn(p, d)
 
-    def decl_proc(self, node, d):
+    def def_proc(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
-                self.elem(node.name), self.formals(node.formals)))
-        self.var_decls(node.vardecls, d+1)
+                node.name, self.formals(node.formals)))
+        self.decls(node.decls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
-    def decl_func(self, node, d):
+    def def_func(self, node, d):
         self.buf.write('proc {}({}) is\n'.format(
-                self.elem(node.name), self.formals(node.formals)))
-        self.var_decls(node.vardecls, d+1)
+                node.name, self.formals(node.formals)))
+        self.decls(node.decls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
     
@@ -78,16 +78,16 @@ class Printer(NodeWalker):
         return ', '.join([self.param(x) for x in node.children()])
 
     def param_var(self, node):
-        return '{}'.format(self.elem(node.name))
+        return '{}'.format(node.name)
 
     def param_alias(self, node):
-        return '{}[]'.format(self.elem(node.name))
+        return '{}[]'.format(node.name)
 
     def param_val(self, node):
-        return 'val {}'.format(self.elem(node.name))
+        return 'val {}'.format(node.name)
     
     def param_chanend(self, node):
-        return 'chanend {}'.format(self.elem(node.name))
+        return 'chanend {}'.format(node.name)
 
     # Statements ==========================================
 
@@ -114,7 +114,7 @@ class Printer(NodeWalker):
 
     def stmt_pcall(self, node, d):
         self.out(d, '{}({})'.format(
-            self.elem(node.name), self.expr_list(node.args)))
+            node.name, self.expr_list(node.args)))
 
     def stmt_ass(self, node, d):
         self.out(d, '{} := {}'.format(
@@ -187,10 +187,10 @@ class Printer(NodeWalker):
         return '({})'.format(self.expr(node.expr))
 
     def elem_sub(self, node):
-        return '{}[{}]'.format(self.elem(node.name), self.expr(node.expr))
+        return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_fcall(self, node):
-        return '{}({})'.format(self.elem(node.name), self.exprlist(node.args))
+        return '{}({})'.format(node.name, self.exprlist(node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)
@@ -205,5 +205,5 @@ class Printer(NodeWalker):
         return '{}'.format(node.value)
 
     def elem_id(self, node):
-        return node.value
+        return node.name
 

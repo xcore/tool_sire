@@ -74,102 +74,25 @@ class Decls(Node):
         s += ')'
         return s
 
-class DeclSingle(Node):
-    def __init__(self, name, type, expr, coord=None):
+class Decl(Node):
+    def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
-        self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_decl_single(self)
+        tag = visitor.visit_decl(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'DeclSingle('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class DeclArray(Node):
-    def __init__(self, name, type, expr, coord=None):
-        self.name = name
-        self.type = type
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_decl_array(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'DeclArray('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class DeclVal(Node):
-    def __init__(self, name, type, expr, coord=None):
-        self.name = name
-        self.type = type
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_decl_val(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'DeclVal('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class DeclPort(Node):
-    def __init__(self, name, type, expr, coord=None):
-        self.name = name
-        self.type = type
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_decl_port(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'DeclPort('
+        s =  'Decl('
         s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
@@ -196,60 +119,31 @@ class Defs(Node):
         s += ')'
         return s
 
-class DefProc(Node):
-    def __init__(self, name, type, formals, vardecls, stmt, coord=None):
+class Def(Node):
+    def __init__(self, name, type, formals, decls, stmt, coord=None):
         self.name = name
         self.type = type
         self.formals = formals
-        self.vardecls = vardecls
+        self.decls = decls
         self.stmt = stmt
         self.coord = coord
 
     def children(self):
         c = []
         if self.formals is not None: c.append(self.formals)
-        if self.vardecls is not None: c.append(self.vardecls)
+        if self.decls is not None: c.append(self.decls)
         if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_def_proc(self)
+        tag = visitor.visit_def(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'DefProc('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class DefFunc(Node):
-    def __init__(self, name, type, formals, vardecls, stmt, coord=None):
-        self.name = name
-        self.type = type
-        self.formals = formals
-        self.vardecls = vardecls
-        self.stmt = stmt
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.formals is not None: c.append(self.formals)
-        if self.vardecls is not None: c.append(self.vardecls)
-        if self.stmt is not None: c.append(self.stmt)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_def_func(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'DefFunc('
+        s =  'Def('
         s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
@@ -276,7 +170,7 @@ class Formals(Node):
         s += ')'
         return s
 
-class ParamSingle(Node):
+class Param(Node):
     def __init__(self, name, type, coord=None):
         self.name = name
         self.type = type
@@ -287,83 +181,14 @@ class ParamSingle(Node):
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_param_single(self)
+        tag = visitor.visit_param(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'ParamSingle('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class ParamAlias(Node):
-    def __init__(self, name, type, coord=None):
-        self.name = name
-        self.type = type
-        self.coord = coord
-
-    def children(self):
-        c = []
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_param_alias(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'ParamAlias('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class ParamVal(Node):
-    def __init__(self, name, type, coord=None):
-        self.name = name
-        self.type = type
-        self.coord = coord
-
-    def children(self):
-        c = []
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_param_val(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'ParamVal('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class ParamChanend(Node):
-    def __init__(self, name, type, coord=None):
-        self.name = name
-        self.type = type
-        self.coord = coord
-
-    def children(self):
-        c = []
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_param_chanend(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'ParamChanend('
+        s =  'Param('
         s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.1
+#! /usr/bin/env python3.1
 
 import sys
 import argparse
@@ -44,34 +44,35 @@ def setup_argparse():
 
 def read_input(filename):
     """ Read a file and return its contents as a string """
-    verbose_report("Reading input file '{}'...".format(filename))
+    verbose_report("Reading input file '{}'...\n".format(filename))
+    contents=None
     try:
         file = open(filename, 'r')
         contents = file.read()
         file.close()
-    except(IOError, (errno, stderror)):
-        print('I/O error({}): {}'.format(errno, stderror))
+    except IOError as err:
+        print('\nError reading input ({}): {}'.format(err.errno, err.strerror),
+                file=sys.stderr)
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
-    verbose_report("done.\n")
     return contents
 
 def write_output(buf, filename):
     """ Write the output to a file """
-    verbose_report("Writing output file '{}'...".format(filename))
+    verbose_report("Writing output file '{}'...\n".format(filename))
     try:
         file = open(filename, 'w')
         file.write(buf.getvalue())
         file.close()
     except IOError as err:
-        print('I/O error({}): {}'.format(err.errno, err.stderror))
+        print('\nError writing output ({}): {}'.format(err.errno, err.strerror),
+                file=sys.stderr)
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
-    verbose_report("done.\n")
 
 def parse(input, filename, error, logging=False):
     """ Parse an input string to produce an AST """
-    verbose_report("Parsing file '{}'...".format(filename))
+    verbose_report("Parsing file '{}'...\n".format(filename))
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,
@@ -84,15 +85,13 @@ def parse(input, filename, error, logging=False):
     parser = Parser(error, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
     program = parser.parse(input, filename, debug=log)
-    verbose_report("done.\n")
     return program
 
 def semantic_analysis(program, error):
     """ Perform semantic analysis on an AST """
-    verbose_report("Performing semantic analysis...")
+    verbose_report("Performing semantic analysis...\n")
     visitor = semantics.Semantics(error)
     program.accept(visitor)
-    verbose_report("done.\n")
 
 def pprint_ast(program):
     """ Pretty-print an AST in sire syntax """
@@ -106,11 +105,14 @@ def show_ast(program):
 
 def translate_ast(program, buf):
     """ Transform an AST into XC """
+    verbose_report("Translating AST...\n")
     walker = translate.Translate(buf)
     walker.walk_program(program)
    
 def verbose_report(msg):
-    if verbose: sys.stdout.write(msg)
+    if verbose: 
+        sys.stdout.write(msg)
+        sys.stdout.flush()
 
 def main(args):
         
@@ -124,7 +126,9 @@ def main(args):
     err = error.Error()
 
     # Read the input file and parse
-    input = read_input(a.infile) 
+    input = read_input(a.infile)
+    if not input:
+        return
     program = parse(input, a.infile, err)
     verbose_report('Completed parsing.')
 
@@ -152,7 +156,7 @@ def main(args):
 
     # Compile
     pass
-    os.remove(a.outfile)
+    #os.remove(a.outfile)
     if a.compile_only: return
 
     # Assemble and link with the runtime
