@@ -4,10 +4,11 @@ import semantics
 
 # Valid types that can be taken by each formal type
 param_conversions = {
-    Type('var',     'single') : [Type('var',  'single'), Type('var',  'sub')],
-    Type('val',     'single') : [Type('var',  'single'), Type('val',  'single')],
+    Type('var',     'single') : [Type('var',  'single'), Type('var', 'sub')],
+    Type('val',     'single') : [Type('var',  'single'), 
+        Type('val', 'single'), Type('var', 'sub')],
     Type('var',     'alias')  : [Type('var',  'array'),  Type('var',  'alias')],
-    Type('chanend', 'single') : [Type('chan', 'array'),  Type('chan', 'alias')],
+    Type('chanend', 'single') : [Type('chan', 'single'), Type('chan', 'sub')],
 }
 
 class SignatureTable(object):
@@ -30,8 +31,11 @@ class SignatureTable(object):
             return False
 
         # Compare each param type to the type of each expr argument
+        #print('Checking args for {}'.format(node.name))
         for (x, y) in zip(self.tab[node.name].params, node.args.expr):
             t = self.sem.get_expr_type(y)
+            #print('Arg type: {}'.format(t))
+
             # If argument y has no type, i.e. not defined
             if not t:
                 return False

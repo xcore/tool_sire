@@ -37,20 +37,19 @@ class Translate(NodeWalker):
                     [self.decl(x) for x in node.children()]))
         if len(node.children())>0: self.buf.write(';\n')
 
-    def decl_single(self, node):
-        return '{} {}'.format(node.type, node.name)
-    
-    def decl_array(self, node):
-        return '{} {}[{}]'.format(node.type, self.elem(node.name), 
-                    self.expr(node.expr) if node.expr else '')
-    
-    def decl_val(self, node):
-        return '{} := {}'.format(node.type.decl_str(node.name), 
-                    self.expr(node.expr))
-    
-    def decl_port(self, node):
-        return 'port {} : {}'.format(node.name, 
-                    self.expr(node.expr))
+    def decl(self, node):
+        s = '{}'.format(node.name)
+        if node.type.form == 'array':
+            s += '[{}]'.format(self.expr(node.expr))
+        elif node.type.form == 'alias':
+            s += '[]'
+        if node.type.specifier == 'val':
+            s = 'val {} := {}'.format(s, self.expr(node.expr))
+        elif node.type.specifier == 'port':
+            s = 'port {} : {}'.format(s, self.expr(node.expr))
+        else:
+            s = '{} {}'.format(node.type.specifier, s)
+        return s
 
     # Procedure declarations ==============================
 
@@ -58,16 +57,9 @@ class Translate(NodeWalker):
         for p in node.children():
             self.defn(p, d)
 
-    def def_proc(self, node, d):
-        self.buf.write('proc {}({}) is\n'.format(
-                node.name, self.formals(node.formals)))
-        self.decls(node.decls, d+1)
-        self.stmt(node.stmt, d+1)
-        self.buf.write('\n\n')
-    
-    def def_func(self, node, d):
-        self.buf.write('proc {}({}) is\n'.format(
-                node.name, self.formals(node.formals)))
+    def defn(self, node, d):
+        self.buf.write('{} {}({}) is\n'.format(
+                node.type.specifier, node.name, self.formals(node.formals)))
         self.decls(node.decls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
@@ -77,17 +69,15 @@ class Translate(NodeWalker):
     def formals(self, node):
         return ', '.join([self.param(x) for x in node.children()])
 
-    def param_var(self, node):
-        return '{}'.format(node.name)
-
-    def param_alias(self, node):
-        return '{}[]'.format(node.name)
-
-    def param_val(self, node):
-        return 'val {}'.format(node.name)
-    
-    def param_chanend(self, node):
-        return 'chanend {}'.format(node.name)
+    def param(self, node):
+        s = '{}'.format(node.name)
+        if node.type.form == 'alias':
+            s += '[]'
+        if node.type.specifier == 'var':
+            pass
+        else:
+            s = '{} {}'.format(node.type.specifier, s)
+        return s
 
     # Statements ==========================================
 

@@ -47,12 +47,18 @@ class Semantics(ast.NodeVisitor):
         # If its an expression group, get_expr_type
         if isinstance(elem, ast.ElemGroup):
             return self.get_expr_type(elem.expr)
-        # If its an identifer, look it up (if it exists)
-        elif isinstance(elem, ast.ElemId) or isinstance(elem, ast.ElemSub):
+        # If its a single identifer, look it up (if it exists)
+        elif isinstance(elem, ast.ElemId):
             if self.sym.check_decl(elem.name):
                 return self.sym.lookup(elem.name).type
             else:
-                self.nodecl_error(elem.name, 'variable or array', None)
+                self.nodecl_error(elem.name, 'single', None)
+        # If its a subscripted identifier, lookup and return subscripted type
+        elif isinstance(elem, ast.ElemSub):
+            if self.sym.check_decl(elem.name):
+                return self.sym.lookup(elem.name).type.subscriptOf()
+            else:
+                self.nodecl_error(elem.name, 'array', None)
         # Otherwise, return the specified elem type
         else:
             return elem_types[util.camel_to_under(elem.__class__.__name__)]
@@ -81,7 +87,7 @@ class Semantics(ast.NodeVisitor):
 
     def badargs_error(self, name, coord):
         """ No definition error """
-        self.error.report_error("invalid argumens for procedure '{}' "
+        self.error.report_error("invalid arguments for procedure '{}' "
                 .format(name), coord)
 
     def redecl_error(self, name, coord):
@@ -118,19 +124,7 @@ class Semantics(ast.NodeVisitor):
     def visit_decls(self, node):
         pass
 
-    def visit_decl_single(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_decl_array(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_decl_val(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_decl_port(self, node):
+    def visit_decl(self, node):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
@@ -139,38 +133,19 @@ class Semantics(ast.NodeVisitor):
     def visit_defs(self, node):
         pass
 
-    def visit_def_proc(self, node):
+    def visit_def(self, node):
         if self.sym.insert(node.name, node.type, node.coord):
-            self.sig.insert('proc', node)
+            self.sig.insert(node.type, node)
         else:
             self.redecl_error(node.name, node.coord)
         return 'proc'
-    
-    def visit_def_func(self, node):
-        if self.sym.insert(node.name, node.type, node.coord):
-            self.sig.insert('func', node)
-        else:
-            self.redecl_error(node.name, node.coord)
-        return 'func'
     
     # Formals =============================================
     
     def visit_formals(self, node):
         pass
 
-    def visit_param_single(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_param_alias(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_param_val(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
-            self.redecl_error(node.name, node.coord)
-
-    def visit_param_chanend(self, node):
+    def visit_param(self, node):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 

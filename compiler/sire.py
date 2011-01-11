@@ -28,11 +28,13 @@ def setup_argparse():
             help='specify the output filename')
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
+    p.add_argument('-r', '--parse', action='store_true', dest='parse_only', 
+            help='parse the input file and quit')
     p.add_argument('-s', '--sem', action='store_true', dest='sem_only', 
             help='perform semantic analysis and quit')
-    p.add_argument('-a', '--ast', action='store_true', dest='show_ast',
+    p.add_argument('-a', '--display-ast', action='store_true', dest='show_ast',
             help='display the AST and quit')
-    p.add_argument('-p', '--pprint', action='store_true', dest='pprint',
+    p.add_argument('-p', '--pprint-ast', action='store_true', dest='pprint',
             help='pretty-print the AST and quit')
     p.add_argument('-t', '--translate', action='store_true',
             dest='translate_only',
@@ -130,7 +132,8 @@ def main(args):
     if not input:
         return
     program = parse(input, a.infile, err)
-    verbose_report('Completed parsing.')
+    if a.parse_only:
+        return
 
     # Perform semantic analysis
     semantic_analysis(program, err)

@@ -29,16 +29,7 @@ class Dump(NodeVisitor):
     def visit_decls(self, node):
         self.out(node)
 
-    def visit_decl_single(self, node):
-        self.out(node)
-
-    def visit_decl_array(self, node):
-        self.out(node)
-
-    def visit_decl_val(self, node):
-        self.out(node)
-
-    def visit_decl_port(self, node):
+    def visit_decl(self, node):
         self.out(node)
 
     # Procedure declarations ==============================
@@ -46,10 +37,7 @@ class Dump(NodeVisitor):
     def visit_defs(self, node):
         self.out(node)
             
-    def visit_def_proc(self, node):
-        self.out(node)
-    
-    def visit_def_func(self, node):
+    def visit_def(self, node):
         self.out(node)
     
     # Formals =============================================
@@ -57,16 +45,7 @@ class Dump(NodeVisitor):
     def visit_formals(self, node):
         self.out(node)
         
-    def visit_param_var(self, node):
-        self.out(node)
-
-    def visit_param_alias(self, node):
-        self.out(node)
-
-    def visit_param_val(self, node):
-        self.out(node)
-
-    def visit_param_chanend(self, node):
+    def visit_param(self, node):
         self.out(node)
 
     # Statements ==========================================

@@ -75,9 +75,10 @@ class Decls(Node):
         return s
 
 class Decl(Node):
-    def __init__(self, name, type, coord=None):
+    def __init__(self, name, type, expr, coord=None):
         self.name = name
         self.type = type
+        self.expr = expr
         self.coord = coord
 
     def children(self):
@@ -93,7 +94,7 @@ class Decl(Node):
 
     def __repr__(self):
         s =  'Decl('
-        s += ', '.join('%s' % v for v in [self.name, self.type])
+        s += ', '.join('%s' % v for v in [self.name, self.type, self.expr])
         s += ')'
         return s
 

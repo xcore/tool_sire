@@ -90,7 +90,7 @@ class Parser(object):
     # Var declaration
     def p_var_decl_var(self, p):
         'var_decl : type name'
-        p[0] = ast.Decl(p[2], Type(p[1], 'single', None), 
+        p[0] = ast.Decl(p[2], Type(p[1], 'single'), None, 
                 self.coord(p))
 
     # Array declaration
@@ -98,19 +98,19 @@ class Parser(object):
         '''var_decl : type name LBRACKET RBRACKET
                     | type name LBRACKET expr RBRACKET'''
         p[0] = ast.Decl(p[2], 
-                Type(p[1], 'array' if len(p)==6 else 'alias', 
-                p[4] if len(p)==6 else None, self.coord(p)))
+                Type(p[1], 'array' if len(p)==6 else 'alias'), 
+                p[4] if len(p)==6 else None, self.coord(p))
 
     # Val declaration
     def p_var_decl_val(self, p):
         'var_decl : VAL name ASS expr'
-        p[0] = ast.Decl(p[2], Type('val', 'single', p[4]), 
+        p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], 
                 self.coord(p))
 
     # Port declaration
     def p_var_decl_port(self, p):
         'var_decl : PORT name COLON expr'
-        p[0] = ast.Decl(p[2], Type('port', 'single', p[4]), 
+        p[0] = ast.Decl(p[2], Type('port', 'single'), p[4], 
                 self.coord(p))
 
     # Variable types

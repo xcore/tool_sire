@@ -15,12 +15,13 @@ forms = {
     'single'    : 1, 
     'array'     : 2, 
     'alias'     : 3, 
-    'sub'       : 4,
+    'sub'       : 4, 
     'procedure' : 5,
 }
 
 class Type(object):
-    def __init__(self, specifier, form='undefined', expr=None):
+    """ A type class, where a type has a specifier and a form """
+    def __init__(self, specifier, form='undefined'):
         if not specifier in specifiers:
             raise Exception("Invalid specifier '{}'".format(specifier))
         if not form in forms:
@@ -29,7 +30,12 @@ class Type(object):
         self.form = form
 
     def isTag(self):
+        """ Check if this type is a tag """
         return self.specifier == 'tag'
+
+    def subscriptOf(self):
+        """ Return a subscripted type of this type """
+        return Type(self.specifier, 'sub')
 
     def __hash__(self):
         return specifiers[self.specifier] + 10*forms[self.form]
@@ -42,9 +48,4 @@ class Type(object):
 
     def __repr__(self):
         return "Type({}, {})".format(self.specifier, self.form)
-    
-    def decl_str(self, name):
-        return "{} {} {}".format(self.specifier, name, self.form)
-    
-    def param_str(self, name):
-        return "{} {}".format(self.specifier, name, self.form)
+
