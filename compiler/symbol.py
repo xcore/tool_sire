@@ -54,7 +54,7 @@ class SymbolTable(object):
             print("Inserted sym '{}' {} in scope '{}'"
                     .format(name, type, self.curr_scope))
 
-    def insert(self, name, type, coord):
+    def insert(self, name, type, coord=None):
         """ Insert a new symbol in the table if it doesn't already exisit in the
             current scope """
         if not self.lookup_scoped(name):
@@ -81,6 +81,12 @@ class SymbolTable(object):
         """ Check a symbol has been declared with the correct form """
         if key in self.tab:
             return any(x == self.tab[key].type.form for x in forms)
+        return False
+
+    def check_type(self, key, types):
+        """ Check a symbol has been declared with the correct form """
+        if key in self.tab:
+            return any(x == self.tab[key].type for x in types)
         return False
 
     def mark_decl(self, key):

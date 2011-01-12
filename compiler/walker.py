@@ -16,9 +16,9 @@ class NodeWalker(object):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))
         return f(node)
     
-    def stmt(self, node, d):
+    def stmt(self, node):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))
-        return f(node, d)
+        return f(node)
     
     def expr(self, node):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))

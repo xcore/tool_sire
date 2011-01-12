@@ -454,15 +454,14 @@ class StmtOn(Node):
         return s
 
 class StmtConnect(Node):
-    def __init__(self, left, core, dest, coord=None):
-        self.left = left
+    def __init__(self, src, core, dest, coord=None):
+        self.src = src
         self.core = core
         self.dest = dest
         self.coord = coord
 
     def children(self):
         c = []
-        if self.left is not None: c.append(self.left)
         if self.core is not None: c.append(self.core)
         if self.dest is not None: c.append(self.dest)
         return tuple(c)
@@ -476,19 +475,19 @@ class StmtConnect(Node):
 
     def __repr__(self):
         s =  'StmtConnect('
+        s += ', '.join('%s' % v for v in [self.src])
         s += ')'
         return s
 
 class StmtAliases(Node):
-    def __init__(self, left, name, expr, coord=None):
-        self.left = left
+    def __init__(self, dest, name, expr, coord=None):
+        self.dest = dest
         self.name = name
         self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.left is not None: c.append(self.left)
         if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
@@ -501,7 +500,7 @@ class StmtAliases(Node):
 
     def __repr__(self):
         s =  'StmtAliases('
-        s += ', '.join('%s' % v for v in [self.name])
+        s += ', '.join('%s' % v for v in [self.dest, self.name])
         s += ')'
         return s
 

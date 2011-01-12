@@ -150,8 +150,7 @@ class Printer(NodeWalker):
 
     def stmt_aliases(self, node, d):
         self.out(d, '{} aliases {}[{}..]'.format(
-            self.elem(node.left), self.elem(node.name), 
-            self.expr(node.expr)))
+            node.dest, node.name, self.expr(node.expr)))
 
     def stmt_return(self, node, d):
         self.out(d, 'return {}'.format(self.expr(node.expr)))

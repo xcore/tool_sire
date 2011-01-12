@@ -23,8 +23,8 @@ def setup_argparse():
     p = argparse.ArgumentParser(description='sire compiler')
     p.add_argument('infile', metavar='<input-file>', default=DEFAULT_INPUT_FILE,
             help='specify the input filename')
-    p.add_argument('-o', nargs=1, metavar='<file>', dest='outfile',
-            default=DEFAULT_OUTPUT_FILE,
+    p.add_argument('-o', nargs=1, metavar='<file>', 
+            dest='outfile', default=DEFAULT_OUTPUT_FILE,
             help='specify the output filename')
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
@@ -94,6 +94,7 @@ def semantic_analysis(program, error):
     verbose_report("Performing semantic analysis...\n")
     visitor = semantics.Semantics(error)
     program.accept(visitor)
+    return visitor
 
 def pprint_ast(program):
     """ Pretty-print an AST in sire syntax """
@@ -105,10 +106,10 @@ def show_ast(program):
     visitor = dump.Dump()
     program.accept(visitor)
 
-def translate_ast(program, buf):
+def translate_ast(program, semantics, buf):
     """ Transform an AST into XC """
     verbose_report("Translating AST...\n")
-    walker = translate.Translate(buf)
+    walker = translate.Translate(semantics, buf)
     walker.walk_program(program)
    
 def verbose_report(msg):
@@ -136,7 +137,7 @@ def main(args):
         return
 
     # Perform semantic analysis
-    semantic_analysis(program, err)
+    sem = semantic_analysis(program, err)
     if a.sem_only:
         return
 
@@ -152,9 +153,9 @@ def main(args):
    
     # Translate the AST
     buf = io.StringIO()
-    translate_ast(program, buf)
-    if a.translate_only: 
-        write_output(buf, a.outfile)
+    translate_ast(program, sem, buf)
+    if a.translate_only:
+        write_output(buf, DEFAULT_TRANSLATION_FILE)
         return
 
     # Compile

@@ -271,7 +271,7 @@ class Parser(object):
         p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
 
     def p_stmt_aliases(self, p):
-        'stmt : elem_name ALIASES elem_name LBRACKET expr DOTS RBRACKET'
+        'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
         p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
 
     def p_stmt_return(self, p):
@@ -352,9 +352,9 @@ class Parser(object):
         p[0] = ast.ElemId(p[1], self.coord(p)) 
 
     # To force use of an identifier, e.g. with alias
-    def p_elem_name_(self, p):
-        'elem_name : name'
-        p[0] = ast.ElemId(p[1], self.coord(p)) 
+    #def p_elem_name_(self, p):
+    #    'elem_name : name'
+    #    p[0] = ast.ElemId(p[1], self.coord(p)) 
 
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'

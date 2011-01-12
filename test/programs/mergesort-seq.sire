@@ -1,4 +1,3 @@
-port led : 0x00010600;
 val LENGTH := 1500;
 var a[LENGTH];
 
@@ -31,8 +30,7 @@ proc msort(array[], val len) is
   var b[]; 
   var i;
   var j;
-{ led ! 1
-; if len > 1 then 
+{ if len > 1 then 
   { i := len / 2
   ; j := len - i
   ; a aliases array[0..]
@@ -50,4 +48,6 @@ proc main() is
 { for i:=0 to LENGTH-1 do 
     a[i] := LENGTH-i
 ; msort(a, LENGTH)
+; for i:=0 to LENGTH-1 do
+    printval(a[i])
 }

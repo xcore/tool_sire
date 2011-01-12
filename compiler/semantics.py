@@ -4,6 +4,7 @@ import util
 import ast
 import symbol
 import signature
+from builtin import functions
 from type import Type
 
 SYS_CORE_ARRAY = 'core'
@@ -14,10 +15,10 @@ elem_types = {
     'elem_id'      : None,
     'elem_group'   : None,
     'elem_fcall'   : Type('var', 'single'),
-    'elem_number'  : Type('var', 'single'),
-    'elem_boolean' : Type('var', 'single'),
     'elem_string'  : Type('var', 'array'),
-    'elem_char'    : Type('var', 'single'),
+    'elem_number'  : Type('val', 'single'),
+    'elem_boolean' : Type('val', 'single'),
+    'elem_char'    : Type('val', 'single'),
 }
 
 class Semantics(ast.NodeVisitor):
@@ -27,12 +28,20 @@ class Semantics(ast.NodeVisitor):
         self.depth = 0
         self.error = error
         self.sym = symbol.SymbolTable(self, debug=False)
-        self.sig = signature.SignatureTable(self)
+        self.sig = signature.SignatureTable(self, debug=False)
+        self.init_system()
 
+    def init_system(self):
+        """ """
         # Add system variables core, chan
         self.sym.begin_scope('system')
-        self.sym.insert(SYS_CORE_ARRAY, Type('core', 'array'), None)
-        self.sym.insert(SYS_CHAN_ARRAY, Type('chanend', 'array'), None)
+        self.sym.insert(SYS_CORE_ARRAY, Type('core', 'array'))
+        self.sym.insert(SYS_CHAN_ARRAY, Type('chanend', 'array'))
+
+        # Add builtin functions
+        for x in functions:
+            self.sym.insert(x.name, x.type)
+            self.sig.insert(x.type, x)
 
     def down(self, tag):
         """ Begin a new scope """
@@ -173,8 +182,7 @@ class Semantics(ast.NodeVisitor):
 
     def visit_stmt_ass(self, node):
         if not self.check_elem_types(node.left, 
-                [Type('var', 'single'), Type('var', 'array'), 
-                    Type('var', 'alias')]):
+                [Type('var', 'single'), Type('var', 'sub')]):
             self.type_error('assignment', node.left.name, node.coord)
 
     def visit_stmt_in(self, node):
@@ -201,14 +209,13 @@ class Semantics(ast.NodeVisitor):
             self.type_error('on target', node.core, node.coord)
 
     def visit_stmt_connect(self, node):
-        if not self.check_elem_types(node.core, [Type('core', 'sub')]):
+        if not self.sym.check_type(node.core, [Type('core', 'sub')]):
             self.type_error('connect target', node.core, node.coord)
 
     def visit_stmt_aliases(self, node):
-        if not self.check_elem_types(node.left, [Type('var', 'alias')]):
+        if not self.sym.check_form(node.dest, ['alias']):
             self.type_error('alias', node.left, node.coord)
-        if not self.check_elem_types(node.name, 
-                [Type('var', 'array'), Type('var', 'alias')]):
+        if not self.sym.check_form(node.name, ['var', 'alias']):
             self.type_error('alias', node.name, node.coord)
 
     def visit_stmt_return(self, node):
@@ -236,7 +243,7 @@ class Semantics(ast.NodeVisitor):
     def visit_expr_binop(self, node):
         if not self.check_elem_types(node.elem, 
                 [Type('var', 'single'), Type('var', 'array'), 
-                    Type('var', 'alias'), Type('val', 'single')]):
+                    Type('var', 'sub'), Type('val', 'single')]):
             self.type_error('binop dest', node.elem, node.coord)
     
     # Elements= ===========================================
