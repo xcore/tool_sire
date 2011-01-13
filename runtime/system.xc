@@ -1,5 +1,5 @@
 #include <xs1.h>
-#include "../include/platform.h"
+#include "../include/numcores.h"
 #include "../include/definitions.h"
 #include "globals.h"
 #include "util.h"
@@ -131,11 +131,11 @@ void syncCores() {
     // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
     if(coreId == 0) {
         cfgWrite(c, 1);
-        while(cfgRead(c) != NUM_CORES);
+        while(cfgRead(c) != NUM_CORES) continue;
     }
     // Otherwise wait until the value reaches coreId and write coreId+1
     else {
-        while(cfgRead(c) != coreId);
+        while(cfgRead(c) != coreId) continue;
         cfgWrite(c, coreId+1);
     }
 }

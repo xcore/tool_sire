@@ -2,24 +2,36 @@
 #include "util.h"
 #include "../include/definitions.h"
 
+// Create a channel resource identifier with a particular count
+//static inline
+unsigned chanResId(unsigned id, int counter) {
+    return destResId(id) | counter << 8;    
+}
+
+// Generate a configuration resource identifier
+//static inline
+unsigned genCRI(unsigned nodeId) {
+    return nodeId << 24 | XS1_CT_SSCTRL << 8 | 12;
+}
+
+// Raise an exception in the event of an error
+//static inline
+void raiseException() {
+    asm("ldc r11, 0\n\tecallf r11" ::: "r11");
+}
+
+// Exception error
+//static inline
+void error() {
+    asm("waiteu");
+}
+
 // Get the id of this thread
 unsigned getThreadId() {
     unsigned threadId;
     asm("get r11, id\n\t"
         "mov %0, r11" : "=r"(threadId) :: "r11");
     return threadId;
-}
-
-// Create a channel resource identifier with a particular count
-static inline
-unsigned chanResId(unsigned id, int counter) {
-    return destResId(id) | counter << 8;    
-}
-
-// Generate a configuration resource identifier
-static inline
-unsigned genCRI(unsigned nodeId) {
-    return nodeId << 24 | XS1_CT_SSCTRL << 8 | 12;
 }
 
 // Given a resource id, return the node identifer
@@ -47,7 +59,7 @@ unsigned destResId(unsigned dest) {
     return n | (dest % CORES_PER_NODE) << 16 | 0x2;
 }
 
-static inline
+/*static inline
 int TESTCT(unsigned c) {
    int r;
    asm("testct %0, res[%1]" : "=r"(r) : "r"(c));
@@ -74,17 +86,5 @@ unsigned GETR_CHANEND() {
    unsigned c;
    asm("getr %0, 2":"=r"(c));
    return c;
-}
-
-// Raise an exception in the event of an error
-static inline
-void raiseException() {
-    asm("ldc r11, 0\n\tecallf r11" ::: "r11");
-}
-
-// Exception error
-static inline
-void error() {
-    asm("waiteu");
-}
+}*/
 

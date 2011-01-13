@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Network xmlns="http://www.xmos.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
+	<Type>XMP-16 Board</Type>
+	
+	<Declarations>
+		<Declaration>core stdcore[16]</Declaration>
+	</Declarations>
+
+	<Nodes>
+		<Node Id="0" Type="XS1-G4A-FB512">
+			<Core Number="0" Reference="stdcore[0]">
+				<Port Location="XS1_PORT_1E" Name="PORT_LED_0"/>
+			</Core>  
+            <Core Number="1" Reference="stdcore[1]"/>
+            <Core Number="2" Reference="stdcore[2]"/>
+            <Core Number="3" Reference="stdcore[3]"/>
+		</Node>
+		<Node id="1" Type="XS1-G4A-FB512">
+			<Core Number="0" Reference="stdcore[4]">
+				<Port Location="XS1_PORT_1E" Name="PORT_LED_1"/>
+			</Core>
+			<Core Number="1" Reference="stdcore[5]"/>
+			<Core Number="2" Reference="stdcore[6]"/>
+			<Core Number="3" Reference="stdcore[7]"/>
+		</Node>
+		<Node id="2" Type="XS1-G4A-FB512">
+			<Core Number="0" Reference="stdcore[8]">
+				<Port Location="XS1_PORT_1E" Name="PORT_LED_2"/>
+			</Core>
+			<Core Number="1" Reference="stdcore[9]"/>
+			<Core Number="2" Reference="stdcore[10]"/>
+			<Core Number="3" Reference="stdcore[11]"/>
+		</Node>
+		<Node id="3" Type="XS1-G4A-FB512">
+			<Core Number="0" Reference="stdcore[12]">
+				<Port Location="XS1_PORT_1E" Name="PORT_LED_3"/>
+			</Core>
+			<Core Number="1" Reference="stdcore[13]"/>
+			<Core Number="2" Reference="stdcore[14]"/>
+			<Core Number="3" Reference="stdcore[15]"/>
+		</Node>
+	</Nodes>
+
+	<Links>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint NodeId="0" Link="2"/> <LinkEndpoint Nodeid="2" Link="14"/> </Link>  
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint NodeId="0" Link="6"/> <LinkEndpoint Nodeid="2" Link="10"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint NodeId="0" Link="4"/> <LinkEndpoint Nodeid="2" Link="8"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint NodeId="0" Link="0"/> <LinkEndpoint Nodeid="2" Link="12"/> </Link>
+        
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="2"/> <LinkEndpoint NodeId="0" Link="14"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="6"/> <LinkEndpoint NodeId="0" Link="10"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="4"/> <LinkEndpoint NodeId="0" Link="8"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="0"/> <LinkEndpoint NodeId="0" Link="12"/> </Link>
+        
+        <Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="2" Link="2"/> <LinkEndpoint Nodeid="3" Link="14"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="2" Link="6"/> <LinkEndpoint Nodeid="3" Link="10"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="2" Link="4"/> <LinkEndpoint Nodeid="3" Link="8"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="2" Link="0"/> <LinkEndpoint Nodeid="3" Link="12"/> </Link>
+        
+        <Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="3" Link="6"/> <LinkEndpoint Nodeid="1" Link="10"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="3" Link="4"/> <LinkEndpoint Nodeid="1" Link="8"/> </Link>
+		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="3" Link="0"/> <LinkEndpoint Nodeid="1" Link="12"/> </Link>
+	</Links>
+
+    <JTAGChain>
+		<JTAGDevice Nodeid="2"/>
+		<JTAGDevice Nodeid="3"/>
+		<JTAGDevice Nodeid="1"/>
+		<JTAGDevice NodeId="0"/>
+    </JTAGChain>
+
+</Network>

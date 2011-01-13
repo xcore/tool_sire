@@ -1,6 +1,6 @@
 #include <platform.h>
+#include "../include/numcores.h"
 #include "../include/definitions.h"
-#include "../include/platform.h"
 #include "globals.h"
 #include "system.h"
 

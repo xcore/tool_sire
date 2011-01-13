@@ -28,6 +28,7 @@ op_conversion = {
 }
 
 proc_conversion = {
+    'main'     : '_main',
     'printval' : 'printint',
     'printstr' : 'printstr',
 }
@@ -117,6 +118,14 @@ class Translate(NodeWalker):
             self.blocker.end()
         else:
             self.stmt(stmt)
+        
+    def procedure_name(self, name):
+        """ If a procedure name has a conversion, return it """
+        # Check for conversion (TODO: neaten this)
+        if name in proc_conversion:
+            return proc_conversion[name] 
+        else:
+            return name
 
     def header(self):
         self.buf.write('#include <xs1.h>\n')
@@ -168,12 +177,11 @@ class Translate(NodeWalker):
     def defn(self, node, d):
         self.out('#pragma unsafe arrays')
         s = ''
-        if node.type.specifier == 'proc':
-            s += 'void'
-        elif node.type.specifier == 'func':
-            s += 'int'
+        if node.type.specifier == 'proc':   s += 'void'
+        elif node.type.specifier == 'func': s += 'int'
         s += ' {}({})'.format(
-                node.name, self.formals(node.formals))
+                self.procedure_name(node.name), 
+                self.formals(node.formals))
         self.out(s)
         self.blocker.begin()
         self.decls(node.decls)
@@ -220,12 +228,8 @@ class Translate(NodeWalker):
         pass
 
     def stmt_pcall(self, node):
-        name = node.name
-        # Check for conversion (TODO: neaten this)
-        if node.name in proc_conversion:
-            name = proc_conversion[node.name] 
         self.out('{}({});'.format(
-            name, self.expr_list(node.args)))
+            self.procedure_name(node.name), self.expr_list(node.args)))
 
     def stmt_ass(self, node):
         self.out('{} = {};'.format(

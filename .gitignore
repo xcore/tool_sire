@@ -8,6 +8,7 @@
 compiler/parsetab.py
 compiler/parselog.txt
 compiler/parser.out
+include/numcores.h
 parsetab.py
 parselog.txt
 parser.out
@@ -16,3 +17,4 @@ out.x[ce]
 a.out
 a.xe
 test.sire
+*.o
