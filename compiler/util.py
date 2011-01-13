@@ -31,6 +31,9 @@ def write_file(filename, s):
         raise Exception('Unexpected error:', sys.exc_info()[0])
 
 def camel_to_under(s):
-    return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", lambda m:
-            '{}_{}'.format(m.group(3), m.group(4)), s).lower()
+    return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", 
+            lambda m: '{}_{}'.format(m.group(3), m.group(4)), s).lower()
+
+def indexed_dict(elements):
+    return dict([(e,i) for i, e in list(enumerate(elements))])
 

@@ -67,7 +67,4 @@
 #define S_(x) #x
 #define S(x) S_(x)
 
-// Hypercube neighbour
-#define HNBR(node, d) (node ^ (0x1 << d))
-
 #endif

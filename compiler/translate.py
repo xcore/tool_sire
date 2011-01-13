@@ -28,7 +28,6 @@ op_conversion = {
 }
 
 proc_conversion = {
-    'main'     : '_main',
     'printval' : 'printint',
     'printstr' : 'printstr',
 }
@@ -129,9 +128,8 @@ class Translate(NodeWalker):
 
     def header(self):
         self.buf.write('#include <xs1.h>\n')
-        self.buf.write('#include <platform.h>\n')
         self.buf.write('#include <print.h>\n')
-    
+   
     # Program ============================================
 
     def walk_program(self, node):

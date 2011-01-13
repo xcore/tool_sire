@@ -29,6 +29,7 @@ class Semantics(ast.NodeVisitor):
         self.error = error
         self.sym = symbol.SymbolTable(self, debug=False)
         self.sig = signature.SignatureTable(self, debug=False)
+        self.proc_names = []
         self.init_system()
 
     def init_system(self):
@@ -143,10 +144,14 @@ class Semantics(ast.NodeVisitor):
         pass
 
     def visit_def(self, node):
+        # Rename main to avoid conflicts in linking
+        if node.name == 'main':
+            node.name = '_' + node.name
         if self.sym.insert(node.name, node.type, node.coord):
             self.sig.insert(node.type, node)
         else:
             self.redecl_error(node.name, node.coord)
+        self.proc_names.append(node.name)
         return 'proc'
     
     # Formals =============================================

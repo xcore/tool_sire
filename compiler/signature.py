@@ -31,8 +31,14 @@ class SignatureTable(object):
             return False
 
         # Compare each param type to the type of each expr argument
-        if(self.debug):
+        if self.debug:
             print('Checking args for {}'.format(node.name))
+
+        # If there are no parameters, we don't need to check
+        if not self.tab[node.name].params:
+            return True
+
+        # Otherwise check them
         for (x, y) in zip(self.tab[node.name].params, node.args.expr):
             t = self.sem.get_expr_type(y)
             if(self.debug):

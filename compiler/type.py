@@ -1,23 +1,10 @@
-specifiers = {
-    'proc'      : 0, 
-    'func'      : 1, 
-    'var'       : 2, 
-    'val'       : 3, 
-    'chanend'   : 4, 
-    'chan'      : 5, 
-    'port'      : 6, 
-    'core'      : 7,
-    'tag'       : 8,
-}
+from util import indexed_dict
 
-forms = {
-    'undefined' : 0,   
-    'single'    : 1, 
-    'array'     : 2, 
-    'alias'     : 3, 
-    'sub'       : 4, 
-    'procedure' : 5,
-}
+specifier_names = ['proc','func', 'var', 'val', 'chanend', 'chan', 'port', 'core', 'tag']
+specifiers = indexed_dict(specifier_names)
+
+form_names = ['undefined', 'single', 'array', 'alias', 'sub', 'procedure']
+forms = indexed_dict(form_names)
 
 class Type(object):
     """ A type class, where a type has a specifier and a form """

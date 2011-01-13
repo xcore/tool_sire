@@ -15,10 +15,11 @@ import dump
 import printer
 import semantics
 import translate
+import tables
 import build
 
 # Constants
-DEFAULT_TRANSLATION_FILE = 'a.xc'
+DEFAULT_TRANSLATION_FILE = 'program.xc'
 DEFAULT_INPUT_FILE       = 'stdin'
 DEFAULT_OUTPUT_FILE      = 'a.out'
 PARSE_LOG_FILE           = 'parselog.txt'
@@ -83,22 +84,30 @@ def semantic_analysis(program, error):
     program.accept(visitor)
     return visitor
 
-def translate_ast(program, semantics, buf):
+def translate_ast(program, sem, program_buf, jumptab_buf, sizetab_buf):
     """ Transform an AST into XC 
     """
     verbose_msg("Translating AST\n")
-    walker = translate.Translate(semantics, buf)
+
+    # Translate the AST
+    walker = translate.Translate(semantics, program_buf)
     walker.walk_program(program)
 
-def build_(buf, numcores, compile_only):
+    # Output the jump table
+    tables.build_jumptab(jumptab_buf, sem.proc_names)
+
+    # Output the size table
+    tables.build_sizetab(sizetab_buf, sem.proc_names)
+
+def build_(program_buf, jumptab_buf, sizetab_buf, numcores, compile_only):
     """ Build the program executable 
     """
     verbose_msg("Building executable\n")
-    builder = build.Build(buf, numcores, verbose=True)
+    builder = build.Build(numcores, verbose=True)
     if compile_only:
-        builder.compile()
+        builder.compile(program_buf)
     else:
-        builder.run()
+        builder.run(program_buf, jumptab_buf, sizetab_buf)
 
 def verbose_msg(msg):
     if verbose: 
@@ -142,14 +151,16 @@ def main(args):
         return
    
     # Translate the AST
-    buf = io.StringIO()
-    translate_ast(program, sem, buf)
+    program_buf = io.StringIO()
+    jumptab_buf = io.StringIO()
+    sizetab_buf = io.StringIO()
+    translate_ast(program, sem, program_buf, jumptab_buf, sizetab_buf)
     if a.translate_only:
-        write_file(DEFAULT_TRANSLATION_FILE, buf.getvalue())
+        util.write_file(DEFAULT_TRANSLATION_FILE, program_buf.getvalue())
         return
 
     # Compile, assemble and link with the runtime
-    build_(buf, a.numcores, a.compile_only)
+    build_(program_buf, jumptab_buf, sizetab_buf, a.numcores, a.compile_only)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))
