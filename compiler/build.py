@@ -2,8 +2,8 @@ import sys
 import os
 import io
 import util
+import glob
 import subprocess
-import assembly
 from math import floor
 
 RUNTIME_DIR    = 'runtime'
@@ -20,6 +20,7 @@ MASTER_XE      = 'master.xe'
 SLAVE_XE       = 'slave.xe'
 
 XCC            = 'xcc'
+XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
 COMPILE_FLAGS  = ['-S', '-O2']
 ASSEMBLE_FLAGS = ['-c', '-O2']
@@ -52,7 +53,7 @@ class Build(object):
         self.sem = semantics
         self.verbose = verbose
 
-    def run(self, program_buf):
+    def run(self, program_buf, outfile):
         """ Run the full build
         """
         e = False
@@ -64,24 +65,29 @@ class Build(object):
         self.build_sizetab(sizetab_buf)
         
         self.create_headers()
-        if not e: e = self.compile_buf(PROGRAM, program_buf, False)
+        if not e: e = self.compile_buf(PROGRAM, program_buf)
         if not e: 
             program_buf.close()
             program_buf = io.StringIO()
-            self.extract_asm(PROGRAM_ASM, program_buf)
-        if not e: self.assemble_buf(PROGRAM, 'S', program_buf, False)
+            self.insert_labels(PROGRAM_ASM, program_buf)
+        if not e: e = self.assemble_buf(PROGRAM, 'S', program_buf)
         if not e: e = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
         if not e: e = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
         if not e: e = self.assemble_runtime()
         if not e: e = self.link_master()
-        #if not e: e = self.link_slave()
-        #if not e: e = self.replace_slaves()
-        self.cleanup()
+        if not e: e = self.link_slave()
+        if not e: e = self.replace_slaves()
+        self.cleanup(outfile)
 
-    def compile(self, program_buf):
+    def compile(self, buf, outfile):
         """ Compile the program only
         """
-        self.compile_buf('program', program_buf)
+        self.compile_buf(PROGRAM, buf)
+        buf.close()
+        buf = io.StringIO()
+        self.insert_labels(PROGRAM_ASM, buf)
+        util.write_file(PROGRAM_ASM, buf.getvalue())
+        os.rename(PROGRAM_ASM, outfile)
 
     def create_headers(self):
         self.verbose_msg('Creating header '+NUMCORES_HDR)
@@ -89,7 +95,8 @@ class Build(object):
                 '#define NUM_CORES {}'.format(self.numcores));
 
     def compile_buf(self, name, buf, cleanup=True):
-        """ Compile a buffer containing an XC program """
+        """ Compile a buffer containing an XC program
+        """
         srcfile = name + '.xc'
         outfile = name + '.S'
         self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
@@ -100,12 +107,16 @@ class Build(object):
         return e
 
     def assemble_buf(self, name, ext, buf, cleanup=True):
-        """ Assemble a buffer containing an XC or assembly program """
+        """ Assemble a buffer containing an XC or assembly program
+        """
         srcfile = name + '.' + ext
         outfile = name + '.o'
         self.verbose_msg('Assembling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
-        e = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
+        if ext == 'xc':
+            e = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
+        elif ext == 'S':
+            e = util.call([XAS, srcfile, '-o', outfile])
         if cleanup: 
             os.remove(srcfile)
         return e
@@ -124,84 +135,74 @@ class Build(object):
         return e
 
     def link_master(self):
-        self.verbose_msg('Linking master')
+        self.verbose_msg('Linking master -> '+MASTER_XE)
         e = util.call([XCC, self.target(), 
             '-first '+MASTER_JUMPTAB+'.o', MASTER_SIZETAB+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
             'program.o',
-            'util.xc.o', '-o '+MASTER_XE] + LINK_FLAGS)
+            'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS)
         return e
 
     def link_slave(self):
-        self.verbose_msg('Linking slave')
+        self.verbose_msg('Linking slave -> '+SLAVE_XE)
         e = util.call([XCC, self.target(), 
             '-first slavejumptab.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
-            'slave.xc.o',
-            'util.xc.o', '-o '+SLAVE_XE] + LINK_FLAGS)
+            'slave.S.o',
+            'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS)
         return e
 
     def replace_slaves(self):
         self.verbose_msg('Splitting slave')
-        e = util.call([XOBJDUMP, '--split', SLAVE_XE, '>/dev/null'])
+        e = util.call([XOBJDUMP, '--split', SLAVE_XE])
         for x in range(self.numcores):
             node = floor(x / CORES_PER_NODE)
             core = floor(x % CORES_PER_NODE)
             if core == 0:
-                self.verbose_msg('  Replacing node {}, core 0'.format(node))
+                self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
+                        end='')
             else:
-                self.verbose_msg('{}'.format(core))
-            e = util.call([XOBJDUMP], MASTER_XE, 
-                    '-r {},{},image_n0c0.elf'.format(node, core),
-                    '> /dev/null')
+                self.verbose_msg(', {}'.format(core), end='')
+            e = util.call([XOBJDUMP, MASTER_XE, 
+                    '-r', '{},{},image_n0c0.elf'.format(node, core)])
+        self.verbose_msg('')
         return e
 
-    def extract_asm(self, file, buf):
-        """ Extact relevant sections from generated assembly file """
-        # *Assume function definitions will come first
+    def insert_labels(self, file, buf):
+        """ Insert top and bottom labels for each function 
+        """
+        # Look for the structure and insert:
+        # > .globl <bottom-label>
+        #   foo:
+        #     ...
+        # > <bottom-label>
+        #   .cc_bottom foo.function
         
-        self.verbose_msg('Extracting assembly sections')
+        self.verbose_msg('Inserting function labels')
         lines = util.read_file(file, readlines=True)
-        externs = []
-        functions = {}
-        current = None
 
-        # For each line of assembly
-        for x in lines:
-            if x[0] == '.':
-                frags = x.split(' ')
-                directive = frags[0]
-                if directive == '.extern':
-                    externs.append(x)
-                elif directive == '.cc_top':
-                    name = frags[1].split('.')[0]
-                    if not name in functions:
-                        functions[name] = []
-                    current = name if len(functions[name])==0 else None
-                elif directive == '.cc_bottom':
-                    name = frags[1].split('.')[0]
-                    if current: 
-                        functions[name].append(x)
-                    current = None
-            
-            if current:
-                functions[current].append(x)
-
-        # Write a new assembly file in buf
-        for x in externs:
-            buf.write(x)
-        
-        buf.write('\t.text\n')
+        # For each function, for each line...
+        # (Create a new list and modify it each time...)
+        b = False
         for x in self.sem.proc_names:
-            buf.write(self.function_label_top(x)+':\n')
-            for y in functions[x]:
-                buf.write(y)
-            buf.write(self.function_label_bottom(x)+':\n')
-
-        #print(buf.getvalue())
+            new = []
+            for (i, y) in enumerate(lines):
+                new.append(y)
+                if y == x+':\n' and not b:
+                    new.insert(len(new)-1, '.globl '+self.function_label_bottom(x)+'\n')
+                    b = True
+                elif y[0] == '.' and b:
+                    if y.split(' ')[0] == '.cc_bottom':
+                        new.insert(len(new)-1, self.function_label_bottom(x)+':\n')
+                        b = False
+            lines = new
+    
+        # Make sure the buffer is empty and write the lines
+        for x in lines:
+            buf.write(x)
 
     def build_jumptab(self, buf):
 
@@ -253,20 +254,28 @@ class Build(object):
         # Program procedure entries
         for x in self.sem.proc_names:
             buf.write('\t.word {}-{}+{}\n'.format(
-                self.function_label_bottom(x), 
-                self.function_label_top(x), 
-                BYTES_PER_WORD))
+                self.function_label_bottom(x), x, BYTES_PER_WORD))
 
     def function_label_top(self, name):
-        return '.Ltop_'+name
+        return '.L'+name+'_top'
 
     def function_label_bottom(self, name):
-        return '.Lbottom_'+name
+        return '.L'+name+'_bottom'
 
-    def cleanup(self):
+    def cleanup(self, output_xe):
         self.verbose_msg('Cleaning up')
+        os.rename(MASTER_XE, output_xe)
+        os.remove('image_n0c0.elf')
+        os.remove('config.xml')
+        os.remove('platform_def.xn')
+        os.remove('program_info.txt')
+        os.remove('slave.xe')
+        for x in glob.glob('*.o'):
+            os.remove(x)
+        # *.S, *.o, *.xc
 
-    def verbose_msg(self, msg):
+    def verbose_msg(self, msg, end='\n'):
         if self.verbose: 
-            sys.stdout.write(msg+'\n')
+            sys.stdout.write(msg+end)
+            sys.stdout.flush()
 

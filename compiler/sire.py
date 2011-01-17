@@ -15,13 +15,14 @@ import dump
 import printer
 import semantics
 import translate
-import assembly
 import build
 
 # Constants
 DEFAULT_TRANSLATION_FILE = 'program.xc'
 DEFAULT_INPUT_FILE       = 'stdin'
-DEFAULT_OUTPUT_FILE      = 'a.out'
+DEFAULT_OUTPUT_XC        = 'a.xc'
+DEFAULT_OUTPUT_S         = 'a.S'
+DEFAULT_OUTPUT_XE        = 'a.xe'
 PARSE_LOG_FILE           = 'parselog.txt'
 DEFAULT_NUM_CORES        = 4
 
@@ -35,7 +36,7 @@ def setup_argparse():
     p.add_argument('infile', metavar='<input-file>', default=DEFAULT_INPUT_FILE,
             help='specify the input filename')
     p.add_argument('-o', nargs=1, metavar='<file>', 
-            dest='outfile', default=DEFAULT_OUTPUT_FILE,
+            dest='outfile', default=None,
             help='specify the output filename')
     p.add_argument('-n', '--numcores', nargs=1, metavar='<n>', 
             dest='numcores', default=DEFAULT_NUM_CORES,
@@ -93,15 +94,15 @@ def translate_ast(program, sem, buf):
     walker = translate.Translate(sem, buf)
     walker.walk_program(program)
 
-def build_(sem, buf, numcores, compile_only):
+def build_(sem, buf, numcores, outfile, compile_only):
     """ Build the program executable 
     """
     verbose_msg("Building executable\n")
     builder = build.Build(numcores, sem, verbose=True)
     if compile_only:
-        builder.compile(buf)
+        builder.compile(buf, outfile)
     else:
-        builder.run(buf)
+        builder.run(buf, outfile)
 
 def verbose_msg(msg):
     if verbose: 
@@ -148,11 +149,16 @@ def main(args):
     buf = io.StringIO()
     translate_ast(program, sem, buf)
     if a.translate_only:
-        util.write_file(DEFAULT_TRANSLATION_FILE, buf.getvalue())
+        if not a.outfile:
+            outfile = DEFAULT_OUTPUT_XC
+        util.write_file(outfile, buf.getvalue())
         return
 
     # Compile, assemble and link with the runtime
-    build_(sem, buf, a.numcores, a.compile_only)
+    if not a.outfile:
+        if a.compile_only: outfile = DEFAULT_OUTPUT_S
+        else: outfile = DEFAULT_OUTPUT_XE
+    build_(sem, buf, a.numcores, outfile, a.compile_only)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

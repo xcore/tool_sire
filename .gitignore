@@ -14,7 +14,6 @@ parselog.txt
 parser.out
 lextab.py
 out.x[ce]
-a.out
-a.xe
 test.sire
+a.*
 *.o

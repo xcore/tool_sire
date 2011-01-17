@@ -41,8 +41,8 @@ def call(args):
     try:
         s = subprocess.check_output(args, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as err:
-        print('Error executing command: {}\nOuput: {}'.format(
-            err.cmd, err.output))
+        s = err.output.decode('utf-8').replace("\\n", "\n")
+        print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
         return True
     return False
 
