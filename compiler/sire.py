@@ -15,7 +15,7 @@ import dump
 import printer
 import semantics
 import translate
-import tables
+import assembly
 import build
 
 # Constants
@@ -84,30 +84,24 @@ def semantic_analysis(program, error):
     program.accept(visitor)
     return visitor
 
-def translate_ast(program, sem, program_buf, jumptab_buf, sizetab_buf):
+def translate_ast(program, sem, buf):
     """ Transform an AST into XC 
     """
     verbose_msg("Translating AST\n")
 
     # Translate the AST
-    walker = translate.Translate(semantics, program_buf)
+    walker = translate.Translate(sem, buf)
     walker.walk_program(program)
 
-    # Output the jump table
-    tables.build_jumptab(jumptab_buf, sem.proc_names)
-
-    # Output the size table
-    tables.build_sizetab(sizetab_buf, sem.proc_names)
-
-def build_(program_buf, jumptab_buf, sizetab_buf, numcores, compile_only):
+def build_(sem, buf, numcores, compile_only):
     """ Build the program executable 
     """
     verbose_msg("Building executable\n")
-    builder = build.Build(numcores, verbose=True)
+    builder = build.Build(numcores, sem, verbose=True)
     if compile_only:
-        builder.compile(program_buf)
+        builder.compile(buf)
     else:
-        builder.run(program_buf, jumptab_buf, sizetab_buf)
+        builder.run(buf)
 
 def verbose_msg(msg):
     if verbose: 
@@ -151,16 +145,14 @@ def main(args):
         return
    
     # Translate the AST
-    program_buf = io.StringIO()
-    jumptab_buf = io.StringIO()
-    sizetab_buf = io.StringIO()
-    translate_ast(program, sem, program_buf, jumptab_buf, sizetab_buf)
+    buf = io.StringIO()
+    translate_ast(program, sem, buf)
     if a.translate_only:
-        util.write_file(DEFAULT_TRANSLATION_FILE, program_buf.getvalue())
+        util.write_file(DEFAULT_TRANSLATION_FILE, buf.getvalue())
         return
 
     # Compile, assemble and link with the runtime
-    build_(program_buf, jumptab_buf, sizetab_buf, a.numcores, a.compile_only)
+    build_(sem, buf, a.numcores, a.compile_only)
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

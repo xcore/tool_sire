@@ -1,13 +1,18 @@
+import sys
 import re
+import subprocess
 
-def read_file(filename):
+def read_file(filename, readlines=False):
     """ Read a file and return its contents as a string 
     """
     #verbose_report("Reading input file '{}'...\n".format(filename))
     contents=None
     try:
         file = open(filename, 'r')
-        contents = file.read()
+        if readlines:
+            contents = file.readlines()
+        else:
+            contents = file.read()
         file.close()
     except IOError as err:
         print('Error reading input ({}): {}'.format(err.errno, err.strerror),
@@ -29,6 +34,17 @@ def write_file(filename, s):
                 file=sys.stderr)
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
+
+def call(args):
+    """ Try to execute a shell command
+    """
+    try:
+        s = subprocess.check_output(args, stderr=subprocess.STDOUT)
+    except subprocess.CalledProcessError as err:
+        print('Error executing command: {}\nOuput: {}'.format(
+            err.cmd, err.output))
+        return True
+    return False
 
 def camel_to_under(s):
     return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", 

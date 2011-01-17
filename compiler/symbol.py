@@ -31,7 +31,7 @@ class SymbolTable(object):
                 print("Popped sym '{}'".format(s.name))
 
             # If symbol hasn't been used, give a warning
-            if not s.mark and not s.name == 'main':
+            if not s.mark and not s.name == '_main':
                 self.sem.unused_warning(s.name, s.coord)
         
         s = self.scope.pop()
