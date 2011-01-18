@@ -21,7 +21,7 @@
 
 // Set the _DoSyscall symbol to an inaccessable pc because it persists between
 // loadables for mulit-node simulations cauising a retsp to be executed.
-    .set _DoSyscall, spawnChan
+//    .set _DoSyscall, spawnChan
 
     .text
 
