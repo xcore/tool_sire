@@ -351,11 +351,6 @@ class Parser(object):
         'elem : name'
         p[0] = ast.ElemId(p[1], self.coord(p)) 
 
-    # To force use of an identifier, e.g. with alias
-    #def p_elem_name_(self, p):
-    #    'elem_name : name'
-    #    p[0] = ast.ElemId(p[1], self.coord(p)) 
-
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'
         p[0] = ast.ElemSub(p[1], p[3], self.coord(p))

@@ -11,6 +11,7 @@ import logging
 
 import error
 import util
+import definitions
 import dump
 import printer
 import semantics
@@ -18,6 +19,7 @@ import translate
 import build
 
 # Constants
+DEFINITIONS              = 'include/definitions.h'
 DEFAULT_TRANSLATION_FILE = 'program.xc'
 DEFAULT_INPUT_FILE       = 'stdin'
 DEFAULT_OUTPUT_XC        = 'a.xc'
@@ -111,6 +113,9 @@ def verbose_msg(msg):
 
 def main(args):
         
+    # Load definitions
+    definitions.load(DEFINITIONS)
+
     # Setup parser and parse arguments
     argp = setup_argparse()
     a = argp.parse_args(args)

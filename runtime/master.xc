@@ -25,7 +25,7 @@ void initMaster() {
     timer tmr;
     unsigned main, begin, end, elapsed, result;
     
-    asm("ldap r11, " LBL_MAIN "\n\t"
+    asm("ldap r11, " LABEL_MAIN "\n\t"
         "mov %0, r11" : "=r"(main) :: "r11");
    
     tmr :> begin;

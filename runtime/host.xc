@@ -78,7 +78,7 @@ void spawnHost() {
     asm("chkct res[%0], " S(XS1_CT_END) :: "r"(mSpawnChan));
 
     // Initialise migrated process on a new thread
-    asm("ldap r11, " LBL_RUN_THREAD "\n\t"
+    asm("ldap r11, " LABEL_RUN_THREAD "\n\t"
         "mov %0, r11" : "=r"(pc) :: "r11");
     
     // Give the next thread some space and launch it
@@ -324,7 +324,7 @@ void newAsyncThread(unsigned pc, unsigned sp, unsigned senderId) {
     asm("init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("init t[%0]:sp, %1"  :: "r"(t), "r"(sp));
     asm("init t[%0]:pc, %1"  :: "r"(t), "r"(pc));
-    asm("ldap r11, " LBL_YEILD ::: "r11");
+    asm("ldap r11, " LABEL_YEILD ::: "r11");
     asm("init t[%0]:lr, r11" :: "r"(t) : "r11");
                              
     // Set senderId arg 

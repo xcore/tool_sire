@@ -1,6 +1,7 @@
 import sys
 import ast
 import semantics
+import definitions as defs
 from type import Type
 
 scopes = ['system', 'module', 'proc', 'func']
@@ -31,7 +32,7 @@ class SymbolTable(object):
                 print("Popped sym '{}'".format(s.name))
 
             # If symbol hasn't been used, give a warning
-            if not s.mark and not s.name == '_main':
+            if not s.mark and not s.name == defs.LABEL_MAIN:
                 self.sem.unused_warning(s.name, s.coord)
         
         s = self.scope.pop()

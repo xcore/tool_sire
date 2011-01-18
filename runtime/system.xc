@@ -29,7 +29,7 @@ void initSystem() {
         asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(progChan[i]));
 
     // Set the function pointer (fp) to after the data section
-    asm("ldap r11, " LBL_END_BSS
+    asm("ldap r11, " LABEL_END_BSS
         "\n\tmov %0, r11" : "=r"(fp) :: "r11");
     if(fp % 4) fp += 2;
 
@@ -192,7 +192,7 @@ void idle() {
     asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(mSpawnChan));
     
     // Set event vector to idle handler
-    asm("ldap r11, " LBL_IDLE_HOST_HANDLER "\n\t"
+    asm("ldap r11, " LABEL_IDLE_HOST_HANDLER "\n\t"
         "setv res[%0], r11" :: "r"(mSpawnChan) : "r11");
 
     // Wait for an event on mSpawnChan

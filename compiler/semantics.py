@@ -4,11 +4,9 @@ import util
 import ast
 import symbol
 import signature
+import definitions as defs
 from builtin import functions
 from type import Type
-
-SYS_CORE_ARRAY = 'core'
-SYS_CHAN_ARRAY = 'chan'
 
 elem_types = {
     'elem_sub'     : None,
@@ -28,7 +26,7 @@ class Semantics(ast.NodeVisitor):
         self.depth = 0
         self.error = error
         self.sym = symbol.SymbolTable(self, debug=False)
-        self.sig = signature.SignatureTable(self, debug=True)
+        self.sig = signature.SignatureTable(self, debug=False)
         self.proc_names = []
         self.init_system()
 
@@ -36,8 +34,8 @@ class Semantics(ast.NodeVisitor):
         """ """
         # Add system variables core, chan
         self.sym.begin_scope('system')
-        self.sym.insert(SYS_CORE_ARRAY, Type('core', 'array'))
-        self.sym.insert(SYS_CHAN_ARRAY, Type('chanend', 'array'))
+        self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
+        self.sym.insert(defs.SYS_CHAN_ARRAY, Type('chanend', 'array'))
 
         # Add builtin functions
         for x in functions:
@@ -146,7 +144,7 @@ class Semantics(ast.NodeVisitor):
     def visit_def(self, node):
         # Rename main to avoid conflicts in linking
         if node.name == 'main':
-            node.name = '_' + node.name
+            node.name = defs.LABEL_MAIN
         if self.sym.insert(node.name, node.type, node.coord):
             self.sig.insert(node.type, node)
         else:

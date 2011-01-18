@@ -2,28 +2,28 @@
 #define DEFINITIONS_H
 
 // Labels
-#define LBL_EXCEP_HANDLER      "excepHandler"
-#define LBL_IDLE_HOST_HANDLER  "idleHostHandler"
-#define LBL_BUSY_HOST_HANDLER  "busyHostHandler"
-#define LBL_RUN_THREAD         "runThread"
-#define LBL_WAIT_HANDLER       "waitHandler"
-#define LBL_MAIN               "_main"
-#define LBL_YEILD              "yeild"
-#define LBL_END_BSS            "_edp.bss"
-#define LBL_START              "_start"
-#define LBL_MIGRATE            "migrate"
-#define LBL_INIT_THREAD        "initThread"
-#define LBL_CONNECT            "connect"
-#define LBL_CHAN_ARRAY         "progChan"
+#define LABEL_EXCEP_HANDLER      "excepHandler"
+#define LABEL_IDLE_HOST_HANDLER  "idleHostHandler"
+#define LABEL_BUSY_HOST_HANDLER  "busyHostHandler"
+#define LABEL_RUN_THREAD         "runThread"
+#define LABEL_WAIT_HANDLER       "waitHandler"
+#define LABEL_MAIN               "_main"
+#define LABEL_YEILD              "yeild"
+#define LABEL_END_BSS            "_edp.bss"
+#define LABEL_START              "_start"
+#define LABEL_MIGRATE            "migrate"
+#define LABEL_INIT_THREAD        "initThread"
+#define LABEL_CONNECT            "connect"
+#define LABEL_CHAN_ARRAY         "progChan"
 
 // System variables
-#define CHAN_ARRAY             "chan"
-#define CORE_ARRAY             "core"
+#define SYS_CHAN_ARRAY           "chan"
+#define SYS_CORE_ARRAY           "core"
 
 // Jump table
-#define JUMPI_MIGRATE         0
-#define JUMPI_INIT_THREAD     1
-#define JUMPI_CONNECT         2
+#define JUMPI_MIGRATE            0
+#define JUMPI_INIT_THREAD        1
+#define JUMPI_CONNECT            2
 
 // Hardware specs
 #define RAM_BASE               0x10000

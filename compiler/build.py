@@ -4,6 +4,7 @@ import io
 import util
 import glob
 import subprocess
+from definitions import *
 from math import floor
 
 RUNTIME_DIR    = 'runtime'
@@ -39,10 +40,6 @@ BYTES_PER_WORD = 4
 
 # TODO: read all these from definitions fil
 # TODO: fix top and bottom function labels
-
-LBL_MIGRATE     = 'migrate'
-LBL_INIT_THREAD = 'initThread'
-LBL_CONNECT     = 'connect'
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -158,14 +155,15 @@ class Build(object):
     def replace_slaves(self):
         self.verbose_msg('Splitting slave')
         e = util.call([XOBJDUMP, '--split', SLAVE_XE])
-        for x in range(self.numcores):
+        self.verbose_msg('\r  Replacing node 0, core', end='')
+        for x in range(1, self.numcores):
             node = floor(x / CORES_PER_NODE)
             core = floor(x % CORES_PER_NODE)
             if core == 0:
                 self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
                         end='')
             else:
-                self.verbose_msg(', {}'.format(core), end='')
+                self.verbose_msg(' {}'.format(core), end='')
             e = util.call([XOBJDUMP, MASTER_XE, 
                     '-r', '{},{},image_n0c0.elf'.format(node, core)])
         self.verbose_msg('')
@@ -219,9 +217,9 @@ class Build(object):
         buf.write(JUMP_TABLE+':\n')
         
         # Runtime entries
-        buf.write('\t.word '+LBL_MIGRATE+'\n')
-        buf.write('\t.word '+LBL_INIT_THREAD+'\n')
-        buf.write('\t.word '+LBL_CONNECT+'\n')
+        buf.write('\t.word '+LABEL_MIGRATE+'\n')
+        buf.write('\t.word '+LABEL_INIT_THREAD+'\n')
+        buf.write('\t.word '+LABEL_CONNECT+'\n')
 
         # Program entries
         for x in self.sem.proc_names:
