@@ -4,11 +4,17 @@ import semantics
 
 # Valid types that can be taken by each formal type
 param_conversions = {
-    Type('var',     'single') : [Type('var',  'single'), Type('var', 'sub')],
-    Type('val',     'single') : [Type('var',  'single'), 
-        Type('val', 'single'), Type('var', 'sub')],
-    Type('var',     'alias')  : [Type('var',  'array'),  Type('var',  'alias')],
-    Type('chanend', 'single') : [Type('chan', 'single'), Type('chan', 'sub')],
+    Type('var',     'single') : 
+        [Type('var',  'single'), Type('var', 'sub')],
+
+    Type('val',     'single') : 
+        [Type('var',  'single'), Type('val', 'single'), Type('var', 'sub')],
+
+    Type('var',     'alias')  :
+        [Type('var',  'array'),  Type('var',  'alias')],
+
+    Type('chanend', 'single') :
+        [Type('chan', 'single'), Type('chan', 'sub')],
 }
 
 class SignatureTable(object):
@@ -43,13 +49,16 @@ class SignatureTable(object):
             t = self.sem.get_expr_type(y)
             if(self.debug):
                 print('Arg type: {}'.format(t))
+                print('Param type: {}'.format(x.type))
 
             # If argument y has no type, i.e. not defined
             if not t:
                 return False
+
             # Check it against each valid conversion
             if not any(t==z for z in param_conversions[x.type]):
                 return False
+        
         return True
     
     def dump(self, buf=sys.stdout):

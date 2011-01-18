@@ -10,7 +10,7 @@ printval = Def(
 printstr = Def(
         'printstr', 
         Type('proc', 'procedure'), 
-        Formals([Param('v', Type('var', 'array'))]),
+        Formals([Param('v', Type('var', 'alias'))]),
         None, None)
 
 functions = (

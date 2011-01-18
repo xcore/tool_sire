@@ -28,7 +28,7 @@ class Semantics(ast.NodeVisitor):
         self.depth = 0
         self.error = error
         self.sym = symbol.SymbolTable(self, debug=False)
-        self.sig = signature.SignatureTable(self, debug=False)
+        self.sig = signature.SignatureTable(self, debug=True)
         self.proc_names = []
         self.init_system()
 

@@ -69,7 +69,7 @@ class Build(object):
             program_buf.close()
             program_buf = io.StringIO()
             self.extract_asm(PROGRAM_ASM, program_buf)
-        if not e: self.assemble_buf(PROGRAM, 'S', program_buf, False)
+        if not e: e = self.assemble_buf(PROGRAM, 'S', program_buf, False)
         if not e: e = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
         if not e: e = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
         if not e: e = self.assemble_runtime()
