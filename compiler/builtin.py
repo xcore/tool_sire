@@ -13,8 +13,15 @@ printstr = Def(
         Formals([Param('v', Type('var', 'alias'))]),
         None, None)
 
+exit = Def(
+        'exit', 
+        Type('proc', 'procedure'), 
+        Formals([Param('v', Type('val', 'single'))]),
+        None, None)
+
 functions = (
         printval,
-        printstr
+        printstr,
+        exit
         )
 

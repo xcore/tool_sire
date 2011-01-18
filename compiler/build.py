@@ -4,7 +4,7 @@ import io
 import util
 import glob
 import subprocess
-from definitions import *
+import definitions as defs
 from math import floor
 
 RUNTIME_DIR    = 'runtime'
@@ -27,19 +27,8 @@ COMPILE_FLAGS  = ['-S', '-O2']
 ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
-CORES_PER_NODE = 4
-
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
 'slave.S', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
-
-JUMP_TABLE = 'jumpTable'
-SIZE_TABLE = 'sizeTable'
-NUM_RUNTIME_ENTRIES = 3
-JUMP_TABLE_SIZE = 10
-BYTES_PER_WORD = 4
-
-# TODO: read all these from definitions fil
-# TODO: fix top and bottom function labels
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -118,9 +107,6 @@ class Build(object):
             os.remove(srcfile)
         return e
 
-    def target(self):
-        return '{}/XMP-{}.xn'.format(CONFIGS_DIR, self.numcores)
-
     def assemble_runtime(self):
         self.verbose_msg('Compiling runtime:')
         e = False
@@ -157,8 +143,8 @@ class Build(object):
         e = util.call([XOBJDUMP, '--split', SLAVE_XE])
         self.verbose_msg('\r  Replacing node 0, core', end='')
         for x in range(1, self.numcores):
-            node = floor(x / CORES_PER_NODE)
-            core = floor(x % CORES_PER_NODE)
+            node = floor(x / defs.CORES_PER_NODE)
+            core = floor(x % defs.CORES_PER_NODE)
             if core == 0:
                 self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
                         end='')
@@ -190,11 +176,13 @@ class Build(object):
             for (i, y) in enumerate(lines):
                 new.append(y)
                 if y == x+':\n' and not b:
-                    new.insert(len(new)-1, '.globl '+self.function_label_bottom(x)+'\n')
+                    new.insert(len(new)-1, 
+                            '.globl '+self.function_label_bottom(x)+'\n')
                     b = True
                 elif y[0] == '.' and b:
                     if y.split(' ')[0] == '.cc_bottom':
-                        new.insert(len(new)-1, self.function_label_bottom(x)+':\n')
+                        new.insert(len(new)-1, 
+                                self.function_label_bottom(x)+':\n')
                         b = False
             lines = new
     
@@ -208,25 +196,25 @@ class Build(object):
         
         # Constant section
         buf.write('\t.section .cp.rodata, "ac", @progbits\n')
-        buf.write('\t.align {}\n'.format(BYTES_PER_WORD))
+        buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
-        buf.write('\t.globl '+JUMP_TABLE+', "a(:ui)"\n')
-        buf.write('\t.set {}.globound, {}\n'.format(JUMP_TABLE,
-            BYTES_PER_WORD*JUMP_TABLE_SIZE))
-        buf.write(JUMP_TABLE+':\n')
+        buf.write('\t.globl '+defs.LABEL_JUMP_TABLE+', "a(:ui)"\n')
+        buf.write('\t.set {}.globound, {}\n'.format(
+            defs.LABEL_JUMP_TABLE, defs.BYTES_PER_WORD*defs.JUMP_TABLE_SIZE))
+        buf.write(defs.LABEL_JUMP_TABLE+':\n')
         
         # Runtime entries
-        buf.write('\t.word '+LABEL_MIGRATE+'\n')
-        buf.write('\t.word '+LABEL_INIT_THREAD+'\n')
-        buf.write('\t.word '+LABEL_CONNECT+'\n')
+        buf.write('\t.word '+defs.LABEL_MIGRATE+'\n')
+        buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
+        buf.write('\t.word '+defs.LABEL_CONNECT+'\n')
 
         # Program entries
         for x in self.sem.proc_names:
             buf.write('\t.word '+x+'\n')
 
         # Pad any unused space
-        remaining = JUMP_TABLE_SIZE - (NUM_RUNTIME_ENTRIES+
+        remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
                 len(self.sem.proc_names))
         buf.write('\t.space {}\n'.format(remaining))
 
@@ -236,31 +224,28 @@ class Build(object):
         
         # Data section
         buf.write('\t.section .dp.data, "awd", @progbits\n')
-        buf.write('\t.align {}\n'.format(BYTES_PER_WORD))
+        buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
-        buf.write('\t.globl '+SIZE_TABLE+'\n')
-        buf.write('\t.set {}.globound, {}\n'.format(SIZE_TABLE,
-            BYTES_PER_WORD*(NUM_RUNTIME_ENTRIES+
+        buf.write('\t.globl '+defs.LABEL_SIZE_TABLE+'\n')
+        buf.write('\t.set {}.globound, {}\n'.format(
+            defs.LABEL_SIZE_TABLE,
+            defs.BYTES_PER_WORD*(defs.JUMP_INDEX_OFFSET+
                 len(self.sem.proc_names))))
-        buf.write(SIZE_TABLE+':\n')
+        buf.write(defs.LABEL_SIZE_TABLE+':\n')
         
         # Pad runtime entries
-        for x in range(NUM_RUNTIME_ENTRIES):
+        for x in range(defs.JUMP_INDEX_OFFSET):
             buf.write('\t.word 0\n')
 
         # Program procedure entries
         for x in self.sem.proc_names:
             buf.write('\t.word {}-{}+{}\n'.format(
-                self.function_label_bottom(x), x, BYTES_PER_WORD))
-
-    def function_label_top(self, name):
-        return '.L'+name+'_top'
-
-    def function_label_bottom(self, name):
-        return '.L'+name+'_bottom'
+                self.function_label_bottom(x), x, defs.BYTES_PER_WORD))
 
     def cleanup(self, output_xe):
+        """ Renanme the output file and delete any temporary files
+        """
         self.verbose_msg('Cleaning up')
         os.rename(MASTER_XE, output_xe)
         os.remove('image_n0c0.elf')
@@ -270,7 +255,15 @@ class Build(object):
         os.remove('slave.xe')
         for x in glob.glob('*.o'):
             os.remove(x)
-        # *.S, *.o, *.xc
+
+    def target(self):
+        return '{}/XMP-{}.xn'.format(CONFIGS_DIR, self.numcores)
+
+    def function_label_top(self, name):
+        return '.L'+name+'_top'
+
+    def function_label_bottom(self, name):
+        return '.L'+name+'_bottom'
 
     def verbose_msg(self, msg, end='\n'):
         if self.verbose: 

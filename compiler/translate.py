@@ -30,6 +30,7 @@ op_conversion = {
 proc_conversion = {
     'printval' : 'printint',
     'printstr' : 'printstr',
+    'exit'     : '_exit',
 }
 
 class Blocker(object):
@@ -129,6 +130,7 @@ class Translate(NodeWalker):
     def header(self):
         self.buf.write('#include <xs1.h>\n')
         self.buf.write('#include <print.h>\n')
+        self.buf.write('#include <syscall.h>\n')
    
     # Program ============================================
 

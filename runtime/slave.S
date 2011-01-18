@@ -41,8 +41,8 @@ _slave:
 	.section .dp.data, "awd", @progbits
 	
     .align 4
-    .set sizeTable.globound, BYTES_PER_WORD*SIZE_TAB_SIZE
+    .set sizeTable.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
 
 sizeTable:
-    .space BYTES_PER_WORD*SIZE_TAB_SIZE 
+    .space BYTES_PER_WORD*SIZE_TABLE_SIZE 
 

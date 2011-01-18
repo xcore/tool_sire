@@ -144,7 +144,8 @@ class Semantics(ast.NodeVisitor):
     def visit_def(self, node):
         # Rename main to avoid conflicts in linking
         if node.name == 'main':
-            node.name = defs.LABEL_MAIN
+            #node.name = defs.LABEL_MAIN
+            node.name = '_'+node.name
         if self.sym.insert(node.name, node.type, node.coord):
             self.sig.insert(node.type, node)
         else:
