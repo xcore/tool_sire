@@ -1,0 +1,9 @@
+The sire language and dynamic process creation
+==============================================
+
+sire is a small language with features to demonstate a mechanims for distributed
+and dynamic creation of processes in a parallel system. It is targeted at the
+XMOS XS1 architecture, which is general-purpose and has low-level support for
+concurrency and communications.
+
+More to come soon.
