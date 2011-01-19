@@ -1,4 +1,5 @@
 #include <platform.h>
+#include <syscall.h>
 #include "../include/numcores.h"
 #include "../include/definitions.h"
 #include "globals.h"
@@ -20,6 +21,7 @@ void initMaster() {
     idle();
 }*/
 
+// Master procedure with timing.
 void initMaster() {
 
     timer tmr;
@@ -37,12 +39,14 @@ void initMaster() {
 
     // Move the elapsed time to r11 and pause
     asm("mov r11, %0" :: "r"(elapsed));
-    asm("waiteu");
+    //asm("waiteu");
 
-    idle();
+    //idle();
+    _exit(0);
 }
 
-// Mapping function
+// Mapping function to trigger construction of a NUM_CORES binary. Images on
+// cores 1 to NUM_CORES-1 will be replaced by slave images.
 int main(void) {
     par(int i=0; i<NUM_CORES; i++) {
         on stdcore[i] : _master();

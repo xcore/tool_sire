@@ -5,16 +5,14 @@ import util
 import glob
 import subprocess
 import definitions as defs
+import config
 from math import floor
 
-RUNTIME_DIR    = 'runtime'
-INCLUDE_DIR    = 'include'
-CONFIGS_DIR    = 'configs'
 NUMCORES_HDR   = 'numcores.h'
 PROGRAM        = 'program'
-PROGRAM_SRC    = 'program.xc'
-PROGRAM_ASM    = 'program.S'
-PROGRAM_OBJ    = 'program.o'
+PROGRAM_SRC    = PROGRAM+'.xc'
+PROGRAM_ASM    = PROGRAM+'.S'
+PROGRAM_OBJ    = PROGRAM+'.o'
 MASTER_JUMPTAB = 'masterjumptab'
 MASTER_SIZETAB = 'mastersizetab'
 MASTER_XE      = 'master.xe'
@@ -28,7 +26,7 @@ ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
-'slave.S', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
+        'slave.S', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -42,8 +40,6 @@ class Build(object):
     def run(self, program_buf, outfile):
         """ Run the full build
         """
-        e = False
-
         # Output the master jump and size tables
         jumptab_buf = io.StringIO()
         sizetab_buf = io.StringIO()
@@ -51,33 +47,37 @@ class Build(object):
         self.build_sizetab(sizetab_buf)
         
         self.create_headers()
-        if not e: e = self.compile_buf(PROGRAM, program_buf)
-        if not e: 
+        s = self.compile_buf(PROGRAM, program_buf)
+        if s: 
             program_buf.close()
             program_buf = io.StringIO()
-            self.insert_labels(PROGRAM_ASM, program_buf)
-        if not e: e = self.assemble_buf(PROGRAM, 'S', program_buf)
-        if not e: e = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
-        if not e: e = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
-        if not e: e = self.assemble_runtime()
-        if not e: e = self.link_master()
-        if not e: e = self.link_slave()
-        if not e: e = self.replace_slaves()
+            s = self.insert_labels(PROGRAM_ASM, program_buf)
+        if s: s = self.assemble_buf(PROGRAM, 'S', program_buf)
+        if s: s = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
+        if s: s = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
+        if s: s = self.assemble_runtime()
+        if s: s = self.link_master()
+        if s: s = self.link_slave()
+        if s: s = self.replace_slaves()
         self.cleanup(outfile)
+        return s
 
     def compile(self, buf, outfile):
         """ Compile the program only
         """
-        self.compile_buf(PROGRAM, buf)
+        s = True
+        s = self.compile_buf(PROGRAM, buf)
         buf.close()
         buf = io.StringIO()
         self.insert_labels(PROGRAM_ASM, buf)
-        util.write_file(PROGRAM_ASM, buf.getvalue())
+        if s: s = util.write_file(PROGRAM_ASM, buf.getvalue())
         os.rename(PROGRAM_ASM, outfile)
+        return s
 
     def create_headers(self):
+        # TODO: shouldn't really write to this directory...
         self.verbose_msg('Creating header '+NUMCORES_HDR)
-        util.write_file(INCLUDE_DIR+'/'+NUMCORES_HDR, 
+        util.write_file(config.INCLUDE_PATH+'/'+NUMCORES_HDR, 
                 '#define NUM_CORES {}'.format(self.numcores));
 
     def compile_buf(self, name, buf, cleanup=True):
@@ -87,10 +87,10 @@ class Build(object):
         outfile = name + '.S'
         self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
-        e = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS)
+        s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS)
         if cleanup:
             os.remove(srcfile)
-        return e
+        return s
 
     def assemble_buf(self, name, ext, buf, cleanup=True):
         """ Assemble a buffer containing an XC or assembly program
@@ -100,47 +100,47 @@ class Build(object):
         self.verbose_msg('Assembling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
         if ext == 'xc':
-            e = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
+            s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
         elif ext == 'S':
-            e = util.call([XAS, srcfile, '-o', outfile])
+            s = util.call([XAS, srcfile, '-o', outfile])
         if cleanup: 
             os.remove(srcfile)
-        return e
+        return s
 
     def assemble_runtime(self):
         self.verbose_msg('Compiling runtime:')
-        e = False
+        s = True
         for x in RUNTIME_FILES:
             objfile = x+'.o'
             self.verbose_msg('  '+x+' -> '+objfile)
-            e = util.call([XCC, self.target(), RUNTIME_DIR+'/'+x, '-o', objfile] 
+            s = util.call([XCC, self.target(), config.RUNTIME_PATH+'/'+x, '-o', objfile] 
                     + ASSEMBLE_FLAGS)
-        return e
+        return s
 
     def link_master(self):
         self.verbose_msg('Linking master -> '+MASTER_XE)
-        e = util.call([XCC, self.target(), 
+        s = util.call([XCC, self.target(), 
             '-first '+MASTER_JUMPTAB+'.o', MASTER_SIZETAB+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
             'program.o',
             'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS)
-        return e
+        return s
 
     def link_slave(self):
         self.verbose_msg('Linking slave -> '+SLAVE_XE)
-        e = util.call([XCC, self.target(), 
+        s = util.call([XCC, self.target(), 
             '-first slavejumptab.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.S.o',
             'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS)
-        return e
+        return s
 
     def replace_slaves(self):
         self.verbose_msg('Splitting slave')
-        e = util.call([XOBJDUMP, '--split', SLAVE_XE])
+        s = util.call([XOBJDUMP, '--split', SLAVE_XE])
         self.verbose_msg('\r  Replacing node 0, core', end='')
         for x in range(1, self.numcores):
             node = floor(x / defs.CORES_PER_NODE)
@@ -150,10 +150,10 @@ class Build(object):
                         end='')
             else:
                 self.verbose_msg(' {}'.format(core), end='')
-            e = util.call([XOBJDUMP, MASTER_XE, 
+            s = util.call([XOBJDUMP, MASTER_XE, 
                     '-r', '{},{},image_n0c0.elf'.format(node, core)])
         self.verbose_msg('')
-        return e
+        return s
 
     def insert_labels(self, file, buf):
         """ Insert top and bottom labels for each function 
@@ -165,8 +165,10 @@ class Build(object):
         # > <bottom-label>
         #   .cc_bottom foo.function
         
-        self.verbose_msg('Inserting function labels')
+        self.verbose_msg('Inserting function labels in '+file)
         lines = util.read_file(file, readlines=True)
+        if not lines:
+            return False
 
         # For each function, for each line...
         # (Create a new list and modify it each time...)
@@ -189,6 +191,8 @@ class Build(object):
         # Make sure the buffer is empty and write the lines
         for x in lines:
             buf.write(x)
+
+        return True
 
     def build_jumptab(self, buf):
 
@@ -247,17 +251,17 @@ class Build(object):
         """ Renanme the output file and delete any temporary files
         """
         self.verbose_msg('Cleaning up')
-        os.rename(MASTER_XE, output_xe)
-        os.remove('image_n0c0.elf')
-        os.remove('config.xml')
-        os.remove('platform_def.xn')
-        os.remove('program_info.txt')
-        os.remove('slave.xe')
+        util.rename_file(MASTER_XE, output_xe)
+        util.remove_file('image_n0c0.elf')
+        util.remove_file('config.xml')
+        util.remove_file('platform_def.xn')
+        util.remove_file('program_info.txt')
+        util.remove_file('slave.xe')
         for x in glob.glob('*.o'):
-            os.remove(x)
+            util.remove_file(x)
 
     def target(self):
-        return '{}/XMP-{}.xn'.format(CONFIGS_DIR, self.numcores)
+        return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, self.numcores)
 
     def function_label_top(self, name):
         return '.L'+name+'_top'

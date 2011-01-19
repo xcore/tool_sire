@@ -140,43 +140,6 @@ void syncCores() {
     }
 }
 
-// System-wide barrier synchronisation to ensure all cores in consistent state
-// before starting program execution. Can assume the first channel returned will
-// be number NUM_THREADS+1 as this is always core 0. Also assumes the number of 
-// cores in the network is a power of 2
-#pragma unsafe arrays
-/*void syncCores() {
-
-    unsigned c[DIMENSIONS];
-    unsigned destResId, coreId = getCore(mSpawnChan);
-
-    // Get a channel for each dimension and connect it
-    for(int i=0; i<DIMENSIONS; i++) {
-        destResId = chanResId(HNBR(coreId, i), i+NUM_THREADS+1);
-        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c[i]));
-        asm("setd res[%0], %1" :: "r"(c[i]), "r"(destResId));
-    }
-
-    // Peform the barrier
-    for(int i=0; i<DIMENSIONS; i++) {
-        if(coreId > HNBR(coreId, i)) {
-            asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c[i]));
-            asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c[i]));
-            asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c[i]));
-            asm("outct res[%0], " S(XS1_CT_END) :: "r"(c[i]));
-        } else {
-            asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c[i]));
-            asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c[i]));
-            asm("outct res[%0], " S(XS1_CT_END) :: "r"(c[i]));
-            asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c[i]));
-        }
-    }
-
-    // Free the channels
-    for(int i=0; i<DIMENSIONS; i++)
-        asm("freer res[%0]" :: "r"(c[i]));
-}*/
-
 // Connect a channel
 void connect(unsigned to, int c1, int c2) {
     unsigned destResId = chanResId(to, PROG_CHAN_OFF+c2);

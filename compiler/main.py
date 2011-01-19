@@ -12,6 +12,7 @@ import logging
 import error
 import util
 import definitions
+import config
 import dump
 import printer
 import semantics
@@ -19,7 +20,9 @@ import translate
 import build
 
 # Constants
-DEFINITIONS              = 'include/definitions.h'
+SUCCESS                  = 0
+FAILURE                  = 1
+DEFINITIONS_FILE         = 'definitions.h'
 DEFAULT_TRANSLATION_FILE = 'program.xc'
 DEFAULT_INPUT_FILE       = 'stdin'
 DEFAULT_OUTPUT_XC        = 'a.xc'
@@ -30,6 +33,7 @@ DEFAULT_NUM_CORES        = 4
 
 # Globals
 verbose = False
+proceede = True
 
 def setup_argparse():
     """ Configure an argument parser object 
@@ -100,7 +104,7 @@ def build_(sem, buf, numcores, outfile, compile_only):
     """ Build the program executable 
     """
     verbose_msg("Building executable\n")
-    builder = build.Build(numcores, sem, verbose=True)
+    builder = build.Build(numcores, sem, verbose)
     if compile_only:
         builder.compile(buf, outfile)
     else:
@@ -111,44 +115,50 @@ def verbose_msg(msg):
         sys.stdout.write(msg)
         sys.stdout.flush()
 
-def main(args):
-        
-    # Load definitions
-    definitions.load(DEFINITIONS)
+# TODO: Ensure proper error handling for each stage here
 
-    # Setup parser and parse arguments
-    argp = setup_argparse()
-    a = argp.parse_args(args)
+def main(args):
+    
+    global proceede
     global verbose
-    verbose = a.verbose
 
     # Setup the error object
     err = error.Error()
 
+    # Setup the configuration variables
+    proceede = config.init(err)
+    if not proceede: return FAILURE
+
+    # Load definitions
+    proceede = definitions.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
+    if not proceede: return FAILURE
+
+    # Setup parser and parse arguments
+    argp = setup_argparse()
+    a = argp.parse_args(args)
+    verbose = a.verbose
+
     # Read the input file 
     input = util.read_file(a.infile)
-    if not input:
-        return
+    if not input: return FAILURE
 
     # Parse the input file
     program = parse(input, a.infile, err)
-    if a.parse_only:
-        return
+    if a.parse_only: return SUCCESS
 
     # Perform semantic analysis
     sem = semantic_analysis(program, err)
-    if a.sem_only:
-        return
+    if a.sem_only: return SUCCESS
 
     # Display (dump) the AST
     if a.show_ast:    
         program.accept(dump.Dump())
-        return
+        return SUCCESS
 
     # Display (pretty-print) the AST
     if a.pprint: 
         walker.walk_program(printer.Printer())
-        return
+        return SUCCESS
    
     # Translate the AST
     buf = io.StringIO()
@@ -157,13 +167,17 @@ def main(args):
         if not a.outfile:
             outfile = DEFAULT_OUTPUT_XC
         util.write_file(outfile, buf.getvalue())
-        return
+        return SUCCESS
 
     # Compile, assemble and link with the runtime
     if not a.outfile:
         if a.compile_only: outfile = DEFAULT_OUTPUT_S
         else: outfile = DEFAULT_OUTPUT_XE
-    build_(sem, buf, a.numcores, outfile, a.compile_only)
+    proceede = build_(sem, buf, a.numcores, outfile, a.compile_only)
+    if not proceede:
+        return FAILURE
+
+    return SUCCESS
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

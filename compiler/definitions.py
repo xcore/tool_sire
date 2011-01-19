@@ -1,12 +1,5 @@
 import util
 
-#SYS_CORE_ARRAY = 'core'
-#SYS_CHAN_ARRAY = 'chan'
-#LABEL_MAIN        = '_main'
-#LABEL_MIGRATE     = 'migrate'
-#LABEL_INIT_THREAD = 'initThread'
-#LABEL_CONNECT     = 'connect'
-
 def convert_value(s):
     """ Convert a string value from a #define
     """
@@ -25,12 +18,16 @@ def convert_value(s):
 
 def load(filename):
     lines = util.read_file(filename, readlines=True)
-    for x in lines:
-        frags = x.split()
-        if len(frags) == 3:
-            if frags[0] == '#define':
-                s = convert_value(frags[2])
-                globals()[frags[1]] = s
-                #print("Set global {} = {} ({})".format(
-                #    frags[1], s, s.__class__.__name__))
+    if lines:
+        for x in lines:
+            frags = x.split()
+            if len(frags) == 3:
+                if frags[0] == '#define':
+                    s = convert_value(frags[2])
+                    globals()[frags[1]] = s
+                    #print("Set global {} = {} ({})".format(
+                    #    frags[1], s, s.__class__.__name__))
+        return True
+    else:
+        return False
 

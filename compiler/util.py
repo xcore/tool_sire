@@ -1,5 +1,6 @@
 import sys
 import re
+import os
 import subprocess
 
 def read_file(filename, readlines=False):
@@ -14,12 +15,13 @@ def read_file(filename, readlines=False):
         else:
             contents = file.read()
         file.close()
+        return contents
     except IOError as err:
         print('Error reading input ({}): {}'.format(err.errno, err.strerror),
                 file=sys.stderr)
+        return None
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
-    return contents
 
 def write_file(filename, s):
     """ Write the output to a file 
@@ -29,9 +31,11 @@ def write_file(filename, s):
         file = open(filename, 'w')
         file.write(s)
         file.close()
+        return True
     except IOError as err:
         print('Error writing output ({}): {}'.format(err.errno, err.strerror),
                 file=sys.stderr)
+        return False
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
 
@@ -40,11 +44,23 @@ def call(args):
     """
     try:
         s = subprocess.check_output(args, stderr=subprocess.STDOUT)
+        return True
     except subprocess.CalledProcessError as err:
         s = err.output.decode('utf-8').replace("\\n", "\n")
         print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
-        return True
-    return False
+        return False
+
+def remove_file(filename):
+    """ Remove a file if it exists
+    """
+    if os.path.isfile(filename):
+        os.remove(filename)
+
+def rename_file(filename, newname):
+    """ Rename a file if it exists
+    """
+    if os.path.isfile(filename):
+        os.rename(filename, newname)
 
 def camel_to_under(s):
     return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", 

@@ -6,5 +6,6 @@ Todo
 - Add more error cases to improve syntax error reporting.
 - Write tests for each rule of semantic analysis, check that it behaves well on
   all cases that cause errors and warnings.
+- Make sure errors are dealt with properly at each stage of the main function
 
 - Write language feature test cases in a unittest framework.

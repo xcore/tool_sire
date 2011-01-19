@@ -3,18 +3,15 @@
 xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
   <Type>Board</Type>
-  <Name>XMP-4</Name>
+  <Name>XMP-1</Name>
 
   <Declarations>
-    <Declaration>core stdcore[4]</Declaration>
+    <Declaration>core stdcore[1]</Declaration>
   </Declarations>
 
   <Nodes>
     <Node Id="0" Type="XS1-G4B" Oscillator="20MHz" SystemFrequency="400MHz">
       <Core Number="0" Reference="stdcore[0]"/>
-      <Core Number="1" Reference="stdcore[1]"/>
-      <Core Number="2" Reference="stdcore[2]"/>
-      <Core Number="3" Reference="stdcore[3]"/>
     </Node>
   </Nodes>
 

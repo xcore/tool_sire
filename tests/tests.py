@@ -1,11 +1,26 @@
 #!/usr/bin/env python3.1
 
+import os
 import subprocess
 import unittest
 
-SIRE = '../compiler/sire.py'
-XSIM = 'xsim'
-PROGRAM_DIR = 'programs/'
+COMPILE = 'sire'
+SIMULATE = 'xsim'
+PROGRAM_DIR = 'programs'
+INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
+
+def init():
+    """ Initialise configuration
+    """
+    global INSTALL_PATH
+    INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
+    if not INSTALL_PATH:
+        print("Error: no '"+INSTALL_PATH_env+"' enviromnent variable", 
+                out=sys.stderr)
+        return False
+    else:
+        globals()['TEST_PROGRAMS_PATH'] = INSTALL_PATH+'/tests/programs'
+        return True
 
 class Test(unittest.TestCase):
 
@@ -27,10 +42,11 @@ class Test(unittest.TestCase):
         pass
 
     def test_hello(self):
-        s = self.call([SIRE, PROGRAM_DIR+'hello.sire'])
-        self.assertTrue(not s)
-        s = self.call([XSIM, 'a.xe'])
+        s = self.call([COMPILE, TEST_PROGRAMS_PATH+'/hello.sire'])
+        self.assertTrue(s == None)
+        s = self.call([SIMULATE, 'a.xe'])
         self.assertEqual(s, 'hello world\n')
 
 if __name__ == '__main__':
-    unittest.main()
+    if init():
+        unittest.main()

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Network xmlns="http://www.xmos.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
-	<Type>XMP-16 Board</Type>
+	<Type>XMP-8 Board</Type>
 	
 	<Declarations>
 		<Declaration>core stdcore[8]</Declaration>
