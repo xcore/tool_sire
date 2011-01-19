@@ -263,7 +263,7 @@ class Build(object):
         util.remove_file('program_info.txt')
         
         # Remove unused master images
-        for x in glob.glob('image_n*c*\.elf')
+        for x in glob.glob('image_n*c*elf'):
             util.remove_file(x)
 
         # Remove runtime objects
