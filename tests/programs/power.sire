@@ -3,13 +3,14 @@
 func power(val base, val exp) is
   var result;
   var i;
-{ result := 1
+{ result := base
 ; for i:= 0 to exp-1 do
     result := result * base
 ; return result
 }
 
 proc main() is
-{ power(2, 5)
-; power(7, 9)
+{ printvalln(power(2, 5))
+; printvalln(power(5, 9))
+; printvalln(power(9, 3))
 }

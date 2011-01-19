@@ -28,9 +28,9 @@ op_conversion = {
 }
 
 proc_conversion = {
-    'printval' : 'printint',
-    'printstr' : 'printstr',
-    'exit'     : '_exit',
+    'printval'   : 'printint',
+    'printvalln' : 'printintln',
+    'exit'       : '_exit',
 }
 
 class Blocker(object):

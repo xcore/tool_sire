@@ -7,7 +7,7 @@ func factorial(val x) is
 
 % Ouput: 6, 120, 5040
 proc main() is
-{  printval(factorial(3)) ; printstr("\n")
-;  printval(factorial(5)) ; printstr("\n")
-;  printval(factorial(7)) ; printstr("\n")
+{  printvalln(factorial(3))
+;  printvalln(factorial(5))
+;  printvalln(factorial(7))
 }
