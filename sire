@@ -1,0 +1,3 @@
+#! /usr/bin/env sh
+
+$SIRE_INSTALL_PATH/compiler/main.py "$@"
