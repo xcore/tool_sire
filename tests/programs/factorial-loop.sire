@@ -1,8 +1,8 @@
 % Calculate the factorial of a value
 
 func factorial(val x) is
-    var ans;
-    var y;
+  var ans;
+  var y;
 { ans := 1
 ; y := 1
 ; while y <= x do
@@ -12,6 +12,9 @@ func factorial(val x) is
 ; return ans
 }
 
+% Ouput: 6, 120, 5040
 proc main() is
-  factorial(5)
-
+{  printval(factorial(3)) ; printstr("\n")
+;  printval(factorial(5)) ; printstr("\n")
+;  printval(factorial(7)) ; printstr("\n")
+}

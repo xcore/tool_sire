@@ -29,7 +29,7 @@ DEFAULT_OUTPUT_XC        = 'a.xc'
 DEFAULT_OUTPUT_S         = 'a.S'
 DEFAULT_OUTPUT_XE        = 'a.xe'
 PARSE_LOG_FILE           = 'parselog.txt'
-DEFAULT_NUM_CORES        = 4
+DEFAULT_NUM_CORES        = 1
 
 # Globals
 verbose = False
@@ -106,9 +106,9 @@ def build_(sem, buf, numcores, outfile, compile_only):
     verbose_msg("Building executable\n")
     builder = build.Build(numcores, sem, verbose)
     if compile_only:
-        builder.compile(buf, outfile)
+        return builder.compile(buf, outfile)
     else:
-        builder.run(buf, outfile)
+        return builder.run(buf, outfile)
 
 def verbose_msg(msg):
     if verbose: 
@@ -173,6 +173,8 @@ def main(args):
     if not a.outfile:
         if a.compile_only: outfile = DEFAULT_OUTPUT_S
         else: outfile = DEFAULT_OUTPUT_XE
+    else:
+        outfile = a.outfile[0]
     proceede = build_(sem, buf, a.numcores, outfile, a.compile_only)
     if not proceede:
         return FAILURE

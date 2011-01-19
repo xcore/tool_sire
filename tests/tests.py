@@ -1,6 +1,7 @@
 #!/usr/bin/env python3.1
 
 import os
+import sys
 import subprocess
 import unittest
 
@@ -25,15 +26,16 @@ def init():
 class Test(unittest.TestCase):
 
     def call(self, args):
-        """ Execute a shell command
+        """ Execute a shell command, return (success, output)
         """
         try:
+            # Returning non-zero will riase CalledProcessError
             s = subprocess.check_output(args, stderr=subprocess.STDOUT)
-            return s.decode('utf-8')
+            return (True, s.decode('utf-8'))
         except subprocess.CalledProcessError as err:
             s = err.output.decode('utf-8').replace("\\n", "\n")
             print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
-            return None
+            return (False, None)
 
     def setUp(self):
         pass
@@ -41,12 +43,36 @@ class Test(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def test_hello(self):
-        s = self.call([COMPILE, TEST_PROGRAMS_PATH+'/hello.sire'])
-        self.assertTrue(s == None)
-        s = self.call([SIMULATE, 'a.xe'])
-        self.assertEqual(s, 'hello world\n')
+    def harness(self, filename, output):
+        r = self.call([COMPILE, TEST_PROGRAMS_PATH+'/'+filename])
+        self.assertTrue(r[0])
+        r = self.call([SIMULATE, 'a.xe'])
+        self.assertTrue(r[0])
+        self.assertEqual(r[1], output)
+
+    def test_program_hello(self):
+        self.harness('hello.sire', 'hello world\n')
+
+    def test_program_factorial_loop(self):
+        self.harness('factorial-loop.sire', '6\n120\n5040\n')
+
+    def test_program_factorial_rec(self):
+        self.harness('factorial-rec.sire', '6\n120\n5040\n')
+
+    def test_program_fibonacci_loop(self):
+        self.harness('fibonacci-loop.sire', '8\n89\n987\n')
+
+    def test_program_fibonacci_rec(self):
+        self.harness('fibonacci-rec.sire', '8\n89\n987\n')
+
+    # ackermann
+    # power
+    # primetest
+    # bubblesort
+    # mergesort-seq
+    # quicksort
 
 if __name__ == '__main__':
     if init():
+        sys.argv.append('-v')
         unittest.main()

@@ -139,20 +139,22 @@ class Build(object):
         return s
 
     def replace_slaves(self):
-        self.verbose_msg('Splitting slave')
-        s = util.call([XOBJDUMP, '--split', SLAVE_XE])
-        self.verbose_msg('\r  Replacing node 0, core', end='')
-        for x in range(1, self.numcores):
-            node = floor(x / defs.CORES_PER_NODE)
-            core = floor(x % defs.CORES_PER_NODE)
-            if core == 0:
-                self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
-                        end='')
-            else:
-                self.verbose_msg(' {}'.format(core), end='')
-            s = util.call([XOBJDUMP, MASTER_XE, 
-                    '-r', '{},{},image_n0c0.elf'.format(node, core)])
-        self.verbose_msg('')
+        self.verbose_msg('Replacing master image in node 0, core 0')
+        s = util.call([XOBJDUMP, '--split', MASTER_XE])
+        s = util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'])
+        #self.verbose_msg('Splitting slave')
+        #self.verbose_msg('\r  Replacing node 0, core', end='')
+        #for x in range(1, self.numcores):
+        #    node = floor(x / defs.CORES_PER_NODE)
+        #    core = floor(x % defs.CORES_PER_NODE)
+        #    if core == 0:
+        #        self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
+        #                end='')
+        #    else:
+        #        self.verbose_msg(' {}'.format(core), end='')
+        #    s = util.call([XOBJDUMP, MASTER_XE, 
+        #            '-r', '{},{},image_n0c0.elf'.format(node, core)])
+        #self.verbose_msg('')
         return s
 
     def insert_labels(self, file, buf):
@@ -251,17 +253,30 @@ class Build(object):
         """ Renanme the output file and delete any temporary files
         """
         self.verbose_msg('Cleaning up')
-        util.rename_file(MASTER_XE, output_xe)
+        
+        # Remove specific files
+        util.rename_file(SLAVE_XE, output_xe)
+        util.remove_file('master.xe')
         util.remove_file('image_n0c0.elf')
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
-        util.remove_file('slave.xe')
+        
+        # Remove unused master images
+        for x in glob.glob('image_n*c*\.elf')
+            util.remove_file(x)
+
+        # Remove runtime objects
         for x in glob.glob('*.o'):
             util.remove_file(x)
 
     def target(self):
-        return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, self.numcores)
+        # TODO: Ensure the number of nodes is compatible with an available
+        # device
+        numcores = self.numcores
+        if numcores < defs.CORES_PER_NODE:
+            numcores = defs.CORES_PER_NODE
+        return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, numcores)
 
     def function_label_top(self, name):
         return '.L'+name+'_top'

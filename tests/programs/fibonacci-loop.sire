@@ -1,13 +1,14 @@
 % Calculate nth Fibonacci number
 
-func fib(val n) is 
+func fibonacci(val n) is 
   var x;
   var y;
   var z;
   var i;
 { x := 0 
 ; y := 1
-; i := n
+; i := n - 1
+; z := x
 ; while(i > 0) do 
   { z := x + y
   ; x := y
@@ -17,7 +18,9 @@ func fib(val n) is
 ; return z
 }
 
+% Output: 8, 89, 987
 proc main() is
-{ fib(10)
-; fib(17)
+{  printval(fibonacci(6))  ; printstr("\n")
+;  printval(fibonacci(11)) ; printstr("\n")
+;  printval(fibonacci(16)) ; printstr("\n")
 }

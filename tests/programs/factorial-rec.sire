@@ -5,5 +5,9 @@ func factorial(val x) is
    then return 1 
    else return x * factorial(x-1)
 
+% Ouput: 6, 120, 5040
 proc main() is
-  factorial(5)
+{  printval(factorial(3)) ; printstr("\n")
+;  printval(factorial(5)) ; printstr("\n")
+;  printval(factorial(7)) ; printstr("\n")
+}

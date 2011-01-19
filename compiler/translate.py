@@ -309,7 +309,7 @@ class Translate(NodeWalker):
             return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_fcall(self, node):
-        return '{}({})'.format(node.name, self.exprlist(node.args))
+        return '{}({})'.format(node.name, self.expr_list(node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)
