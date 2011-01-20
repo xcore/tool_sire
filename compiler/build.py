@@ -21,7 +21,7 @@ SLAVE_XE       = 'slave.xe'
 XCC            = 'xcc'
 XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
-COMPILE_FLAGS  = ['-S', '-O2']
+COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm']
 ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 

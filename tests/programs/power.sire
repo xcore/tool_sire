@@ -3,8 +3,8 @@
 func power(val base, val exp) is
   var result;
   var i;
-{ result := base
-; for i:= 0 to exp-1 do
+{ result := 1
+; for i:=0 to exp-1 do
     result := result * base
 ; return result
 }

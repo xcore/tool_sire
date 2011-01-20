@@ -219,7 +219,7 @@ class Semantics(ast.NodeVisitor):
     def visit_stmt_aliases(self, node):
         if not self.sym.check_form(node.dest, ['alias']):
             self.type_error('alias', node.left, node.coord)
-        if not self.sym.check_form(node.name, ['var', 'alias']):
+        if not self.sym.check_form(node.name, ['var', 'alias', 'array']):
             self.type_error('alias', node.name, node.coord)
 
     def visit_stmt_return(self, node):

@@ -1,6 +1,7 @@
 import sys
 import ast
 import printer
+import definitions as defs
 from walker import NodeWalker
 from type import Type
 
@@ -173,14 +174,15 @@ class Translate(NodeWalker):
         """
         args = []
         for x in arg_list.children():
-            # Load single array arguments type conversion: int[] to unsigned
+            # For single array arguments, load the address given by this
+            # variable manually to circumvent an XC type error.
             arg = None
             if isinstance(x, ast.ExprSingle):
                 if isinstance(x.elem, ast.ElemId):
                     if x.elem.symbol.type.form == 'array':
                         tmp = self.blocker.get_tmp()
-                        self.asm('ldw %0, %1[%2]', outop=tmp,
-                                inops=[x.elem.name, '0'])
+                        self.asm('mov %0, %1', outop=tmp,
+                                inops=[x.elem.name])
                         arg = tmp
             args.append(arg if arg else self.expr(x))
         return ', '.join(args)
@@ -242,8 +244,12 @@ class Translate(NodeWalker):
     def defn(self, node, d):
         self.out('#pragma unsafe arrays')
         s = ''
-        if node.type.specifier == 'proc':   s += 'void'
-        elif node.type.specifier == 'func': s += 'int'
+        #if node.type.specifier == 'proc':   s += 'int'
+        #elif node.type.specifier == 'func': s += 'int'
+        if node.name == '_main':
+            s += 'void'
+        else:
+            s += 'int'
         s += ' {}({})'.format(
                 self.procedure_name(node.name), 
                 self.formals(node.formals))
@@ -350,7 +356,8 @@ class Translate(NodeWalker):
     def stmt_aliases(self, node):
         self.asm('add %0, %1, %2', 
                 outop=node.dest, 
-                inops=[node.name, self.elem(node.expr)])
+                inops=[node.name, '({})*{}'.format(
+                    self.elem(node.expr), defs.BYTES_PER_WORD)])
 
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))
@@ -415,8 +422,7 @@ class Translate(NodeWalker):
         #    return None
 
     def elem_fcall(self, node):
-        return '{}({})'.format(node.name,
-                self.expr_list(self.arguments(node.args)))
+        return '{}({})'.format(node.name, self.arguments(node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)

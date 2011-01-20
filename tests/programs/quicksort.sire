@@ -1,4 +1,4 @@
-val LENGTH:=50;
+val LENGTH:=10;
 var a[LENGTH];
 
 % Partition
@@ -39,7 +39,7 @@ proc qsort(array[], val len) is
   var a[];
   var b[]; 
   var pivot;
-{ if len > 10 then 
+{ if len > 1 then 
   { pivot := partition(array, len)
   ; a aliases array[0..]
   ; b aliases array[pivot+1..]
@@ -49,9 +49,13 @@ proc qsort(array[], val len) is
   else skip
 }
 
+% Ouput: 0123456789
 proc main() is
   var i;
 { for i:=0 to LENGTH-1 do 
-    a[i] := LENGTH-i
+    a[i] := LENGTH-(i+1)
 ; qsort(a, LENGTH)
+; for i:=0 to LENGTH-1 do
+    printval(a[i])
+; printstrln("")
 }
