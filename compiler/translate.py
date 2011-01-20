@@ -5,7 +5,9 @@ from walker import NodeWalker
 from type import Type
 
 INDENT = '  '
-SCRATCH_VAR = '_x_'
+MAX_TEMPS = 100
+BEGIN_BLOCK = '^'
+END_BLOCK = '*'
 
 op_conversion = {
     '+'   : '+',
@@ -34,41 +36,74 @@ proc_conversion = {
 }
 
 class Blocker(object):
-    """ A class to buffer and output blocks containing statements
+    """ A class to buffer and output blocks containing declarations and 
+        statements
     """
+
+    class BlockBegin(object):
+        def __init__(self):
+            self.temps = []
+
+    class BlockEnd(object):
+        def __init__(self):
+            pass
+
     def __init__(self, translator, buf):
         self.translator = translator
         self.buf = buf
         self.stack = []
         self.temps = []
         self.temp_counter = 0
-        self.unused_temps = list(range(100))
+        self.unused_temps = list(range(MAX_TEMPS))
 
     def begin(self):
-        self.stack.append('^')
-        self.temps.append('^')
+        self.stack.append(self.BlockBegin())
+        self.temps.append(BEGIN_BLOCK)
 
     def end(self):
-        self.stack.append('*')
-        while not self.temps[-1] == '^':
-            t = self.temps.pop()
-            self.unused_temps.insert(0, t)
-            
+        self.stack.append(self.BlockEnd())
+
+        # Remove temps not out of scope
+        while not self.temps[-1] == BEGIN_BLOCK:
+           t = self.temps.pop()
+           self.unused_temps.insert(0, t)
         self.temps.pop()
 
-    def insert(self, s):
-        self.stack.append(s)
-    
-    def insert_before(self, s):
-        self.stack.insert(len(self.stack), s)
+    def get_tmp(self):
+        """ Get the next unused temporary variable """
+        t = self.unused_temps[0]
+        del self.unused_temps[0]
+        self.temps.append(t)
+        
+        # Insert in in the current scope, skipping any nested blocks
+        skip = 0
+        for x in reversed(self.stack):
+            if isinstance(x, self.BlockEnd):
+                skip += 1
+            if isinstance(x, self.BlockBegin):
+                if skip == 0:
+                    x.temps.append(t)
+                    break
+                else:
+                    skip -= 1
 
+        return '_t{}'.format(t)
+
+    def insert(self, s):
+        """ Insert a statement """
+        self.stack.append(s)
+   
     def output(self):
         depth = 0
         for x in self.stack:
-            if x == '^':
+            if isinstance(x, self.BlockBegin):
                 self.out(depth, '{\n')
                 depth += 1
-            elif x == '*':
+                # Output temporaries declaration
+                if len(x.temps) > 0: 
+                    self.out(depth, 'unsigned '+
+                        (', '.join(['_t{}'.format(t) for t in x.temps]))+';\n')
+            elif isinstance(x, self.BlockEnd):
                 depth -= 1
                 self.out(depth, '}\n')
             else:
@@ -77,13 +112,7 @@ class Blocker(object):
     def out(self, d, s):
         """ Write an indented line """
         self.buf.write((INDENT*d)+s)
-    
-    def get_tmp(self):
-        """ Get the next unused temporary variable """
-        t = self.unused_temps[0]
-        del self.unused_temps[0]
-        self.temps.append(t)
-        return '_t{}'.format(t)
+   
 
 class Translate(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
@@ -101,21 +130,17 @@ class Translate(NodeWalker):
         """ Write an indented line """
         self.blocker.insert(s)
 
-    def asm(self, template, outops=None, inops=None, clobber=None):
+    def asm(self, template, outop=None, inops=None, clobber=None):
         """ Write an inline assembly statement """
         self.out('asm("{}"{}{}{}{}{}{});'.format(
             template,
-            ' : '   if outops or inops or clobber else '',
-            outops  if outops  else '', 
-            ' : '   if inops or clobber  else '', 
-            inops   if inops else '',
+            ' : ' if outop or inops or clobber else '',
+            '"=r"('+outop+')' if outop else '', 
+            ' : ' if inops or clobber  else '', 
+            ', '.join(['"r"('+x+')' for x in inops]) if inops else '',
             ' : '   if clobber else '',
             clobber if clobber else ''
             ))
-
-    def declare_tmp(self, name):
-        """ Declare a temporary variable """
-        self.out('unsigned '+name+';')
 
     def ppt(self, method, node):
         """ Display a pretty-printed AST node in a comment """
@@ -141,6 +166,24 @@ class Translate(NodeWalker):
             return proc_conversion[name] 
         else:
             return name
+
+    def arguments(self, arg_list):
+        """ Build the list of arguments. If there is an array reference 
+            proper, it must be loaded manually.
+        """
+        args = []
+        for x in arg_list.children():
+            # Load single array arguments type conversion: int[] to unsigned
+            arg = None
+            if isinstance(x, ast.ExprSingle):
+                if isinstance(x.elem, ast.ElemId):
+                    if x.elem.symbol.type.form == 'array':
+                        tmp = self.blocker.get_tmp()
+                        self.asm('ldw %0, %1[%2]', outop=tmp,
+                                inops=[x.elem.name, '0'])
+                        arg = tmp
+            args.append(arg if arg else self.expr(x))
+        return ', '.join(args)
 
     def header(self):
         self.out('#include <xs1.h>')
@@ -254,18 +297,16 @@ class Translate(NodeWalker):
 
     def stmt_pcall(self, node):
         self.out('{}({});'.format(
-            self.procedure_name(node.name), self.expr_list(node.args)))
+            self.procedure_name(node.name), self.arguments(node.args)))
 
     def stmt_ass(self, node):
     
         # If the target is an alias, then generate a store after
         if node.left.symbol.type.form == 'alias':
             tmp = self.blocker.get_tmp()
-            self.declare_tmp(tmp)
             self.out('{} = {};'.format(tmp, self.expr(node.expr)))
             self.asm('stw %0, %1[%2]', 
-                    inops='"r"('+tmp+'), "r"('+node.left.name+
-                        '), "r"('+self.expr(node.left.expr)+')')
+                    inops=[tmp, node.left.name, self.expr(node.left.expr)])
         
         # Otherwise, proceede normally
         else:
@@ -308,8 +349,8 @@ class Translate(NodeWalker):
 
     def stmt_aliases(self, node):
         self.asm('add %0, %1, %2', 
-                outops='"=r"('+node.dest+')', 
-                inops='"r"('+node.name+'), "r"('+self.elem(node.expr)+')')
+                outop=node.dest, 
+                inops=[node.name, self.elem(node.expr)])
 
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))
@@ -325,11 +366,8 @@ class Translate(NodeWalker):
         if isinstance(node.elem, ast.ElemSub):
             if node.elem.symbol.type.form == 'alias':
                 tmp = self.blocker.get_tmp()
-                self.declare_tmp(tmp)
-                self.asm('ldw %0, %1[%2]', 
-                        outops='"r"('+tmp+')',
-                        inops='"r"('+node.elem.name+'), "r"('
-                            +self.expr(node.elem.expr)+')')
+                self.asm('ldw %0, %1[%2]', outop=tmp,
+                        inops=[node.elem.name, self.expr(node.elem.expr)])
                 return tmp
 
         # Otherwise, just return
@@ -341,11 +379,8 @@ class Translate(NodeWalker):
         if isinstance(node.elem, ast.ElemSub):
             if node.elem.symbol.type.form == 'alias':
                 tmp = self.blocker.get_tmp()
-                self.declare_tmp(tmp)
-                self.asm('ldw %0, %1[%2]', 
-                        outops='"r"('+tmp+')',
-                        inops='"r"('+node.elem.name+'), "r"('
-                            +self.expr(node.elem.expr)+')')
+                self.asm('ldw %0, %1[%2]', outop=tmp,
+                        inops=[node.elem.name, self.expr(node.elem.expr)])
                 return '({}{})'.format(node.op, tmp)
         
         # Otherwise, just return
@@ -358,11 +393,8 @@ class Translate(NodeWalker):
         if isinstance(node.elem, ast.ElemSub):
             if node.elem.symbol.type.form == 'alias':
                 tmp = self.blocker.get_tmp()
-                self.declare_tmp(tmp)
-                self.asm('ldw %0, %1[%2]', 
-                        outops='"r"('+tmp+')',
-                        inops='"r"('+node.elem.name+'), "r"('
-                            +self.expr(node.elem.expr)+')')
+                self.asm('ldw %0, %1[%2]', outop=tmp,
+                        inops=[node.elem.name, self.expr(node.elem.expr)])
                 return '{} {} {}'.format(tmp,
                         op_conversion[node.op], self.expr(node.right))
         
@@ -376,22 +408,15 @@ class Translate(NodeWalker):
         return '({})'.format(self.expr(node.expr))
 
     def elem_sub(self, node):
-        
-        # If its a reference, we need to load the value manually
-        #if node.symbol.type.form == 'alias':
-        #    scratch = '_x_'
-        #    self.asm('ldw %0, %1[%2]', 
-        #            outops='"r"('+scratch+')',
-        #            inops='"r"('+node.name+'), "r"('+self.expr(node.expr)+')')
-        #    return scratch
-        # Otherwise, we can just use XC notation
-        if node.symbol.type.form == 'array':
-            return '{}[{}]'.format(node.name, self.expr(node.expr))
-        elif node.symbol.type.form == 'alias':
-            return None
+        return '{}[{}]'.format(node.name, self.expr(node.expr))
+        #if node.symbol.type.form == 'array':
+        #    return '{}[{}]'.format(node.name, self.expr(node.expr))
+        #elif node.symbol.type.form == 'alias':
+        #    return None
 
     def elem_fcall(self, node):
-        return '{}({})'.format(node.name, self.expr_list(node.args))
+        return '{}({})'.format(node.name,
+                self.expr_list(self.arguments(node.args)))
 
     def elem_number(self, node):
         return '{}'.format(node.value)

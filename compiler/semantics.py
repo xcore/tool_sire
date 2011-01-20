@@ -25,7 +25,7 @@ class Semantics(ast.NodeVisitor):
     def __init__(self, error):
         self.depth = 0
         self.error = error
-        self.sym = symbol.SymbolTable(self, debug=True)
+        self.sym = symbol.SymbolTable(self, debug=False)
         self.sig = signature.SignatureTable(self, debug=False)
         self.proc_names = []
         self.init_system()
@@ -275,7 +275,6 @@ class Semantics(ast.NodeVisitor):
         else:
             node.symbol = self.sym.lookup(node.name)
             self.sym.mark_decl(node.name)
-            print('subscript var '+node.name+' has form '+node.symbol.type.form)
         # Check it has the right form 
         #if not self.sym.check_form(node.name, ['array','alias']):
         #    self.form_error('subscript', node.name, node.coord)

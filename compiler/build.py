@@ -71,7 +71,7 @@ class Build(object):
         buf = io.StringIO()
         self.insert_labels(PROGRAM_ASM, buf)
         if s: s = util.write_file(PROGRAM_ASM, buf.getvalue())
-        os.rename(PROGRAM_ASM, outfile)
+        if s: os.rename(PROGRAM_ASM, outfile)
         return s
 
     def create_headers(self):
@@ -88,7 +88,7 @@ class Build(object):
         self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
         s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS)
-        if cleanup:
+        if s and cleanup:
             os.remove(srcfile)
         return s
 
@@ -103,7 +103,7 @@ class Build(object):
             s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
         elif ext == 'S':
             s = util.call([XAS, srcfile, '-o', outfile])
-        if cleanup: 
+        if s and cleanup: 
             os.remove(srcfile)
         return s
 
