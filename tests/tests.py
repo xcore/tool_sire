@@ -65,12 +65,23 @@ class Test(unittest.TestCase):
     def test_program_fibonacci_rec(self):
         self.harness('fibonacci-rec.sire', '8\n89\n987\n')
 
-    # ackermann
-    # power
-    # primetest
-    # bubblesort
-    # mergesort-seq
-    # quicksort
+    def test_program_power(self):
+        self.harness('power.sire', '35\n729\n78125\n')
+
+    def test_program_ackermann(self):
+        self.harness('ackermann.sire', '3\n11\n29\n')
+
+    def test_program_primetest(self):
+        self.harness('primetest.sire', '1010101000101000101000100\n')
+
+    def test_program_bubblesort(self):
+        self.harness('bubblesort.sire', '0123456789\n')
+
+    def test_program_mergesort_seq(self):
+        self.harness('mergesort-seq.sire', '0123456789\n')
+
+    def test_program_quicksort(self):
+        self.harness('quicksort.sire', '0123456789\n')
 
 if __name__ == '__main__':
     if init():

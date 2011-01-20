@@ -25,7 +25,7 @@ class Semantics(ast.NodeVisitor):
     def __init__(self, error):
         self.depth = 0
         self.error = error
-        self.sym = symbol.SymbolTable(self, debug=False)
+        self.sym = symbol.SymbolTable(self, debug=True)
         self.sig = signature.SignatureTable(self, debug=False)
         self.proc_names = []
         self.init_system()
@@ -259,8 +259,9 @@ class Semantics(ast.NodeVisitor):
         # Check the symbol has been declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'variable', node.coord)
-        # Mark it as used if it has
+        # Mark it as used if it has and link to the symbol
         else:
+            node.symbol = self.sym.lookup(node.name)
             self.sym.mark_decl(node.name)
         # Check it has the right form
         #if not self.sym.check_form(node.name, ['single']):
@@ -269,10 +270,12 @@ class Semantics(ast.NodeVisitor):
     def visit_elem_sub(self, node):
         # Check the symbol has been declared
         if not self.sym.check_decl(node.name):
-            self.nodecl_error(node.name, 'array', node.coord)
-        # Mark it as used if it has
+            self.nodecl_error(node.name, 'array or alias', node.coord)
+        # Mark it as used if it has and link to the symbol
         else:
+            node.symbol = self.sym.lookup(node.name)
             self.sym.mark_decl(node.name)
+            print('subscript var '+node.name+' has form '+node.symbol.type.form)
         # Check it has the right form 
         #if not self.sym.check_form(node.name, ['array','alias']):
         #    self.form_error('subscript', node.name, node.coord)

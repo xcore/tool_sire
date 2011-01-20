@@ -10,7 +10,9 @@ func ackermann(val m, val n) is
   else skip
 }
 
+% Output: 3, 11, 29
 proc main() is
-{ ackermann(3, 4)
-; ackermann(4, 0) 
+{ printvalln(ackermann(0, 2))
+; printvalln(ackermann(2, 4))
+; printvalln(ackermann(3, 2)) 
 }

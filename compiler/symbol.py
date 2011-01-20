@@ -28,8 +28,9 @@ class SymbolTable(object):
         s = None
         while not (self.scope[-1].type.isTag()):
             s = self.scope.pop()
+            #del self.tab[s.name]
             if(self.debug): 
-                print("Popped sym '{}'".format(s.name))
+                print("Popped sym '{}' with type {}".format(s.name, s.type))
 
             # If symbol hasn't been used, give a warning
             if not s.mark and not s.name == defs.LABEL_MAIN:
@@ -63,9 +64,13 @@ class SymbolTable(object):
             return True
         return False
 
+    # TODO: ideally, symbol lookup should be O(1) by creating new tables for
+    # each new scope
     def lookup(self, key):
-        """ Lookup a symbol in any scope """
-        return self.tab[key]
+        """ Lookup a symbol in scope order """
+        for x in reversed(self.scope):
+            if x.name == key: return x
+        return None
 
     def lookup_scoped(self, key):
         """ Lookup a symbol in the current scope """

@@ -1,4 +1,4 @@
-val LENGTH := 1500;
+val LENGTH := 10;
 var a[LENGTH];
 
 % Merge
@@ -42,12 +42,14 @@ proc msort(array[], val len) is
   else skip
 }
 
-% Main
+% Ouput: 0123456789
 proc main() is
   var i;
 { for i:=0 to LENGTH-1 do 
-    a[i] := LENGTH-i
+    a[i] := LENGTH-(i+1)
 ; msort(a, LENGTH)
 ; for i:=0 to LENGTH-1 do
     printval(a[i])
+; printstrln("")
 }
+

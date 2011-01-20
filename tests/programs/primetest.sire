@@ -1,4 +1,4 @@
-val MAX:=10;
+val MAX:=25;
 
 func testPrime (val x) is
   var n;
@@ -15,5 +15,7 @@ func testPrime (val x) is
 
 proc main() is
   var i;
-{  for i:=1 to MAX do testPrime(i)
+{ for i:=1 to MAX do
+    printval(testPrime(i))
+; printstrln("")
 }

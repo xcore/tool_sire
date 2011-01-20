@@ -40,12 +40,21 @@ class Blocker(object):
         self.translator = translator
         self.buf = buf
         self.stack = []
+        self.temps = []
+        self.temp_counter = 0
+        self.unused_temps = list(range(100))
 
     def begin(self):
         self.stack.append('^')
+        self.temps.append('^')
 
     def end(self):
         self.stack.append('*')
+        while not self.temps[-1] == '^':
+            t = self.temps.pop()
+            self.unused_temps.insert(0, t)
+            
+        self.temps.pop()
 
     def insert(self, s):
         self.stack.append(s)
@@ -56,11 +65,7 @@ class Blocker(object):
     def output(self):
         depth = 0
         for x in self.stack:
-            if x == '$':
-                depth += 1
-            elif x == '%':
-                depth -= 1
-            elif x == '^':
+            if x == '^':
                 self.out(depth, '{\n')
                 depth += 1
             elif x == '*':
@@ -72,7 +77,13 @@ class Blocker(object):
     def out(self, d, s):
         """ Write an indented line """
         self.buf.write((INDENT*d)+s)
-
+    
+    def get_tmp(self):
+        """ Get the next unused temporary variable """
+        t = self.unused_temps[0]
+        del self.unused_temps[0]
+        self.temps.append(t)
+        return '_t{}'.format(t)
 
 class Translate(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
@@ -102,6 +113,10 @@ class Translate(NodeWalker):
             clobber if clobber else ''
             ))
 
+    def declare_tmp(self, name):
+        """ Declare a temporary variable """
+        self.out('unsigned '+name+';')
+
     def ppt(self, method, node):
         """ Display a pretty-printed AST node in a comment """
         self.out('/*\n')
@@ -128,14 +143,20 @@ class Translate(NodeWalker):
             return name
 
     def header(self):
-        self.buf.write('#include <xs1.h>\n')
-        self.buf.write('#include <print.h>\n')
-        self.buf.write('#include <syscall.h>\n')
-   
+        self.out('#include <xs1.h>')
+        self.out('#include <print.h>')
+        self.out('#include <syscall.h>')
+  
+    def definitions(self):
+        self.out('#define TRUE 1')
+        self.out('#define FALSE 0')
+
     # Program ============================================
 
     def walk_program(self, node):
         self.header()
+        self.out('')
+        self.definitions()
         self.out('')
         self.decls(node.decls)
         self.out('')
@@ -145,19 +166,19 @@ class Translate(NodeWalker):
     # Variable declarations ===============================
 
     def decls(self, node):
-        #self.buf.write((INDENT*d if len(node.children())>0 else '') 
-        #        +(';\n'+(INDENT*d)).join(
-        #            [self.decl(x) for x in node.children()]))
-        #if len(node.children())>0: self.buf.write(';\n')
         for x in node.children():
             self.out(self.decl(x))
 
     def decl(self, node):
         s = '{}'.format(node.name)
+
+        # Forms
         if node.type.form == 'array':
             s += '[{}]'.format(self.expr(node.expr))
         elif node.type.form == 'alias':
-            s += '[1]'
+            return 'unsigned '+s+';'
+        
+        # Specifiers
         if node.type.specifier == 'var':
             s = 'int {}'.format(s)+';'
         elif node.type.specifier == 'val':
@@ -166,6 +187,7 @@ class Translate(NodeWalker):
             s = 'const unsigned {} = {};'.format(s, self.expr(node.expr))
         else:
             s = '{} {}'.format(node.type.specifier, s)
+        
         return s
 
     # Procedure declarations ==============================
@@ -185,8 +207,6 @@ class Translate(NodeWalker):
         self.out(s)
         self.blocker.begin()
         self.decls(node.decls)
-        # Add the scratch variable to the procedure scope
-        self.out('unsigned ' + SCRATCH_VAR + ';')
         self.stmt_block(node.stmt)
         self.blocker.end()
         self.out('')
@@ -198,14 +218,19 @@ class Translate(NodeWalker):
 
     def param(self, node):
         s = '{}'.format(node.name)
+
+        # Forms
         if node.type.form == 'alias':
-            s += '[]'
+            return 'unsigned '+s
+
+        # Specifiers
         if node.type == Type('var', 'single'):
             s = '&' + s
         elif node.type.specifier == 'var' or node.type.specifier == 'val':
             s = 'int ' + s
         elif node.type.specifier == 'chanend':
             s = 'unsigned '+s
+
         return s
 
     # Statements ==========================================
@@ -232,8 +257,20 @@ class Translate(NodeWalker):
             self.procedure_name(node.name), self.expr_list(node.args)))
 
     def stmt_ass(self, node):
-        self.out('{} = {};'.format(
-            self.elem(node.left), self.expr(node.expr)))
+    
+        # If the target is an alias, then generate a store after
+        if node.left.symbol.type.form == 'alias':
+            tmp = self.blocker.get_tmp()
+            self.declare_tmp(tmp)
+            self.out('{} = {};'.format(tmp, self.expr(node.expr)))
+            self.asm('stw %0, %1[%2]', 
+                    inops='"r"('+tmp+'), "r"('+node.left.name+
+                        '), "r"('+self.expr(node.left.expr)+')')
+        
+        # Otherwise, proceede normally
+        else:
+            self.out('{} = {};'.format(
+                self.elem(node.left), self.expr(node.expr)))
 
     def stmt_in(self, node):
         self.out('{} ? {};'.format(
@@ -255,7 +292,7 @@ class Translate(NodeWalker):
         self.stmt_block(node.stmt)
     
     def stmt_for(self, node):
-        self.out('for ({0} = {1}; {0} < {2}; {0}++)'.format(
+        self.out('for ({0} = {1}; {0} <= {2}; {0}++)'.format(
             self.elem(node.var),
             self.expr(node.init), self.expr(node.bound)))
         self.stmt_block(node.stmt)
@@ -271,10 +308,8 @@ class Translate(NodeWalker):
 
     def stmt_aliases(self, node):
         self.asm('add %0, %1, %2', 
-                outops='"=r"('+SCRATCH_VAR+')', 
+                outops='"=r"('+node.dest+')', 
                 inops='"r"('+node.name+'), "r"('+self.elem(node.expr)+')')
-        self.asm('stw %0, %1[0x0]', 
-                inops='"r"('+SCRATCH_VAR+'), "r"('+node.dest+')')
 
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))
@@ -285,12 +320,53 @@ class Translate(NodeWalker):
         return ', '.join([self.expr(x) for x in node.children()])
     
     def expr_single(self, node):
+
+        # If the elem is an alias subscript, generate a load
+        if isinstance(node.elem, ast.ElemSub):
+            if node.elem.symbol.type.form == 'alias':
+                tmp = self.blocker.get_tmp()
+                self.declare_tmp(tmp)
+                self.asm('ldw %0, %1[%2]', 
+                        outops='"r"('+tmp+')',
+                        inops='"r"('+node.elem.name+'), "r"('
+                            +self.expr(node.elem.expr)+')')
+                return tmp
+
+        # Otherwise, just return
         return self.elem(node.elem)
 
     def expr_unary(self, node):
-        return '({}{})'.format(node.op, self.elem(node.elem))
+        
+        # If the elem is an alias subscript, generate a load
+        if isinstance(node.elem, ast.ElemSub):
+            if node.elem.symbol.type.form == 'alias':
+                tmp = self.blocker.get_tmp()
+                self.declare_tmp(tmp)
+                self.asm('ldw %0, %1[%2]', 
+                        outops='"r"('+tmp+')',
+                        inops='"r"('+node.elem.name+'), "r"('
+                            +self.expr(node.elem.expr)+')')
+                return '({}{})'.format(node.op, tmp)
+        
+        # Otherwise, just return
+        else:
+            return '({}{})'.format(node.op, self.elem(node.elem))
 
     def expr_binop(self, node):
+        
+        # If the elem is an alias subscript, generate a load
+        if isinstance(node.elem, ast.ElemSub):
+            if node.elem.symbol.type.form == 'alias':
+                tmp = self.blocker.get_tmp()
+                self.declare_tmp(tmp)
+                self.asm('ldw %0, %1[%2]', 
+                        outops='"r"('+tmp+')',
+                        inops='"r"('+node.elem.name+'), "r"('
+                            +self.expr(node.elem.expr)+')')
+                return '{} {} {}'.format(tmp,
+                        op_conversion[node.op], self.expr(node.right))
+        
+        # Otherwise, just return
         return '{} {} {}'.format(self.elem(node.elem), 
                 op_conversion[node.op], self.expr(node.right))
     
@@ -300,13 +376,19 @@ class Translate(NodeWalker):
         return '({})'.format(self.expr(node.expr))
 
     def elem_sub(self, node):
-        # If the index is a constant value, assign it to a variable first to
-        # that the compiler will allow an unsafe access to the array
-        if self.sem.get_expr_type(node.expr) == Type('val', 'single'):
-            self.blocker.insert_before(SCRATCH_VAR+' = '+self.expr(node.expr));
-            return '{}[{}]'.format(node.name, SCRATCH_VAR)
-        else:
+        
+        # If its a reference, we need to load the value manually
+        #if node.symbol.type.form == 'alias':
+        #    scratch = '_x_'
+        #    self.asm('ldw %0, %1[%2]', 
+        #            outops='"r"('+scratch+')',
+        #            inops='"r"('+node.name+'), "r"('+self.expr(node.expr)+')')
+        #    return scratch
+        # Otherwise, we can just use XC notation
+        if node.symbol.type.form == 'array':
             return '{}[{}]'.format(node.name, self.expr(node.expr))
+        elif node.symbol.type.form == 'alias':
+            return None
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.expr_list(node.args))
@@ -315,7 +397,7 @@ class Translate(NodeWalker):
         return '{}'.format(node.value)
 
     def elem_boolean(self, node):
-        return '{}'.format(node.value)
+        return '{}'.format(node.value.upper())
 
     def elem_string(self, node):
         return '{}'.format(node.value)

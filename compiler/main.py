@@ -144,10 +144,12 @@ def main(args):
 
     # Parse the input file
     program = parse(input, a.infile, err)
+    if err.any(): return FAILURE
     if a.parse_only: return SUCCESS
 
     # Perform semantic analysis
     sem = semantic_analysis(program, err)
+    if err.any(): return FAILURE
     if a.sem_only: return SUCCESS
 
     # Display (dump) the AST

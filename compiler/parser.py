@@ -325,12 +325,14 @@ class Parser(object):
         'right : elem'
         p[0] = ast.ExprSingle(p[1])
 
+    # Associative operators, TODO: check these
     def p_right(self, p):
         '''right : elem AND right
                  | elem OR right
                  | elem XOR right
                  | elem PLUS right
-                 | elem MULT right'''
+                 | elem MINUS right'''
+                 # MULT and DIV?
         p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
     # Elements =================================================

@@ -23,6 +23,9 @@ class Error(object):
     def fatal(self, msg):
             print('Fatal error: '+msg, file=sys.stderr)
 
+    def any(self):
+        return self.num_errors > 0
+
     def summary(self):
         return '{} errors and {} warnings'.format(
                 self.num_errors, self.num_warnings)
