@@ -1,27 +1,20 @@
-val LENGTH := 8;
+val LENGTH := 10;
 var a[LENGTH];
 var scratch[LENGTH];
 
 % Merge
-proc merge(a[], b[], array[], val m, val n, val begin, val end) is
+proc merge(a[], b[], array[], val m, val n) is
   var i;
   var j;
   var k;
-{ 
-% printstrln("a:===========")
-%; for i:=0 to m-1 do
-%   printvalln(a[i])
-%; printstrln("b:===========")
-%; for i:=0 to n-1 do
-%   printvalln(b[i])
- i:=0 
+{ i:=0 
 ; j:=0 
 ; k:=0
 ; while (i < m) and (j < n) do 
   { if(a[i] <= b[j])
     then 
-    { scratch[k] := a[i] 
-    ; i := i+1 
+    { scratch[k] := a[i]
+    ; i := i+1
     } 
     else 
     { scratch[k] := b[j]
@@ -29,31 +22,41 @@ proc merge(a[], b[], array[], val m, val n, val begin, val end) is
     }
     ; k := k+1
   }
-; if i<m then scratch[k] := a[i] else skip
-; if j<n then scratch[k] := b[j] else skip
-%; printstrln("merged:")
-; for i:=0 to end-begin-1 do
-  { array[i+begin] := scratch[i]
-  %; printvalln(array[i+begin])
+; if i<m then
+    while i<m do
+    {  scratch[k] := a[i] 
+    ; k := k+1
+    ; i := i+1
+    }
+  else skip
+; if j<n then 
+    while j<n do
+    { scratch[k] := b[j] 
+    ; k := k+1
+    ; j := j+1
+    }
+  else skip
+
+  % Copy scratch back into the array
+; for i:=0 to m+n-1 do
+  { array[i] := scratch[i]
   }
 }
 
 % Merge sort
-proc msort(array[], val begin, val end) is
+proc msort(array[], val len) is
   var a[];
   var b[]; 
   var m;
   var n;
-  var len;
-{ len := end - begin
-; if len > 1 then
+{ if len > 1 then
   { m := len >> 1
   ; n := len - m
   ; a aliases array[0..]
   ; b aliases array[m..]
-  ; msort(a, begin, begin+m)
-  ; msort(b, begin+m, end)
-  ; merge(a, b, array, m, n, begin, end)
+  ; msort(a, m)
+  ; msort(b, n)
+  ; merge(a, b, array, m, n)
   }
   else skip
 }
@@ -61,12 +64,9 @@ proc msort(array[], val begin, val end) is
 % Ouput: 0123456789
 proc main() is
   var i;
-{ 
-for i:=0 to LENGTH-1 do 
+{ for i:=0 to LENGTH-1 do 
     a[i] := LENGTH-(i+1)
-; for i:=0 to LENGTH-1 do 
-    scratch[i] := -999
-; msort(a, 0, LENGTH)
+; msort(a, LENGTH)
 ; for i:=0 to LENGTH-1 do
     printval(a[i])
 ; printstrln("")

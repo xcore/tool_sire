@@ -80,8 +80,8 @@ class Test(unittest.TestCase):
     def test_program_quicksort(self):
         self.harness('quicksort.sire', '0123456789\n')
 
-    #def test_program_mergesort_seq(self):
-    #    self.harness('mergesort-seq.sire', '0123456789\n')
+    def test_program_mergesort_seq(self):
+        self.harness('mergesort-seq.sire', '0123456789\n')
 
 if __name__ == '__main__':
     if init():
