@@ -83,6 +83,12 @@ class Test(unittest.TestCase):
     def test_program_mergesort_seq(self):
         self.harness('mergesort-seq.sire', '0123456789\n')
 
+    def test_program_euclid_loop(self):
+        self.harness('euclid-loop.sire', '8\n7\n1\n')
+
+    def test_program_euclid_rec(self):
+        self.harness('euclid-rec.sire', '8\n7\n1\n')
+
 if __name__ == '__main__':
     if init():
         sys.argv.append('-v')

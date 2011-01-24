@@ -39,12 +39,12 @@ class Parser(object):
                 column=self.lexer.findcol(self.lexer.data(), t.lexpos))
 
     def lex_error(self, msg, line, col):
-        self.error.report_error('lexing', Coord(line, col))
+        self.error.report_error(msg, Coord(line, col))
         self.lexer.errok()
 
-    def parse_error(self, msg, coord=None):
-        self.error.report_error('parsing', coord)
-        self.parser.errok()
+    def parse_error(self, msg, coord=None, discard=True):
+        self.error.report_error(msg, coord)
+        if discard: self.parser.errok()
 
     # Define operator presidence
     precedence = (
@@ -221,12 +221,12 @@ class Parser(object):
     # Seq error
     def p_stmt_seq_err(self, p):
         'stmt_seq : error SEMI'
-        self.parse_error('sequential block', p, 1)
+        self.parse_error('sequential block', self.coord(p))
 
     # Par error
     def p_stmt_par_err(self, p):
         'stmt_par : error BAR'
-        self.parse_error('parallel block', p, 1)
+        self.parse_error('parallel block', self.coord(p))
 
     # Statements ==========================================
 
@@ -277,6 +277,10 @@ class Parser(object):
     def p_stmt_return(self, p):
         'stmt : RETURN expr'
         p[0] = ast.StmtReturn(p[2], self.coord(p))
+
+    def p_stmt_err(self, p):
+        'stmt : error'
+        self.parse_error('stmt', self.coord(p))
 
     # Expressions ==============================================
 
@@ -397,9 +401,9 @@ class Parser(object):
     # Error rule for syntax errors
     def p_error(self, t):
         if t:
-            self.parse_error('before: %s' % t.value, self.tcoord(t))
+            self.parse_error('before: {}'.format(t.value), self.tcoord(t))
         else:
-            self.parse_error('At end of input')
+            self.parse_error('at end of input', discard=False)
 
 class Coord(object):
     """ Coordinates (file, line, col) of a syntactic element. """

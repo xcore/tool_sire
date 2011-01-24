@@ -10,14 +10,14 @@ class Error(object):
         if coord:
             print('{}: error: {}'.format(coord, msg), file=sys.stderr)
         else:
-            print('Error: {}'+msg, file=sys.stderr)
+            print('Error: '+msg, file=sys.stderr)
         self.num_errors += 1
 
     def report_warning(self, msg, coord=None):
         if coord:
             print('{}: warning: {}'.format(coord, msg), file=sys.stderr)
         else:
-            print('Warning: {}'+msg, file=sys.stderr)
+            print('Warning: '+msg, file=sys.stderr)
         self.num_warnings += 1
 
     def fatal(self, msg):

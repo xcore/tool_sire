@@ -1,0 +1,23 @@
+% Find the greatest common divisor of two numbers a,b
+
+func gcd(val a, val b) is
+  var t;
+  var x;
+  var y;
+{ x := a
+; y := b
+; while y ~= 0 do
+  { t := y
+  ; y := x rem y
+  ; x := t
+  }
+; return x
+}
+
+% Ouput: 8, 7, 1
+proc main() is
+{ printvalln(gcd(16, 24))
+; printvalln(gcd(49, 84))
+; printvalln(gcd(243, 346))
+}
+
