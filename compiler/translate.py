@@ -134,14 +134,19 @@ class Translate(NodeWalker):
     def asm(self, template, outop=None, inops=None, clobber=None):
         """ Write an inline assembly statement """
         self.out('asm("{}"{}{}{}{}{}{});'.format(
+            #template.replace('\n', ' ; '),
             template,
-            ' : ' if outop or inops or clobber else '',
+            ':' if outop or inops or clobber else '',
             '"=r"('+outop+')' if outop else '', 
-            ' : ' if inops or clobber  else '', 
+            ':' if inops or clobber  else '', 
             ', '.join(['"r"('+x+')' for x in inops]) if inops else '',
-            ' : '   if clobber else '',
-            clobber if clobber else ''
+            ':'   if clobber else '',
+            ', '.join(['"'+x+'"' for x in clobber]) if clobber else ''
             ))
+
+    def comment(self, s):
+        """ Write a comment """
+        self.out('// '+s)
 
     def ppt(self, method, node):
         """ Display a pretty-printed AST node in a comment """
@@ -162,11 +167,7 @@ class Translate(NodeWalker):
         
     def procedure_name(self, name):
         """ If a procedure name has a conversion, return it """
-        # Check for conversion (TODO: neaten this)
-        if name in proc_conversion:
-            return proc_conversion[name] 
-        else:
-            return name
+        return proc_conversion[name] if name in proc_conversion else name
 
     def arguments(self, arg_list):
         """ Build the list of arguments. If there is an array reference 
@@ -191,6 +192,8 @@ class Translate(NodeWalker):
         self.out('#include <xs1.h>')
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
+        # TODO: this path should be more generic
+        self.out("#include 'runtime/globals.h'")
   
     def definitions(self):
         self.out('#define TRUE 1')
@@ -290,13 +293,82 @@ class Translate(NodeWalker):
             self.stmt(x)
         self.blocker.end()
 
+    def fork_set(self, sync_reg, thread_reg, temp_reg, thread_label):
+        """ Generate the initialisation for a slave thread """
+
+        # Get a synchronised thread
+        self.asm('getst %0, res[%1]', outop=thread_reg, inops=[sync_reg])
+
+        # Setup pc = &initThread (from jump table)
+        self.asm('ldw r11, cp[%0] ; init t[%1]:pc, %2', 
+                inops=['JUMPI_INIT_THREAD', thread_reg],
+                clobber=['r11'])
+
+        # Move sp away: sp -= THREAD_STACK_SPACE and save it
+        self.out('_sp = _sp - THREAD_STACK_SPACE;')
+        self.asm('init t[%0]:sp, %1', inops=[thread_reg, '_sp'])
+
+        # Setup dp, cp
+        self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
+                 inops=[thread_reg], clobber=['r11'])
+        self.asm('ldaw r11, cp[0x0] ; init t[%0]:cp, r11', 
+                 inops=[thread_reg], clobber=['r11'])
+
+        # Copy register values
+        for i in range(11):
+            self.asm('set t[%0]:r{0}, r{0}'.format(i))
+
     def stmt_par(self, node):
-        #self.buf.write(self.indt(d-1)+'par {\n')
-        #for x in node.children():
-        #    self.stmt(x)
-        #    self.buf.write('\n')
-        #self.buf.write(self.indt(d-1)+'}')
-        pass
+        """ Generate a parallel block """
+        sync_reg = self.blocker.get_tmp()
+        thread_reg = self.blocker.get_tmp()
+        temp_reg = self.blocker.get_tmp()
+        exit_label = 'EXIT'
+
+        self.comment('Parallel block')
+
+        # Declare an array to store thread identifiers
+        self.out('unsigned _threads[{}];'.format(len(node.children())-1))
+        
+        # Get a thread synchroniser
+        self.asm('getr %0, %1', outop=sync_reg, inops=['RES_TYPE_SYNC'])
+        
+        # Setup each slave thread
+        self.comment('Initialise slave threads')
+        self.out('for(int i=0; i<{}; i++)'.format(len(node.children())-1))
+        self.blocker.begin()
+        self.fork_set(sync_reg, thread_reg, temp_reg, 'thread_label')
+        self.blocker.end()
+       
+        # Set lr = &instruction label
+        self.comment('Initialise slave link registers')
+        for (i, x) in enumerate(node.children()):
+            if not i == 0:
+                self.asm('ldap thread_x ; init t[%0]:lr, %1',
+                    inops=['threads[{}]'.format(i-1), temp_reg], clobber=['r11'])
+
+        # Master synchronise
+        self.comment('Master synchronise')
+        self.asm('msync %0', inops=[sync_reg])
+
+        # Output each thread's instructions followed by a slave synchronise or
+        # for the master, a master join and branch out of the block.
+        master = True
+        for x in node.children():
+            self.comment('Thread x')
+            self.asm('THREAD_LABEL:')
+            self.stmt(x)
+            if master:
+                self.asm('mjoin %0', inops=[sync_reg])
+                self.asm('bu '+exit_label)
+                master = False
+            else:
+                self.asm('ssync')
+
+        # Ouput exit label and restore stack pointer position
+        self.comment('Exit and restore _sp')
+        self.asm(exit_label+':')
+        self.out('_sp = _sp - (THREAD_STACK_SPACE * {})'.format(len(node.children())-1))
 
     def stmt_skip(self, node):
         pass
@@ -377,7 +449,7 @@ class Translate(NodeWalker):
                         inops=[node.elem.name, self.expr(node.elem.expr)])
                 return tmp
 
-        # Otherwise, just return
+        # Otherwise, just return the regular syntax
         return self.elem(node.elem)
 
     def expr_unary(self, node):
@@ -390,7 +462,7 @@ class Translate(NodeWalker):
                         inops=[node.elem.name, self.expr(node.elem.expr)])
                 return '({}{})'.format(node.op, tmp)
         
-        # Otherwise, just return
+        # Otherwise, just return the regular syntax
         else:
             return '({}{})'.format(node.op, self.elem(node.elem))
 
@@ -405,7 +477,7 @@ class Translate(NodeWalker):
                 return '{} {} {}'.format(tmp,
                         op_conversion[node.op], self.expr(node.right))
         
-        # Otherwise, just return
+        # Otherwise, just return the regular syntax
         return '{} {} {}'.format(self.elem(node.elem), 
                 op_conversion[node.op], self.expr(node.right))
     
@@ -416,10 +488,6 @@ class Translate(NodeWalker):
 
     def elem_sub(self, node):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
-        #if node.symbol.type.form == 'array':
-        #    return '{}[{}]'.format(node.name, self.expr(node.expr))
-        #elif node.symbol.type.form == 'alias':
-        #    return None
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

@@ -1,9 +1,6 @@
 Todo
 ====
 
-- Fix: parser can easilly fall into infinite loop, e.g. with missing ';' or mimsing
-  destination in asssignment.
-
 - Add more error cases to improve syntax error reporting.
 
 - Write tests for each rule of semantic analysis, check that it behaves well on
@@ -15,3 +12,5 @@ Todo
   each new scope
 
 - Write language feature test cases in a unittest framework.
+
+- Make sure all runtime variables can't clash with sire variables

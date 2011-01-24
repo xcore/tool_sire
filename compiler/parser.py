@@ -278,10 +278,6 @@ class Parser(object):
         'stmt : RETURN expr'
         p[0] = ast.StmtReturn(p[2], self.coord(p))
 
-    def p_stmt_err(self, p):
-        'stmt : error'
-        self.parse_error('stmt', self.coord(p))
-
     # Expressions ==============================================
 
     def p_expr_list(self, p):
