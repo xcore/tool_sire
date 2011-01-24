@@ -2,6 +2,7 @@ import sys
 import ast
 import printer
 import definitions as defs
+import config
 from walker import NodeWalker
 from type import Type
 
@@ -37,8 +38,7 @@ proc_conversion = {
 }
 
 class Blocker(object):
-    """ A class to buffer and output blocks containing declarations and 
-        statements
+    """ A class to buffer blocks containing statements. 
     """
 
     class BlockBegin(object):
@@ -126,6 +126,7 @@ class Translate(NodeWalker):
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
         self.printer = printer.Printer(buf)
+        self.label_counter = 0
 
     def out(self, s):
         """ Write an indented line """
@@ -188,12 +189,17 @@ class Translate(NodeWalker):
             args.append(arg if arg else self.expr(x))
         return ', '.join(args)
 
+    def get_label(self):
+        """ Get the next unique label """
+        l = '_L{}'.format(self.label_counter)
+        self.label_counter += 1
+        return l
+
     def header(self):
         self.out('#include <xs1.h>')
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
-        # TODO: this path should be more generic
-        self.out("#include 'runtime/globals.h'")
+        self.out('#include "'+config.RUNTIME_PATH+'/globals.h"')
   
     def definitions(self):
         self.out('#define TRUE 1')
@@ -293,82 +299,88 @@ class Translate(NodeWalker):
             self.stmt(x)
         self.blocker.end()
 
-    def fork_set(self, sync_reg, thread_reg, temp_reg, thread_label):
-        """ Generate the initialisation for a slave thread """
+    def thread_set(self):
+        """ Generate the initialisation for a slave thread, in the body of a for
+            loop with i indexing the thread number
+        """
 
         # Get a synchronised thread
-        self.asm('getst %0, res[%1]', outop=thread_reg, inops=[sync_reg])
+        self.out('unsigned _t;')
+        self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
         # Setup pc = &initThread (from jump table)
         self.asm('ldw r11, cp[%0] ; init t[%1]:pc, %2', 
-                inops=['JUMPI_INIT_THREAD', thread_reg],
+                inops=['JUMPI_INIT_THREAD', '_t'],
                 clobber=['r11'])
 
         # Move sp away: sp -= THREAD_STACK_SPACE and save it
         self.out('_sp = _sp - THREAD_STACK_SPACE;')
-        self.asm('init t[%0]:sp, %1', inops=[thread_reg, '_sp'])
+        self.asm('init t[%0]:sp, %1', inops=['_t', '_sp'])
 
         # Setup dp, cp
         self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
-                 inops=[thread_reg], clobber=['r11'])
+                 inops=['_t'], clobber=['r11'])
         self.asm('ldaw r11, cp[0x0] ; init t[%0]:cp, r11', 
-                 inops=[thread_reg], clobber=['r11'])
+                 inops=['_t'], clobber=['r11'])
 
         # Copy register values
         for i in range(11):
-            self.asm('set t[%0]:r{0}, r{0}'.format(i))
+            self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
+
+        # Copy thread id to the array
+        self.out('_threads[i] = _t;')
 
     def stmt_par(self, node):
         """ Generate a parallel block """
-        sync_reg = self.blocker.get_tmp()
-        thread_reg = self.blocker.get_tmp()
-        temp_reg = self.blocker.get_tmp()
-        exit_label = 'EXIT'
+        num_slaves = len(node.children()) - 1
+        exit_label = self.get_label()
 
         self.comment('Parallel block')
 
-        # Declare an array to store thread identifiers
-        self.out('unsigned _threads[{}];'.format(len(node.children())-1))
+        # Declare sync variable and array to store thread identifiers
+        self.out('unsigned _sync;')
+        self.out('unsigned _threads[{}];'.format(num_slaves))
+
+        # Get a label for each thread
+        thread_labels = [self.get_label() for i in range(num_slaves + 1)]
         
         # Get a thread synchroniser
-        self.asm('getr %0, %1', outop=sync_reg, inops=['RES_TYPE_SYNC'])
+        self.asm('getr %0, %1', outop='_sync', inops=['RES_TYPE_SYNC'])
         
         # Setup each slave thread
         self.comment('Initialise slave threads')
-        self.out('for(int i=0; i<{}; i++)'.format(len(node.children())-1))
+        self.out('for(int i=0; i<{}; i++)'.format(num_slaves))
         self.blocker.begin()
-        self.fork_set(sync_reg, thread_reg, temp_reg, 'thread_label')
+        self.thread_set()
         self.blocker.end()
        
         # Set lr = &instruction label
         self.comment('Initialise slave link registers')
         for (i, x) in enumerate(node.children()):
             if not i == 0:
-                self.asm('ldap thread_x ; init t[%0]:lr, %1',
-                    inops=['threads[{}]'.format(i-1), temp_reg], clobber=['r11'])
+                self.asm('ldap '+thread_labels[i]+' ; init t[%0]:lr, r11',
+                    inops=['_threads[{}]'.format(i-1)], clobber=['r11'])
 
         # Master synchronise
         self.comment('Master synchronise')
-        self.asm('msync %0', inops=[sync_reg])
+        self.asm('msync %0', inops=['_sync'])
 
         # Output each thread's instructions followed by a slave synchronise or
         # for the master, a master join and branch out of the block.
-        master = True
-        for x in node.children():
-            self.comment('Thread x')
-            self.asm('THREAD_LABEL:')
+        for (i, x) in enumerate(node.children()):
+            self.comment('Thread {}'.format(i))
+            self.asm(thread_labels[i]+':')
             self.stmt(x)
-            if master:
-                self.asm('mjoin %0', inops=[sync_reg])
+            if i == 0:
+                self.asm('mjoin %0', inops=['_sync'])
                 self.asm('bu '+exit_label)
-                master = False
             else:
                 self.asm('ssync')
 
         # Ouput exit label and restore stack pointer position
         self.comment('Exit and restore _sp')
         self.asm(exit_label+':')
-        self.out('_sp = _sp - (THREAD_STACK_SPACE * {})'.format(len(node.children())-1))
+        self.out('_sp = _sp - (THREAD_STACK_SPACE * {});'.format(num_slaves))
 
     def stmt_skip(self, node):
         pass
