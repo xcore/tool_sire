@@ -243,7 +243,7 @@ initPointers:
     set sp, r11
 
     // Save the sp for thread allocation
-    stw r11, dp[sp]
+    stw r11, dp[_sp]
 
     retsp 0
     .cc_bottom initPointers.function
@@ -283,13 +283,13 @@ initThread:
 //==========================================================
 // Data
 //==========================================================
-    .globl mSpawnChan,    "ui"
-    .globl spawnChan,    "a(:ui)"
-    .globl progChan, "a(:ui)"
-    .globl fpLock,   "ui"
-    .globl fp,       "ui"
-    .globl sp,       "ui"
-    .globl _pc,      "ui"
+    .globl mSpawnChan, "ui"
+    .globl spawnChan,  "a(:ui)"
+    .globl progChan,   "a(:ui)"
+    .globl fpLock,     "ui"
+    .globl _fp,        "ui"
+    .globl _sp,        "ui"
+    .globl _pc,        "ui"
 	
 	.section .dp.data, "awd", @progbits
     .align 4
@@ -319,16 +319,16 @@ fpLock:
     .set fpLock.globound, 4
 
 // Function pointer (for loading functions into memory)
-fp:
+_fp:
     .space 4
-    .globl fp.globound
-    .set fp.globound, 4
+    .globl _fp.globound
+    .set _fp.globound, 4
 
 // Stack pointer pointer (for allocating new threads)
-sp:
+_sp:
     .space 4
-    .globl sp.globound
-    .set sp.globound, 4
+    .globl _sp.globound
+    .set _sp.globound, 4
 
 // Stack pointer pointer (for allocating new threads)
 _pc:

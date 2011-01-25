@@ -5,6 +5,9 @@
 #include "util.h"
 #include "host.h"
 
+/* TODO: - access to _sp should be protected
+         - _sp should be restored after a spawned thread has exited
+*/
 extern void runProcedure      (unsigned int, int, int, unsigned int[]);
 
 void       initGuestConnection(unsigned, unsigned);
@@ -82,8 +85,8 @@ void spawnHost() {
         "mov %0, r11" : "=r"(pc) :: "r11");
     
     // Give the next thread some space and launch it
-    sp -= THREAD_STACK_SPACE; 
-    newAsyncThread(pc, sp, senderId);
+    _sp -= THREAD_STACK_SPACE; 
+    newAsyncThread(pc, _sp, senderId);
 }
 
 // Initialise the conneciton with the sender

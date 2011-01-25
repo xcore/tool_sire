@@ -30,8 +30,8 @@ void initSystem() {
 
     // Set the function pointer (fp) to after the data section
     asm("ldap r11, " LABEL_END_BSS
-        "\n\tmov %0, r11" : "=r"(fp) :: "r11");
-    if(fp % 4) fp += 2;
+        "\n\tmov %0, r11" : "=r"(_fp) :: "r11");
+    if(_fp % 4) _fp += 2;
 
     // Get a lock for the fp variable
     asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(fpLock));

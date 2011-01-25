@@ -199,7 +199,8 @@ class Translate(NodeWalker):
         self.out('#include <xs1.h>')
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
-        self.out('#include "'+config.RUNTIME_PATH+'/globals.h"')
+        #self.out('#include "'+config.RUNTIME_PATH+'/globals.h"')
+        self.out('#include globals.h"')
   
     def definitions(self):
         self.out('#define TRUE 1')
@@ -309,7 +310,7 @@ class Translate(NodeWalker):
         self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
         # Setup pc = &initThread (from jump table)
-        self.asm('ldw r11, cp[%0] ; init t[%1]:pc, %2', 
+        self.asm('ldw r11, cp[%0] ; init t[%1]:pc, r11', 
                 inops=['JUMPI_INIT_THREAD', '_t'],
                 clobber=['r11'])
 
@@ -332,6 +333,7 @@ class Translate(NodeWalker):
 
     def stmt_par(self, node):
         """ Generate a parallel block """
+        self.blocker.begin()
         num_slaves = len(node.children()) - 1
         exit_label = self.get_label()
 
@@ -381,6 +383,7 @@ class Translate(NodeWalker):
         self.comment('Exit and restore _sp')
         self.asm(exit_label+':')
         self.out('_sp = _sp - (THREAD_STACK_SPACE * {});'.format(num_slaves))
+        self.blocker.end()
 
     def stmt_skip(self, node):
         pass

@@ -21,7 +21,7 @@ SLAVE_XE       = 'slave.xe'
 XCC            = 'xcc'
 XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
-COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm']
+COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm', '-I', config.RUNTIME_PATH]
 ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 

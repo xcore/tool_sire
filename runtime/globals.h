@@ -4,8 +4,8 @@
 #include "../include/definitions.h"
 
 // External globals
-extern unsigned fp;
-extern unsigned sp;
+extern unsigned _fp;
+extern unsigned _sp;
 extern unsigned fpLock;
 extern unsigned mSpawnChan;
 extern unsigned spawnChan[MAX_THREADS];
