@@ -21,7 +21,7 @@ SLAVE_XE       = 'slave.xe'
 XCC            = 'xcc'
 XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
-COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm', '-I', config.RUNTIME_PATH]
+COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm']
 ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
@@ -36,6 +36,9 @@ class Build(object):
         self.numcores = numcores
         self.sem = semantics
         self.verbose = verbose
+
+        # Add the include path once it has been set
+        COMPILE_FLAGS += ['-I', config.RUNTIME_PATH]
 
     def run(self, program_buf, outfile):
         """ Run the full build
