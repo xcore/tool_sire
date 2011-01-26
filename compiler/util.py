@@ -49,7 +49,7 @@ def call(args, verbose=False):
         return True
     except subprocess.CalledProcessError as err:
         s = err.output.decode('utf-8').replace("\\n", "\n")
-        print('Error executing command:\n{}\nOuput:\n{}'.format(
+        print('Error executing command:\n\n{}\n\nOuput:\n\n{}'.format(
             ' '.join(err.cmd), s))
         return False
 
@@ -66,9 +66,13 @@ def rename_file(filename, newname):
         os.rename(filename, newname)
 
 def camel_to_under(s):
+    """ Covert a camel-case string to use underscores 
+    """
     return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", 
             lambda m: '{}_{}'.format(m.group(3), m.group(4)), s).lower()
 
 def indexed_dict(elements):
+    """ Return a dictionary of indexes for item keys 
+    """
     return dict([(e,i) for i, e in list(enumerate(elements))])
 
