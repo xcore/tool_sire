@@ -169,17 +169,17 @@ void receiveArguments(unsigned c, int numArgs,
         }
         // Receive an array: write to stack and set args[i] to start address
         else {
-            args[i] = fp;
+            args[i] = _fp;
 
             // Receive each element of the array and write straight to memory
             for(int j=0; j<len[i]; j++) {
                 asm("in %0, res[%1]"  : "=r"(value) : "r"(c));
-                asm("stw %0, %1[%2]" :: "r"(value), "r"(fp), "r"(j));
+                asm("stw %0, %1[%2]" :: "r"(value), "r"(_fp), "r"(j));
             }
            
             // Update fp, ensuring it is word aligned
-            fp += len[i]*4; 
-            if(fp % 4) fp += 2;
+            _fp += len[i]*4; 
+            if(_fp % 4) _fp += 2;
         }
             
         // Synchronise with acknowledge end
@@ -206,7 +206,7 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
         // Instructions
         for(int j=0; j<procSize/4; j++) {
             asm("in %0, res[%1]"  : "=r"(inst): "r"(c));
-            asm("stw %0, %1[%2]" :: "r"(inst), "r"(fp), "r"(j));
+            asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
         }
      
         // Acknowledge end
@@ -214,7 +214,7 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
         asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
     
         // Patch jump table entry
-        asm("stw %0, %1[%2]" :: "r"(fp), "r"(jumpTable), "r"(procIndex));
+        asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
 
         // Update the procSize entry
         sizeTable[procIndex] = procSize;
@@ -222,8 +222,8 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
         if(i == 0) index = procIndex;
         
         // Update fp, ensuring it is word aligned
-        fp += procSize;
-        if(fp % 4) fp += 2;
+        _fp += procSize;
+        if(_fp % 4) _fp += 2;
     }
 
     return index;

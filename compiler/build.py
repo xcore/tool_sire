@@ -38,6 +38,7 @@ class Build(object):
         self.verbose = verbose
 
         # Add the include path once it has been set
+        global COMPILE_FLAGS
         COMPILE_FLAGS += ['-I', config.RUNTIME_PATH]
 
     def run(self, program_buf, outfile):
@@ -116,8 +117,10 @@ class Build(object):
         for x in RUNTIME_FILES:
             objfile = x+'.o'
             self.verbose_msg('  '+x+' -> '+objfile)
-            s = util.call([XCC, self.target(), config.RUNTIME_PATH+'/'+x, '-o', objfile] 
-                    + ASSEMBLE_FLAGS)
+            s = util.call([XCC, self.target(), config.RUNTIME_PATH+'/'+x, 
+                '-o', objfile] + ASSEMBLE_FLAGS)
+            if not s: 
+                break
         return s
 
     def link_master(self):

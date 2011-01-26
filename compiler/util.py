@@ -39,15 +39,18 @@ def write_file(filename, s):
     except:
         raise Exception('Unexpected error:', sys.exc_info()[0])
 
-def call(args):
+def call(args, verbose=False):
     """ Try to execute a shell command
     """
     try:
+        if verbose:
+            print(' '.join(args))
         s = subprocess.check_output(args, stderr=subprocess.STDOUT)
         return True
     except subprocess.CalledProcessError as err:
         s = err.output.decode('utf-8').replace("\\n", "\n")
-        print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
+        print('Error executing command:\n{}\nOuput:\n{}'.format(
+            ' '.join(err.cmd), s))
         return False
 
 def remove_file(filename):

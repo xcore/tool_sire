@@ -37,19 +37,19 @@ proceede = True
 def setup_argparse():
     """ Configure an argument parser object 
     """
-    p = argparse.ArgumentParser(description='sire compiler')
+    p = argparse.ArgumentParser(description='sire compiler', prog='sire')
     
     p.add_argument('infile', nargs='?', metavar='<input-file>', 
             default=None,
-            help='specify the input filename')
+            help='input filename')
     
     p.add_argument('-o', nargs=1, metavar='<file>', 
             dest='outfile', default=None,
-            help='specify the output filename')
+            help='output filename')
     
     p.add_argument('-n', '--numcores', nargs=1, metavar='<n>', 
             dest='numcores', default=DEFAULT_NUM_CORES,
-            help='specify the output filename')
+            help='number of cores')
     
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
@@ -79,7 +79,7 @@ def setup_argparse():
 def parse(input, filename, error, logging=False):
     """ Parse an input string to produce an AST 
     """
-    verbose_msg("Parsing file '{}'\n".format(filename))
+    verbose_msg("Parsing file '{}'\n".format(filename if filename else 'stdin'))
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,

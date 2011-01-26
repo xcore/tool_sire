@@ -199,8 +199,7 @@ class Translate(NodeWalker):
         self.out('#include <xs1.h>')
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
-        #self.out('#include "'+config.RUNTIME_PATH+'/globals.h"')
-        self.out('#include globals.h"')
+        self.out('#include "globals.h"')
   
     def definitions(self):
         self.out('#define TRUE 1')
