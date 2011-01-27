@@ -22,7 +22,7 @@ unsigned permDest(unsigned d) {
 }
 
 // Migrate a procedure to a destination
-void migrate(unsigned dest, unsigned closure[]) {
+void _migrate(unsigned dest, unsigned closure[]) {
     
     unsigned args[NUM_ARGS];
     int len[NUM_ARGS];

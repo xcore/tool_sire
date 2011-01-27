@@ -24,6 +24,9 @@ class ASTGenerator(object):
             cfg_filename=self.cfg_filename)
         
         src += _PROLOGUE_CODE
+
+        src += self.gen_visitor()
+
         for node_cfg in self.node_cfg:
             src += node_cfg.gen_source() + '\n\n'
         
@@ -49,6 +52,15 @@ class ASTGenerator(object):
                 vallist = [v.strip() for v in val.split(',')] if val else []
                 yield name, vallist
 
+    def gen_visitor(self):
+        """ Generate a base visitor class that does nothing
+        """
+        src = 'class NodeVisitor(object):\n'
+        for x in self.node_cfg:
+            src += '    def visit_'+util.camel_to_under(x.name)+'(self, node): pass\n'
+
+        src += '\n\n'
+        return src
 
 class NodeCfg(object):
     """ Node configuration. 
@@ -168,11 +180,6 @@ class Node(object):
         """
         pass
 
-
-class NodeVisitor(object):
-    """ Generic Node visitor base class to be subclassed
-    """
-    pass
 
 '''
 

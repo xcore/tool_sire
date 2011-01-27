@@ -16,6 +16,7 @@ import config
 import dump
 import printer
 import semantics
+import children
 import translate
 import build
 
@@ -98,17 +99,27 @@ def semantic_analysis(program, error):
     """ Perform semantic analysis on an AST 
     """
     verbose_msg("Performing semantic analysis\n")
-    visitor = semantics.Semantics(error)
-    program.accept(visitor)
-    return visitor
+    sem = semantics.Semantics(error)
+    program.accept(sem)
+    return sem
 
-def translate_ast(program, sem, buf):
+def child_analysis(program, semantics):
+    """ Determine children
+    """
+    verbose_msg("Performing child analysis\n")
+    child = children.Children(semantics.proc_names)
+    program.accept(child)
+    child.build_proc_children()
+    child.display_proc_children()
+    return child
+
+def translate_ast(program, sem, child, buf):
     """ Transform an AST into XC 
     """
     verbose_msg("Translating AST\n")
 
     # Translate the AST
-    walker = translate.Translate(sem, buf)
+    walker = translate.Translate(sem, child, buf)
     walker.walk_program(program)
 
 def build_(sem, buf, numcores, outfile, compile_only):
@@ -173,6 +184,9 @@ def main(args):
     if a.sem_only: 
         return SUCCESS
 
+    # Perform child analysis
+    child = child_analysis(program, sem)
+
     # Display (dump) the AST
     if a.show_ast:    
         program.accept(dump.Dump())
@@ -185,7 +199,7 @@ def main(args):
    
     # Translate the AST
     buf = io.StringIO()
-    translate_ast(program, sem, buf)
+    translate_ast(program, sem, child, buf)
     if a.translate_only:
         if not a.outfile:
             outfile = DEFAULT_OUTPUT_XC

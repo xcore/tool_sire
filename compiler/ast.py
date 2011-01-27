@@ -24,9 +24,40 @@ class Node(object):
 
 
 class NodeVisitor(object):
-    """ Generic Node visitor base class to be subclassed
-    """
-    pass
+    def visit_program(self, node): pass
+    def visit_decls(self, node): pass
+    def visit_decl(self, node): pass
+    def visit_defs(self, node): pass
+    def visit_def(self, node): pass
+    def visit_formals(self, node): pass
+    def visit_param(self, node): pass
+    def visit_stmt_seq(self, node): pass
+    def visit_stmt_par(self, node): pass
+    def visit_stmt_skip(self, node): pass
+    def visit_stmt_pcall(self, node): pass
+    def visit_stmt_ass(self, node): pass
+    def visit_stmt_in(self, node): pass
+    def visit_stmt_out(self, node): pass
+    def visit_stmt_if(self, node): pass
+    def visit_stmt_while(self, node): pass
+    def visit_stmt_for(self, node): pass
+    def visit_stmt_on(self, node): pass
+    def visit_stmt_connect(self, node): pass
+    def visit_stmt_aliases(self, node): pass
+    def visit_stmt_return(self, node): pass
+    def visit_expr_list(self, node): pass
+    def visit_expr_single(self, node): pass
+    def visit_expr_unary(self, node): pass
+    def visit_expr_binop(self, node): pass
+    def visit_elem_group(self, node): pass
+    def visit_elem_sub(self, node): pass
+    def visit_elem_fcall(self, node): pass
+    def visit_elem_number(self, node): pass
+    def visit_elem_boolean(self, node): pass
+    def visit_elem_string(self, node): pass
+    def visit_elem_char(self, node): pass
+    def visit_elem_id(self, node): pass
+
 
 class Program(Node):
     def __init__(self, decls, defs, coord=None):

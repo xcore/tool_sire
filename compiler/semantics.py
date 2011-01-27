@@ -52,30 +52,36 @@ class Semantics(ast.NodeVisitor):
 
     def get_elem_type(self, elem):
         """ Given an element, return its type """
+        
         # If its an expression group, get_expr_type
         if isinstance(elem, ast.ElemGroup):
             return self.get_expr_type(elem.expr)
+        
         # If its a single identifer, look it up (if it exists)
         elif isinstance(elem, ast.ElemId):
             if self.sym.check_decl(elem.name):
                 return self.sym.lookup(elem.name).type
             else:
                 self.nodecl_error(elem.name, 'single', None)
+        
         # If its a subscripted identifier, lookup and return subscripted type
         elif isinstance(elem, ast.ElemSub):
             if self.sym.check_decl(elem.name):
                 return self.sym.lookup(elem.name).type.subscriptOf()
             else:
                 self.nodecl_error(elem.name, 'array', None)
+        
         # Otherwise, return the specified elem type
         else:
             return elem_types[util.camel_to_under(elem.__class__.__name__)]
 
     def get_expr_type(self, expr):
         """ Given an expression work out its type """
+        
         #If it's a single value, lookup the type
         if isinstance(expr, ast.ExprSingle):
             return self.get_elem_type(expr.elem)    
+        
         # Otherwise it must be a unary or binop, and hence a var
         return Type('var', 'single')
 
@@ -144,13 +150,13 @@ class Semantics(ast.NodeVisitor):
     def visit_def(self, node):
         # Rename main to avoid conflicts in linking
         if node.name == 'main':
-            #node.name = defs.LABEL_MAIN
             node.name = '_'+node.name
         if self.sym.insert(node.name, node.type, node.coord):
             self.sig.insert(node.type, node)
         else:
             self.redecl_error(node.name, node.coord)
         self.proc_names.append(node.name)
+        self.parent = node.name
         return 'proc'
     
     # Formals =============================================
@@ -174,13 +180,16 @@ class Semantics(ast.NodeVisitor):
         pass
 
     def visit_stmt_pcall(self, node):
+        
         # Check the name is declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'process', node.coord)
+        
         else:
             # Check the arguments are correct
             if not self.sig.check_args('proc', node):
                 self.badargs_error(node.name, node.coord)
+            
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
 
@@ -209,7 +218,7 @@ class Semantics(ast.NodeVisitor):
         pass
 
     def visit_stmt_on(self, node):
-        if not self.check_elem_types(node.core, [Type('core', 'array')]):
+        if not self.check_elem_types(node.core, [Type('core', 'sub')]):
             self.type_error('on target', node.core, node.coord)
 
     def visit_stmt_connect(self, node):

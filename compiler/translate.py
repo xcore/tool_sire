@@ -119,9 +119,10 @@ class Translate(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
     
-    def __init__(self, semantics, buf):
+    def __init__(self, semantics, children, buf):
         super(Translate, self).__init__()
         self.sem = semantics
+        self.child = children
         self.buf = buf
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
@@ -433,9 +434,46 @@ class Translate(NodeWalker):
         self.stmt_block(node.stmt)
 
     def stmt_on(self, node):
-        self.out('on {}: '.format(self.elem(node.core)))
-        self.stmt(node.pcall)
-        self.out(';')
+        """ Generate an on statement """
+        #self.out('on {}: '.format(self.elem(node.core)))
+        #self.stmt(node.pcall)
+        #self.out(';')
+
+        proc_name = node.pcall.name
+        num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
+        num_procs = len(self.child.children[proc_name]) + 1
+        # |closure| = |header| + 2*#args + #procs
+        closure_size = 2 + 2*num_args + num_procs;
+
+        self.comment('On')
+        
+        self.blocker.begin()
+        self.out('unsigned _closure[{}];'.format(closure_size))
+        i = 0
+
+        # Header: (#args, #procs)
+        self.out('_closure[{}] = {};'.format(i, num_args)) ; i+=1
+        self.out('_closure[{}] = {};'.format(i, num_procs)) ; i+=1
+
+        # Arguments: (size, value)*
+        if node.pcall.args.expr:
+            for x in node.pcall.args.expr:
+                #if
+                self.out('_closure[{}] = {};'.format(i)) ; i+=1
+                self.out('_closure[{}] = {};'.format(i)) ; i+=1
+
+        # Procedures: (jumpindex)*
+        self.out('_closure[{}] = {};'.format(i, 
+                self.sem.proc_names.index(proc_name))) ; i+=1
+        for x in self.child.children[proc_name]:
+            self.out('_closure[{}] = {};'.format(i, 
+                    self.sem.proc_names.index(x))) ; i+=1
+
+        # Call runtime TODO: length argument?
+        self.out('_migrtate({}, _closure)'.format(
+                self.expr(node.core.expr))
+
+        self.blocker.end()
 
     def stmt_connect(self, node):
         self.out('connect {} to {} : {};'.format(

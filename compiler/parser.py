@@ -263,7 +263,7 @@ class Parser(object):
         p[0] = ast.StmtFor(p[2], p[4], p[6], p[8])
 
     def p_stmt_on(self, p):
-        'stmt : ON left COLON name LPAREN expr_list RPAREN'
+        'stmt : ON left DO name LPAREN expr_list RPAREN'
         p[0] = ast.StmtOn(p[2], ast.StmtPcall(p[4], p[6], self.coord(p)), self.coord(p))
 
     def p_stmt_connect(self, p):

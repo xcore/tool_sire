@@ -11,7 +11,7 @@
 #define LABEL_YEILD              "yeild"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
-#define LABEL_MIGRATE            "migrate"
+#define LABEL_MIGRATE            "_migrate"
 #define LABEL_INIT_THREAD        "initThread"
 #define LABEL_CONNECT            "connect"
 #define LABEL_CHAN_ARRAY         "progChan"
