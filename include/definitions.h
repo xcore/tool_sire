@@ -22,10 +22,13 @@
 #define SYS_CHAN_ARRAY           "chan"
 #define SYS_CORE_ARRAY           "core"
 
-// Jump table
+// Jump table indicies
 #define JUMPI_MIGRATE            0
 #define JUMPI_INIT_THREAD        1
 #define JUMPI_CONNECT            2
+
+// Index offset of program jump indicies
+#define JUMP_INDEX_OFFSET        3
 
 // Hardware specs
 #define RAM_BASE                 0x10000
@@ -42,7 +45,6 @@
 #define SIZE_TABLE_SIZE          20
 #define KERNEL_SPACE             0x200
 #define THREAD_STACK_SPACE       0x400
-#define JUMP_INDEX_OFFSET        3
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
 #define NUM_PROG_CHANS           (MAX_CHANNELS-PROG_CHAN_OFF)
                                 

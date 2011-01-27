@@ -200,21 +200,24 @@ class Translate(NodeWalker):
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
         self.out('#include "globals.h"')
+        self.out('')
   
     def definitions(self):
         self.out('#define TRUE 1')
         self.out('#define FALSE 0')
+        self.out('')
 
     # Program ============================================
 
     def walk_program(self, node):
+
+        # Walk the entire program
         self.header()
-        self.out('')
         self.definitions()
-        self.out('')
         self.decls(node.decls)
-        self.out('')
         self.defs(node.defs, 0)
+
+        # Output the buffered blocks
         self.blocker.output()
     
     # Variable declarations ===============================
@@ -222,6 +225,8 @@ class Translate(NodeWalker):
     def decls(self, node):
         for x in node.children():
             self.out(self.decl(x))
+        if len(node.children()) > 0:
+            self.out('')
 
     def decl(self, node):
         s = '{}'.format(node.name)
@@ -255,12 +260,9 @@ class Translate(NodeWalker):
         s = ''
         #if node.type.specifier == 'proc':   s += 'int'
         #elif node.type.specifier == 'func': s += 'int'
-        if node.name == '_main':
-            s += 'void'
-        else:
-            s += 'int'
+        s += 'void' if node.name == '_main' else 'int'
         s += ' {}({})'.format(
-                self.procedure_name(node.name), 
+                self.procedure_name(node.name),
                 self.formals(node.formals))
         self.out(s)
         self.blocker.begin()
@@ -301,7 +303,7 @@ class Translate(NodeWalker):
 
     def thread_set(self):
         """ Generate the initialisation for a slave thread, in the body of a for
-            loop with i indexing the thread number
+            loop with _i indexing the thread number
         """
 
         # Get a synchronised thread
@@ -328,7 +330,7 @@ class Translate(NodeWalker):
             self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
 
         # Copy thread id to the array
-        self.out('_threads[i] = _t;')
+        self.out('_threads[_i] = _t;')
 
     def stmt_par(self, node):
         """ Generate a parallel block """
@@ -350,7 +352,7 @@ class Translate(NodeWalker):
         
         # Setup each slave thread
         self.comment('Initialise slave threads')
-        self.out('for(int i=0; i<{}; i++)'.format(num_slaves))
+        self.out('for(int _i=0; _i<{}; _i++)'.format(num_slaves))
         self.blocker.begin()
         self.thread_set()
         self.blocker.end()

@@ -55,7 +55,7 @@ class Build(object):
         if s: 
             program_buf.close()
             program_buf = io.StringIO()
-            s = self.insert_labels(PROGRAM_ASM, program_buf)
+            s = self.modify_assembly(PROGRAM_ASM, program_buf)
         if s: s = self.assemble_buf(PROGRAM, 'S', program_buf)
         if s: s = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
         if s: s = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
@@ -73,16 +73,16 @@ class Build(object):
         s = self.compile_buf(PROGRAM, buf)
         buf.close()
         buf = io.StringIO()
-        self.insert_labels(PROGRAM_ASM, buf)
+        if s: s = self.modify_assembly(PROGRAM_ASM, buf)
         if s: s = util.write_file(PROGRAM_ASM, buf.getvalue())
         if s: os.rename(PROGRAM_ASM, outfile)
         return s
 
     def create_headers(self):
-        # TODO: shouldn't really write to this directory...
         self.verbose_msg('Creating header '+NUMCORES_HDR)
-        util.write_file(config.INCLUDE_PATH+'/'+NUMCORES_HDR, 
-                '#define NUM_CORES {}'.format(self.numcores));
+        #util.write_file(config.INCLUDE_PATH+'/'+NUMCORES_HDR, 
+        #        '#define NUM_CORES {}'.format(self.numcores));
+        util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
 
     def compile_buf(self, name, buf, cleanup=True):
         """ Compile a buffer containing an XC program
@@ -163,8 +163,26 @@ class Build(object):
         #self.verbose_msg('')
         return s
 
-    def insert_labels(self, file, buf):
-        """ Insert top and bottom labels for each function 
+    def modify_assembly(self, file, buf):
+        """ Perform modifications on assembly output
+        """
+        self.verbose_msg('Modifying assembly output: '+file)
+        lines = util.read_file(file, readlines=True)
+        if not lines:
+            return False
+
+        self.insert_labels(lines)
+        self.rewrite_calls(lines)
+
+        # Make sure the buffer is empty and write the lines
+        for x in lines:
+            buf.write(x)
+
+        return True
+
+
+    def insert_labels(self, lines):
+        """ Insert bottom labels for each function 
         """
         # Look for the structure and insert:
         # > .globl <bottom-label>
@@ -173,11 +191,8 @@ class Build(object):
         # > <bottom-label>
         #   .cc_bottom foo.function
         
-        self.verbose_msg('Inserting function labels in '+file)
-        lines = util.read_file(file, readlines=True)
-        if not lines:
-            return False
-
+        self.verbose_msg('  Inserting function labels')
+        
         # For each function, for each line...
         # (Create a new list and modify it each time...)
         b = False
@@ -195,12 +210,18 @@ class Build(object):
                                 self.function_label_bottom(x)+':\n')
                         b = False
             lines = new
-    
-        # Make sure the buffer is empty and write the lines
-        for x in lines:
-            buf.write(x)
 
-        return True
+    def rewrite_calls(self, lines):
+        """ Rewrite calls to program functions to branch through the jump table
+        """
+        self.verbose_msg('  Rewriting calls')
+
+        for (i, x) in enumerate(lines):
+            frags = x.strip().split()
+            if frags and frags[0] == 'bl' and frags[1] in self.sem.proc_names:
+                #print(frags[1])
+                lines[i] = '\tbla cp[{} + {}]\n'.format(defs.LABEL_JUMP_TABLE,
+                        defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(frags[1]))
 
     def build_jumptab(self, buf):
 
@@ -267,6 +288,7 @@ class Build(object):
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
+        util.remove_file('numcores.h')
         
         # Remove unused master images
         for x in glob.glob('image_n*c*elf'):
