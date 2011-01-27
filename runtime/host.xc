@@ -217,7 +217,7 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
         asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
 
         // Update the procSize entry
-        sizeTable[procIndex] = procSize;
+        _sizetab[procIndex] = procSize;
 
         if(i == 0) index = procIndex;
         

@@ -230,7 +230,7 @@ initPointers:
     get r9, ps[r11]
     set ps[r10], r9
 
-    // ksp = 2*PS_RAM_BASE-4
+    // ksp = 2*PS_RAM_BASE-BYTES_PER_WORD
     shl r11, r9, 1
     sub r11, r11, 8
     set sp, r11
@@ -292,47 +292,47 @@ initThread:
     .globl _pc,        "ui"
 	
 	.section .dp.data, "awd", @progbits
-    .align 4
+    .align BYTES_PER_WORD
 
 // Master/migrate 
 mSpawnChan:
-    .space 4
+    .space BYTES_PER_WORD
     .globl mSpawnChan.globound
-    .set mSpawnChan.globound, 4
+    .set mSpawnChan.globound, BYTES_PER_WORD
 
 // Channel array storing identifiers for each thread
 spawnChan:
-    .space MAX_THREADS*4
+    .space MAX_THREADS*BYTES_PER_WORD
     .globl spawnChan.globound
-    .set spawnChan.globound, MAX_THREADS*4
+    .set spawnChan.globound, MAX_THREADS*BYTES_PER_WORD
 
 // Channel array storing identifiers for each thread
 progChan:
-    .space NUM_PROG_CHANS*4
+    .space NUM_PROG_CHANS*BYTES_PER_WORD
     .globl progChan.globound
-    .set progChan.globound, NUM_PROG_CHANS*4
+    .set progChan.globound, NUM_PROG_CHANS*BYTES_PER_WORD
 
 // Function pointer lock identifier
 fpLock:
-    .space 4
+    .space BYTES_PER_WORD
     .globl fpLock.globound
-    .set fpLock.globound, 4
+    .set fpLock.globound, BYTES_PER_WORD
 
 // Function pointer (for loading functions into memory)
 _fp:
-    .space 4
+    .space BYTES_PER_WORD
     .globl _fp.globound
-    .set _fp.globound, 4
+    .set _fp.globound, BYTES_PER_WORD
 
 // Stack pointer pointer (for allocating new threads)
 _sp:
-    .space 4
+    .space BYTES_PER_WORD
     .globl _sp.globound
-    .set _sp.globound, 4
+    .set _sp.globound, BYTES_PER_WORD
 
 // Stack pointer pointer (for allocating new threads)
 _pc:
-    .space 4
+    .space BYTES_PER_WORD
     .globl _pc.globound
-    .set _pc.globound, 4
+    .set _pc.globound, BYTES_PER_WORD
 

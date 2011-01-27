@@ -12,7 +12,7 @@
     .globl main
     .globl _start
     .globl _slave
-    .globl sizeTable
+    .globl _sizetab
    
     .text
 
@@ -41,8 +41,8 @@ _slave:
 	.section .dp.data, "awd", @progbits
 	
     .align 4
-    .set sizeTable.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
+    .set _sizetab.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
 
-sizeTable:
+_sizetab:
     .space BYTES_PER_WORD*SIZE_TABLE_SIZE 
 

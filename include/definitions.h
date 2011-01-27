@@ -15,8 +15,8 @@
 #define LABEL_INIT_THREAD        "initThread"
 #define LABEL_CONNECT            "connect"
 #define LABEL_CHAN_ARRAY         "progChan"
-#define LABEL_JUMP_TABLE         "jumpTable"
-#define LABEL_SIZE_TABLE         "sizeTable"
+#define LABEL_JUMP_TABLE         "_jumptab"
+#define LABEL_SIZE_TABLE         "_sizetab"
 
 // System variables
 #define SYS_CHAN_ARRAY           "chan"

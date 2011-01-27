@@ -10,8 +10,8 @@ extern unsigned fpLock;
 extern unsigned mSpawnChan;
 extern unsigned spawnChan[MAX_THREADS];
 extern unsigned progChan[NUM_PROG_CHANS];  
-extern unsigned sizeTable[SIZE_TABLE_SIZE];
-extern unsigned jumpTable[JUMP_TABLE_SIZE];
+extern unsigned _sizetab[SIZE_TABLE_SIZE];
+extern unsigned _jumptab[JUMP_TABLE_SIZE];
 
 // External functions
 extern void excepHandler(void);

@@ -6,10 +6,10 @@
     .section .cp.rodata, "ac", @progbits
 	
     .align 4
-    .globl jumpTable, "a(:ui)"
-    .set jumpTable.globound, BYTES_PER_WORD*JUMP_TABLE_SIZE
+    .globl _jumptab, "a(:ui)"
+    .set _jumptab.globound, BYTES_PER_WORD*JUMP_TABLE_SIZE
 
-jumpTable:
+_jumptab:
     .word migrate
     .word initThread
     .word connect

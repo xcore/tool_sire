@@ -158,7 +158,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
 
         // Load the procAddress and procSize from the index
         procIndex = closure[procOff+i];
-        procSize  = sizeTable[procIndex];
+        procSize  = _sizetab[procIndex];
         asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
     
         // Jump index and size

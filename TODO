@@ -13,7 +13,8 @@ Todo
 
 - Write language feature test cases in a unittest framework.
 
-- Make sure all runtime variables can't clash with sire variables
+- Make sure all runtime variables can't clash with sire variables - rename all
+  with underscores.
 
 
 
