@@ -20,3 +20,9 @@ Todo
 
 - Find out why asm expressions produce syntax errors, e.g. 
     .set .foo (_cp/4)+3
+
+
+- Add a CompileStage class to record time and stats etc
+
+- Adjust syntax to enforce array bounds for on statements, e.g. 
+    proc foo(a[n], val n)

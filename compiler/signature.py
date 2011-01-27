@@ -30,6 +30,8 @@ class SignatureTable(object):
         if(self.debug):
             print("Inserted sig for '{}' ({})".format(node.name, type))
 
+    def lookup_param_type(self, name, i):
+        return self.tab[name].params[i].type
 
     def check_args(self, type, node):
         """ Check if a procedure signature is defined """

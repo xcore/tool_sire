@@ -449,29 +449,33 @@ class Translate(NodeWalker):
         
         self.blocker.begin()
         self.out('unsigned _closure[{}];'.format(closure_size))
-        i = 0
+        n = 0
 
         # Header: (#args, #procs)
-        self.out('_closure[{}] = {};'.format(i, num_args)) ; i+=1
-        self.out('_closure[{}] = {};'.format(i, num_procs)) ; i+=1
+        self.out('_closure[{}] = {};'.format(n, num_args)) ; n+=1
+        self.out('_closure[{}] = {};'.format(n, num_procs)) ; n+=1
 
         # Arguments: (size, value)*
         if node.pcall.args.expr:
-            for x in node.pcall.args.expr:
-                #if
-                self.out('_closure[{}] = {};'.format(i)) ; i+=1
-                self.out('_closure[{}] = {};'.format(i)) ; i+=1
+            for (i, x) in enumerate(node.pcall.args.expr):
+                t = self.sem.sig.lookup_param_type(proc_name, i)
+                if t.form == 'alias':
+                    self.out('_closure[{}] = 2;'.format(n)) ; n+=1
+                    self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
+                else:
+                    self.out('_closure[{}] = 1;'.format(n)) ; n+=1
+                    self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
 
         # Procedures: (jumpindex)*
-        self.out('_closure[{}] = {};'.format(i, 
-                self.sem.proc_names.index(proc_name))) ; i+=1
+        self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
+                +self.sem.proc_names.index(proc_name))) ; n+=1
         for x in self.child.children[proc_name]:
-            self.out('_closure[{}] = {};'.format(i, 
-                    self.sem.proc_names.index(x))) ; i+=1
+            self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
+                    +self.sem.proc_names.index(x))) ; n+=1
 
         # Call runtime TODO: length argument?
-        self.out('_migrtate({}, _closure)'.format(
-                self.expr(node.core.expr))
+        self.out('{}({}, _closure)'.format(defs.LABEL_MIGRATE, 
+            self.expr(node.core.expr)))
 
         self.blocker.end()
 
