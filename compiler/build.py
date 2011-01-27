@@ -48,6 +48,7 @@ class Build(object):
         jumptab_buf = io.StringIO()
         sizetab_buf = io.StringIO()
         self.build_jumptab(jumptab_buf)
+        #self.build_jumptab(sys.stdout)
         self.build_sizetab(sizetab_buf)
         
         self.create_headers()
@@ -126,7 +127,7 @@ class Build(object):
     def link_master(self):
         self.verbose_msg('Linking master -> '+MASTER_XE)
         s = util.call([XCC, self.target(), 
-            '-first '+MASTER_JUMPTAB+'.o', MASTER_SIZETAB+'.o',
+            '-first', MASTER_JUMPTAB+'.o', MASTER_SIZETAB+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
@@ -137,7 +138,7 @@ class Build(object):
     def link_slave(self):
         self.verbose_msg('Linking slave -> '+SLAVE_XE)
         s = util.call([XCC, self.target(), 
-            '-first slavejumptab.o',
+            '-first', 'slavejumptab.S.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.S.o',
@@ -171,8 +172,10 @@ class Build(object):
         if not lines:
             return False
 
-        self.insert_labels(lines)
+        lines = self.insert_labels(lines)
         self.rewrite_calls(lines)
+
+        lines.insert(20, '.extern jumpTable, "a(20:ui)"\n')
 
         # Make sure the buffer is empty and write the lines
         for x in lines:
@@ -211,6 +214,8 @@ class Build(object):
                         b = False
             lines = new
 
+        return lines
+
     def rewrite_calls(self, lines):
         """ Rewrite calls to program functions to branch through the jump table
         """
@@ -220,7 +225,8 @@ class Build(object):
             frags = x.strip().split()
             if frags and frags[0] == 'bl' and frags[1] in self.sem.proc_names:
                 #print(frags[1])
-                lines[i] = '\tbla cp[{} + {}]\n'.format(defs.LABEL_JUMP_TABLE,
+                lines[i] = '\tbla cp[{}]\n'.format(
+                        #defs.LABEL_JUMP_TABLE,
                         defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(frags[1]))
 
     def build_jumptab(self, buf):
@@ -260,7 +266,7 @@ class Build(object):
         buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
-        buf.write('\t.globl '+defs.LABEL_SIZE_TABLE+'\n')
+        buf.write('\t.globl '+defs.LABEL_SIZE_TABLE+', "a(:ui)"\n')
         buf.write('\t.set {}.globound, {}\n'.format(
             defs.LABEL_SIZE_TABLE,
             defs.BYTES_PER_WORD*(defs.JUMP_INDEX_OFFSET+

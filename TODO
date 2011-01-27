@@ -14,3 +14,8 @@ Todo
 - Write language feature test cases in a unittest framework.
 
 - Make sure all runtime variables can't clash with sire variables
+
+
+
+- Find out why asm expressions produce syntax errors, e.g. 
+    .set .foo (_cp/4)+3
