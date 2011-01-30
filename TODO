@@ -26,3 +26,5 @@ Todo
 
 - Adjust syntax to enforce array bounds for on statements, e.g. 
     proc foo(a[n], val n)
+
+- Add NUMCORES keyword

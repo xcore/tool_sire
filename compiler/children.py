@@ -1,4 +1,5 @@
 import sys
+import builtin
 from ast import NodeVisitor
 
 class Children(NodeVisitor):
@@ -18,11 +19,12 @@ class Children(NodeVisitor):
         pass
 
     def add_child(self, name):
-        """ Add a child procedure call """
-        self.children[self.parent].append(name)
-        print('added child '+name+' to '+self.parent)
+        """ Add a child procedure call of the program, omit builtins """
+        if (not name in builtin.names) and (not name in self.children[self.parent]):
+            self.children[self.parent].append(name)
+            #print('added child '+name+' to '+self.parent)
 
-    def build_proc_children(self):
+    def build(self):
         """ Given immediate child relationships, calculate all nested
             relationships
         """
@@ -37,11 +39,11 @@ class Children(NodeVisitor):
                     # for each child z of call y, or grandchild of x
                     for z in self.children[y]:
                         # Add it if it hasn't already been
-                        if not z in self.proc_children[x]:
-                            self.proc_children[x].append(z)
+                        if not z in self.children[x]:
+                            self.children[x].append(z)
                             change = True
 
-    def display_proc_children(self, buf=sys.stdout):
+    def display(self, buf=sys.stdout):
         """ Display children """
         for x in self.children.keys():
             buf.write(x+':\n')

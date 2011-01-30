@@ -109,8 +109,8 @@ def child_analysis(program, semantics):
     verbose_msg("Performing child analysis\n")
     child = children.Children(semantics.proc_names)
     program.accept(child)
-    child.build_proc_children()
-    child.display_proc_children()
+    child.build()
+    #child.display()
     return child
 
 def translate_ast(program, sem, child, buf):

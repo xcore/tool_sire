@@ -168,6 +168,8 @@ class Semantics(ast.NodeVisitor):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
+        # TODO: for alias parameters, check expr is composed of param values
+
     # Statements ==========================================
 
     def visit_stmt_seq(self, node):

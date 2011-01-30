@@ -1,7 +1,7 @@
 val LENGTH:=10;
 var a[LENGTH];
 
-proc bsort(a[], val len) is
+proc bsort(a[len], val len) is
   var i;
   var j;
   var tmp;

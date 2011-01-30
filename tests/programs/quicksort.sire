@@ -2,7 +2,7 @@ val LENGTH:=10;
 var a[LENGTH];
 
 % Partition
-proc partition(array[], val len) is
+proc partition(array[len], val len) is
   var storeIndex;
   var pivot;
   var pivotValue;
@@ -35,7 +35,7 @@ proc partition(array[], val len) is
 }
 
 % Quicksort
-proc qsort(array[], val len) is
+proc qsort(array[len], val len) is
   var a[];
   var b[]; 
   var pivot;

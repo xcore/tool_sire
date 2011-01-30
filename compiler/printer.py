@@ -72,7 +72,7 @@ class Printer(NodeWalker):
     def param(self, node):
         s = '{}'.format(node.name)
         if node.type.form == 'alias':
-            s += '[]'
+            s += '[{}]'.format(node.expr)
         if node.type.specifier == 'var':
             pass
         else:

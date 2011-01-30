@@ -170,25 +170,25 @@ class Parser(object):
     # Var parameter
     def p_param_decl_var(self, p):
         'param_decl : name'
-        p[0] = ast.Param(p[1], Type('var', 'single'), 
+        p[0] = ast.Param(p[1], Type('var', 'single'), None,
                 self.coord(p))
 
     # Array alias parameter
     def p_param_decl_alias(self, p):
-        'param_decl : name LBRACKET RBRACKET'
-        p[0] = ast.Param(p[1], Type('var', 'alias'), 
+        'param_decl : name LBRACKET expr RBRACKET'
+        p[0] = ast.Param(p[1], Type('var', 'alias'), p[3],
                 self.coord(p))
 
     # Val parameter
     def p_param_decl_val(self, p):
         'param_decl : VAL name'
-        p[0] = ast.Param(p[2], Type('val', 'single'), 
+        p[0] = ast.Param(p[2], Type('val', 'single'), None,
                 self.coord(p))
 
     # Chanend parameter
     def p_param_decl_chanend(self, p):
         'param_decl : CHANEND name'
-        p[0] = ast.Param(p[2], Type('chanend', 'single'), 
+        p[0] = ast.Param(p[2], Type('chanend', 'single'), None,
                 self.coord(p))
 
     # Statement blocks =========================================
@@ -264,7 +264,9 @@ class Parser(object):
 
     def p_stmt_on(self, p):
         'stmt : ON left DO name LPAREN expr_list RPAREN'
-        p[0] = ast.StmtOn(p[2], ast.StmtPcall(p[4], p[6], self.coord(p)), self.coord(p))
+        p[0] = ast.StmtOn(p[2], 
+                ast.StmtPcall(p[4], p[6], self.coord(p)), 
+                self.coord(p))
 
     def p_stmt_connect(self, p):
         'stmt : CONNECT left TO left COLON left'
