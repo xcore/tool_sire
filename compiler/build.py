@@ -301,7 +301,7 @@ class Build(object):
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
-        #util.remove_file('numcores.h')
+        util.remove_file('numcores.h')
         
         # Remove unused master images
         for x in glob.glob('image_n*c*elf'):

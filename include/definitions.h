@@ -21,6 +21,7 @@
 // System variables
 #define SYS_CHAN_ARRAY           "chan"
 #define SYS_CORE_ARRAY           "core"
+#define SYS_NUM_CORES            "NUM_CORES"
 
 // Jump table indicies
 #define JUMPI_MIGRATE            0

@@ -25,18 +25,6 @@ _master:
     bl initPointers
     bl initSystem
     bl _setupthread
-    
-/*    ldc r11, 2
-    shl r11, r11, 24
-
-// Pause for a bit until the other cores are ready to synchronise??
-.Lstart:
-    eq  r10, r11, 0
-    bt  r10, .Lexit
-    sub r11, r11, 1
-    bu .Lstart
-
-.Lexit:*/
     bl syncCores
     bu initMaster
 

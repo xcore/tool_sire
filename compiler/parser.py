@@ -4,6 +4,19 @@ import error
 from lexer import Lexer
 from type import Type
 
+class Coord(object):
+    """ Coordinates (file, line, col) of a syntactic element. """
+    def __init__(self, file, line, column=None):
+        self.file = file
+        self.line = line
+        self.column = column
+        #print('new coord: {}:{}'.format(line, column))
+
+    def __str__(self):
+        str = "%s:%s" % (self.file, self.line)
+        if self.column: str += ":%s" % self.column
+        return str
+
 class Parser(object):
     """ A parser object for the sire langauge """
 
@@ -59,6 +72,7 @@ class Parser(object):
     start = 'program'
 
     # Program declaration ======================================
+    
     def p_program(self, p):
         'program : var_decls proc_decls'
         p[0] = ast.Program(p[1], p[2], self.coord(p, 1))
@@ -70,6 +84,7 @@ class Parser(object):
         p[0] = None
 
     # Variable declarations ====================================
+
     def p_var_decls(self, p):
         '''var_decls : empty
                      | var_decl_seq'''
@@ -175,8 +190,9 @@ class Parser(object):
 
     # Array alias parameter
     def p_param_decl_alias(self, p):
-        'param_decl : name LBRACKET expr RBRACKET'
-        p[0] = ast.Param(p[1], Type('var', 'alias'), p[3],
+        'param_decl : name LBRACKET name RBRACKET'
+        p[0] = ast.Param(p[1], Type('var', 'alias'), 
+                ast.ExprSingle(ast.ElemName(p[3])),
                 self.coord(p))
 
     # Val parameter
@@ -402,17 +418,4 @@ class Parser(object):
             self.parse_error('before: {}'.format(t.value), self.tcoord(t))
         else:
             self.parse_error('at end of input', discard=False)
-
-class Coord(object):
-    """ Coordinates (file, line, col) of a syntactic element. """
-    def __init__(self, file, line, column=None):
-        self.file = file
-        self.line = line
-        self.column = column
-        #print('new coord: {}:{}'.format(line, column))
-
-    def __str__(self):
-        str = "%s:%s" % (self.file, self.line)
-        if self.column: str += ":%s" % self.column
-        return str
 

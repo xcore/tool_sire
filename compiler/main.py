@@ -128,7 +128,7 @@ def parse(logging=False):
         log = logging.getLogger()
     else:
         log = 0
-    parser = Parser(error, lex_optimise=True, 
+    parser = Parser(err, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
     ast = parser.parse(input, infile, debug=log)
 
@@ -137,7 +137,7 @@ def semantic_analysis():
     """
     global sem
     verbose_msg("Performing semantic analysis\n")
-    sem = semantics.Semantics(error)
+    sem = semantics.Semantics(err)
     ast.accept(sem)
 
 def child_analysis():

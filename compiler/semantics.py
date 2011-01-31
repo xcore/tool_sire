@@ -31,11 +31,13 @@ class Semantics(ast.NodeVisitor):
         self.init_system()
 
     def init_system(self):
-        """ """
+        """ Initialise variables in the 'system' scope
+        """
         # Add system variables core, chan
         self.sym.begin_scope('system')
         self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
         self.sym.insert(defs.SYS_CHAN_ARRAY, Type('chanend', 'array'))
+        self.sym.insert(defs.SYS_NUM_CORES, Type('val', 'single'))
 
         # Add builtin functions
         for x in functions:
@@ -168,7 +170,10 @@ class Semantics(ast.NodeVisitor):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
-        # TODO: for alias parameters, check expr is composed of param values
+        # TODO: For alias parameters, check expr is composed of param values
+        if node.type.form == 'alias':
+            pass
+            #if not self.get_expr_type(node.expr).form == 'alias'
 
     # Statements ==========================================
 

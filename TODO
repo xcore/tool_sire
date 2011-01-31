@@ -31,3 +31,4 @@ Todo
 
 - Constant pool (ideally) needs to be replicated amongst slaves.
 
+- Semantic analysis should check formal array qualifiers are valid.

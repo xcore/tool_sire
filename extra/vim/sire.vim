@@ -28,7 +28,7 @@ syn match       xNumber        "[0-9]+"
 syn match       xNumber        "0[xX][0-9a-fA-F]+"
 syn match       xNumber        "0[bB][0-1]*"
 
-syn match       xSpecialChar	/\\'\|\\\|*#\(\[0-9A-F\]\+\)/ contained
+syn match       xSpecialChar	/\\'\|\\\|*#\(\[0-9A-F_\]\+\)/ contained
 
 syn match       xIdentifier    /\<[A-Z.][A-Z.0-9]*\>/
 syn match       xFunction      /\<[A-Za-z.][A-Za-z0-9.]*\>/ contained

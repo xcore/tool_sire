@@ -1,0 +1,6 @@
+proc foo() is 
+  skip
+
+proc main() is
+  on core[NUM_CORES-1] do foo()
+
