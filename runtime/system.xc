@@ -1,6 +1,6 @@
 #include <xs1.h>
-#include "../include/numcores.h"
-#include "../include/definitions.h"
+#include "numcores.h"
+#include "definitions.h"
 #include "globals.h"
 #include "util.h"
 #include "system.h"

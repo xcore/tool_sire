@@ -1,4 +1,4 @@
-#include "../include/definitions.h"
+#include "definitions.h"
    
     .extern _migrate
     .extern _setupthread

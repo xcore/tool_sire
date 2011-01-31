@@ -1,5 +1,5 @@
 #include <xs1.h>
-#include "../include/definitions.h"
+#include "definitions.h"
 
     .extern initSystem
     .extern host

@@ -33,14 +33,20 @@ class Build(object):
     """ A class to compile, assemble and link the program source with the
         runtime into an executable multi-core binary.
     """
-    def __init__(self, numcores, semantics, verbose=False):
+    def __init__(self, numcores, semantics, verbose=False, showcalls=False):
         self.numcores = numcores
         self.sem = semantics
         self.verbose = verbose
+        self.showcalls = showcalls
 
-        # Add the include path once it has been set
+        # Add the include paths once they have been set
         global COMPILE_FLAGS
-        COMPILE_FLAGS += ['-I', config.RUNTIME_PATH]
+        global ASSEMBLE_FLAGS
+        include_dirs = ['-I', config.RUNTIME_PATH]
+        include_dirs += ['-I', config.INCLUDE_PATH]
+        include_dirs += ['-I', '.']
+        COMPILE_FLAGS += include_dirs
+        ASSEMBLE_FLAGS += include_dirs
 
     def run(self, program_buf, outfile):
         """ Run the full build
@@ -49,7 +55,6 @@ class Build(object):
         jumptab_buf = io.StringIO()
         sizetab_buf = io.StringIO()
         self.build_jumptab(jumptab_buf)
-        #self.build_jumptab(sys.stdout)
         self.build_sizetab(sizetab_buf)
         
         self.create_headers()
@@ -82,8 +87,6 @@ class Build(object):
 
     def create_headers(self):
         self.verbose_msg('Creating header '+NUMCORES_HDR)
-        #util.write_file(config.INCLUDE_PATH+'/'+NUMCORES_HDR, 
-        #        '#define NUM_CORES {}'.format(self.numcores));
         util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
 
     def compile_buf(self, name, buf, cleanup=True):
@@ -93,7 +96,8 @@ class Build(object):
         outfile = name + '.S'
         self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
-        s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS)
+        s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS,
+                self.showcalls)
         if s and cleanup:
             os.remove(srcfile)
         return s
@@ -106,9 +110,10 @@ class Build(object):
         self.verbose_msg('Assembling '+srcfile+' -> '+outfile)
         util.write_file(srcfile, buf.getvalue())
         if ext == 'xc':
-            s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS)
+            s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS,
+                    self.showcalls)
         elif ext == 'S':
-            s = util.call([XAS, srcfile, '-o', outfile])
+            s = util.call([XAS, srcfile, '-o', outfile], self.showcalls)
         if s and cleanup: 
             os.remove(srcfile)
         return s
@@ -120,7 +125,7 @@ class Build(object):
             objfile = x+'.o'
             self.verbose_msg('  '+x+' -> '+objfile)
             s = util.call([XCC, self.target(), config.RUNTIME_PATH+'/'+x, 
-                '-o', objfile] + ASSEMBLE_FLAGS)
+                '-o', objfile] + ASSEMBLE_FLAGS, self.showcalls)
             if not s: 
                 break
         return s
@@ -133,7 +138,8 @@ class Build(object):
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
             'program.o',
-            'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS)
+            'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS,
+            self.showcalls)
         return s
 
     def link_slave(self):
@@ -143,13 +149,15 @@ class Build(object):
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.S.o',
-            'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS)
+            'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS,
+            self.showcalls)
         return s
 
     def replace_slaves(self):
         self.verbose_msg('Replacing master image in node 0, core 0')
-        s = util.call([XOBJDUMP, '--split', MASTER_XE])
-        s = util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'])
+        s = util.call([XOBJDUMP, '--split', MASTER_XE], self.showcalls)
+        s = util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'],
+                self.showcalls)
         #self.verbose_msg('Splitting slave')
         #self.verbose_msg('\r  Replacing node 0, core', end='')
         #for x in range(1, self.numcores):
@@ -226,8 +234,7 @@ class Build(object):
             frags = x.strip().split()
             names = builtin.runtime_functions + self.sem.proc_names 
             if frags and frags[0] == 'bl' and frags[1] in names:
-                lines[i] = '\tbla cp[{}]\n'.format(
-                        defs.JUMP_INDEX_OFFSET + names.index(frags[1]))
+                lines[i] = '\tbla cp[{}]\n'.format(names.index(frags[1]))
 
     def build_jumptab(self, buf):
 
@@ -294,7 +301,7 @@ class Build(object):
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
-        util.remove_file('numcores.h')
+        #util.remove_file('numcores.h')
         
         # Remove unused master images
         for x in glob.glob('image_n*c*elf'):
@@ -308,9 +315,8 @@ class Build(object):
         # TODO: Ensure the number of nodes is compatible with an available
         # device
         numcores = self.numcores
-        if numcores < defs.CORES_PER_NODE:
-            numcores = defs.CORES_PER_NODE
-        return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, numcores)
+        return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, 
+                defs.CORES_PER_NODE if numcores < defs.CORES_PER_NODE else numcores)
 
     def function_label_top(self, name):
         return '.L'+name+'_top'

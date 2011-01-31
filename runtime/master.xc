@@ -1,7 +1,7 @@
 #include <platform.h>
 #include <syscall.h>
-#include "../include/numcores.h"
-#include "../include/definitions.h"
+#include "numcores.h"
+#include "definitions.h"
 #include "globals.h"
 #include "system.h"
 

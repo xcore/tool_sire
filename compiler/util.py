@@ -49,7 +49,7 @@ def call(args, verbose=False):
         return True
     except subprocess.CalledProcessError as err:
         s = err.output.decode('utf-8').replace("\\n", "\n")
-        print('Error executing command:\n\n{}\n\nOuput:\n\n{}'.format(
+        print('error executing command:\n\n{}\n\nouput:\n\n{}'.format(
             ' '.join(err.cmd), s))
         return False
 

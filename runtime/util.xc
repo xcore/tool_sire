@@ -1,6 +1,6 @@
 #include <xs1.h>
 #include "util.h"
-#include "../include/definitions.h"
+#include "definitions.h"
 
 // Create a channel resource identifier with a particular count
 //static inline

@@ -49,11 +49,14 @@ def setup_argparse():
             help='output filename')
     
     p.add_argument('-n', '--numcores', nargs=1, metavar='<n>', 
-            dest='numcores', default=DEFAULT_NUM_CORES,
+            dest='numcores', default=[DEFAULT_NUM_CORES],
             help='number of cores')
     
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
+    
+    p.add_argument('-e', '--display-calls', action='store_true',
+            dest='showcalls', help='display external commands invoked ')
     
     p.add_argument('-r', '--parse', action='store_true', dest='parse_only', 
             help='parse the input file and quit')
@@ -77,10 +80,45 @@ def setup_argparse():
     
     return p
 
-def parse(input, filename, error, logging=False):
+def setup_globals(a):
+    """ Setup global variables for this module to control execution of
+        compilation
+    """
+    
+    global verbose
+    global showcalls
+    global numcores
+    global infile
+    global outfile
+    global parse_only
+    global sem_only
+    global show_ast
+    global pprint
+    global translate_only
+    
+    verbose        = a.verbose
+    showcalls      = a.showcalls
+    numcores       = int(a.numcores[0])
+    infile         = a.infile
+    parse_only     = a.parse_only
+    sem_only       = a.sem_only
+    compile_only   = a.compile_only
+    show_ast       = a.show_ast
+    pprint         = a.pprint
+    translate_only = a.translate_only
+
+    if not a.outfile:
+        if translate_only: outfile = DEFAULT_OUTPUT_XC 
+        elif compile_only: outfile = DEFAULT_OUTPUT_S
+        else:              outfile = DEFAULT_OUTPUT_XE
+    else:
+        outfile = a.outfile[0]
+
+def parse(logging=False):
     """ Parse an input string to produce an AST 
     """
-    verbose_msg("Parsing file '{}'\n".format(filename if filename else 'stdin'))
+    global ast
+    verbose_msg("Parsing file '{}'\n".format(infile if infile else 'stdin'))
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,
@@ -92,45 +130,48 @@ def parse(input, filename, error, logging=False):
         log = 0
     parser = Parser(error, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
-    program = parser.parse(input, filename, debug=log)
-    return program
+    ast = parser.parse(input, infile, debug=log)
 
-def semantic_analysis(program, error):
+def semantic_analysis():
     """ Perform semantic analysis on an AST 
     """
+    global sem
     verbose_msg("Performing semantic analysis\n")
     sem = semantics.Semantics(error)
-    program.accept(sem)
-    return sem
+    ast.accept(sem)
 
-def child_analysis(program, semantics):
+def child_analysis():
     """ Determine children
     """
+    global child
     verbose_msg("Performing child analysis\n")
-    child = children.Children(semantics.proc_names)
-    program.accept(child)
+    child = children.Children(sem.proc_names)
+    ast.accept(child)
     child.build()
     #child.display()
-    return child
 
-def translate_ast(program, sem, child, buf):
+def translate_ast():
     """ Transform an AST into XC 
     """
+    global translate_buf
     verbose_msg("Translating AST\n")
+    translate_buf = io.StringIO()
+    walker = translate.Translate(sem, child, translate_buf)
+    walker.walk_program(ast)
+    if translate_only:
+        util.write_file(outfile, translate_buf.getvalue())
 
-    # Translate the AST
-    walker = translate.Translate(sem, child, buf)
-    walker.walk_program(program)
-
-def build_(sem, buf, numcores, outfile, compile_only):
+def builder(outfile, compile_only):
     """ Build the program executable 
     """
-    verbose_msg("Building executable\n")
-    builder = build.Build(numcores, sem, verbose)
+    global proceede
+    verbose_msg('[Building an executable for {} cores]\n'.format(
+            numcores))
+    builder = build.Build(numcores, sem, verbose, showcalls)
     if compile_only:
-        return builder.compile(buf, outfile)
+        proceede = builder.compile(translate_buf, outfile)
     else:
-        return builder.run(buf, outfile)
+        proceede = builder.run(translate_buf, outfile)
 
 def verbose_msg(msg):
     if verbose: 
@@ -142,7 +183,12 @@ def verbose_msg(msg):
 def main(args):
     
     global proceede
-    global verbose
+    global err
+    global ast
+    global input
+    global translate_buf
+    global sem
+    global child
 
     # Setup the error object
     err = error.Error()
@@ -157,65 +203,55 @@ def main(args):
     if not proceede:
         return FAILURE
 
-    # Setup parser and parse arguments
+    # Setup parser, parse arguments and initialise globals
     argp = setup_argparse()
     a = argp.parse_args(args)
-    verbose = a.verbose
+    setup_globals(a)
 
     # Read the input from stdin or from a file 
-    if a.infile:
-        input = util.read_file(a.infile)
-    else:
-        input = sys.stdin.read()
+    input = util.read_file(infile) if infile else sys.stdin.read()
     if not input: 
         return FAILURE
 
-    # Parse the input file
-    program = parse(input, a.infile, err)
+    # Parse the input file and produce an AST
+    parse()
     if err.any(): 
         return FAILURE
-    if a.parse_only: 
+    if parse_only: 
         return SUCCESS
 
-    # Perform semantic analysis
-    sem = semantic_analysis(program, err)
+    # Perform semantic analysis on the AST
+    semantic_analysis()
     if err.any(): 
         return FAILURE
-    if a.sem_only: 
+    if sem_only: 
         return SUCCESS
 
     # Perform child analysis
-    child = child_analysis(program, sem)
+    child_analysis()
 
     # Display (dump) the AST
-    if a.show_ast:    
-        program.accept(dump.Dump())
+    if show_ast:
+        ast.accept(dump.Dump())
         return SUCCESS
 
     # Display (pretty-print) the AST
-    if a.pprint: 
+    if pprint: 
         walker.walk_program(printer.Printer())
         return SUCCESS
    
     # Translate the AST
-    buf = io.StringIO()
-    translate_ast(program, sem, child, buf)
-    if a.translate_only:
-        if not a.outfile:
-            outfile = DEFAULT_OUTPUT_XC
-        util.write_file(outfile, buf.getvalue())
+    translate_ast()
+    if translate_only:
         return SUCCESS
 
     # Compile, assemble and link with the runtime
-    if not a.outfile:
-        if a.compile_only: outfile = DEFAULT_OUTPUT_S
-        else: outfile = DEFAULT_OUTPUT_XE
-    else:
-        outfile = a.outfile[0]
-    proceede = build_(sem, buf, a.numcores, outfile, a.compile_only)
+    builder(outfile, a.compile_only)
     if not proceede:
         return FAILURE
 
+    verbose_msg('Produced file: '+outfile+'\n')
+    
     return SUCCESS
 
 if __name__ == '__main__':

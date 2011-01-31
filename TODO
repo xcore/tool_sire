@@ -28,3 +28,6 @@ Todo
     proc foo(a[n], val n)
 
 - Add NUMCORES keyword
+
+- Constant pool (ideally) needs to be replicated amongst slaves.
+
