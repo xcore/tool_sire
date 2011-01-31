@@ -1,8 +1,8 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-extern void initThread();
-extern void connect(unsigned, int, int);
+extern void _setupthread();
+extern void _connect(unsigned, int, int);
 
 void initSystem();
 void yeild();

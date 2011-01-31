@@ -4,6 +4,7 @@ import io
 import util
 import glob
 import subprocess
+import builtin
 import definitions as defs
 import config
 from math import floor
@@ -172,10 +173,10 @@ class Build(object):
         if not lines:
             return False
 
+        lines.insert(0, '###### MODIFIED ######\n')
+        
         lines = self.insert_labels(lines)
         self.rewrite_calls(lines)
-
-        lines.insert(20, '.extern jumpTable, "a(20:ui)"\n')
 
         # Make sure the buffer is empty and write the lines
         for x in lines:
@@ -223,11 +224,10 @@ class Build(object):
 
         for (i, x) in enumerate(lines):
             frags = x.strip().split()
-            if frags and frags[0] == 'bl' and frags[1] in self.sem.proc_names:
-                #print(frags[1])
+            names = builtin.runtime_functions + self.sem.proc_names 
+            if frags and frags[0] == 'bl' and frags[1] in names:
                 lines[i] = '\tbla cp[{}]\n'.format(
-                        #defs.LABEL_JUMP_TABLE,
-                        defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(frags[1]))
+                        defs.JUMP_INDEX_OFFSET + names.index(frags[1]))
 
     def build_jumptab(self, buf):
 

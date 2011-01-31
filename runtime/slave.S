@@ -3,11 +3,11 @@
     .extern touchRegs
     .extern initPointers
     .extern initSystem
-    .extern initThread
     .extern idle
-    .extern migrate
     .extern syncCores
-    .extern initThread
+    .extern _migrate
+    .extern _setupthread
+    .extern _connect
 
     .globl main
     .globl _start
@@ -29,7 +29,7 @@ _slave:
     bl touchRegs
     bl initPointers
     bl initSystem
-    bl initThread
+    bl _setupthread
     bl syncCores
     bu idle
 

@@ -63,3 +63,9 @@ names = (
     'exit',
 )
 
+# Runtime functions available to programs. Ordering matches jump and size tables.
+runtime_functions = [ 
+    '_migrate',
+    '_setupthread',
+    '_connect',
+]

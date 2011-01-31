@@ -33,6 +33,17 @@ class SignatureTable(object):
     def lookup_param_type(self, name, i):
         return self.tab[name].params[i].type
 
+    def lookup_array_qualifier(self, name, i):
+        """ Given the index of an array parameter, return the index of the
+            qualifying paramemer in the ordered set of formals.
+        """
+        params = self.tab[name].params
+        assert(params[i].type == Type('var', 'alias'))
+        qualifier = params[i].expr.elem.name
+        for (i, x) in enumerate(params):
+            if x.name == qualifier: return i
+        return None
+
     def check_args(self, type, node):
         """ Check if a procedure signature is defined """
         if not node.name in self.tab:

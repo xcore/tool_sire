@@ -17,7 +17,7 @@
     .globl busyHostHandler
     .globl touchRegs
     .globl initPointers
-    .globl initThread, "f{0}(0)"
+    .globl _setupthread, "f{0}(0)"
 
 // Set the _DoSyscall symbol to an inaccessable pc because it persists between
 // loadables for mulit-node simulations cauising a retsp to be executed.
@@ -256,9 +256,9 @@ initPointers:
 // mechanism and by synchronous thread creation with fork-join concurrent
 // composition
 //==========================================================
-    .cc_top initThread.function, initThread
+    .cc_top _setupthread.function, _setupthread
     .align 2
-initThread:
+_setupthread:
    
     entsp 2
     stw r11, sp[0]
@@ -272,7 +272,7 @@ initThread:
     ldw r11, sp[0]
     retsp 2
     
-    .cc_bottom initThread.function
+    .cc_bottom _setupthread.function
 
 //==========================================================
 // Constants

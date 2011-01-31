@@ -6,10 +6,10 @@ import config
 from walker import NodeWalker
 from type import Type
 
-INDENT = '  '
-MAX_TEMPS = 100
+INDENT      = '  '
+MAX_TEMPS   = 100
 BEGIN_BLOCK = '^'
-END_BLOCK = '*'
+END_BLOCK   = '*'
 
 op_conversion = {
     '+'   : '+',
@@ -201,6 +201,7 @@ class Translate(NodeWalker):
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
         self.out('#include "globals.h"')
+        self.out('#include "guest.h"')
         self.out('')
   
     def definitions(self):
@@ -311,7 +312,7 @@ class Translate(NodeWalker):
         self.out('unsigned _t;')
         self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
-        # Setup pc = &initThread (from jump table)
+        # Setup pc = &setupthread (from jump table)
         self.asm('ldw r11, cp[%0] ; init t[%1]:pc, r11', 
                 inops=['JUMPI_INIT_THREAD', '_t'],
                 clobber=['r11'])
@@ -434,11 +435,8 @@ class Translate(NodeWalker):
         self.stmt_block(node.stmt)
 
     def stmt_on(self, node):
-        """ Generate an on statement """
-        #self.out('on {}: '.format(self.elem(node.core)))
-        #self.stmt(node.pcall)
-        #self.out(';')
-
+        """ Generate an on statement 
+        """
         proc_name = node.pcall.name
         num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
         num_procs = len(self.child.children[proc_name]) + 1
@@ -459,9 +457,26 @@ class Translate(NodeWalker):
         if node.pcall.args.expr:
             for (i, x) in enumerate(node.pcall.args.expr):
                 t = self.sem.sig.lookup_param_type(proc_name, i)
+
+                # If the parameter type is an array reference
                 if t.form == 'alias':
-                    self.out('_closure[{}] = 2;'.format(n)) ; n+=1
-                    self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
+
+                    # Output the length of the array
+                    q = self.sem.sig.lookup_array_qualifier(proc_name, i)
+                    self.out('_closure[{}] = {};'.format(n,
+                        self.expr(node.pcall.args.expr[q]))) ; n+=1
+                   
+                    # If the elem is a proper array, load the address
+                    if x.elem.symbol.type.form == 'array':
+                        tmp = self.blocker.get_tmp()
+                        self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
+                        self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
+
+                    # Otherwise, just assign
+                    else:
+                        self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
+                
+                # Otherwise, a single
                 else:
                     self.out('_closure[{}] = 1;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
@@ -474,7 +489,7 @@ class Translate(NodeWalker):
                     +self.sem.proc_names.index(x))) ; n+=1
 
         # Call runtime TODO: length argument?
-        self.out('{}({}, _closure)'.format(defs.LABEL_MIGRATE, 
+        self.out('{}({}, _closure);'.format(defs.LABEL_MIGRATE, 
             self.expr(node.core.expr)))
 
         self.blocker.end()
@@ -484,8 +499,7 @@ class Translate(NodeWalker):
             self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
 
     def stmt_aliases(self, node):
-        self.asm('add %0, %1, %2', 
-                outop=node.dest, 
+        self.asm('add %0, %1, %2', outop=node.dest, 
                 inops=[node.name, '({})*{}'.format(
                     self.elem(node.expr), defs.BYTES_PER_WORD)])
 

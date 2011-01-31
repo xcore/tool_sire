@@ -1,7 +1,7 @@
     .extern touchRegs
     .extern initPointers
     .extern initSystem
-    .extern initThread
+    .extern _setupthread
     .extern syncCores
     .extern initMaster
   
@@ -23,7 +23,7 @@ _master:
     bl touchRegs
     bl initPointers
     bl initSystem
-    bl initThread
+    bl _setupthread
     
 /*    ldc r11, 2
     shl r11, r11, 24

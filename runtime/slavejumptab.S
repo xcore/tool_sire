@@ -1,7 +1,8 @@
 #include "../include/definitions.h"
    
     .extern _migrate
-    .extern initThread
+    .extern _setupthread
+    .extern _connect
 
     .section .cp.rodata, "ac", @progbits
 	
@@ -11,6 +12,6 @@
 
 _jumptab:
     .word _migrate
-    .word initThread
-    .word connect
+    .word _setupthread
+    .word _connect
     .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)

@@ -141,7 +141,7 @@ void syncCores() {
 }
 
 // Connect a channel
-void connect(unsigned to, int c1, int c2) {
+void _connect(unsigned to, int c1, int c2) {
     unsigned destResId = chanResId(to, PROG_CHAN_OFF+c2);
     asm("setd res[%0], %1" :: "r"(progChan[c1]), 
         "r"(destResId));
