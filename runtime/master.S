@@ -17,6 +17,7 @@
     .cc_top _master.function, _master 
     .align 2 
 
+main:
 _start:
 _master:
     

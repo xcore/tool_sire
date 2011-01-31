@@ -22,7 +22,6 @@
     .cc_top _slave.function, _slave
     .align 2 
 
-main:
 _start:
 _slave:
 

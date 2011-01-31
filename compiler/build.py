@@ -27,7 +27,7 @@ ASSEMBLE_FLAGS = ['-c', '-O2']
 LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
-        'slave.S', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
+        'slave.S', 'slave.xc', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -148,7 +148,7 @@ class Build(object):
             '-first', 'slavejumptab.S.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
-            'slave.S.o',
+            'slave.xc.o', 'slave.S.o',
             'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS,
             self.showcalls)
         return s
