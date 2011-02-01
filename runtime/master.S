@@ -3,7 +3,7 @@
     .extern resetChannels
     .extern initSystem
     .extern _setupthread
-    .extern syncCores
+    .extern masterSync
     .extern initMaster
   
     .globl main
@@ -28,7 +28,7 @@ _master:
     bl resetChannels
     bl initSystem
     bl _setupthread
-    bl syncCores
+    bl masterSync
     bu initMaster
 
     .cc_bottom _master.function

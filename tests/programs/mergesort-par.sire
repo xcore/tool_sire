@@ -1,7 +1,6 @@
 port led : 0x00010600;
 val LENGTH:=1500;
 val THRESHOLD:=1000;
-val NUMCORES:=64;
 var a[LENGTH];
 
 % Merge
@@ -59,5 +58,5 @@ proc msort(val t, val n, array[], val len) is
 proc main() is
   var i;
 { for i:=0 to LENGTH-1 do a[i] := LENGTH-i
-; msort(0, NUMCORES, a, LENGTH)
+; msort(0, NUM_CORES, a, LENGTH)
 }

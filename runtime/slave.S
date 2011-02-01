@@ -5,7 +5,7 @@
     .extern resetChannels
     .extern initSystem
     .extern _setupthread
-    .extern syncCores
+    .extern slaveSync
     .extern idle
 
     .globl _start
@@ -28,7 +28,7 @@ _slave:
     bl resetChannels
     bl initSystem
     bl _setupthread
-    bl syncCores
+    bl slaveSync
     bu idle
 
     .cc_bottom _slave.function

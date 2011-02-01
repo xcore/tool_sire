@@ -114,26 +114,41 @@ unsigned cfgRead(unsigned c) {
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
-void syncCores() {
+// Assume that master is always core 0
+void masterSync() {
 
     unsigned coreId = getCore(mSpawnChan);
-    unsigned cri = genCRI(0); // Configuration resource identifier
+    // Configuration resource identifier
+    unsigned cri = genCRI(0); 
     unsigned c, v;
+    unsigned t;
 
     // Get and set a chanend
     c = progChan[0];
     asm("setd res[%0], %1" :: "r"(c), "r"(cri));
 
     // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
-    if(coreId == 0) {
-        cfgWrite(c, 1);
-        while(cfgRead(c) != NUM_CORES) continue;
-    }
+    cfgWrite(c, 1);
+    while(cfgRead(c) != NUM_CORES)
+        continue;
+}
+
+// Ensure all cores are in a consistent state before completing initialisation
+void slaveSync() {
+
+    unsigned coreId = getCore(mSpawnChan);
+    // Configuration resource identifier
+    unsigned cri = genCRI(0); 
+    unsigned c, v;
+
+    // Get and set a chanend
+    c = progChan[0];
+    asm("setd res[%0], %1" :: "r"(c), "r"(cri));
+
     // Otherwise wait until the value reaches coreId and write coreId+1
-    else {
-        while(cfgRead(c) != coreId) continue;
-        cfgWrite(c, coreId+1);
-    }
+    while(cfgRead(c) != coreId)
+        continue;
+    cfgWrite(c, coreId+1);
 }
 
 // Connect a channel
