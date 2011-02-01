@@ -5,15 +5,30 @@
 #include "util.h"
 #include "system.h"
 
-void resetChannels();
+// Allocate all remaining channel ends then free them to ensure they are all
+// available
+void resetChannels() {
+    
+    unsigned c = 1, c0;
+    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
+   
+    // Get all remaining channels
+    while(c)
+        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+    
+    // Free all channels
+    c = c0 & 0xFFFF00FF;
+    for(int i=0; i<MAX_CHANNELS; i++) {
+        asm("freer res[%0]" :: "r"(c));
+        c += 0x100;
+    }
+}
 
 // Initialse the system: executed once by thread 0, for all threads
 #pragma unsafe arrays 
 void initSystem() {
     
     unsigned int led, val;
-
-    resetChannels();
 
     // Get the migration channel and set the event vector
     // ASSERT: channel resource counter must be 0 
@@ -40,25 +55,6 @@ void initSystem() {
     led = LED_PORT; val = 6;
     asm("setc res[%0], 8" :: "r"(led));
     asm("setclk res[%0], %1" :: "r"(led), "r"(val));
-}
-
-// Allocate all remaining channel ends then free them to ensure they are all
-// available
-void resetChannels() {
-    
-    unsigned c = 1, c0;
-    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
-   
-    // Get all remaining channels
-    while(c)
-        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-    
-    // Free all channels
-    c = c0 & 0xFFFF00FF;
-    for(int i=0; i<MAX_CHANNELS; i++) {
-        asm("freer res[%0]" :: "r"(c));
-        c += 0x100;
-    }
 }
 
 // Write a switch configuration register

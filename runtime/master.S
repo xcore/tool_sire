@@ -1,10 +1,12 @@
     .extern touchRegs
     .extern initPointers
+    .extern resetChannels
     .extern initSystem
     .extern _setupthread
     .extern syncCores
     .extern initMaster
   
+    .globl main
     .globl _start
     .globl _master, "f{0}(0)"
     .globl runMain, "f{0}(ui)"
@@ -23,6 +25,7 @@ _master:
     
     bl touchRegs
     bl initPointers
+    bl resetChannels
     bl initSystem
     bl _setupthread
     bl syncCores

@@ -4,6 +4,7 @@
 # exclude patterns (uncomment them if you want to use them):
 # *.[oa]
 # *~
+
 *.py[co]
 compiler/parsetab.py
 compiler/parselog.txt
@@ -15,6 +16,7 @@ parser.out
 lextab.py
 out.x[ce]
 test.sire
+dump.txt
 a.*
 *.o
 numcores.h

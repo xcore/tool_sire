@@ -2,17 +2,15 @@
 
     .extern touchRegs
     .extern initPointers
+    .extern resetChannels
     .extern initSystem
-    .extern idle
-    .extern syncCores
-    .extern _migrate
     .extern _setupthread
-    .extern _connect
+    .extern syncCores
+    .extern idle
 
-    .globl main
     .globl _start
-    .globl _slave
-    .globl _sizetab
+    .globl _slave, "f{0}(0)"
+    .globl _sizetab, "a(:ui)"
    
     .text
 
@@ -27,6 +25,7 @@ _slave:
 
     bl touchRegs
     bl initPointers
+    bl resetChannels
     bl initSystem
     bl _setupthread
     bl syncCores

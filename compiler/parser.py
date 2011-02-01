@@ -192,7 +192,7 @@ class Parser(object):
     def p_param_decl_alias(self, p):
         'param_decl : name LBRACKET name RBRACKET'
         p[0] = ast.Param(p[1], Type('var', 'alias'), 
-                ast.ExprSingle(ast.ElemName(p[3])),
+                ast.ExprSingle(ast.ElemId(p[3])),
                 self.coord(p))
 
     # Val parameter

@@ -5,6 +5,7 @@ extern void _setupthread();
 extern void _connect(unsigned, int, int);
 
 void initSystem();
+void resetChannels();
 void yeild();
 void idle();
 void wait();

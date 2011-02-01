@@ -57,8 +57,8 @@ class Build(object):
         self.build_jumptab(jumptab_buf)
         self.build_sizetab(sizetab_buf)
         
-        self.create_headers()
-        s = self.compile_buf(PROGRAM, program_buf)
+        s = self.create_headers()
+        if s: s = self.compile_buf(PROGRAM, program_buf)
         if s: 
             program_buf.close()
             program_buf = io.StringIO()
@@ -76,18 +76,20 @@ class Build(object):
     def compile(self, buf, outfile):
         """ Compile the program only
         """
-        s = True
-        s = self.compile_buf(PROGRAM, buf)
-        buf.close()
-        buf = io.StringIO()
-        if s: s = self.modify_assembly(PROGRAM_ASM, buf)
+        s = self.create_headers()
+        if s: s = self.compile_buf(PROGRAM, buf)
+        if s: 
+            buf.close()
+            buf = io.StringIO()
+            s = self.modify_assembly(PROGRAM_ASM, buf)
         if s: s = util.write_file(PROGRAM_ASM, buf.getvalue())
         if s: os.rename(PROGRAM_ASM, outfile)
         return s
 
     def create_headers(self):
         self.verbose_msg('Creating header '+NUMCORES_HDR)
-        util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
+        s = util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
+        return s
 
     def compile_buf(self, name, buf, cleanup=True):
         """ Compile a buffer containing an XC program
@@ -301,7 +303,7 @@ class Build(object):
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
-        util.remove_file('numcores.h')
+        #util.remove_file('numcores.h')
         
         # Remove unused master images
         for x in glob.glob('image_n*c*elf'):

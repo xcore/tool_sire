@@ -48,10 +48,10 @@ void initHostConnection(unsigned c, unsigned destId) {
 
     // Set the channel destination
     asm("setd res[%0], %1"  :: "r"(c), "r"(destId));
-    //asm("waiteu");
 
     // Initiate conneciton by sending chanResId
     asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
+    //asm("waiteu");
     asm("out   res[%0], %1"  :: "r"(c), "r"(c));
     asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
     
