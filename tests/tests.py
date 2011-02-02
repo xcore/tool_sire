@@ -7,6 +7,7 @@ import unittest
 
 COMPILE          = 'sire'
 SIMULATE         = 'xsim'
+SIM_FLAGS        = ['--iss']
 PROGRAM_DIR      = 'programs'
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 
@@ -48,7 +49,7 @@ class ProgramTests(unittest.TestCase):
     def program(self, filename, output, args=[]):
         r = call([COMPILE, TEST_PROGRAMS_PATH+'/'+filename+'.sire'] + args)
         self.assertTrue(r[0])
-        r = call([SIMULATE, 'a.xe'])
+        r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
         self.assertTrue(r[0])
         self.assertEqual(r[1], output)
 
@@ -105,7 +106,7 @@ class FeatureTests(unittest.TestCase):
     def feature(self, filename, output, args=[]):
         r = call([COMPILE, TEST_FEATURES_PATH+'/'+filename+'.sire'] + args)
         self.assertTrue(r[0])
-        r = call([SIMULATE, 'a.xe'])
+        r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
         self.assertTrue(r[0])
         self.assertEqual(r[1], output)
 
@@ -121,13 +122,13 @@ class FeatureTests(unittest.TestCase):
         self.feature('on_basic', '', ['-n', '64'])
 
     def test_feature_on_array_4(self):
-        self.feature('on_array', 'DEADBEEF', ['-n', '4'])
+        self.feature('on_array', 'DEADBEEF\n', ['-n', '4'])
 
     def test_feature_on_array_16(self):
-        self.feature('on_array', 'DEADBEEF', ['-n', '16'])
+        self.feature('on_array', 'DEADBEEF\n', ['-n', '16'])
 
     def test_feature_on_array_64(self):
-        self.feature('on_array', 'DEADBEEF', ['-n', '64'])
+        self.feature('on_array', 'DEADBEEF\n', ['-n', '64'])
 
     def test_feature_on_chain_4(self):
         self.feature('on_chain', '', ['-n', '4'])

@@ -87,7 +87,6 @@ class Build(object):
         if s:
             buf = io.StringIO()
             [buf.write(x) for x in cp]
-            [print(x, end='') for x in cp]
             s = self.assemble_buf(CONST_POOL, 'S', buf)
             buf.close()
 
