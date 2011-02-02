@@ -25,6 +25,18 @@ printvalln = Def(
         Formals([Param('v', Type('val', 'single'), None)]),
         None, None)
 
+printhex = Def(
+        'printhex', 
+        Type('proc', 'procedure'), 
+        Formals([Param('v', Type('val', 'single'), None)]),
+        None, None)
+
+printhexln = Def(
+        'printhexln',
+        Type('proc', 'procedure'), 
+        Formals([Param('v', Type('val', 'single'), None)]),
+        None, None)
+
 printstr = Def(
         'printstr', 
         Type('proc', 'procedure'), 
@@ -48,6 +60,8 @@ functions = (
 	printcharln,
     printval,
 	printvalln,
+    printhex,
+	printhexln,
     printstr,
 	printstrln,
     exit,
@@ -58,6 +72,8 @@ names = (
 	'printcharln',
     'printval',
 	'printvalln',
+    'printhex',
+	'printhexln',
     'printstr',
 	'printstrln',
     'exit',

@@ -9,22 +9,23 @@ import definitions as defs
 import config
 from math import floor
 
-NUMCORES_HDR   = 'numcores.h'
-PROGRAM        = 'program'
-PROGRAM_SRC    = PROGRAM+'.xc'
-PROGRAM_ASM    = PROGRAM+'.S'
-PROGRAM_OBJ    = PROGRAM+'.o'
-MASTER_JUMPTAB = 'masterjumptab'
-MASTER_SIZETAB = 'mastersizetab'
-MASTER_XE      = 'master.xe'
-SLAVE_XE       = 'slave.xe'
+NUMCORES_HDR     = 'numcores.h'
+PROGRAM          = 'program'
+PROGRAM_SRC      = PROGRAM+'.xc'
+PROGRAM_ASM      = PROGRAM+'.S'
+PROGRAM_OBJ      = PROGRAM+'.o'
+MASTER_JUMPTAB   = 'masterjumptab'
+MASTER_SIZETAB   = 'mastersizetab'
+SLAVE_CONST_POOL = 'slaveconstpool'
+MASTER_XE        = 'master.xe'
+SLAVE_XE         = 'slave.xe'
 
-XCC            = 'xcc'
-XAS            = 'xas'
-XOBJDUMP       = 'xobjdump'
-COMPILE_FLAGS  = ['-S', '-O2', '-fverbose-asm']
-ASSEMBLE_FLAGS = ['-c', '-O2']
-LINK_FLAGS     = ['-nostartfiles', '-Xmapper', '--nochaninit']
+XCC              = 'xcc'
+XAS              = 'xas'
+XOBJDUMP         = 'xobjdump'
+COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm']
+ASSEMBLE_FLAGS   = ['-c', '-O2']
+LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
@@ -51,19 +52,45 @@ class Build(object):
     def run(self, program_buf, outfile):
         """ Run the full build
         """
+        # TODO: tidy this up
+
         # Output the master jump and size tables
         jumptab_buf = io.StringIO()
         sizetab_buf = io.StringIO()
         self.build_jumptab(jumptab_buf)
         self.build_sizetab(sizetab_buf)
-        
+       
+        # Create headers
         s = self.create_headers()
-        if s: s = self.compile_buf(PROGRAM, program_buf)
+
+        # Compile the program into an assembly file
         if s: 
+            s = self.compile_buf(PROGRAM, program_buf)
             program_buf.close()
+
+        # Read the assembly back in
+        if s:
+            lines = util.read_file(PROGRAM_ASM, readlines=True)
+            s = False if not lines else True
+
+        # Create a seperate constant pool
+        const_buf = io.StringIO()
+        if s: s = self.extract_constants(lines, const_buf) 
+        if s: s = self.assemble_buf(SLAVE_CONST_POOL, 'S', const_buf)
+        const_buf.close()
+        
+        # Make modifications
+        if s: 
+            lines = self.modify_assembly(lines)
+
+        # Write it back out
+        if s:
             program_buf = io.StringIO()
-            s = self.modify_assembly(PROGRAM_ASM, program_buf)
-        if s: s = self.assemble_buf(PROGRAM, 'S', program_buf)
+            for x in lines:
+                program_buf.write(x)
+            s = self.assemble_buf(PROGRAM, 'S', program_buf)
+
+        # Assemble and link the rest
         if s: s = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
         if s: s = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
         if s: s = self.assemble_runtime()
@@ -77,12 +104,28 @@ class Build(object):
         """ Compile the program only
         """
         s = self.create_headers()
-        if s: s = self.compile_buf(PROGRAM, buf)
+        
+        # Compile the program into an assembly file
         if s: 
+            s = self.compile_buf(PROGRAM, buf)
             buf.close()
+
+        # Read the assembly back in
+        if s:
+            lines = util.read_file(PROGRAM_ASM, readlines=True)
+            s = False if not lines else True
+
+        # Make modifications
+        if s: 
+            lines = self.modify_assembly(lines)
+
+        # Write it back out
+        if s:
             buf = io.StringIO()
-            s = self.modify_assembly(PROGRAM_ASM, buf)
-        if s: s = util.write_file(PROGRAM_ASM, buf.getvalue())
+            for x in lines:
+                buf.write(x)
+            s = util.write_file(PROGRAM_ASM, buf.getvalue())
+
         if s: os.rename(PROGRAM_ASM, outfile)
         return s
 
@@ -151,6 +194,7 @@ class Build(object):
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.xc.o', 'slave.S.o',
+            SLAVE_CONST_POOL+'.o',
             'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS,
             self.showcalls)
         return s
@@ -160,39 +204,50 @@ class Build(object):
         s = util.call([XOBJDUMP, '--split', MASTER_XE], self.showcalls)
         s = util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'],
                 self.showcalls)
-        #self.verbose_msg('Splitting slave')
-        #self.verbose_msg('\r  Replacing node 0, core', end='')
-        #for x in range(1, self.numcores):
-        #    node = floor(x / defs.CORES_PER_NODE)
-        #    core = floor(x % defs.CORES_PER_NODE)
-        #    if core == 0:
-        #        self.verbose_msg('\r  Replacing node {}, core 0'.format(node),
-        #                end='')
-        #    else:
-        #        self.verbose_msg(' {}'.format(core), end='')
-        #    s = util.call([XOBJDUMP, MASTER_XE, 
-        #            '-r', '{},{},image_n0c0.elf'.format(node, core)])
-        #self.verbose_msg('')
         return s
 
-    def modify_assembly(self, file, buf):
-        """ Perform modifications on assembly output
+    def extract_constants(self, lines, buf):
+        """ Extract constant sections: .section .cp... <...> .text. 
+             - Don't include elimination blocks.
+             - Make labels global.
+            NOTE: this assumes a constant section will be terminated with a
+            .text, which may not be true.
         """
-        self.verbose_msg('Modifying assembly output: '+file)
-        lines = util.read_file(file, readlines=True)
-        if not lines:
-            return False
-
-        lines.insert(0, '###### MODIFIED ######\n')
-        
-        lines = self.insert_labels(lines)
-        self.rewrite_calls(lines)
-
-        # Make sure the buffer is empty and write the lines
+        self.verbose_msg('  Extracting constants')
+        cp = []
+        sec = False
         for x in lines:
+
+            # If this is a cp section
+            if x.find('.section .cp') >= 0:
+                sec = True
+            
+            # If we have left the cp section
+            if x.find('.text') >= 0:
+                sec = False
+
+            # If we are in the seciton and omit elimination directives
+            if sec and (x.find('.cc_top')==-1) and (x.find('.cc_bottom')==-1):
+                if x.find(':\n') > 0:
+                    cp.append('\t.globl '+x[:-2]+'\n')
+                cp.append(x)
+
+        for x in cp:
+            print(x, end='')
             buf.write(x)
 
         return True
+
+    def modify_assembly(self, lines):
+        """ Perform modifications on assembly output
+        """
+        self.verbose_msg('Modifying assembly output')
+        
+        lines.insert(0, '###### MODIFIED ######\n')
+        lines = self.insert_labels(lines)
+        lines = self.rewrite_calls(lines)
+
+        return lines
 
 
     def insert_labels(self, lines):
@@ -237,6 +292,8 @@ class Build(object):
             names = builtin.runtime_functions + self.sem.proc_names 
             if frags and frags[0] == 'bl' and frags[1] in names:
                 lines[i] = '\tbla cp[{}]\n'.format(names.index(frags[1]))
+
+        return lines
 
     def build_jumptab(self, buf):
 
