@@ -169,7 +169,7 @@ def builder(outfile, compile_only):
             numcores))
     builder = build.Build(numcores, sem, verbose, showcalls)
     if compile_only:
-        proceede = builder.compile(translate_buf, outfile)
+        proceede = builder.compile_only(translate_buf, outfile)
     else:
         proceede = builder.run(translate_buf, outfile)
 

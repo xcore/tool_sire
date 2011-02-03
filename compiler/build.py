@@ -1,6 +1,7 @@
 import sys
 import os
 import io
+import re
 import util
 import glob
 import subprocess
@@ -53,84 +54,54 @@ class Build(object):
         """ Run the full build
         """
 
-        # Output the master jump and size tables
-        jumptab_buf = io.StringIO()
-        sizetab_buf = io.StringIO()
-        self.build_jumptab(jumptab_buf)
-        self.build_sizetab(sizetab_buf)
-       
         # Create headers
         s = self.create_headers()
 
-        # Compile the program into an assembly file
-        if s: 
-            s = self.compile_buf(PROGRAM, program_buf)
-            program_buf.close()
-
-        # Read the assembly back in
-        if s:
-            lines = util.read_file(PROGRAM_ASM, readlines=True)
-            s = False if not lines else True
-
-        # Make modifications
-        if s: 
-            (lines, cp) = self.modify_assembly(lines)
+        # Generate the assembly
+        (lines, cp) = self.generate_assembly(program_buf)
 
         # Write the program back out and assemble
-        if s:
-            buf = io.StringIO()
-            [buf.write(x) for x in lines]
-            s = self.assemble_buf(PROGRAM, 'S', buf)
-            buf.close()
+        if s: s = self.assemble(PROGRAM, 'S', ''.join(lines))
 
         # Write the cp out and assemble
-        if s:
-            buf = io.StringIO()
-            [buf.write(x) for x in cp]
-            #[print(x, end='') for x in cp]
-            s = self.assemble_buf(CONST_POOL, 'S', buf)
-            buf.close()
+        if s: s = self.assemble(CONST_POOL, 'S', ''.join(cp))
 
+        # Output and assemble the master jump and size tables
+        if s: 
+            jumptab_buf = io.StringIO()
+            self.build_jumptab(jumptab_buf)
+            s = self.assemble(MASTER_JUMPTAB, 'S', jumptab_buf.getvalue())
+        if s: 
+            sizetab_buf = io.StringIO()
+            self.build_sizetab(sizetab_buf)
+            s = self.assemble(MASTER_SIZETAB, 'S', sizetab_buf.getvalue())
+        
         # Assemble and link the rest
-        if s: s = self.assemble_buf(MASTER_JUMPTAB, 'S', jumptab_buf)
-        if s: s = self.assemble_buf(MASTER_SIZETAB, 'S', sizetab_buf)
         if s: s = self.assemble_runtime()
         if s: s = self.link_master()
         if s: s = self.link_slave()
         if s: s = self.replace_slaves()
+        
         self.cleanup(outfile)
         return s
 
-    def compile(self, program_buf, outfile):
+
+    def compile_only(self, program_buf, outfile):
         """ Compile the program only
         """
         
         # Create headers
         s = self.create_headers()
         
-        # Compile the program into an assembly file
-        if s: 
-            s = self.compile_buf(PROGRAM, program_buf)
-            program_buf.close()
-
-        # Read the assembly back in
-        if s:
-            lines = util.read_file(PROGRAM_ASM, readlines=True)
-            s = False if not lines else True
-
-        # Make modifications
-        if s: 
-            (lines, cp) = self.modify_assembly(lines)
+        # Generate the assembly
+        (lines, cp) = self.generate_assembly(program_buf)
 
         # Write the program back out and assemble
-        if s:
-            buf = io.StringIO()
-            [buf.write(x) for x in lines]
-            s = util.write_file(PROGRAM_ASM, buf.getvalue())
-            buf.close()
+        if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
 
         # Rename the output file
         if s: os.rename(PROGRAM_ASM, outfile)
+        
         return s
 
     def create_headers(self):
@@ -138,26 +109,46 @@ class Build(object):
         s = util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
         return s
 
-    def compile_buf(self, name, buf, cleanup=True):
+    def generate_assembly(self, program_buf):
+        """ Given the program buffer containing the XC translation, generate the
+            program and constant pool assembly.
+        """
+
+        # Compile the program into an assembly file
+        s = self.compile(PROGRAM, program_buf.getvalue())
+        program_buf.close()
+
+        # Read the assembly back in
+        if s:
+            lines = util.read_file(PROGRAM_ASM, readlines=True)
+            s = False if not lines else True
+
+        # Make modifications
+        if s: 
+            (lines, cp) = self.modify_assembly(lines)
+        
+        return (lines, cp) if s else None
+
+    def compile(self, name, s, cleanup=True):
         """ Compile a buffer containing an XC program
         """
         srcfile = name + '.xc'
         outfile = name + '.S'
         self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
-        util.write_file(srcfile, buf.getvalue())
+        util.write_file(srcfile, s)
         s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS,
                 self.showcalls)
         if s and cleanup:
             os.remove(srcfile)
         return s
 
-    def assemble_buf(self, name, ext, buf, cleanup=True):
+    def assemble(self, name, ext, s, cleanup=True):
         """ Assemble a buffer containing an XC or assembly program
         """
         srcfile = name + '.' + ext
         outfile = name + '.o'
         self.verbose_msg('Assembling '+srcfile+' -> '+outfile)
-        util.write_file(srcfile, buf.getvalue())
+        util.write_file(srcfile, s)
         if ext == 'xc':
             s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS,
                     self.showcalls)
@@ -219,52 +210,69 @@ class Build(object):
         
         lines.insert(0, '###### MODIFIED ######\n')
         
-        #(lines, cp) = self.extract_constants(lines)
-        cp = []
+        (lines, cp) = self.extract_constants(lines)
         lines = self.insert_labels(lines)
         lines = self.rewrite_calls(lines)
 
         return (lines, cp)
 
     def extract_constants(self, lines):
-        """ Extract constant sections: .section .cp... <...> .text. 
-             - Don't include elimination blocks.
-             - Make labels global.
+        """ Extract constant sections only within the elimination block of a
+            function. This covers all constants local to a function. This is to
+            differentiate constants associated with and declared global.
+             - Don't include elimination blocks for strings.
+             - Make extracted labels global.
             NOTE: this assumes a constant section will be terminated with a
             .text, (which may not always be true?).
         """
         self.verbose_msg('  Extracting constants')
         cp = []
         new = []
-        sec = False
+        sect = False
+        func = False
         for x in lines:
 
-            # If this is a cp section
-            if x.find('.section .cp') >= 0:
-                sec = True
-            
-            # If we have left the cp section
-            if x.find('.text') >= 0:
-                sec = False
+            # If we have entered a function elimination block
+            if re.match(r'\.cc_top [_A-Za-z][A-Za-z0-9_]*\.function', x):
+                func = True
 
-            # If we're outside a cp section, add to a new list
-            if not sec: 
-                if x.find('.text')==-1:
-                    new.append(x)
-            else:
-                # If we are in the seciton: replace labels with externs, 
-                # declare them as global in the new cp.
-                if x.find(':\n') > 0:
-                    cp.append('\t.globl '+x[:-2]+'\n')
-                    new.insert(0, '\t.extern '+x[:-2]+'\n')
+            # If we have left
+            if re.match(r'\.cc_bottom [_A-Za-z][A-Za-z0-9_]*\.function', x):
+                func = False
+
+            if func:
+
+                # If this is a cp section
+                if x.find('.section .cp') >= 0:
+                    sect = True
                 
-                # Rename .const4 and const8 to rodata
-                if x.find('.section .cp.const') >= 0:
-                    x = '\t.section .cp.rodata, "ac", @progbits\n'
+                # If we have left the cp section
+                if x.find('.text') >= 0:
+                    sect = False
 
-                # Omit elimination directives.
-                if x.find('.cc_top')==-1 and x.find('.cc_bottom')==-1:
-                    cp.append(x)
+                if sect: 
+                    # If we are in the seciton: replace labels with externs, 
+                    # declare them as global in the new cp.
+                    if x.find(':\n') > 0:
+                        cp.append('\t.globl '+x[:-2]+'\n')
+                        new.insert(0, '\t.extern '+x[:-2]+'\n')
+                    
+                    # Rename .const4 and const8 to rodata
+                    if x.find('.section .cp.const') >= 0:
+                        x = '\t.section .cp.rodata, "ac", @progbits\n'
+
+                    # Omit elimination directives (for strings).
+                    if x.find('.cc_top')==-1 and x.find('.cc_bottom')==-1:
+                        cp.append(x)
+
+                # If we're outside a cp section, add to a new list
+                else:
+                    if x.find('.text')==-1:
+                        new.append(x)
+            
+            # If we're outside a function block, add to a new list
+            else:
+                new.append(x)
 
         return (new, cp)
 
