@@ -23,7 +23,7 @@ SLAVE_XE         = 'slave.xe'
 XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm']
+COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
@@ -87,6 +87,7 @@ class Build(object):
         if s:
             buf = io.StringIO()
             [buf.write(x) for x in cp]
+            #[print(x, end='') for x in cp]
             s = self.assemble_buf(CONST_POOL, 'S', buf)
             buf.close()
 
@@ -218,7 +219,8 @@ class Build(object):
         
         lines.insert(0, '###### MODIFIED ######\n')
         
-        (lines, cp) = self.extract_constants(lines) 
+        #(lines, cp) = self.extract_constants(lines)
+        cp = []
         lines = self.insert_labels(lines)
         lines = self.rewrite_calls(lines)
 
