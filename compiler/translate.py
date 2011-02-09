@@ -314,9 +314,9 @@ class Translate(NodeWalker):
         self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
         # Setup pc = &setupthread (from jump table)
-        self.asm('ldw r11, cp[%0] ; init t[%1]:pc, r11', 
-                inops=['JUMPI_INIT_THREAD', '_t'],
-                clobber=['r11'])
+        self.asm('ldw r11, cp[{}] ; init t[%0]:pc, r11'
+                .format(defs.JUMPI_INIT_THREAD), 
+                inops=['_t'], clobber=['r11'])
 
         # Move sp away: sp -= THREAD_STACK_SPACE and save it
         self.out('_sp = _sp - THREAD_STACK_SPACE;')
@@ -329,7 +329,7 @@ class Translate(NodeWalker):
                  inops=['_t'], clobber=['r11'])
 
         # Copy register values
-        for i in range(11):
+        for i in range(12):
             self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
 
         # Copy thread id to the array
@@ -351,7 +351,7 @@ class Translate(NodeWalker):
         thread_labels = [self.get_label() for i in range(num_slaves + 1)]
         
         # Get a thread synchroniser
-        self.asm('getr %0, %1', outop='_sync', inops=['RES_TYPE_SYNC'])
+        self.asm('getr %0, " S(RES_TYPE_SYNC) "', outop='_sync')
         
         # Setup each slave thread
         self.comment('Initialise slave threads')
@@ -364,12 +364,12 @@ class Translate(NodeWalker):
         self.comment('Initialise slave link registers')
         for (i, x) in enumerate(node.children()):
             if not i == 0:
-                self.asm('ldap '+thread_labels[i]+' ; init t[%0]:lr, r11',
+                self.asm('ldap r11, '+thread_labels[i]+' ; init t[%0]:lr, r11',
                     inops=['_threads[{}]'.format(i-1)], clobber=['r11'])
 
         # Master synchronise
         self.comment('Master synchronise')
-        self.asm('msync %0', inops=['_sync'])
+        self.asm('msync res[%0]', inops=['_sync'])
 
         # Output each thread's instructions followed by a slave synchronise or
         # for the master, a master join and branch out of the block.
@@ -378,7 +378,7 @@ class Translate(NodeWalker):
             self.asm(thread_labels[i]+':')
             self.stmt(x)
             if i == 0:
-                self.asm('mjoin %0', inops=['_sync'])
+                self.asm('mjoin res[%0]', inops=['_sync'])
                 self.asm('bu '+exit_label)
             else:
                 self.asm('ssync')

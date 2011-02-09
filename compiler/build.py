@@ -24,7 +24,7 @@ SLAVE_XE         = 'slave.xe'
 XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
+COMPILE_FLAGS    = ['-S', '-O0', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
@@ -58,7 +58,8 @@ class Build(object):
         s = self.create_headers()
 
         # Generate the assembly
-        (lines, cp) = self.generate_assembly(program_buf)
+        s = self.generate_assembly(program_buf)
+        if s: (lines, cp) = s
 
         # Write the program back out and assemble
         if s: s = self.assemble(PROGRAM, 'S', ''.join(lines))

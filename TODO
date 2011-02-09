@@ -16,19 +16,21 @@ Todo
 - Make sure all runtime variables can't clash with sire variables - rename all
   with underscores.
 
-
-
 - Find out why asm expressions produce syntax errors, e.g. 
     .set .foo (_cp/4)+3
 
-
 - Add a CompileStage class to record time and stats etc
+
+- Semantic analysis should check formal array qualifiers are valid.
+
+Done
+====
+
+- Add NUM_CORES keyword
+
+- Constant pool (ideally) needs to be replicated amongst slaves.
 
 - Adjust syntax to enforce array bounds for on statements, e.g. 
     proc foo(a[n], val n)
 
-- Add NUMCORES keyword
 
-- Constant pool (ideally) needs to be replicated amongst slaves.
-
-- Semantic analysis should check formal array qualifiers are valid.
