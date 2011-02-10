@@ -17,6 +17,7 @@
 #define LABEL_CHAN_ARRAY         "progChan"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
+#define LABEL_FRAME_TABLE        "_frametab"
 
 // System variables
 #define SYS_CHAN_ARRAY           "chan"

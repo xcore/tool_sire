@@ -128,6 +128,7 @@ class Translate(NodeWalker):
         self.blocker = Blocker(self, buf)
         self.printer = printer.Printer(buf)
         self.label_counter = 0
+        self.parent = None
 
     def out(self, s):
         """ Write an indented line """
@@ -267,6 +268,7 @@ class Translate(NodeWalker):
         s += ' {}({})'.format(
                 self.procedure_name(node.name),
                 self.formals(node.formals))
+        self.parent = node.name
         self.out(s)
         self.blocker.begin()
         self.decls(node.decls)
@@ -393,6 +395,8 @@ class Translate(NodeWalker):
         pass
 
     def stmt_pcall(self, node):
+        if self.parent == node.name:
+            self.out('#pragma stackcalls 10')
         self.out('{}({});'.format(
             self.procedure_name(node.name), self.arguments(node.args)))
 

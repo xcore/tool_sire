@@ -17,6 +17,7 @@ PROGRAM_ASM      = PROGRAM+'.S'
 PROGRAM_OBJ      = PROGRAM+'.o'
 MASTER_JUMPTAB   = 'masterjumptab'
 MASTER_SIZETAB   = 'mastersizetab'
+MASTER_FRAMETAB  = 'masterframetab'
 CONST_POOL       = 'constpool'
 MASTER_XE        = 'master.xe'
 SLAVE_XE         = 'slave.xe'
@@ -76,6 +77,11 @@ class Build(object):
             sizetab_buf = io.StringIO()
             self.build_sizetab(sizetab_buf)
             s = self.assemble(MASTER_SIZETAB, 'S', sizetab_buf.getvalue())
+        if s: 
+            frametab_buf = io.StringIO()
+            self.build_frametab(frametab_buf)
+            print(frametab_buf.getvalue())
+            s = self.assemble(MASTER_FRAMETAB, 'S', frametab_buf.getvalue())
         
         # Assemble and link the rest
         if s: s = self.assemble_runtime()
@@ -181,6 +187,7 @@ class Build(object):
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
             'program.o',
+            MASTER_FRAMETAB+'.o',
             'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS,
             self.showcalls)
         return s
@@ -377,6 +384,23 @@ class Build(object):
         for x in self.sem.proc_names:
             buf.write('\t.word {}-{}+{}\n'.format(
                 self.function_label_bottom(x), x, defs.BYTES_PER_WORD))
+
+    def build_frametab(self, buf):
+
+        # Constant section
+        buf.write('\t.section .cp.rodata, "ac", @progbits\n')
+        buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
+        
+        # Header
+        buf.write('\t.globl '+defs.LABEL_FRAME_TABLE+', "a(:ui)"\n')
+        buf.write('\t.set {}.globound, {}\n'.format(
+            defs.LABEL_FRAME_TABLE,
+            defs.BYTES_PER_WORD*(len(self.sem.proc_names))))
+        buf.write(defs.LABEL_FRAME_TABLE+':\n')
+        
+        # Program procedure entries
+        for x in self.sem.proc_names:
+            buf.write('\t.word {}.nstackwords\n'.format(x))
 
     def cleanup(self, output_xe):
         """ Renanme the output file and delete any temporary files
