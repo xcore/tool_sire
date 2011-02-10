@@ -1,5 +1,0 @@
-proc foo() is skip
-proc bar() is skip
-
-proc main() is
-{ foo() | bar() }

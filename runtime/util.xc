@@ -59,32 +59,3 @@ unsigned destResId(unsigned dest) {
     return n | (dest % CORES_PER_NODE) << 16 | 0x2;
 }
 
-/*static inline
-int TESTCT(unsigned c) {
-   int r;
-   asm("testct %0, res[%1]" : "=r"(r) : "r"(c));
-   return r;
-}
-
-static inline
-void OUTCT_END(unsigned c) {
-   asm("outct res[%0], %1" :: "r"(c), "r"(CT_END));
-}
-
-static inline
-void CHKCT_END(unsigned c) {
-   asm("chkct res[%0], %1" :: "r"(c), "r"(CT_END));
-}
-
-static inline
-void SETD(unsigned c, unsigned dest) {
-   asm("setd res[%0], %1" :: "r"(c), "r"(dest));
-}
-
-static inline
-unsigned GETR_CHANEND() {
-   unsigned c;
-   asm("getr %0, 2":"=r"(c));
-   return c;
-}*/
-

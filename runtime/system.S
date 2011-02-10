@@ -286,7 +286,7 @@ _setupthread:
     .globl mSpawnChan, "ui"
     .globl spawnChan,  "a(:ui)"
     .globl progChan,   "a(:ui)"
-    .globl fpLock,     "ui"
+    .globl _fpLock,    "ui"
     .globl _fp,        "ui"
     .globl _sp,        "ui"
     .globl _pc,        "ui"
@@ -313,7 +313,7 @@ progChan:
     .set progChan.globound, NUM_PROG_CHANS*BYTES_PER_WORD
 
 // Function pointer lock identifier
-fpLock:
+_fpLock:
     .space BYTES_PER_WORD
     .globl fpLock.globound
     .set fpLock.globound, BYTES_PER_WORD
@@ -330,7 +330,7 @@ _sp:
     .globl _sp.globound
     .set _sp.globound, BYTES_PER_WORD
 
-// Stack pointer pointer (for allocating new threads)
+// For storing the pc on interrupts 
 _pc:
     .space BYTES_PER_WORD
     .globl _pc.globound

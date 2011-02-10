@@ -53,14 +53,14 @@ unsigned setHost() {
     unsigned senderId;
     
     // Connect to the sender and receive their id 
-    asm("chkct  res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(mSpawnChan));
-    asm("in %0, res[%1]" : "=r"(senderId): "r"(mSpawnChan));
-    asm("setd   res[%0], %1" :: "r"(mSpawnChan), "r"(senderId));
-    asm("outct  res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(mSpawnChan));
+    CHKCT_END(mSpawnChan);
+    senderId = IN(mSpawnChan);
+    SETD(mSpawnChan, senderId);
+    OUTCT_END(mSpawnChan);
     
     // Close mSpawnChan connection
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(mSpawnChan));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(mSpawnChan));
+    OUTCT_END(mSpawnChan);
+    CHKCT_END(mSpawnChan);
 
     return senderId;
 }
@@ -71,14 +71,14 @@ void spawnHost() {
     unsigned senderId, pc;
     
     // Connect to the sender and receive their id 
-    asm("chkct  res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(mSpawnChan));
-    asm("in %0, res[%1]" : "=r"(senderId): "r"(mSpawnChan));
-    asm("setd   res[%0], %1" :: "r"(mSpawnChan), "r"(senderId));
-    asm("outct  res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(mSpawnChan));
+    CHKCT_END(mSpawnChan);
+    senderId = IN(mSpawnChan);
+    SETD(mSpawnChan, senderId);
+    OUTCT_END(mSpawnChan);
 
     // Close the connection
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(mSpawnChan));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(mSpawnChan));
+    OUTCT_END(mSpawnChan);
+    CHKCT_END(mSpawnChan);
 
     // Initialise migrated process on a new thread
     asm("ldap r11, " LABEL_RUN_THREAD "\n\t"
@@ -91,11 +91,10 @@ void spawnHost() {
 
 // Initialise the conneciton with the sender
 void initGuestConnection(unsigned c, unsigned senderId) {
-    
-    asm("setd res[%0], %1"  :: "r"(c), "r"(senderId));
-    asm("outct res[%0], " S(XS1_CT_START_TRANSACTION)  :: "r"(c));
-    asm("out   res[%0], %1" :: "r"(c), "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION)  :: "r"(c));
+    SETD(c, senderId);
+    OUTCT_END(c);
+    OUT(c, c);
+    CHKCT_END(c);
 }
 
 // Receive a closure
@@ -108,20 +107,19 @@ void initGuestConnection(unsigned c, unsigned senderId) {
     {numArgs, numProcs} = receiveHeader(c);
 
     // Use and update the fp safely by obtaining a lock
-    asm("in r11, res[%0]" :: "r"(fpLock));
+    ACQUIRE_LOCK(_fpLock); 
     
     // Receive arguments
     receiveArguments(c, numArgs, args, len);
 
     // Load jump table address
-    asm("ldaw r11, cp[0]\n\t"
-        "mov %0, r11" : "=r"(jumpTable) :: "r11");
+    asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
 
     // Receive the children
     index = receiveProcedures(c, numProcs, jumpTable);
 
     // Release the lock
-    asm("out res[%0], r11" :: "r"(fpLock));
+    RELEASE_LOCK(_fpLock);
     
     return {index, numArgs};
 }
@@ -129,19 +127,8 @@ void initGuestConnection(unsigned c, unsigned senderId) {
 // Receive the closure header
 {int, int} receiveHeader(unsigned c) {
     
-    int numArgs, numProcs;
-
-    // Acknowledge begin
-    asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
-    // Receive closure header
-    asm("in %0, res[%1]" : "=r"(numArgs) : "r"(c));
-    asm("in %0, res[%1]" : "=r"(numProcs) : "r"(c));
-
-    // Synchronise with acknowledge end
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
+    int numArgs = INS(c);
+    int numProcs = INS(c);
 
     return {numArgs, numProcs};
 }
@@ -156,16 +143,12 @@ void receiveArguments(unsigned c, int numArgs,
     // For each argument
     for(int i=0; i<numArgs; i++) {
 
-        // Acknowledge begin
-        asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-        asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
         // Receive the length
-        asm("in %0, res[%1]"  : "=r"(len[i]) : "r"(c));
+        len[i] = INS(c);
 
         // Receive a single value
         if(len[i] == 1) {
-            asm("in %0, res[%1]"  : "=r"(args[i]) : "r"(c));
+            args[i] = INS(c);
         }
         // Receive an array: write to stack and set args[i] to start address
         else {
@@ -173,7 +156,7 @@ void receiveArguments(unsigned c, int numArgs,
 
             // Receive each element of the array and write straight to memory
             for(int j=0; j<len[i]; j++) {
-                asm("in %0, res[%1]"  : "=r"(value) : "r"(c));
+                value = INS(c);
                 asm("stw %0, %1[%2]" :: "r"(value), "r"(_fp), "r"(j));
             }
            
@@ -181,10 +164,6 @@ void receiveArguments(unsigned c, int numArgs,
             _fp += len[i]*4; 
             if(_fp % 4) _fp += 2;
         }
-            
-        // Synchronise with acknowledge end
-        asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-        asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
     }
 }
 
@@ -198,21 +177,18 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
     for(int i=0; i<numProcs; i++) {
         
         // Jump index and size
-        asm("in %0, res[%1]"  : "=r"(procIndex) : "r"(c));
-        asm("in %0, res[%1]"  : "=r"(procSize) : "r"(c));
+        procIndex = INS(c);
+        procSize = INS(c);
 
         // TODO: Respond if this procedure has already been sent
 
         // Instructions
         for(int j=0; j<procSize/4; j++) {
-            asm("in %0, res[%1]"  : "=r"(inst): "r"(c));
+            //asm("in %0, res[%1]"  : "=r"(inst): "r"(c));
+            inst = INS(c);
             asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
         }
      
-        // Acknowledge end
-        asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-        asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-    
         // Patch jump table entry
         asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
 
@@ -268,15 +244,15 @@ void runProcedure(unsigned c, int threadId, int procIndex,
 void informCompleted(unsigned c, unsigned senderId) {
     
     // Set the channel destination (as it may have been set again by a nested on)
-    asm("setd res[%0], %1"  :: "r"(c), "r"(senderId));
+    SETD(c, senderId);
 
     // Signal the completion of execution
     asm("outct res[%0], " S(CT_COMPLETED) :: "r"(c));
     asm("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));
     
     // End
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
+    OUTCT_END(c);
+    CHKCT_END(c);
 }
 
 // Send back any arrays that may have been updated by the execution of
@@ -290,19 +266,12 @@ void sendResults(unsigned c, int numArgs, unsigned args[], int len[]) {
         length = len[i];
         if(length > 1) {
 
-            // Begin
-            asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-            asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
             for(int j=0; j<length; j++) {
                 // Note can write this in one asm using r11 (but causes xcc fail)
                 asm("ldw %0, %1[%2]" : "=r"(value) : "r"(args[i]), "r"(j));
-                asm("out res[%0], %1" :: "r"(c), "r"(value));
+                //asm("out res[%0], %1" :: "r"(c), "r"(value));
+                OUTS(c, value);
             }
-        
-            // End
-            asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-            asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
         }
     }
 }
@@ -310,11 +279,12 @@ void sendResults(unsigned c, int numArgs, unsigned args[], int len[]) {
 // Spawn a new asynchronous thread
 void newAsyncThread(unsigned pc, unsigned sp, unsigned senderId) {
     
-    unsigned t, c = 0;
+    unsigned t;
     int id;
    
     // Get a new asynchronous thread
-    asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
+    //asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
+    t = GET_ASYNC_THREAD();
     if(t == 0) error();
 
     // Get the thread's id (resource counter)
@@ -334,16 +304,16 @@ void newAsyncThread(unsigned pc, unsigned sp, unsigned senderId) {
     asm("set t[%0]:r0, %1"  :: "r"(t), "r"(senderId));
 
     // Touch remaining GPRs
-    asm("set t[%0]:r1, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r2, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r3, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r4, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r5, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r6, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r7, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r8, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r9, %1"  :: "r"(t), "r"(c));
-    asm("set t[%0]:r10, %1" :: "r"(t), "r"(c));
+    asm("set t[%0]:r1, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r2, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r3, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
+    asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
 
     // Start the thread
     asm("start t[%0]" :: "r"(t));

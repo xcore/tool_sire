@@ -47,23 +47,22 @@ void _migrate(unsigned dest, unsigned closure[]) {
 void initHostConnection(unsigned c, unsigned destId) {
 
     // Set the channel destination
-    asm("setd res[%0], %1"  :: "r"(c), "r"(destId));
+    SETD(c, destId);
 
     // Initiate conneciton by sending chanResId
-    asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    //asm("waiteu");
-    asm("out   res[%0], %1"  :: "r"(c), "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
+    OUTCT_END(c);
+    OUT(c, c);
+    CHKCT_END(c);
+
     // Close the current channel connection 
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
+    CHKCT_END(c);
+    OUTCT_END(c);
     
     // Open new connection with spawned thread
-    asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    asm("in %0, res[%1]"   : "=r"(destId) : "r"(c));
-    asm("setd res[%0], %1" :: "r"(c), "r"(destId));
-    asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
+    CHKCT_END(c);
+    destId = IN(c);
+    SETD(c, destId);
+    OUTCT_END(c);
 }
 
 // Send a closure
@@ -88,16 +87,8 @@ void sendClosure(unsigned c, unsigned closure[],
 // Send the header
 void sendHeader(unsigned c, int numArgs, int numProcs) {
     
-    // Begin
-    asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-
-    asm("out res[%0], %1" :: "r"(c), "r"(numArgs));
-    asm("out res[%0], %1" :: "r"(c), "r"(numProcs));
-
-    // Synchronise with end
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
+    OUTS(c, numArgs);
+    OUTS(c, numProcs);
 }
 
 // Send the guest procedures arguments
@@ -114,28 +105,20 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[],
         len[i] = closure[cIndex];
         args[i] = closure[cIndex+1];
 
-        // Begin
-        asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-        asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
         // Send the argument length
-        asm("out res[%0], %1" :: "r"(c), "r"(len[i]));
+        OUTS(c, len[i]);
         
         // Send a single value
         if(len[i] == 1) {
-            asm("out res[%0], %1" :: "r"(c), "r"(closure[cIndex+1]));
+            OUTS(c, closure[cIndex+1]);
         }
         // Send an array
         else {
             for(int j=0; j<len[i]; j++) {
                 asm("ldw %0, %1[%2]" : "=r"(value) : "r"(args[i]), "r"(j));
-                asm("out res[%0], %1" :: "r"(c), "r"(value));
+                OUTS(c, value);
             }
         }
-        
-        // Synchronise with end
-        asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-        asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
     }
 }
 
@@ -162,20 +145,17 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
         asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
     
         // Jump index and size
-        asm("out res[%0], %1" :: "r"(c), "r"(procIndex));
-        asm("out res[%0], %1" :: "r"(c), "r"(procSize));
+        OUTS(c, procIndex);
+        OUTS(c, procSize);
     
         // TODO: check here whether the host already has this procedure
 
         // Instructions
         for(int j=0; j<procSize/4; j++) {
             asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
-            asm("out res[%0], %1" :: "r"(c), "r"(inst));
+            //asm("out res[%0], %1" :: "r"(c), "r"(inst));
+            OUTS(c, inst);
         }
-        
-        // Synchronise with end
-        asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-        asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
     }
 }
 
@@ -198,8 +178,8 @@ void waitForCompletion(unsigned c, int threadId) {
     asm("outct res[%0], " S(CT_COMPLETED) :: "r"(c));    
             
     // Acknowledge end
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
+    CHKCT_END(c);
+    OUTCT_END(c);
 }
 
 // Receive any array arguments that may have been updated by the migrated
@@ -213,19 +193,12 @@ void receiveResults(unsigned c, int numArgs, unsigned args[], int len[]) {
         length = len[i];
         if(length > 1) {
 
-            // Acknowledge begin
-            asm("chkct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-            asm("outct res[%0], " S(XS1_CT_START_TRANSACTION) :: "r"(c));
-    
             for(int j=0; j<length; j++) {
                 // Note can write this in one asm using r11 (but causes xcc fail)
-                asm("in %0, res[%1]" : "=r"(value) : "r"(c));
+                //asm("in %0, res[%1]" : "=r"(value) : "r"(c));
+                value = INS(c);
                 asm("stw %0, %1[%2]" :: "r"(value), "r"(args[i]), "r"(j));
             }
-            
-            // Acknowledge end
-            asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-            asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
         }
     }
 }

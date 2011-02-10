@@ -139,6 +139,15 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_chain_64(self):
         self.feature('on_chain', '', ['-n', '64'])
 
+    def test_feature_thread_basic_2(self):
+        self.feature('thread_basic_2', '')
+
+    def test_feature_thread_basic_4(self):
+        self.feature('thread_basic_4', '')
+
+    def test_feature_thread_basic_8(self):
+        self.feature('thread_basic_8', '')
+
 if __name__ == '__main__':
     if init():
         sys.argv.append('-v')

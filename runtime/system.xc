@@ -10,12 +10,12 @@
 void resetChannels() {
     
     unsigned c = 1, c0;
-    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
-   
+    c0 = GETR_CHANEND();
+
     // Get all remaining channels
     while(c)
-        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-    
+        c = GETR_CHANEND();
+   
     // Free all channels
     c = c0 & 0xFFFF00FF;
     for(int i=0; i<MAX_CHANNELS; i++) {
@@ -28,20 +28,20 @@ void resetChannels() {
 #pragma unsafe arrays 
 void initSystem() {
     
-    unsigned int led, val;
+    unsigned int led;
 
     // Get the migration channel and set the event vector
     // ASSERT: channel resource counter must be 0 
-    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(mSpawnChan));
+    mSpawnChan = GETR_CHANEND();
     asm("eeu res[%0]" :: "r"(mSpawnChan));
 
     // Get channels for each thread
     for(int i=0; i<MAX_THREADS; i++) 
-        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(spawnChan[i]));
+        spawnChan[i] = GETR_CHANEND();
 
     // Get the remaining channels for program use
     for(int i=0; i<NUM_PROG_CHANS; i++)
-        asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(progChan[i]));
+        progChan[i] = GETR_CHANEND();
 
     // Set the function pointer (fp) to after the data section
     asm("ldap r11, " LABEL_END_BSS
@@ -49,12 +49,12 @@ void initSystem() {
     if(_fp % 4) _fp += 2;
 
     // Get a lock for the fp variable
-    asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(fpLock));
+    _fpLock = GETR_LOCK();
 
     // Setup led port
-    led = LED_PORT; val = 6;
+    led = LED_PORT;
     asm("setc res[%0], 8" :: "r"(led));
-    asm("setclk res[%0], %1" :: "r"(led), "r"(val));
+    asm("setclk res[%0], %1" :: "r"(led), "r"(6));
 }
 
 // Write a switch configuration register
@@ -154,8 +154,8 @@ void slaveSync() {
 // Connect a channel
 void _connect(unsigned to, int c1, int c2) {
     unsigned destResId = chanResId(to, PROG_CHAN_OFF+c2);
-    asm("setd res[%0], %1" :: "r"(progChan[c1]), 
-        "r"(destResId));
+    //asm("setd res[%0], %1" :: "r"(progChan[c1]), "r"(destResId));
+    SETD(progChan[c1], destResId);
 }
 
 // Idle (thread 0 only) for the next event to occur
@@ -173,8 +173,10 @@ void idle() {
     asm("waiteu");
 }
 
-// Yeild execution of a thread (only 1-7)
-void yeild() {
+// Yeild execution of a thread (only 1-7), set as the value of the link register
+// of an asynchronous thread (created by the host).
+void slaveYeild() {
     asm("freet");
 }
+
 
