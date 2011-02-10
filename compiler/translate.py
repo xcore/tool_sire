@@ -262,8 +262,6 @@ class Translate(NodeWalker):
     def defn(self, node, d):
         self.out('#pragma unsafe arrays')
         s = ''
-        #if node.type.specifier == 'proc':   s += 'int'
-        #elif node.type.specifier == 'func': s += 'int'
         s += 'void' if node.name == '_main' else 'int'
         s += ' {}({})'.format(
                 self.procedure_name(node.name),
@@ -331,8 +329,17 @@ class Translate(NodeWalker):
                  inops=['_t'], clobber=['r11'])
 
         # Copy register values
+        self.comment('Copy thread registers')
         for i in range(12):
             self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
+        
+        self.comment('Copy thread stack')
+        self.out('for(int _j=0; _j<_frametab[{}]; _j++)'.format(
+            defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(self.parent)))
+        self.blocker.begin()
+        self.asm('ldw ...') 
+        self.asm('stw ...') 
+        self.blocker.end()
 
         # Copy thread id to the array
         self.out('_threads[_i] = _t;')

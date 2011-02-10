@@ -16,8 +16,7 @@ PROGRAM_SRC      = PROGRAM+'.xc'
 PROGRAM_ASM      = PROGRAM+'.S'
 PROGRAM_OBJ      = PROGRAM+'.o'
 MASTER_JUMPTAB   = 'masterjumptab'
-MASTER_SIZETAB   = 'mastersizetab'
-MASTER_FRAMETAB  = 'masterframetab'
+MASTER_TABS      = 'mastertabs'
 CONST_POOL       = 'constpool'
 MASTER_XE        = 'master.xe'
 SLAVE_XE         = 'slave.xe'
@@ -70,18 +69,14 @@ class Build(object):
 
         # Output and assemble the master jump and size tables
         if s: 
-            jumptab_buf = io.StringIO()
-            self.build_jumptab(jumptab_buf)
-            s = self.assemble(MASTER_JUMPTAB, 'S', jumptab_buf.getvalue())
+            buf = io.StringIO()
+            self.build_jumptab(buf)
+            s = self.assemble(MASTER_JUMPTAB, 'S', buf.getvalue())
         if s: 
-            sizetab_buf = io.StringIO()
-            self.build_sizetab(sizetab_buf)
-            s = self.assemble(MASTER_SIZETAB, 'S', sizetab_buf.getvalue())
-        if s: 
-            frametab_buf = io.StringIO()
-            self.build_frametab(frametab_buf)
-            print(frametab_buf.getvalue())
-            s = self.assemble(MASTER_FRAMETAB, 'S', frametab_buf.getvalue())
+            buf = io.StringIO()
+            self.build_sizetab(buf)
+            self.build_frametab(buf)
+            s = self.assemble(MASTER_TABS, 'S', buf.getvalue())
         
         # Assemble and link the rest
         if s: s = self.assemble_runtime()
@@ -182,12 +177,11 @@ class Build(object):
         s = util.call([XCC, self.target(), 
             '-first', MASTER_JUMPTAB+'.o', 
             '-first', CONST_POOL+'.o',
-            MASTER_SIZETAB+'.o',
+            MASTER_TABS+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
             'program.o',
-            MASTER_FRAMETAB+'.o',
             'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS,
             self.showcalls)
         return s
@@ -220,6 +214,7 @@ class Build(object):
         
         (lines, cp) = self.extract_constants(lines)
         lines = self.insert_labels(lines)
+        lines = self.insert_framesizes(lines)
         lines = self.rewrite_calls(lines)
 
         return (lines, cp)
@@ -308,10 +303,35 @@ class Build(object):
                             '.globl '+self.function_label_bottom(x)+'\n')
                     b = True
                 elif y[0] == '.' and b:
-                    if y.split(' ')[0] == '.cc_bottom':
+                    if y.split()[0] == '.cc_bottom':
                         new.insert(len(new)-1, 
                                 self.function_label_bottom(x)+':\n')
                         b = False
+            lines = new
+
+        return lines
+
+    def insert_framesizes(self, lines):
+        """ Insert labels with the value of the size of funciton frames
+            (extracted from 'entsp n' instruction)
+        """
+        self.verbose_msg('  Inserting frame sizes')
+            
+        b = False
+        for x in self.sem.proc_names:
+            new = []
+            for (i, y) in enumerate(lines):
+                new.append(y)
+                if b and y.strip()[0:5] == 'entsp':
+                    size = int(y.strip().split()[1][2:], 16)
+                    #print(x+' is of size {}'.format(size))
+                    new.insert(len(new)-1, '.set {}, {}\n'.format(
+                        self.function_label_framesize(x), size))
+                    b = False
+                if y == x+':\n':
+                    new.insert(len(new)-1, '.globl {}\n'.format(
+                        self.function_label_framesize(x)))
+                    b = True          
             lines = new
 
         return lines
@@ -340,8 +360,6 @@ class Build(object):
         
         # Header
         buf.write('\t.globl '+defs.LABEL_JUMP_TABLE+', "a(:ui)"\n')
-        #buf.write('\t.set {}.globound, BYTES_PER_WORD*JUMP_TABLE_SIZE\n'.format(
-        #    defs.LABEL_JUMP_TABLE))
         buf.write('\t.set {}.globound, {}\n'.format(
             defs.LABEL_JUMP_TABLE, defs.BYTES_PER_WORD*defs.JUMP_TABLE_SIZE))
         buf.write(defs.LABEL_JUMP_TABLE+':\n')
@@ -387,20 +405,23 @@ class Build(object):
 
     def build_frametab(self, buf):
 
+        self.verbose_msg('Building master frame table')
+        
         # Constant section
-        buf.write('\t.section .cp.rodata, "ac", @progbits\n')
+        buf.write('\t.section .dp.data, "awd", @progbits\n')
         buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
         buf.write('\t.globl '+defs.LABEL_FRAME_TABLE+', "a(:ui)"\n')
         buf.write('\t.set {}.globound, {}\n'.format(
             defs.LABEL_FRAME_TABLE,
-            defs.BYTES_PER_WORD*(len(self.sem.proc_names))))
+            defs.BYTES_PER_WORD*(defs.JUMP_INDEX_OFFSET+
+                len(self.sem.proc_names))))
         buf.write(defs.LABEL_FRAME_TABLE+':\n')
         
         # Program procedure entries
         for x in self.sem.proc_names:
-            buf.write('\t.word {}.nstackwords\n'.format(x))
+            buf.write('\t.word {}\n'.format(self.function_label_framesize(x)))
 
     def cleanup(self, output_xe):
         """ Renanme the output file and delete any temporary files
@@ -432,10 +453,13 @@ class Build(object):
                 defs.CORES_PER_NODE if numcores < defs.CORES_PER_NODE else numcores)
 
     def function_label_top(self, name):
-        return '.L'+name+'_top'
+        return '.'+name+'.top'
 
     def function_label_bottom(self, name):
-        return '.L'+name+'_bottom'
+        return '.'+name+'.bottom'
+
+    def function_label_framesize(self, name):
+        return '.'+name+'.framesize'
 
     def verbose_msg(self, msg, end='\n'):
         if self.verbose: 

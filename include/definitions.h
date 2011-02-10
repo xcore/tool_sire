@@ -43,8 +43,9 @@
 // Runtime specs                
 #define NUM_ARGS                 4
 #define MAX_PROCS                10
-#define JUMP_TABLE_SIZE          20
-#define SIZE_TABLE_SIZE          20
+#define JUMP_TABLE_SIZE          13
+#define SIZE_TABLE_SIZE          13
+#define FRAME_TABLE_SIZE         10
 #define KERNEL_SPACE             0x200
 #define THREAD_STACK_SPACE       0x400
 #define PROG_CHAN_OFF            (MAX_THREADS+1)

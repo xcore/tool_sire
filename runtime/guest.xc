@@ -142,15 +142,17 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
         // Load the procAddress and procSize from the index
         procIndex = closure[procOff+i];
         procSize  = _sizetab[procIndex];
-        asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
     
         // Jump index and size
         OUTS(c, procIndex);
         OUTS(c, procSize);
+        OUTS(c, _frametab[procIndex]);
     
         // TODO: check here whether the host already has this procedure
 
         // Instructions
+        asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
+        
         for(int j=0; j<procSize/4; j++) {
             asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
             //asm("out res[%0], %1" :: "r"(c), "r"(inst));

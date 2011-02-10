@@ -171,14 +171,15 @@ void receiveArguments(unsigned c, int numArgs,
 #pragma unsafe arrays
 int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
     
-    int procIndex, procSize, index;
+    int index;
     unsigned inst;
     
     for(int i=0; i<numProcs; i++) {
         
-        // Jump index and size
-        procIndex = INS(c);
-        procSize = INS(c);
+        // Jump index, size and frame size
+        int procIndex = INS(c);
+        int procSize = INS(c);
+        int frameSize = INS(c);
 
         // TODO: Respond if this procedure has already been sent
 
@@ -194,6 +195,9 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
 
         // Update the procSize entry
         _sizetab[procIndex] = procSize;
+
+        // Update the frameSize entry
+        _frametab[procIndex] = frameSize;
 
         if(i == 0) index = procIndex;
         

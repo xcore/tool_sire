@@ -11,6 +11,7 @@
     .globl _start
     .globl _slave, "f{0}(0)"
     .globl _sizetab, "a(:ui)"
+    .globl _frametab, "a(:ui)"
    
     .text
 
@@ -37,10 +38,14 @@ _slave:
 // Data
 //==========================================================
 	.section .dp.data, "awd", @progbits
-	
     .align 4
     .set _sizetab.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
 
 _sizetab:
     .space BYTES_PER_WORD*SIZE_TABLE_SIZE 
 
+    .align 4
+    .set _frametab.globound, BYTES_PER_WORD*FRAME_TABLE_SIZE
+
+_frametab:
+    .space BYTES_PER_WORD*FRAME_TABLE_SIZE
