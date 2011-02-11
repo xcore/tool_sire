@@ -65,6 +65,13 @@ unsigned GETR_CHANEND() {
 }
 
 static inline
+unsigned GETR_SYNC() {
+   unsigned c;
+   asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(c));
+   return c;
+}
+
+static inline
 unsigned GET_ASYNC_THREAD() {
    unsigned t;
    asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
@@ -83,6 +90,16 @@ unsigned GETR_LOCK() {
    unsigned c;
    asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(c));
    return c;
+}
+
+static inline 
+void ACQUIRE_LOCK(unsigned l) {
+    asm("in r11, res[%0]" :: "r"(l) : "r11");
+}
+
+static inline 
+void RELEASE_LOCK(unsigned l) {
+    asm("out res[%0], r11" :: "r"(l) : "r11");
 }
 
 unsigned chanResId(unsigned, int);

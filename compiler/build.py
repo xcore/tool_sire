@@ -16,7 +16,7 @@ PROGRAM_SRC      = PROGRAM+'.xc'
 PROGRAM_ASM      = PROGRAM+'.S'
 PROGRAM_OBJ      = PROGRAM+'.o'
 MASTER_JUMPTAB   = 'masterjumptab'
-MASTER_TABS      = 'mastertabs'
+MASTER_TABLES    = 'mastertables'
 CONST_POOL       = 'constpool'
 MASTER_XE        = 'master.xe'
 SLAVE_XE         = 'slave.xe'
@@ -29,7 +29,8 @@ ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
-        'slave.S', 'slave.xc', 'slavejumptab.S', 'system.S', 'system.xc', 'util.xc']
+        'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
+        'util.xc']
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -77,7 +78,7 @@ class Build(object):
             self.build_sizetab(buf)
             self.build_frametab(buf)
             #print(buf.getvalue())
-            s = self.assemble(MASTER_TABS, 'S', buf.getvalue())
+            s = self.assemble(MASTER_TABLES, 'S', buf.getvalue())
         
         # Assemble and link the rest
         if s: s = self.assemble_runtime()
@@ -174,11 +175,14 @@ class Build(object):
         return s
 
     def link_master(self):
+        """ The jump table must be located at _cp and the common elements of the
+            constant and data pools must be in the same positions relative to _cp
+            and _dp in the master and slave images.
+        """
         self.verbose_msg('Linking master -> '+MASTER_XE)
         s = util.call([XCC, self.target(), 
-            '-first', MASTER_JUMPTAB+'.o', 
+            '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
             '-first', CONST_POOL+'.o',
-            MASTER_TABS+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o', 
@@ -188,9 +192,11 @@ class Build(object):
         return s
 
     def link_slave(self):
+        """ As above
+        """
         self.verbose_msg('Linking slave -> '+SLAVE_XE)
         s = util.call([XCC, self.target(), 
-            '-first', 'slavejumptab.S.o',
+            '-first', 'slavetables.S.o',
             '-first', CONST_POOL+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
@@ -375,9 +381,9 @@ class Build(object):
             buf.write('\t.word '+x+'\n')
 
         # Pad any unused space
-        #remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-        #        len(self.sem.proc_names))
-        #buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
+        remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+                len(self.sem.proc_names))
+        buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
     def build_sizetab(self, buf):
 
@@ -390,9 +396,7 @@ class Build(object):
         # Header
         buf.write('\t.globl '+defs.LABEL_SIZE_TABLE+', "a(:ui)"\n')
         buf.write('\t.set {}.globound, {}\n'.format(
-            defs.LABEL_SIZE_TABLE,
-            defs.BYTES_PER_WORD*(defs.JUMP_INDEX_OFFSET+
-                len(self.sem.proc_names))))
+            defs.LABEL_SIZE_TABLE, defs.BYTES_PER_WORD*defs.SIZE_TABLE_SIZE))
         buf.write(defs.LABEL_SIZE_TABLE+':\n')
         
         # Pad runtime entries
@@ -403,21 +407,24 @@ class Build(object):
         for x in self.sem.proc_names:
             buf.write('\t.word {}-{}+{}\n'.format(
                 self.function_label_bottom(x), x, defs.BYTES_PER_WORD))
+        
+        # Pad any unused space
+        remaining = defs.SIZE_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+                len(self.sem.proc_names))
+        buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
     def build_frametab(self, buf):
 
         self.verbose_msg('Building master frame table')
         
         # Constant section
-        #buf.write('\t.section .dp.data, "awd", @progbits\n')
+        buf.write('\t.section .dp.data, "awd", @progbits\n')
         buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
         buf.write('\t.globl '+defs.LABEL_FRAME_TABLE+', "a(:ui)"\n')
         buf.write('\t.set {}.globound, {}\n'.format(
-            defs.LABEL_FRAME_TABLE,
-            defs.BYTES_PER_WORD*(defs.JUMP_INDEX_OFFSET+
-                len(self.sem.proc_names))))
+            defs.LABEL_FRAME_TABLE, defs.BYTES_PER_WORD*defs.FRAME_TABLE_SIZE))
         buf.write(defs.LABEL_FRAME_TABLE+':\n')
         
         # Pad runtime entries
@@ -427,6 +434,11 @@ class Build(object):
         # Program procedure entries
         for x in self.sem.proc_names:
             buf.write('\t.word {}\n'.format(self.function_label_framesize(x)))
+        
+        # Pad any unused space
+        remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+                len(self.sem.proc_names))
+        buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
     def cleanup(self, output_xe):
         """ Renanme the output file and delete any temporary files

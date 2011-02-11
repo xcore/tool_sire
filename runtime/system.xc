@@ -50,6 +50,7 @@ void initSystem() {
 
     // Get a lock for the fp variable
     _fpLock = GETR_LOCK();
+    _spLock = GETR_LOCK();
 
     // Setup led port
     led = LED_PORT;

@@ -360,12 +360,17 @@ class Translate(NodeWalker):
 
         # Get a label for each thread
         thread_labels = [self.get_label() for i in range(num_slaves + 1)]
-        
+
         # Get a thread synchroniser
-        self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync')
+#        self.out('_sync = GETR_SYNC();')
+        self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
        
         # Load the address of sp
         self.asm('ldaw %0, sp[0x0]', outop='_spbase')
+
+        # Get the _sp lock
+#        self.out('ACQUIRE_LOCK(_spLock);')
+        self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
 
         # Setup each slave thread
         self.comment('Initialise slave threads')
@@ -374,6 +379,10 @@ class Translate(NodeWalker):
         self.thread_set()
         self.blocker.end()
        
+        # Release the _sp lock
+#        self.out('RELEASE_LOCK(_spLock);')
+        self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
+
         # Set lr = &instruction label
         self.comment('Initialise slave link registers')
         for (i, x) in enumerate(node.children()):
@@ -397,10 +406,17 @@ class Translate(NodeWalker):
             else:
                 self.asm('ssync')
 
-        # Ouput exit label and restore stack pointer position
+        # Ouput exit label 
         self.comment('Exit and restore _sp')
         self.asm(exit_label+':')
+        
+        # Eestore stack pointer position
+#        self.out('ACQUIRE_LOCK(_spLock);')
+        self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
         self.out('_sp = _sp - (THREAD_STACK_SPACE * {});'.format(num_slaves))
+        self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
+#        self.out('RELEASE_LOCK(_spLock);')
+        
         self.blocker.end()
 
     def stmt_skip(self, node):

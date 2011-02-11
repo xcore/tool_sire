@@ -287,6 +287,7 @@ _setupthread:
     .globl spawnChan,  "a(:ui)"
     .globl progChan,   "a(:ui)"
     .globl _fpLock,    "ui"
+    .globl _spLock,    "ui"
     .globl _fp,        "ui"
     .globl _sp,        "ui"
     .globl _pc,        "ui"
@@ -317,6 +318,12 @@ _fpLock:
     .space BYTES_PER_WORD
     .globl fpLock.globound
     .set fpLock.globound, BYTES_PER_WORD
+
+// Function pointer lock identifier
+_spLock:
+    .space BYTES_PER_WORD
+    .globl spLock.globound
+    .set spLock.globound, BYTES_PER_WORD
 
 // Function pointer (for loading functions into memory)
 _fp:
