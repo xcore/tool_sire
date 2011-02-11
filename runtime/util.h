@@ -3,6 +3,10 @@
 
 #include "definitions.h"
 
+// String wrapper
+#define S_(x) #x
+#define S(x) S_(x)
+
 static inline
 void SETD(unsigned c, unsigned dest) {
    asm("setd res[%0], %1" :: "r"(c), "r"(dest));

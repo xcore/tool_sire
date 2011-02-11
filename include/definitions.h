@@ -43,9 +43,12 @@
 // Runtime specs                
 #define NUM_ARGS                 4
 #define MAX_PROCS                10
+//#define JUMP_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET)
+//#define SIZE_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET) 
+//#define FRAME_TABLE_SIZE         (MAX_PROCS+JUMP_INDEX_OFFSET) 
 #define JUMP_TABLE_SIZE          13
 #define SIZE_TABLE_SIZE          13
-#define FRAME_TABLE_SIZE         10
+#define FRAME_TABLE_SIZE         13
 #define KERNEL_SPACE             0x200
 #define THREAD_STACK_SPACE       0x400
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
@@ -68,10 +71,6 @@
 #define CT_COMPLETED             0x5
 
 // For cmp/codegen.c
-#define RES_TYPE_SYNC            0x3
-
-// String wrapper
-#define S_(x) #x
-#define S(x) S_(x)
+//#define RES_TYPE_SYNC            0x3
 
 #endif

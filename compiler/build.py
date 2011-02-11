@@ -76,6 +76,7 @@ class Build(object):
             buf = io.StringIO()
             self.build_sizetab(buf)
             self.build_frametab(buf)
+            #print(buf.getvalue())
             s = self.assemble(MASTER_TABS, 'S', buf.getvalue())
         
         # Assemble and link the rest
@@ -374,9 +375,9 @@ class Build(object):
             buf.write('\t.word '+x+'\n')
 
         # Pad any unused space
-        remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-                len(self.sem.proc_names))
-        buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
+        #remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+        #        len(self.sem.proc_names))
+        #buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
     def build_sizetab(self, buf):
 
@@ -408,7 +409,7 @@ class Build(object):
         self.verbose_msg('Building master frame table')
         
         # Constant section
-        buf.write('\t.section .dp.data, "awd", @progbits\n')
+        #buf.write('\t.section .dp.data, "awd", @progbits\n')
         buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
         
         # Header
@@ -419,6 +420,10 @@ class Build(object):
                 len(self.sem.proc_names))))
         buf.write(defs.LABEL_FRAME_TABLE+':\n')
         
+        # Pad runtime entries
+        for x in range(defs.JUMP_INDEX_OFFSET):
+            buf.write('\t.word 0\n')
+
         # Program procedure entries
         for x in self.sem.proc_names:
             buf.write('\t.word {}\n'.format(self.function_label_framesize(x)))

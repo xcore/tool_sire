@@ -203,6 +203,7 @@ class Translate(NodeWalker):
         self.out('#include <syscall.h>')
         self.out('#include "numcores.h"')
         self.out('#include "globals.h"')
+        self.out('#include "util.h"')
         self.out('#include "guest.h"')
         self.out('')
   
@@ -337,8 +338,8 @@ class Translate(NodeWalker):
         self.out('for(int _j=0; _j<_frametab[{}]; _j++)'.format(
             defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(self.parent)))
         self.blocker.begin()
-        self.asm('ldw ...') 
-        self.asm('stw ...') 
+        self.asm('ldw r11, %0[%1] ; stw r11, %2[%1]',
+                inops=['_spbase', '_j', '_sp'], clobber=['r11']) 
         self.blocker.end()
 
         # Copy thread id to the array
@@ -354,14 +355,18 @@ class Translate(NodeWalker):
 
         # Declare sync variable and array to store thread identifiers
         self.out('unsigned _sync;')
+        self.out('unsigned _spbase;')
         self.out('unsigned _threads[{}];'.format(num_slaves))
 
         # Get a label for each thread
         thread_labels = [self.get_label() for i in range(num_slaves + 1)]
         
         # Get a thread synchroniser
-        self.asm('getr %0, " S(RES_TYPE_SYNC) "', outop='_sync')
-        
+        self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync')
+       
+        # Load the address of sp
+        self.asm('ldaw %0, sp[0x0]', outop='_spbase')
+
         # Setup each slave thread
         self.comment('Initialise slave threads')
         self.out('for(int _i=0; _i<{}; _i++)'.format(num_slaves))
@@ -402,8 +407,8 @@ class Translate(NodeWalker):
         pass
 
     def stmt_pcall(self, node):
-        if self.parent == node.name:
-            self.out('#pragma stackcalls 10')
+        #if self.parent == node.name:
+        #    self.out('#pragma stackcalls 10')
         self.out('{}({});'.format(
             self.procedure_name(node.name), self.arguments(node.args)))
 
