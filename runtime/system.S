@@ -19,13 +19,9 @@
     .globl initPointers
     .globl _setupthread, "f{0}(0)"
 
-// Set the _DoSyscall symbol to an inaccessable pc because it persists between
-// loadables for mulit-node simulations cauising a retsp to be executed.
-//    .set _DoSyscall, spawnChan
-
     .text
 
-// THIS MUST BE LINKED AT THE BEGINNING OF THE BINARY
+// NOTE: THIS MUST BE LINKED AT THE BEGINNING OF THE BINARY
 
 //==========================================================
 // Exception/interrupt handler (KEP)
@@ -295,6 +291,8 @@ _setupthread:
 	.section .dp.data, "awd", @progbits
     .align BYTES_PER_WORD
 
+/* TODO: move these declarations into XC? */
+
 // Master/migrate 
 mSpawnChan:
     .space BYTES_PER_WORD
@@ -313,33 +311,33 @@ progChan:
     .globl progChan.globound
     .set progChan.globound, NUM_PROG_CHANS*BYTES_PER_WORD
 
-// Function pointer lock identifier
+// _fp lock identifier
 _fpLock:
     .space BYTES_PER_WORD
-    .globl fpLock.globound
-    .set fpLock.globound, BYTES_PER_WORD
+    //.globl _fpLock.globound
+    .set _fpLock.globound, BYTES_PER_WORD
 
-// Function pointer lock identifier
+// _sp lock identifier
 _spLock:
     .space BYTES_PER_WORD
-    .globl spLock.globound
-    .set spLock.globound, BYTES_PER_WORD
+    //.globl _spLock.globound
+    .set _spLock.globound, BYTES_PER_WORD
 
 // Function pointer (for loading functions into memory)
 _fp:
     .space BYTES_PER_WORD
-    .globl _fp.globound
+    //.globl _fp.globound
     .set _fp.globound, BYTES_PER_WORD
 
 // Stack pointer pointer (for allocating new threads)
 _sp:
     .space BYTES_PER_WORD
-    .globl _sp.globound
+    //.globl _sp.globound
     .set _sp.globound, BYTES_PER_WORD
 
 // For storing the pc on interrupts 
 _pc:
     .space BYTES_PER_WORD
-    .globl _pc.globound
+    //.globl _pc.globound
     .set _pc.globound, BYTES_PER_WORD
 

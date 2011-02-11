@@ -23,6 +23,9 @@ Todo
 
 - Semantic analysis should check formal array qualifiers are valid.
 
+- No system call funcitons can be used by processes moved to another core as the
+  slave binaries do not have this linked in.
+
 Done
 ====
 

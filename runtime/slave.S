@@ -13,6 +13,11 @@
    
     .text
 
+// Set the _DoSyscall symbol to an inaccessable pc because it persists between
+// loadables for mulit-node simulations cauising a retsp to be executed. Slave
+// nodes should never use this symbol
+    .set _DoSyscall, 0
+
 //==========================================================
 // This initilises the execution of thread 0, core i for i>0
 //==========================================================

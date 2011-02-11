@@ -466,10 +466,12 @@ class Build(object):
         # TODO: Ensure the number of nodes is compatible with an available
         # device
         numcores = self.numcores
-        available = [1, 4, 16, 64]
+        available = [1, 4, 16, 32, 64]
         if numcores in available:
             return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, 
                     1 if numcores < defs.CORES_PER_NODE else numcores)
+        else:
+            sys.stderr.write('Invalid number of cores: {}'.format(numcores))
 
     def function_label_top(self, name):
         return '.'+name+'.top'
