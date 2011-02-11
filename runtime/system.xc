@@ -118,20 +118,23 @@ unsigned cfgRead(unsigned c) {
 // Assume that master is always core 0
 void masterSync() {
 
-    unsigned coreId = getCore(mSpawnChan);
-    // Configuration resource identifier
-    unsigned cri = genCRI(0); 
-    unsigned c, v;
-    unsigned t;
+    if (NUM_CORES > 1) {
 
-    // Get and set a chanend
-    c = progChan[0];
-    asm("setd res[%0], %1" :: "r"(c), "r"(cri));
+        unsigned coreId = getCore(mSpawnChan);
+        // Configuration resource identifier
+        unsigned cri = genCRI(0); 
+        unsigned c, v;
+        unsigned t;
 
-    // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
-    cfgWrite(c, 1);
-    while(cfgRead(c) != NUM_CORES)
-        continue;
+        // Get and set a chanend
+        c = progChan[0];
+        asm("setd res[%0], %1" :: "r"(c), "r"(cri));
+
+        // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
+        cfgWrite(c, 1);
+        while(cfgRead(c) != NUM_CORES)
+            continue;
+    }
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
