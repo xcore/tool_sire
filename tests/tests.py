@@ -94,6 +94,16 @@ class ProgramTests(unittest.TestCase):
     def test_program_euclid_rec(self):
         self.program('euclid-rec', '8\n7\n1\n')
 
+    # distribute
+    def test_program_distribute_4(self):
+        self.program('distribute', '', ['-n', '4'])
+
+    def test_program_distribute_16(self):
+        self.program('distribute', '', ['-n', '16'])
+
+    def test_program_distribute_64(self):
+        self.program('distribute', '', ['-n', '64'])
+
 
 class FeatureTests(unittest.TestCase):
 
@@ -111,7 +121,8 @@ class FeatureTests(unittest.TestCase):
         self.assertEqual(r[1], output)
 
     # Features =================================================
-    
+   
+    # on_basic
     def test_feature_on_basic_4(self):
         self.feature('on_basic', '', ['-n', '4'])
 
@@ -121,6 +132,7 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_basic_64(self):
         self.feature('on_basic', '', ['-n', '64'])
 
+    # on_array
     def test_feature_on_array_4(self):
         self.feature('on_array', 'DEADBEEF\n', ['-n', '4'])
 
@@ -130,6 +142,7 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_array_64(self):
         self.feature('on_array', 'DEADBEEF\n', ['-n', '64'])
 
+    # on_chain
     def test_feature_on_chain_4(self):
         self.feature('on_chain', '', ['-n', '4'])
 
@@ -139,6 +152,7 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_chain_64(self):
         self.feature('on_chain', '', ['-n', '64'])
 
+    # thread_basic
     def test_feature_thread_basic_2(self):
         self.feature('thread_basic_2', '')
 
@@ -147,6 +161,36 @@ class FeatureTests(unittest.TestCase):
 
     def test_feature_thread_basic_8(self):
         self.feature('thread_basic_8', '')
+
+    # on_chain_threaded_2
+    def test_feature_on_chain_threaded_2_4(self):
+        self.feature('on_chain_threaded_2', '', ['-n', '4'])
+
+    def test_feature_on_chain_threaded_2_16(self):
+        self.feature('on_chain_threaded_2', '', ['-n', '16'])
+
+    def test_feature_on_chain_threaded_2_64(self):
+        self.feature('on_chain_threaded_2', '', ['-n', '64'])
+
+    # on_chain_threaded_4
+    def test_feature_on_chain_threaded_4_4(self):
+        self.feature('on_chain_threaded_4', '', ['-n', '4'])
+
+    def test_feature_on_chain_threaded_4_16(self):
+        self.feature('on_chain_threaded_4', '', ['-n', '16'])
+
+    def test_feature_on_chain_threaded_4_64(self):
+        self.feature('on_chain_threaded_4', '', ['-n', '64'])
+
+    # on_chain_threaded_8
+    def test_feature_on_chain_threaded_8_4(self):
+        self.feature('on_chain_threaded_8', '', ['-n', '4'])
+
+    def test_feature_on_chain_threaded_8_16(self):
+        self.feature('on_chain_threaded_8', '', ['-n', '16'])
+
+    def test_feature_on_chain_threaded_8_64(self):
+        self.feature('on_chain_threaded_8', '', ['-n', '64'])
 
 if __name__ == '__main__':
     if init():
