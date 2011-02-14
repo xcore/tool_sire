@@ -19,6 +19,10 @@ void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, unsigned[], int[]);
 void       newAsyncThread     (unsigned, unsigned, unsigned);
 
+#define REQUEST_QUEUE_SIZE 10
+unsigned request_queue[REQUEST_QUEUE_SIZE];
+int      num_requests;
+
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
     
@@ -47,13 +51,40 @@ void runThread(unsigned senderId) {
     sendResults(c, numArgs, args, len);
 }
 
-// Initialise guest connection with this thread 0 as host
+// Queue all requests in master buffer. Called on an event or uninterrupt on
+// mSpawnChan.
+// Assume buffer looks like: |CRI|CRI|CRI|END_CT|END_CT|END_CT|...
+/*void get_requests() {
+    
+    unsigned d;
+    num_requests = 0;
+    int i;
+
+    // Get all requests
+    while (!TESTCT(mSpawnChan)) {
+        d = IN(mSpawnChan);
+        request_queue[num_requests] = d;
+        num_requests++;
+    }
+    
+    // Clear all END_CTs and close the connection
+    i = 0;
+    while (!TESTCT(mSpawnChan)) {
+        CHKCT_END(mSpawnChan);
+        SETD(mSpawnChan, request_queue[i]);
+        OUTCT_END(mSpawnChan);
+        CHKCT_END(mSpawnChan);
+        i++;
+    }
+}*/
+
+// Initialise guest connection with this thread 0 as host.
 unsigned setHost() {
     
     unsigned senderId;
     
     // Connect to the sender and receive their id 
-    CHKCT_END(mSpawnChan);
+    //CHKCT_END(mSpawnChan);
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
     OUTCT_END(mSpawnChan);
@@ -65,13 +96,15 @@ unsigned setHost() {
     return senderId;
 }
 
-// Host an incoming procedure when thread 0 is BUSY
+// Host an incoming procedure when thread 0 is BUSY. During this time, events
+// and interrupts are disabled and more requests may arrive. get_requests deals
+// with this.
 void spawnHost() {
 
     unsigned senderId, pc;
     
     // Connect to the sender and receive their id 
-    CHKCT_END(mSpawnChan);
+    //CHKCT_END(mSpawnChan);
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
     OUTCT_END(mSpawnChan);

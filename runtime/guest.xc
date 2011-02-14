@@ -50,7 +50,7 @@ void initHostConnection(unsigned c, unsigned destId) {
     SETD(c, destId);
 
     // Initiate conneciton by sending chanResId
-    OUTCT_END(c);
+    //OUTCT_END(c);
     OUT(c, c);
     CHKCT_END(c);
 
