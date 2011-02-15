@@ -1,0 +1,12 @@
+proc a() is skip
+proc b() is a()
+proc c() is b()
+proc d() is c()
+proc e() is d()
+proc f() is e()
+proc g() is f()
+proc h() is g()
+
+proc main() is
+{ on core[NUM_CORES-1] do h()
+}

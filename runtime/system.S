@@ -148,7 +148,8 @@ busyHostHandler:
 
     or r11, r11, r10
     bt r11, .L.BUSY.EXIT
-    
+   
+    // TODO: must increment by the instruction length
     ldw r11, sp[1]
     add r11, r11, 2
     stw r11, sp[1]

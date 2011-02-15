@@ -6,5 +6,6 @@ proc foo(a[len], val len) is
 proc main() is
  var a[LENGTH];
 { on core[NUM_CORES-1] do foo(a, LENGTH) 
-; printhexln(a[LENGTH-1]) }
+; printhexln(a[LENGTH-1])
+}
 
