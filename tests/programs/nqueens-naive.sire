@@ -1,0 +1,44 @@
+
+% Check no columns are the same and no queens in same diagonal
+func valid(val index) is
+  var i;
+  var flag;
+{ flag = true
+; while k < index and flag do
+    if queens[index] = columns[k] or
+        (queens[index] - queens[k]) = index - k
+    then 
+    { flag = false
+    ; k := k + 1
+    }
+    else skip
+; return flag
+}
+
+% Recursively calculate queen placement based on a placement in the given row.
+proc place_queen(val row, queens[size], val size) is
+  var i;
+{ if valid(row) then
+    if row = size-1 
+    then skip % done
+    else 
+      for i:=0 to size-1 do
+      { queens[row + 1] = i
+      ; place_queen(row + 1)
+      }
+  else skip
+}
+
+% Calculate all n queens by iterating over all start row-0 positions.
+proc place_n_queens(queens[size], val size) is
+  var i;
+{ for i:=0 to size-1 do
+  { queens[0] = i
+  ; place_queen(0)
+  }
+}
+
+proc main() is
+  var queens[SIZE];
+{ place_n_queens(queens, SIZE)
+}
