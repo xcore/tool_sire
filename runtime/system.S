@@ -57,9 +57,11 @@ idleHostHandler:
     bl setHost
     stw r0, sp[4] 
     
-    // Set pc to runThread function
+    // Set pc to runThread function. Adjust stored _pc so busyHostHandler
+    // doesn't increment it if an interrupt occurs immediately after this.
     ldap r11, runThread
     stw r11, sp[1]
+    stw r11, dp[_pc]
     ldw spc, sp[1]
 
     // Set lr = &idle
