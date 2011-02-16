@@ -106,7 +106,39 @@ class ProgramTests(unittest.TestCase):
     
     def test_program_distribute_64(self):
         self.program('distribute', '', ['-n', '64'])
+    
+thread_tests = [
+    ['thread_basic_2', '', 1],
+    ['thread_basic_4', '', 1],
+    ['thread_basic_8', '', 1],
+]
 
+on_tests = [
+    ['on_children', '', 4],
+    ['on_basic', '', 4],
+    ['on_basic', '', 16],
+    ['on_basic', '', 32],
+    ['on_basic', '', 64],
+    ['on_array', 'DEADBEEF\n', 4],
+    ['on_array', 'DEADBEEF\n', 16],
+    ['on_array', 'DEADBEEF\n', 32],
+    ['on_array', 'DEADBEEF\n', 64],
+    ['on_chain_1', '', 4],
+    ['on_chain_1', '', 16],
+    ['on_chain_1', '', 32],
+    ['on_chain_1', '', 64],
+    ['on_chain_2', '', 4],
+    ['on_chain_2', '', 16],
+    ['on_chain_2', '', 32],
+    ['on_chain_2', '', 64],
+    ['on_chain_3', '', 4],
+    ['on_chain_3', '', 16],
+    ['on_chain_3', '', 32],
+    ['on_chain_3', '', 64],
+    ['on_chain_6', '', 4],
+    ['on_chain_6', '', 16],
+    ['on_chain_6', '', 32],
+    ['on_chain_6', '', 64],
 
 class FeatureTests(unittest.TestCase):
 
@@ -124,6 +156,8 @@ class FeatureTests(unittest.TestCase):
         self.assertTrue(r[0])
         self.assertEqual(r[1], output)
 
+    def generate(self):
+
     # Features =================================================
    
     # thread_basic
@@ -135,6 +169,10 @@ class FeatureTests(unittest.TestCase):
 
     def test_feature_thread_basic_8(self):
         self.feature('thread_basic_8', '')
+
+    # on_children
+    def test_feature_on_children_4(self):
+        self.feature('on_children', '', 4)
 
     # on_basic
     def test_feature_on_basic_4(self):
@@ -174,10 +212,6 @@ class FeatureTests(unittest.TestCase):
 
     def test_feature_on_chain_1_64(self):
         self.feature('on_chain_1', '', 64)
-
-    # on_children
-    def test_feature_on_children_4(self):
-        self.feature('on_children', '', 4)
 
     # on_chain_2
     def test_feature_on_chain_2_4(self):
@@ -232,14 +266,14 @@ class FeatureTests(unittest.TestCase):
     #    self.feature('on_chain_8', '', 64)
 
     # on_collision_1
-    def test_feature_on_collision_1_4(self):
-        self.feature('on_collision_8', '', 4)
+    #def test_feature_on_collision_1_4(self):
+    #    self.feature('on_collision_1', '', 4)
 
-    def test_feature_on_collision_1_16(self):
-        self.feature('on_collision_8', '', 16)
+    #def test_feature_on_collision_1_16(self):
+    #    self.feature('on_collision_1', '', 16)
 
-    def test_feature_on_collision_1_32(self):
-        self.feature('on_collision_8', '', 32)
+    #def test_feature_on_collision_1_32(self):
+    #    self.feature('on_collision_1', '', 32)
 
     #def test_feature_on_collision_1_64(self):
     #    self.feature('on_collision_1', '', 64)
