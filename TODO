@@ -26,8 +26,6 @@ Todo
 - No system call funcitons can be used by processes moved to another core as the
   slave binaries do not have this linked in.
 
-- ON: Check for a copy of a procedure before receiving.
-
 - ON: Implement referenced variables (or restrict their use with on).
 
 Done
@@ -39,5 +37,7 @@ Done
 
 - Adjust syntax to enforce array bounds for on statements, e.g. 
     proc foo(a[n], val n)
+
+- ON: Check for a copy of a procedure before receiving.
 
 

@@ -101,6 +101,9 @@ class ProgramTests(unittest.TestCase):
     def test_program_distribute_16(self):
         self.program('distribute', '', ['-n', '16'])
 
+    def test_program_distribute_32(self):
+        self.program('distribute', '', ['-n', '32'])
+    
     def test_program_distribute_64(self):
         self.program('distribute', '', ['-n', '64'])
 
@@ -113,8 +116,9 @@ class FeatureTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def feature(self, filename, output, args=[]):
-        r = call([COMPILE, TEST_FEATURES_PATH+'/'+filename+'.sire'] + args)
+    def feature(self, filename, output, num_cores=1, args=[]):
+        r = call([COMPILE, TEST_FEATURES_PATH+'/'+filename+'.sire'] 
+                + ['-n', '{}'.format(num_cores)] + args)
         self.assertTrue(r[0])
         r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
         self.assertTrue(r[0])
@@ -122,40 +126,6 @@ class FeatureTests(unittest.TestCase):
 
     # Features =================================================
    
-    # on_basic
-    def test_feature_on_basic_4(self):
-        self.feature('on_basic', '', ['-n', '4'])
-
-    def test_feature_on_basic_16(self):
-        self.feature('on_basic', '', ['-n', '16'])
-
-    def test_feature_on_basic_64(self):
-        self.feature('on_basic', '', ['-n', '64'])
-
-    # on_array
-    def test_feature_on_array_4(self):
-        self.feature('on_array', 'DEADBEEF\n', ['-n', '4'])
-
-    def test_feature_on_array_16(self):
-        self.feature('on_array', 'DEADBEEF\n', ['-n', '16'])
-
-    def test_feature_on_array_64(self):
-        self.feature('on_array', 'DEADBEEF\n', ['-n', '64'])
-
-    # on_chain
-    def test_feature_on_chain_4(self):
-        self.feature('on_chain', '', ['-n', '4'])
-
-    def test_feature_on_chain_16(self):
-        self.feature('on_chain', '', ['-n', '16'])
-
-    def test_feature_on_chain_64(self):
-        self.feature('on_chain', '', ['-n', '64'])
-
-    # on_children
-    def test_feature_on_children_4(self):
-        self.feature('on_children', '', ['-n', '4'])
-
     # thread_basic
     def test_feature_thread_basic_2(self):
         self.feature('thread_basic_2', '')
@@ -166,35 +136,100 @@ class FeatureTests(unittest.TestCase):
     def test_feature_thread_basic_8(self):
         self.feature('thread_basic_8', '')
 
+    # on_basic
+    def test_feature_on_basic_4(self):
+        self.feature('on_basic', '', 4)
+
+    def test_feature_on_basic_16(self):
+        self.feature('on_basic', '', 16)
+
+    def test_feature_on_basic_32(self):
+        self.feature('on_basic', '', 32)
+
+    def test_feature_on_basic_64(self):
+        self.feature('on_basic', '', 64)
+
+    # on_array
+    def test_feature_on_array_4(self):
+        self.feature('on_array', 'DEADBEEF\n', 4)
+
+    def test_feature_on_array_16(self):
+        self.feature('on_array', 'DEADBEEF\n', 16)
+
+    def test_feature_on_array_32(self):
+        self.feature('on_array', 'DEADBEEF\n', 32)
+
+    def test_feature_on_array_64(self):
+        self.feature('on_array', 'DEADBEEF\n', 64)
+
+    # on_chain
+    def test_feature_on_chain_4(self):
+        self.feature('on_chain', '', 4)
+
+    def test_feature_on_chain_16(self):
+        self.feature('on_chain', '', 16)
+
+    def test_feature_on_chain_32(self):
+        self.feature('on_chain', '', 32)
+
+    def test_feature_on_chain_64(self):
+        self.feature('on_chain', '', 64)
+
+    # on_children
+    def test_feature_on_children_4(self):
+        self.feature('on_children', '', 4)
+
     # on_chain_threaded_2
     def test_feature_on_chain_threaded_2_4(self):
-        self.feature('on_chain_threaded_2', '', ['-n', '4'])
+        self.feature('on_chain_threaded_2', '', 4)
 
     def test_feature_on_chain_threaded_2_16(self):
-        self.feature('on_chain_threaded_2', '', ['-n', '16'])
+        self.feature('on_chain_threaded_2', '', 16)
+
+    def test_feature_on_chain_threaded_2_32(self):
+        self.feature('on_chain_threaded_2', '', 32)
 
     def test_feature_on_chain_threaded_2_64(self):
-        self.feature('on_chain_threaded_2', '', ['-n', '64'])
+        self.feature('on_chain_threaded_2', '', 64)
 
     # on_chain_threaded_3
     def test_feature_on_chain_threaded_3_4(self):
-        self.feature('on_chain_threaded_3', '', ['-n', '4'])
+        self.feature('on_chain_threaded_3', '', 4)
 
     def test_feature_on_chain_threaded_3_16(self):
-        self.feature('on_chain_threaded_3', '', ['-n', '16'])
+        self.feature('on_chain_threaded_3', '', 16)
+
+    def test_feature_on_chain_threaded_3_32(self):
+        self.feature('on_chain_threaded_3', '', 32)
 
     def test_feature_on_chain_threaded_3_64(self):
-        self.feature('on_chain_threaded_3', '', ['-n', '64'])
+        self.feature('on_chain_threaded_3', '', 64)
+
+    # on_chain_threaded_6
+    def test_feature_on_chain_threaded_6_4(self):
+        self.feature('on_chain_threaded_6', '', 4)
+
+    def test_feature_on_chain_threaded_6_16(self):
+        self.feature('on_chain_threaded_6', '', 16)
+
+    def test_feature_on_chain_threaded_6_32(self):
+        self.feature('on_chain_threaded_6', '', 32)
+
+    def test_feature_on_chain_threaded_6_64(self):
+        self.feature('on_chain_threaded_6', '', 64)
 
     # on_chain_threaded_8
     def test_feature_on_chain_threaded_8_4(self):
-        self.feature('on_chain_threaded_8', '', ['-n', '4'])
+        self.feature('on_chain_threaded_8', '', 4)
 
     def test_feature_on_chain_threaded_8_16(self):
-        self.feature('on_chain_threaded_8', '', ['-n', '16'])
+        self.feature('on_chain_threaded_8', '', 16)
+
+    def test_feature_on_chain_threaded_8_32(self):
+        self.feature('on_chain_threaded_8', '', 32)
 
     #def test_feature_on_chain_threaded_8_64(self):
-    #    self.feature('on_chain_threaded_8', '', ['-n', '64'])
+    #    self.feature('on_chain_threaded_8', '', 64)
 
 if __name__ == '__main__':
     if init():

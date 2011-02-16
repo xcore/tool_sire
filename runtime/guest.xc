@@ -128,7 +128,7 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[],
 #pragma unsafe arrays
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
     
-    unsigned procIndex, procAddr, procSize, inst;
+    unsigned procAddr, inst;
     unsigned jumpTable, cp;
     
     // Get address of cp
@@ -137,41 +137,34 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
 
     for(int i=0; i<numProcs; i++) {
 
-        // Load the procAddress and procSize from the index
-        procIndex = closure[procOff+i];
-        procSize  = _sizetab[procIndex];
-    
-        // Jump index and size
-        OUTS(c, procIndex);
-        OUTS(c, procSize);
-        OUTS(c, _frametab[procIndex]);
-    
-        // TODO: check here whether the host already has this procedure
+        unsigned flag;
 
-        // Instructions
-        asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
+        // Load the procAddress and procSize from the index
+        unsigned procIndex = closure[procOff+i];
+    
+        // Send the jump index
+        OUTS(c, procIndex);
+        flag = INS(c);
         
-        for(int j=0; j<procSize/4; j++) {
-            asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
-            //asm("out res[%0], %1" :: "r"(c), "r"(inst));
-            OUTS(c, inst);
+        // If the host doesn't have the procedure, send it.
+        if(flag) {
+            unsigned procSize  = _sizetab[procIndex];
+            OUTS(c, procSize);
+            OUTS(c, _frametab[procIndex]);
+        
+            // Instructions
+            asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
+            
+            for(int j=0; j<procSize/4; j++) {
+                asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
+                OUTS(c, inst);
+            }
         }
     }
 }
 
 // Wait for the completion of the migrated procedure
 void waitForCompletion(unsigned c, int threadId) {
-    
-    // Only thread 0 can interrupt here
-    // Enable interrupts and wait for either the COMPLETED control token or for
-    // another BEGIN token
-    /*if(threadId == 0) {
-        asm("setc res[%0], " XS1_SETC_IE_MODE_INTERRUPT :: "r"(mSpawnChan));
-        asm("setsr " SR_IEBLE);
-        
-        // * Will interrupt into kernel here which will acknowledge COMPLETED and
-        // hand back to here *
-    }*/
     
     // (wait to) Acknowledge completion
     asm("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));    

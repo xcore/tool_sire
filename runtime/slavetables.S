@@ -25,13 +25,14 @@ _jumptab:
 
     .align 4
     .set _sizetab.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
-
+    
 _sizetab:
-    .space BYTES_PER_WORD*SIZE_TABLE_SIZE 
+    .space BYTES_PER_WORD*SIZE_TABLE_SIZE, 0 
 
+    // Must be initalised to 0
     .align 4
     .set _frametab.globound, BYTES_PER_WORD*FRAME_TABLE_SIZE
 
 _frametab:
-    .space BYTES_PER_WORD*FRAME_TABLE_SIZE
+    .space BYTES_PER_WORD*FRAME_TABLE_SIZE, 0
 

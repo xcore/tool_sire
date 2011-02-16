@@ -51,33 +51,6 @@ void runThread(unsigned senderId) {
     sendResults(c, numArgs, args, len);
 }
 
-// Queue all requests in master buffer. Called on an event or uninterrupt on
-// mSpawnChan.
-// Assume buffer looks like: |CRI|CRI|CRI|END_CT|END_CT|END_CT|...
-/*void get_requests() {
-    
-    unsigned d;
-    num_requests = 0;
-    int i;
-
-    // Get all requests
-    while (!TESTCT(mSpawnChan)) {
-        d = IN(mSpawnChan);
-        request_queue[num_requests] = d;
-        num_requests++;
-    }
-    
-    // Clear all END_CTs and close the connection
-    i = 0;
-    while (!TESTCT(mSpawnChan)) {
-        CHKCT_END(mSpawnChan);
-        SETD(mSpawnChan, request_queue[i]);
-        OUTCT_END(mSpawnChan);
-        CHKCT_END(mSpawnChan);
-        i++;
-    }
-}*/
-
 // Initialise guest connection with this thread 0 as host.
 unsigned setHost() {
     
@@ -212,32 +185,40 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
         
         // Jump index, size and frame size
         int procIndex = INS(c);
-        int procSize = INS(c);
-        int frameSize = INS(c);
-
-        // TODO: Respond if this procedure has already been sent
-
-        // Instructions
-        for(int j=0; j<procSize/4; j++) {
-            //asm("in %0, res[%1]"  : "=r"(inst): "r"(c));
-            inst = INS(c);
-            asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
-        }
-     
-        // Patch jump table entry
-        asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
-
-        // Update the procSize entry
-        _sizetab[procIndex] = procSize;
-
-        // Update the frameSize entry
-        _frametab[procIndex] = frameSize;
-
         if(i == 0) index = procIndex;
-        
-        // Update fp, ensuring it is word aligned
-        _fp += procSize;
-        if(_fp % 4) _fp += 2;
+
+        // If we don't have the procedure, receive it
+        if (_sizetab[procIndex] == 0) {
+            
+            int procSize;
+            int frameSize;
+            
+            OUTS(c, 1);
+            procSize = INS(c);
+            frameSize = INS(c);
+
+            // Instructions
+            for(int j=0; j<procSize/4; j++) {
+                inst = INS(c);
+                asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
+            }
+         
+            // Patch jump table entry
+            asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
+
+            // Update the procSize entry
+            _sizetab[procIndex] = procSize;
+
+            // Update the frameSize entry
+            _frametab[procIndex] = frameSize;
+
+            // Update fp, ensuring it is word aligned
+            _fp += procSize;
+            if(_fp % 4) _fp += 2;
+        }
+        else {
+            OUTS(c, 0);
+        }
     }
 
     return index;
