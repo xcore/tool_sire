@@ -1,0 +1,20 @@
+proc work() is skip
+
+proc forwards(val n) is
+  if n = NUM_CORES-1
+  then work()
+  else on core[n+1] do forwards(n+1)
+
+proc backwards(val n) is
+  if n = 0 
+  then work()
+  else on core[n-1] do backwards(n-1)
+
+proc start_backwards(val n) is
+{ backwards(n)
+}
+
+proc main() is
+{ forwards(0)
+| on core[NUM_CORES-1] do start_backwards(NUM_CORES-1)
+}
