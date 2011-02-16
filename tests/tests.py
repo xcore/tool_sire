@@ -173,8 +173,8 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_chain_threaded_2_16(self):
         self.feature('on_chain_threaded_2', '', ['-n', '16'])
 
-    #def test_feature_on_chain_threaded_2_64(self):
-    #    self.feature('on_chain_threaded_2', '', ['-n', '64'])
+    def test_feature_on_chain_threaded_2_64(self):
+        self.feature('on_chain_threaded_2', '', ['-n', '64'])
 
     # on_chain_threaded_3
     def test_feature_on_chain_threaded_3_4(self):
@@ -183,8 +183,8 @@ class FeatureTests(unittest.TestCase):
     def test_feature_on_chain_threaded_3_16(self):
         self.feature('on_chain_threaded_3', '', ['-n', '16'])
 
-    #def test_feature_on_chain_threaded_3_64(self):
-    #    self.feature('on_chain_threaded_3', '', ['-n', '64'])
+    def test_feature_on_chain_threaded_3_64(self):
+        self.feature('on_chain_threaded_3', '', ['-n', '64'])
 
     # on_chain_threaded_8
     def test_feature_on_chain_threaded_8_4(self):

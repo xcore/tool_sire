@@ -130,28 +130,77 @@ busyHostHandler:
     ldc r10, SR_IEBLE
     or  r11, r11, r10
     stw r11, sp[2]
-    
-    // Increment pc:
    
-    // if: pc changed or inst not paused
+    // Increment pc if: has changed or inst not paused
 
-    // Only if it has changed (queued interrupts)
-    ldw r11, sp[1]
-    ldw r10, dp[_pc]
-    eq  r11, r11, r10
+    //=========================================================================
+    // Determine if spc has changed between this interrupt and possibly the last
+    // and if the instruction was paused - in which case we don't want to
+    // increment the spc.
+    //=========================================================================
+
+    // Check if it has changed (queued interrupts)
+    ldw r11, sp[1]    // r11 = pc
+    ldw r10, dp[_pc]  // r10  = _pc
+    eq  r11, r11, r10 // r11 = 1 if pc not changed else 0 (pc == _pc)
+    //not r11, r11      // r11 = 0 if pc changed else 1 (pc != _pc)
     
-    // Only if the instruction wasn't paused
+    // Check if the instruction was paused
     ldw r10, sp[2]
     ldc r9, SR_WAITING
     and r10, r10, r9
-    eq r10, r10, r9
+    eq  r10, r10, r9  // r10 = inst was paused
 
-    or r11, r11, r10
-    bt r11, .L.BUSY.EXIT
-   
-    // TODO: must increment by the instruction length
-    ldw r11, sp[1]
+    // if (pc not changed or inst paused) then EXIT
+    or  r11, r11, r10
+    bt  r11, .L.BUSY.EXIT
+  
+    //==========================================================
+    // Load the Bpw/2 MSB of the interrupted instruction at spc
+    //==========================================================
+    
+    // Load the interrupted instruction (on a word boundary)
+    ldw r11, sp[1]    // r11 = spc
+    ldc r10, 0x2      // r10 = 0x2
+    and r10, r11, r10 // r10 = r10 and 0x2
+    eq  r10, r10, 0   // r10 = r10 == 0
+    bf  r10, .L.BUSY.loadPCOffset
+
+    // Load the spc normally (as its on a word boundary)
+.L.BUSY.loadPC:
+    ldw r10, r11[0]   // r10 = mem[spc]
+    bu .L.BUSY.getInstLen
+
+    // Load the spc at last word boundary and shr 16 bits
+.L.BUSY.loadPCOffset:
+    sub r9, r11, 2    // r9  = spc - 2
+    ldw r10, r9[0]    // r10 = mem[spc-2]
+    shr r10, r10, 16  // r10 = r10 >> 16
+
+    //==========================================================
+    // Determine the length of the instruction:
+    //   Bpw if (inst>>28) & 0xF == 0xF else Bpw/2
+    //==========================================================
+
+    // Determine the instruction length (looking at top 4 bits of bottom 16 bits)
+.L.BUSY.getInstLen:
+    ldc r9, 12        // r9  = 12
+    shr r10, r10, r9  // r10 = r10 >> 12
+    ldc r9, 0xF       // r9  = 0xF
+    eq  r10, r10, r9  // r10 = r10 == r9
+    bt  r10, .L.BUSY.incPCLong
+    
+    // Increment spc by 2
+.L.BUSY.incPCShort:
     add r11, r11, 2
+    bu .L.BUSY.savePC
+
+    // Increment spc by 4
+.L.BUSY.incPCLong:
+    add r11, r11, 4
+
+    // Save spc back to stack and in _pc
+.L.BUSY.savePC:
     stw r11, sp[1]
     stw r11, dp[_pc]
 

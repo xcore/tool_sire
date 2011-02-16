@@ -84,10 +84,9 @@ unsigned setHost() {
     unsigned senderId;
     
     // Connect to the sender and receive their id 
-    //CHKCT_END(mSpawnChan);
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
-    OUTCT_END(mSpawnChan);
+    //OUTCT_END(mSpawnChan);
     
     // Close mSpawnChan connection
     OUTCT_END(mSpawnChan);
@@ -104,10 +103,8 @@ void spawnHost() {
     unsigned senderId, pc;
     
     // Connect to the sender and receive their id 
-    //CHKCT_END(mSpawnChan);
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
-    OUTCT_END(mSpawnChan);
 
     // Close the connection
     OUTCT_END(mSpawnChan);
@@ -124,10 +121,14 @@ void spawnHost() {
 
 // Initialise the conneciton with the sender
 void initGuestConnection(unsigned c, unsigned senderId) {
+    
+    // Send the new CRI
     SETD(c, senderId);
-    OUTCT_END(c);
     OUT(c, c);
+
+    // Sync and close the conncection
     CHKCT_END(c);
+    OUTCT_END(c);
 }
 
 // Receive a closure

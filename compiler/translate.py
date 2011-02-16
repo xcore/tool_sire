@@ -483,6 +483,7 @@ class Translate(NodeWalker):
         n = 0
 
         # Header: (#args, #procs)
+        self.comment('Header: (#args, #procs)')
         self.out('_closure[{}] = {};'.format(n, num_args)) ; n+=1
         self.out('_closure[{}] = {};'.format(n, num_procs)) ; n+=1
 
@@ -496,6 +497,7 @@ class Translate(NodeWalker):
 
                     # Output the length of the array
                     q = self.sem.sig.lookup_array_qualifier(proc_name, i)
+                    self.comment('Arg: array')
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
                    
@@ -511,13 +513,16 @@ class Translate(NodeWalker):
                 
                 # Otherwise, a single
                 else:
+                    self.comment('Arg: value')
                     self.out('_closure[{}] = 1;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
 
         # Procedures: (jumpindex)*
+        self.comment('Proc: parent '+proc_name)
         self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
                 +self.sem.proc_names.index(proc_name))) ; n+=1
         for x in self.child.children[proc_name]:
+            self.comment('Proc: child '+x)
             self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
                     +self.sem.proc_names.index(x))) ; n+=1
 

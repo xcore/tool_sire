@@ -19,8 +19,14 @@ class Children(NodeVisitor):
         pass
 
     def add_child(self, name):
-        """ Add a child procedure call of the program, omit builtins """
-        if (not name in builtin.names) and (not name in self.children[self.parent]):
+        """ Add a child procedure call of the program:
+             - omit builtins
+             - add only if it hasn't been already
+             - don't add if it is its parent (recursive)
+        """
+        if ((not name in builtin.names) 
+                and (not name in self.children[self.parent])
+                and (not name == self.parent)):
             self.children[self.parent].append(name)
             #print('added child '+name+' to '+self.parent)
 

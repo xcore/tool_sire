@@ -46,23 +46,21 @@ void _migrate(unsigned dest, unsigned closure[]) {
 // Initialise the connection with the host thread
 void initHostConnection(unsigned c, unsigned destId) {
 
-    // Set the channel destination
-    SETD(c, destId);
-
     // Initiate conneciton by sending chanResId
-    //OUTCT_END(c);
+    SETD(c, destId);
     OUT(c, c);
-    CHKCT_END(c);
 
     // Close the current channel connection 
     CHKCT_END(c);
     OUTCT_END(c);
     
-    // Open new connection with spawned thread
-    CHKCT_END(c);
+    // Open new connection with spawned thread and get their CRI
     destId = IN(c);
     SETD(c, destId);
+    
+    // Sync and close the connection
     OUTCT_END(c);
+    CHKCT_END(c);
 }
 
 // Send a closure
