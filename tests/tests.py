@@ -7,7 +7,7 @@ import unittest
 
 COMPILE          = 'sire'
 SIMULATE         = 'xsim'
-SIM_FLAGS        = ['--iss']
+SIM_FLAGS        = []
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 
 class Test(object):

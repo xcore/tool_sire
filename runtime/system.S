@@ -130,7 +130,7 @@ busyHostHandler:
     ldc r10, SR_IEBLE
     or  r11, r11, r10
     stw r11, sp[2]
-   
+/*   
     // Increment pc if: has changed or inst not paused
 
     //=========================================================================
@@ -203,6 +203,7 @@ busyHostHandler:
 .L.BUSY.savePC:
     stw r11, sp[1]
     stw r11, dp[_pc]
+*/
 
 .L.BUSY.EXIT:
     ldw spc, sp[1]

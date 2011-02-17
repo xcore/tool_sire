@@ -19,10 +19,6 @@ void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, unsigned[], int[]);
 void       newAsyncThread     (unsigned, unsigned, unsigned);
 
-#define REQUEST_QUEUE_SIZE 10
-unsigned request_queue[REQUEST_QUEUE_SIZE];
-int      num_requests;
-
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
     
