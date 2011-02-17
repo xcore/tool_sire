@@ -8,12 +8,52 @@ import unittest
 COMPILE          = 'sire'
 SIMULATE         = 'xsim'
 SIM_FLAGS        = ['--iss']
-PROGRAM_DIR      = 'programs'
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 
+class Test(object):
+    def __init__(self, name, output, cores=[1], args=[]):
+        self.name = name
+        self.output = output
+        self.cores = cores
+        self.args = args
+
+program_tests = [ 
+    Test('hello',          'hello world\n'),
+    Test('factorial-loop', '6\n120\n5040\n'),
+    Test('factorial-rec',  '6\n120\n5040\n'),
+    Test('fibonacci-loop', '8\n89\n987\n'),
+    Test('fibonacci-rec',  '8\n89\n987\n'),
+    Test('power',          '32\n729\n78125\n'),
+    Test('ackermann',      '3\n11\n29\n'),
+    Test('primetest',      '1010101000101000101000100\n'),
+    Test('bubblesort',     '0123456789\n'),
+    Test('quicksort',      '0123456789\n'),
+    Test('mergesort-seq',  '0123456789\n'),
+    Test('euclid-loop',    '8\n7\n1\n'),
+    Test('euclid-rec',     '8\n7\n1\n'),
+    Test('distribute',     '', [4, 16, 32, 64]),
+]
+    
+thread_tests = [
+    Test('thread_basic_2', ''),
+    Test('thread_basic_4', ''),
+    Test('thread_basic_8', ''),
+]
+
+on_tests = [
+    Test('on_children', '', [4]),
+    Test('on_basic', '', [4, 16, 32, 64]),
+    Test('on_array', 'DEADBEEF\n', [4, 16, 32, 64]),
+    Test('on_chain_1', '', [4, 16, 32, 64]),
+    Test('on_chain_2', '', [4, 16, 32, 64]),
+    Test('on_chain_3', '', [4, 16, 32, 64]),
+    Test('on_chain_6', '', [4, 16, 32, 64]),
+    Test('on_collision_1', '', [4, 16, 32, 64]),
+    Test('on_collision_2', '', [4, 16, 32, 64]),
+]
+
 def init():
-    """ Initialise configuration
-    """
+    """ Initialise configuration """
     global INSTALL_PATH
     INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
     if not INSTALL_PATH:
@@ -24,6 +64,37 @@ def init():
         globals()['TEST_PROGRAMS_PATH'] = INSTALL_PATH+'/tests/programs'
         globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+'/tests/features'
         return True
+
+def run_test(self, name, path, output, num_cores, args=[]):
+    """ Run a single test """
+    r = call([COMPILE, path+'/'+name+'.sire'] 
+            + ['-n', '{}'.format(num_cores)] + args)
+    self.assertTrue(r[0])
+    r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
+    self.assertTrue(r[0])
+    self.assertEqual(r[1], output)
+
+def test_generator(name, path, output, num_cores):
+    """ Generate the test harness """
+    def test(self):
+        run_test(self, name, path, output, num_cores)
+    return test
+
+def generate_program_tests():
+    """ Dynamically generate all the program tests """
+    for t in program_tests:
+        for num_cores in t.cores:
+            name = 'test_program_{}_{}'.format(t.name, num_cores)
+            test = test_generator(t.name, TEST_PROGRAMS_PATH, t.output, num_cores)
+            setattr(FeatureTests, name, test)
+
+def generate_feature_tests():
+    """ Dynamically generate all the feature tests """
+    for t in thread_tests + on_tests:
+        for num_cores in t.cores:
+            name = 'test_feature_{}_{}'.format(t.name, num_cores)
+            test = test_generator(t.name, TEST_FEATURES_PATH, t.output, num_cores)
+            setattr(FeatureTests, name, test)
 
 def call(args):
     """ Execute a shell command, return (success, output)
@@ -37,7 +108,6 @@ def call(args):
         print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
         return (False, None)
 
-
 class ProgramTests(unittest.TestCase):
 
     def setUp(self):
@@ -45,100 +115,6 @@ class ProgramTests(unittest.TestCase):
 
     def tearDown(self):
         pass
-
-    def program(self, filename, output, args=[]):
-        r = call([COMPILE, TEST_PROGRAMS_PATH+'/'+filename+'.sire'] + args)
-        self.assertTrue(r[0])
-        r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
-        self.assertTrue(r[0])
-        self.assertEqual(r[1], output)
-
-    # Programs =================================================
-    
-    def test_program_hello(self):
-        self.program('hello', 'hello world\n')
-
-    def test_program_factorial_loop(self):
-        self.program('factorial-loop', '6\n120\n5040\n')
-
-    def test_program_factorial_rec(self):
-        self.program('factorial-rec', '6\n120\n5040\n')
-
-    def test_program_fibonacci_loop(self):
-        self.program('fibonacci-loop', '8\n89\n987\n')
-
-    def test_program_fibonacci_rec(self):
-        self.program('fibonacci-rec', '8\n89\n987\n')
-
-    def test_program_power(self):
-        self.program('power', '32\n729\n78125\n')
-
-    def test_program_ackermann(self):
-        self.program('ackermann', '3\n11\n29\n')
-
-    def test_program_primetest(self):
-        self.program('primetest', '1010101000101000101000100\n')
-
-    def test_program_bubblesort(self):
-        self.program('bubblesort', '0123456789\n')
-
-    def test_program_quicksort(self):
-        self.program('quicksort', '0123456789\n')
-
-    def test_program_mergesort_seq(self):
-        self.program('mergesort-seq', '0123456789\n')
-
-    def test_program_euclid_loop(self):
-        self.program('euclid-loop', '8\n7\n1\n')
-
-    def test_program_euclid_rec(self):
-        self.program('euclid-rec', '8\n7\n1\n')
-
-    # distribute
-    def test_program_distribute_4(self):
-        self.program('distribute', '', ['-n', '4'])
-
-    def test_program_distribute_16(self):
-        self.program('distribute', '', ['-n', '16'])
-
-    def test_program_distribute_32(self):
-        self.program('distribute', '', ['-n', '32'])
-    
-    def test_program_distribute_64(self):
-        self.program('distribute', '', ['-n', '64'])
-    
-thread_tests = [
-    ['thread_basic_2', '', 1],
-    ['thread_basic_4', '', 1],
-    ['thread_basic_8', '', 1],
-]
-
-on_tests = [
-    ['on_children', '', 4],
-    ['on_basic', '', 4],
-    ['on_basic', '', 16],
-    ['on_basic', '', 32],
-    ['on_basic', '', 64],
-    ['on_array', 'DEADBEEF\n', 4],
-    ['on_array', 'DEADBEEF\n', 16],
-    ['on_array', 'DEADBEEF\n', 32],
-    ['on_array', 'DEADBEEF\n', 64],
-    ['on_chain_1', '', 4],
-    ['on_chain_1', '', 16],
-    ['on_chain_1', '', 32],
-    ['on_chain_1', '', 64],
-    ['on_chain_2', '', 4],
-    ['on_chain_2', '', 16],
-    ['on_chain_2', '', 32],
-    ['on_chain_2', '', 64],
-    ['on_chain_3', '', 4],
-    ['on_chain_3', '', 16],
-    ['on_chain_3', '', 32],
-    ['on_chain_3', '', 64],
-    ['on_chain_6', '', 4],
-    ['on_chain_6', '', 16],
-    ['on_chain_6', '', 32],
-    ['on_chain_6', '', 64],
 
 class FeatureTests(unittest.TestCase):
 
@@ -148,137 +124,9 @@ class FeatureTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-    def feature(self, filename, output, num_cores=1, args=[]):
-        r = call([COMPILE, TEST_FEATURES_PATH+'/'+filename+'.sire'] 
-                + ['-n', '{}'.format(num_cores)] + args)
-        self.assertTrue(r[0])
-        r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
-        self.assertTrue(r[0])
-        self.assertEqual(r[1], output)
-
-    def generate(self):
-
-    # Features =================================================
-   
-    # thread_basic
-    def test_feature_thread_basic_2(self):
-        self.feature('thread_basic_2', '')
-
-    def test_feature_thread_basic_4(self):
-        self.feature('thread_basic_4', '')
-
-    def test_feature_thread_basic_8(self):
-        self.feature('thread_basic_8', '')
-
-    # on_children
-    def test_feature_on_children_4(self):
-        self.feature('on_children', '', 4)
-
-    # on_basic
-    def test_feature_on_basic_4(self):
-        self.feature('on_basic', '', 4)
-
-    def test_feature_on_basic_16(self):
-        self.feature('on_basic', '', 16)
-
-    def test_feature_on_basic_32(self):
-        self.feature('on_basic', '', 32)
-
-    def test_feature_on_basic_64(self):
-        self.feature('on_basic', '', 64)
-
-    # on_array
-    def test_feature_on_array_4(self):
-        self.feature('on_array', 'DEADBEEF\n', 4)
-
-    def test_feature_on_array_16(self):
-        self.feature('on_array', 'DEADBEEF\n', 16)
-
-    def test_feature_on_array_32(self):
-        self.feature('on_array', 'DEADBEEF\n', 32)
-
-    def test_feature_on_array_64(self):
-        self.feature('on_array', 'DEADBEEF\n', 64)
-
-    # on_chain
-    def test_feature_on_chain_1_4(self):
-        self.feature('on_chain_1', '', 4)
-
-    def test_feature_on_chain_1_16(self):
-        self.feature('on_chain_1', '', 16)
-
-    def test_feature_on_chain_1_32(self):
-        self.feature('on_chain_1', '', 32)
-
-    def test_feature_on_chain_1_64(self):
-        self.feature('on_chain_1', '', 64)
-
-    # on_chain_2
-    def test_feature_on_chain_2_4(self):
-        self.feature('on_chain_2', '', 4)
-
-    def test_feature_on_chain_threaded_2_16(self):
-        self.feature('on_chain_2', '', 16)
-
-    def test_feature_on_chain_threaded_2_32(self):
-        self.feature('on_chain_2', '', 32)
-
-    #def test_feature_on_chain_2_64(self):
-    #    self.feature('on_chain_2', '', 64)
-
-    # on_chain_3
-    def test_feature_on_chain_3_4(self):
-        self.feature('on_chain_3', '', 4)
-
-    def test_feature_on_chain_3_16(self):
-        self.feature('on_chain_3', '', 16)
-
-    def test_feature_on_chain_3_32(self):
-        self.feature('on_chain_3', '', 32)
-
-    #def test_feature_on_chain_3_64(self):
-    #    self.feature('on_chain_3', '', 64)
-
-    # on_chain_6
-    def test_feature_on_chain_6_4(self):
-        self.feature('on_chain_6', '', 4)
-
-    def test_feature_on_chain_6_16(self):
-        self.feature('on_chain_6', '', 16)
-
-    def test_feature_on_chain_6_32(self):
-        self.feature('on_chain_6', '', 32)
-
-    #def test_feature_on_chain_6_64(self):
-    #    self.feature('on_chain_6', '', 64)
-
-    # on_chain_8
-    def test_feature_on_chain_8_4(self):
-        self.feature('on_chain_8', '', 4)
-
-    def test_feature_on_chain_8_16(self):
-        self.feature('on_chain_8', '', 16)
-
-    def test_feature_on_chain_8_32(self):
-        self.feature('on_chain_8', '', 32)
-
-    #def test_feature_on_chain_8_64(self):
-    #    self.feature('on_chain_8', '', 64)
-
-    # on_collision_1
-    #def test_feature_on_collision_1_4(self):
-    #    self.feature('on_collision_1', '', 4)
-
-    #def test_feature_on_collision_1_16(self):
-    #    self.feature('on_collision_1', '', 16)
-
-    #def test_feature_on_collision_1_32(self):
-    #    self.feature('on_collision_1', '', 32)
-
-    #def test_feature_on_collision_1_64(self):
-    #    self.feature('on_collision_1', '', 64)
-
 if __name__ == '__main__':
     if init():
         sys.argv.append('-v')
+        generate_program_tests()
+        generate_feature_tests()
         unittest.main()
