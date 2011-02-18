@@ -40,10 +40,13 @@ Done
 
 - ON: Check for a copy of a procedure before receiving.
 
+- ON: Use master thread for hosting last instead of first
+
+- ON: raise proper exception when no avilable threads
+
 Skipped
 =======
 
 - Find out why asm expressions produce syntax errors, e.g. 
     .set .foo (_cp/4)+3
-
 

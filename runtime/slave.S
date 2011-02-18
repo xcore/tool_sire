@@ -6,7 +6,7 @@
     .extern initSystem
     .extern _setupthread
     .extern slaveSync
-    .extern idle
+    .extern masterIdle
 
     .globl _start
     .globl _slave, "f{0}(0)"
@@ -33,7 +33,7 @@ _slave:
     bl initSystem
     bl _setupthread
     bl slaveSync
-    bu idle
+    bu masterIdle
 
     .cc_bottom _slave.function
 

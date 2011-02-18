@@ -43,6 +43,8 @@ thread_tests = [
 on_tests = [
     Test('on_children', '', [4]),
     Test('on_basic', '', [4, 16, 32, 64]),
+    Test('on_repeat_1', '', [4, 16]),
+    Test('on_repeat_2', '', [4, 16]),
     Test('on_array', 'DEADBEEF\n', [4, 16, 32, 64]),
     Test('on_chain_1', '', [4, 16, 32, 64]),
     Test('on_chain_2', '', [4, 16, 32, 64]),

@@ -48,70 +48,18 @@ void initSystem() {
         "\n\tmov %0, r11" : "=r"(_fp) :: "r11");
     if(_fp % 4) _fp += 2;
 
-    // Get a lock for the fp variable
+    // Get locks
     _fpLock = GETR_LOCK();
     _spLock = GETR_LOCK();
+    _numThreadsLock = GETR_LOCK();
+
+    // Set available threads
+    _numThreads = MAX_THREADS; 
 
     // Setup led port
     led = LED_PORT;
     asm("setc res[%0], 8" :: "r"(led));
     asm("setclk res[%0], %1" :: "r"(led), "r"(6));
-}
-
-// Write a switch configuration register
-void cfgWrite(unsigned c, unsigned value) {
-
-    unsigned v;
-
-    // WRITEC token
-    asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_WRITEC));
-
-    // NodeId, CoreId, ChanId
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 24));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 16));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 8));
-
-    // Switch address (register 3)
-    asm("outt  res[%0], %1" :: "r"(c), "r"(0));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(3));
-
-    // Data to write
-    asm("out res[%0], %1" :: "r"(c), "r"(value));
-
-    // End of message
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-
-    // Receive acknowledgement
-    asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-}
-
-// Read a switch configuration register
-unsigned cfgRead(unsigned c) {
-
-    unsigned value, v;
-
-    // READC
-    asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_READC));
-
-    // NodeId, CoreId, ChanId
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 24));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 16));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 8));
-
-    // Switch address (register 3)
-    asm("outt  res[%0], %1" :: "r"(c), "r"(0));
-    asm("outt  res[%0], %1" :: "r"(c), "r"(3));
-
-    // End of message
-    asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-
-    // Receive ACK and data
-    asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-    asm("in %0, res[%1]" : "=r"(value) : "r"(c));
-    asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-
-    return value;
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
@@ -163,7 +111,7 @@ void _connect(unsigned to, int c1, int c2) {
 }
 
 // Idle (thread 0 only) for the next event to occur
-void idle() {
+void masterIdle() {
 
     // Disable interrupts and events, switch to event mode
     asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
@@ -177,10 +125,37 @@ void idle() {
     asm("waiteu");
 }
 
+// Yeild execution of the master thread, and enter idle state.
+void masterYeild() {
+    incrementAvailThreads();
+    masterIdle();
+}
+
 // Yeild execution of a thread (only 1-7), set as the value of the link register
 // of an asynchronous thread (created by the host).
 void slaveYeild() {
+    incrementAvailThreads();
     asm("freet");
+}
+
+unsigned int getAvailThreads() {
+    unsigned num;
+    ACQUIRE_LOCK(_numThreadsLock);
+    num = _numThreads;
+    RELEASE_LOCK(_numThreadsLock);
+    return num;
+}
+
+void incrementAvailThreads() {
+    ACQUIRE_LOCK(_numThreadsLock);
+    _numThreads = _numThreads + 1;
+    RELEASE_LOCK(_numThreadsLock);
+}
+
+void decrementAvailThreads() {
+    ACQUIRE_LOCK(_numThreadsLock);
+    _numThreads = _numThreads - 1;
+    RELEASE_LOCK(_numThreadsLock);
 }
 
 
