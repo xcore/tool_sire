@@ -290,9 +290,10 @@ class Translate(NodeWalker):
         # Specifiers
         if node.type == Type('var', 'single'):
             s = '&' + s
-        elif node.type.specifier == 'var' or node.type.specifier == 'val':
+        if (node.type.specifier == 'var' 
+                or node.type.specifier == 'val'):
             s = 'int ' + s
-        elif node.type.specifier == 'chanend':
+        if node.type.specifier == 'chanend':
             s = 'unsigned '+s
 
         return s

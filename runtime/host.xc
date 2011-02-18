@@ -55,7 +55,6 @@ unsigned setHost() {
     // Connect to the sender and receive their id 
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
-    //OUTCT_END(mSpawnChan);
     
     // Close mSpawnChan connection
     OUTCT_END(mSpawnChan);
@@ -219,40 +218,6 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
 
     return index;
 }
-
-// Branch to and execute the migrated procedure
-/*#pragma unsafe arrays
-void runProcedure(unsigned c, int threadId, int procIndex,
-        unsigned args[]) {
-   
-    unsigned procAddr, s=16;
-
-    // Preserve r0-r3 on extended stack area
-    asm("extsp 4");
-    asm("stw r0, sp[1]");
-    asm("stw r1, sp[2]");
-    asm("stw r2, sp[3]");
-    asm("stw r3, sp[4]");
-
-    // Load arguments and run procedure
-    asm("ldaw r11, cp[0]\n\t"
-        "ldw %0, r11[%1]"
-        : "=r"(procAddr) : "r"(procIndex));
-    asm("mov r0, %0\n\tmov r1, %1\n\tmov r2, %2\n\tmov r3, %3\n\t"
-        "bla %4" 
-        :: "r"(args[0]), "r"(args[1]), "r"(args[2]), "r"(args[3]), "r"(procAddr) 
-        : "r0", "r1", "r2", "r3");
-   
-    // Load r0-r3 and contract stack
-    asm("ldw r0, sp[1]");
-    asm("ldw r1, sp[2]");
-    asm("ldw r2, sp[3]");
-    asm("ldw r3, sp[4]");
-    asm("ldaw r11, sp[0]\n\t"
-        "add r11, r11, %0\n\t" 
-        "set sp, r11\n\t"
-        :: "r"(s) : "r11");
-}*/
 
 // Complete the migration of the procedure by informing the sender and
 // transmitting back any results
