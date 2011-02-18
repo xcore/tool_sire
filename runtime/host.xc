@@ -55,7 +55,6 @@ unsigned setHost() {
     // Connect to the sender and receive their id 
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
-    //OUTCT_END(mSpawnChan);
     
     // Close mSpawnChan connection
     OUTCT_END(mSpawnChan);

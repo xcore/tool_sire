@@ -28,6 +28,10 @@ Todo
 
 - ON: Implement referenced variables (or restrict their use with on).
 
+- ON: Use master thread for hosting last instead of first
+
+- ON: raise proper exception when no avilable threads
+
 Done
 ====
 

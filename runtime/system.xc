@@ -48,9 +48,13 @@ void initSystem() {
         "\n\tmov %0, r11" : "=r"(_fp) :: "r11");
     if(_fp % 4) _fp += 2;
 
-    // Get a lock for the fp variable
+    // Get locks
     _fpLock = GETR_LOCK();
     _spLock = GETR_LOCK();
+    _numThreadsLock = GETR_LOCK();
+
+    // Set available threads
+    _numThreads = MAX_THREADS; 
 
     // Setup led port
     led = LED_PORT;
@@ -162,8 +166,21 @@ void _connect(unsigned to, int c1, int c2) {
     SETD(progChan[c1], destResId);
 }
 
+// Yeild execution of a thread (only 1-7), set as the value of the link register
+// of an asynchronous thread (created by the host).
+void slaveYeild() {
+    incrementAvailThreads();
+    asm("freet");
+}
+
+// Yeild execution of the master thread, and enter idle state.
+void masterYeild() {
+    incrementAvailThreads();
+    masterIdle();
+}
+
 // Idle (thread 0 only) for the next event to occur
-void idle() {
+void masterIdle() {
 
     // Disable interrupts and events, switch to event mode
     asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
@@ -177,10 +194,24 @@ void idle() {
     asm("waiteu");
 }
 
-// Yeild execution of a thread (only 1-7), set as the value of the link register
-// of an asynchronous thread (created by the host).
-void slaveYeild() {
-    asm("freet");
+unsigned int getAvailThreads() {
+    unsigned num;
+    ACQUIRE_LOCK(_numThreadsLock);
+    num = _numThreads;
+    RELEASE_LOCK(_numThreadsLock);
+    return num;
+}
+
+void incrementAvailThreads() {
+    ACQUIRE_LOCK(_numThreadsLock);
+    _numThreads = _numThreads + 1;
+    RELEASE_LOCK(_numThreadsLock);
+}
+
+void decrementAvailThreads() {
+    ACQUIRE_LOCK(_numThreadsLock);
+    _numThreads = _numThreads - 1;
+    RELEASE_LOCK(_numThreadsLock);
 }
 
 

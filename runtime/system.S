@@ -8,8 +8,10 @@
     .extern runThread
     .extern yeild
     .extern error
-    .extern idle
+    .extern masterIdle
     .extern getThreadId
+    .extern getAvailThreads
+    .extern decrementAvailThreads
     .extern raiseException
 
     .globl excepHandler
@@ -40,7 +42,8 @@ excepHandler:
     .cc_bottom excepHandler.function
 
 //==========================================================
-// Idle host handler
+// Idle host handler: receives an event on master spawn channel, sets the host
+// and then runs the incoming closure on this thread.
 //==========================================================
     .cc_top idleHostHandler.function, idleHostHandler
     .align 2
@@ -51,23 +54,34 @@ idleHostHandler:
     stw spc, sp[1]
     stw ssr, sp[2]
     stw sed, sp[3]
-    stw lr,  sp[5]
+    stw lr,  sp[4]
 
+    bl getAvailThreads
+    eq  r11, r0, 1 
+    bt  r11, .L.idle.run   // if _numThreads == 1 then run
+    eq  r11, r0, 0
+    bt  r11, .L.idle.excep // if _numThreads == 0 then error
+                           // else spawn
+
+.L.idle.spawn:
+    bl   spawnHost
+    ldap r11, masterIdle
+    stw  r11, sp[1] // spc = &idle
+    bl   decrementAvailThreads
+    bu   .L.idle.exit
+
+.L.idle.run:
     // Set the host connection up with this thread
     bl setHost
-    stw r0, sp[4] 
+    stw r0, sp[5]  // r0 = senderId 
     
-    // Set pc to runThread function. Adjust stored _pc so busyHostHandler
-    // doesn't increment it if an interrupt occurs immediately after this.
+    // Set pc to runThread function (r0 arg = senderId) 
     ldap r11, runThread
     stw r11, sp[1]
-    stw r11, dp[_pc]
-    ldw spc, sp[1]
 
-    // Set lr = &idle
-    ldap r11, idle
-    stw r11, sp[5]
-    ldw lr, sp[5]
+    // Set lr = &masterYeild
+    ldap r11, masterYeild
+    stw r11, sp[4]
 
     // Set mSpawnChan event vector = &busyHostHandler
     ldap r11, busyHostHandler
@@ -82,12 +96,21 @@ idleHostHandler:
     ldc r10, SR_IEBLE
     or  r11, r11, r10
     stw r11, sp[2]
+   
+    bl   decrementAvailThreads
+    bu   .L.idle.exit
     
+.L.idle.excep:
+    // We shouldn't be able to reach here as the busy handler will be invoked
+    // when all threads are busy.
+    waiteu
+
+.L.idle.exit:
     ldw spc, sp[1]
     ldw ssr, sp[2]
     ldw sed, sp[3]
-    ldw r0,  sp[4]
-    stw r0,  sp[5]
+    ldw lr,  sp[4]
+    ldw r0,  sp[5]
 
     // Return
     krestsp 6
@@ -122,90 +145,18 @@ busyHostHandler:
     stw r11, sp[15]
     stw lr,  sp[16]
    
-    // Initate connection and spawn a thread
+    /*// Initate connection and spawn a thread
     bl spawnHost
    
     // Renable interrupts
     ldw r11, sp[2]
     ldc r10, SR_IEBLE
     or  r11, r11, r10
-    stw r11, sp[2]
-/*   
-    // Increment pc if: has changed or inst not paused
-
-    //=========================================================================
-    // Determine if spc has changed between this interrupt and possibly the last
-    // and if the instruction was paused - in which case we don't want to
-    // increment the spc.
-    //=========================================================================
-
-    // Check if it has changed (queued interrupts)
-    ldw r11, sp[1]    // r11 = pc
-    ldw r10, dp[_pc]  // r10  = _pc
-    eq  r11, r11, r10 // r11 = 1 if pc not changed else 0 (pc == _pc)
-    //not r11, r11      // r11 = 0 if pc changed else 1 (pc != _pc)
+    stw r11, sp[2]*/
     
-    // Check if the instruction was paused
-    ldw r10, sp[2]
-    ldc r9, SR_WAITING
-    and r10, r10, r9
-    eq  r10, r10, r9  // r10 = inst was paused
+    // All threads are busy!
+    waiteu
 
-    // if (pc not changed or inst paused) then EXIT
-    or  r11, r11, r10
-    bt  r11, .L.BUSY.EXIT
-  
-    //==========================================================
-    // Load the Bpw/2 MSB of the interrupted instruction at spc
-    //==========================================================
-    
-    // Load the interrupted instruction (on a word boundary)
-    ldw r11, sp[1]    // r11 = spc
-    ldc r10, 0x2      // r10 = 0x2
-    and r10, r11, r10 // r10 = r10 and 0x2
-    eq  r10, r10, 0   // r10 = r10 == 0
-    bf  r10, .L.BUSY.loadPCOffset
-
-    // Load the spc normally (as its on a word boundary)
-.L.BUSY.loadPC:
-    ldw r10, r11[0]   // r10 = mem[spc]
-    bu .L.BUSY.getInstLen
-
-    // Load the spc at last word boundary and shr 16 bits
-.L.BUSY.loadPCOffset:
-    sub r9, r11, 2    // r9  = spc - 2
-    ldw r10, r9[0]    // r10 = mem[spc-2]
-    shr r10, r10, 16  // r10 = r10 >> 16
-
-    //==========================================================
-    // Determine the length of the instruction:
-    //   Bpw if (inst>>28) & 0xF == 0xF else Bpw/2
-    //==========================================================
-
-    // Determine the instruction length (looking at top 4 bits of bottom 16 bits)
-.L.BUSY.getInstLen:
-    ldc r9, 12        // r9  = 12
-    shr r10, r10, r9  // r10 = r10 >> 12
-    ldc r9, 0xF       // r9  = 0xF
-    eq  r10, r10, r9  // r10 = r10 == r9
-    bt  r10, .L.BUSY.incPCLong
-    
-    // Increment spc by 2
-.L.BUSY.incPCShort:
-    add r11, r11, 2
-    bu .L.BUSY.savePC
-
-    // Increment spc by 4
-.L.BUSY.incPCLong:
-    add r11, r11, 4
-
-    // Save spc back to stack and in _pc
-.L.BUSY.savePC:
-    stw r11, sp[1]
-    stw r11, dp[_pc]
-*/
-
-.L.BUSY.EXIT:
     ldw spc, sp[1]
     ldw ssr, sp[2]
     ldw sed, sp[3]
@@ -332,14 +283,15 @@ _setupthread:
 //==========================================================
 // Data
 //==========================================================
-    .globl mSpawnChan, "ui"
-    .globl spawnChan,  "a(:ui)"
-    .globl progChan,   "a(:ui)"
-    .globl _fpLock,    "ui"
-    .globl _spLock,    "ui"
-    .globl _fp,        "ui"
-    .globl _sp,        "ui"
-    .globl _pc,        "ui"
+    .globl mSpawnChan,      "ui"
+    .globl spawnChan,       "a(:ui)"
+    .globl progChan,        "a(:ui)"
+    .globl _fpLock,         "ui"
+    .globl _spLock,         "ui"
+    .globl _numThreadsLock, "ui"
+    .globl _fp,             "ui"
+    .globl _sp,             "ui"
+    .globl _numThreads,     "ui"
 	
 	.section .dp.data, "awd", @progbits
     .align BYTES_PER_WORD
@@ -376,6 +328,12 @@ _spLock:
     //.globl _spLock.globound
     .set _spLock.globound, BYTES_PER_WORD
 
+// _numThreads lock identifier
+_numThreadsLock:
+    .space BYTES_PER_WORD
+    //.globl _numThreadsLock.globound
+    .set _numThreadsLock.globound, BYTES_PER_WORD
+
 // Function pointer (for loading functions into memory)
 _fp:
     .space BYTES_PER_WORD
@@ -388,9 +346,9 @@ _sp:
     //.globl _sp.globound
     .set _sp.globound, BYTES_PER_WORD
 
-// For storing the pc on interrupts 
-_pc:
+// Record the number of available threads. 
+_numThreads:
     .space BYTES_PER_WORD
-    //.globl _pc.globound
-    .set _pc.globound, BYTES_PER_WORD
+    //.globl _numThreads.globound
+    .set _numThreads.globound, BYTES_PER_WORD
 

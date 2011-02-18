@@ -361,6 +361,8 @@ class Translate(NodeWalker):
         # Get a label for each thread
         thread_labels = [self.get_label() for i in range(num_slaves + 1)]
 
+        self.comment('Get a sync, sp base, _spLock and claim num threads')
+        
         # Get a thread synchroniser
 #        self.out('_sync = GETR_SYNC();')
         self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
@@ -371,6 +373,11 @@ class Translate(NodeWalker):
         # Get the _sp lock
 #        self.out('ACQUIRE_LOCK(_spLock);')
         self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
+
+        # Claim thread count
+        self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
+        self.out('_numThreads = _numThreads - {}'.format(num_slaves))
+        self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
 
         # Setup each slave thread
         self.comment('Initialise slave threads')
@@ -407,7 +414,7 @@ class Translate(NodeWalker):
                 self.asm('ssync')
 
         # Ouput exit label 
-        self.comment('Exit and restore _sp')
+        self.comment('Exit, restore _sp and _numThreads')
         self.asm(exit_label+':')
         
         # Eestore stack pointer position
@@ -417,6 +424,11 @@ class Translate(NodeWalker):
         self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
 #        self.out('RELEASE_LOCK(_spLock);')
         
+        # Release thread count
+        self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
+        self.out('_numThreads = _numThreads + {}'.format(num_slaves))
+        self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
+
         self.blocker.end()
 
     def stmt_skip(self, node):
