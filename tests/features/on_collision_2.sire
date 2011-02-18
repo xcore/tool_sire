@@ -6,7 +6,7 @@ proc forwards(val n) is
   else on core[n+1] do forwards(n+1)
 
 proc backwards(val n) is
-  if n = 0 
+  if n = 1 
   then work()
   else on core[n-1] do backwards(n-1)
 

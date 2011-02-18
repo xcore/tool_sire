@@ -30,7 +30,7 @@ LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
-        'util.xc']
+        'util.xc', 'memory.c']
 
 class Build(object):
     """ A class to compile, assemble and link the program source with the
@@ -185,9 +185,11 @@ class Build(object):
             '-first', CONST_POOL+'.o',
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
-            'master.xc.o', 'master.S.o', 
+            'master.xc.o', 'master.S.o',
             'program.o',
-            'util.xc.o', '-o', MASTER_XE] + LINK_FLAGS,
+            #'memory.c.o', 
+            'util.xc.o', 
+            '-o', MASTER_XE] + LINK_FLAGS,
             self.showcalls)
         return s
 
@@ -201,7 +203,9 @@ class Build(object):
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.xc.o', 'slave.S.o',
-            'util.xc.o', '-o', SLAVE_XE] + LINK_FLAGS,
+            #'memory.c.o', 
+            'util.xc.o', 
+            '-o', SLAVE_XE] + LINK_FLAGS,
             self.showcalls)
         return s
 

@@ -6,7 +6,7 @@
     .extern setHost
     .extern spawnHost
     .extern runThread
-    .extern yeild
+    .extern slaveYeild
     .extern error
     .extern masterIdle
     .extern getThreadId
@@ -102,7 +102,7 @@ idleHostHandler:
 .L.idle.excep:
     // We shouldn't be able to reach here as the busy handler will be invoked
     // when all threads are busy.
-    waiteu
+    bl error
 
 .L.idle.exit:
     ldw spc, sp[1]
@@ -154,7 +154,7 @@ busyHostHandler:
     stw r11, sp[2]*/
     
     // All threads are busy!
-    waiteu
+    bl error
 
     ldw spc, sp[1]
     ldw ssr, sp[2]

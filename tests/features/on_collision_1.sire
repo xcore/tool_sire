@@ -15,6 +15,6 @@ proc start_backwards(val n) is
 }
 
 proc main() is
-{ skip%forwards(0)
+{ forwards(0)
 | on core[NUM_CORES-1] do start_backwards(NUM_CORES-1)
 }

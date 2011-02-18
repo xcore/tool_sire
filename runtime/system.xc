@@ -131,13 +131,6 @@ void masterYeild() {
     masterIdle();
 }
 
-// Yeild execution of a thread (only 1-7), set as the value of the link register
-// of an asynchronous thread (created by the host).
-void slaveYeild() {
-    incrementAvailThreads();
-    asm("freet");
-}
-
 unsigned int getAvailThreads() {
     unsigned num;
     ACQUIRE_LOCK(_numThreadsLock);
@@ -156,6 +149,18 @@ void decrementAvailThreads() {
     ACQUIRE_LOCK(_numThreadsLock);
     _numThreads = _numThreads - 1;
     RELEASE_LOCK(_numThreadsLock);
+}
+
+void claimStackSpace() {
+    ACQUIRE_LOCK(_spLock);
+    _sp = _sp - THREAD_STACK_SPACE; 
+    RELEASE_LOCK(_spLock);
+}
+
+void releaseStackSpace() {
+    ACQUIRE_LOCK(_spLock);
+    _sp = _sp + THREAD_STACK_SPACE; 
+    RELEASE_LOCK(_spLock);
 }
 
 

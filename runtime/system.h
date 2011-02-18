@@ -10,9 +10,10 @@ void masterSync();
 void slaveSync();
 void masterIdle();
 void slaveYeild();
-
 unsigned int getAvailThreads();
 void incrementAvailThreads();
 void decrementAvailThreads();
+void claimStackSpace();
+void releaseStackSpace();
 
 #endif

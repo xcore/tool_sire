@@ -5,9 +5,6 @@
 #include "util.h"
 #include "host.h"
 
-/* TODO: - access to _sp should be protected
-         - _sp should be restored after a spawned thread has exited
-*/
 extern void runProcedure      (unsigned int, int, int, unsigned int[]);
 
 void       initGuestConnection(unsigned, unsigned);
@@ -258,8 +255,9 @@ void newAsyncThread(unsigned senderId) {
     unsigned t;
     int id;
    
-    // Claim a thread
+    // Claim a thread and some stack space
     decrementAvailThreads();
+    claimStackSpace();
     
     // Get a new asynchronous thread
     t = GET_ASYNC_THREAD();
@@ -268,20 +266,15 @@ void newAsyncThread(unsigned senderId) {
     // Get the thread's id (resource counter)
     id = (t >> 8) && 0xF;
     
-    // Claim some stack space
-    ACQUIRE_LOCK(_spLock);
-    _sp = _sp - THREAD_STACK_SPACE; 
-    RELEASE_LOCK(_spLock);
-
     // Initialise cp, dp, sp, pc, lr
     asm("ldaw r11, cp[0] "
         "; init t[%0]:cp, r11" ::"r"(t) : "r11");
     asm("ldaw r11, dp[0] "
         "; init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("init t[%0]:sp, %1" :: "r"(t), "r"(_sp));
-    asm("ldap r11, " LABEL_RUN_THREAD 
+    asm("ldap r11, runThread" 
         " ; init t[%0]:pc, r11" :: "r"(t) : "r11");
-    asm("ldap r11, " LABEL_SLAVE_YEILD 
+    asm("ldap r11, slaveYeild"  
         " ; init t[%0]:lr, r11" :: "r"(t) : "r11");
                              
     // Set senderId arg 
@@ -302,4 +295,12 @@ void newAsyncThread(unsigned senderId) {
     // Start the thread
     asm("start t[%0]" :: "r"(t));
 }
+
+// Yeild execution of a slave thread (only 1-7)
+void slaveYeild() {
+    incrementAvailThreads();
+    releaseStackSpace();
+    asm("freet");
+}
+
 
