@@ -67,7 +67,6 @@ idleHostHandler:
     bl   spawnHost
     ldap r11, masterIdle
     stw  r11, sp[1] // spc = &idle
-    bl   decrementAvailThreads
     bu   .L.idle.exit
 
 .L.idle.run:

@@ -17,7 +17,7 @@ void       receiveArguments   (unsigned, int, unsigned[], int[]);
 int        receiveProcedures  (unsigned, int, unsigned);
 void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, unsigned[], int[]);
-void       newAsyncThread     (unsigned, unsigned, unsigned);
+void       newAsyncThread     (unsigned);
 
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
@@ -68,26 +68,22 @@ unsigned setHost() {
 // with this.
 void spawnHost() {
 
-    unsigned senderId, pc;
+    unsigned senderId;
     
     // Connect to the sender and receive their id 
     senderId = IN(mSpawnChan);
     SETD(mSpawnChan, senderId);
 
     // Close the connection
-    OUTCT_END(mSpawnChan);
     CHKCT_END(mSpawnChan);
+    OUTCT_END(mSpawnChan);
 
-    // Initialise migrated process on a new thread
-    asm("ldap r11, " LABEL_RUN_THREAD "\n\t"
-        "mov %0, r11" : "=r"(pc) :: "r11");
-    
     // Give the next thread some space and launch it
-    _sp -= THREAD_STACK_SPACE; 
-    newAsyncThread(pc, _sp, senderId);
+    newAsyncThread(senderId);
 }
 
 // Initialise the conneciton with the sender
+// Communication performed on a slave spawn channel
 void initGuestConnection(unsigned c, unsigned senderId) {
     
     // Send the new CRI
@@ -95,8 +91,8 @@ void initGuestConnection(unsigned c, unsigned senderId) {
     OUT(c, c);
 
     // Sync and close the conncection
-    CHKCT_END(c);
     OUTCT_END(c);
+    CHKCT_END(c);
 }
 
 // Receive a closure
@@ -291,28 +287,36 @@ void sendResults(unsigned c, int numArgs, unsigned args[], int len[]) {
 }
 
 // Spawn a new asynchronous thread
-void newAsyncThread(unsigned pc, unsigned sp, unsigned senderId) {
+void newAsyncThread(unsigned senderId) {
     
     unsigned t;
     int id;
    
+    // Claim a thread
+    decrementAvailThreads();
+    
     // Get a new asynchronous thread
-    //asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
     t = GET_ASYNC_THREAD();
     if(t == 0) error();
 
     // Get the thread's id (resource counter)
     id = (t >> 8) && 0xF;
+    
+    // Claim some stack space
+    ACQUIRE_LOCK(_spLock);
+    _sp = _sp - THREAD_STACK_SPACE; 
+    RELEASE_LOCK(_spLock);
 
-    // Initialise cp, dp, sp, pc, lr := &yeild
-    asm("ldaw r11, cp[0]"    ::: "r11");
-    asm("init t[%0]:cp, r11" :: "r"(t));
-    asm("ldaw r11, dp[0]"    ::: "r11");
-    asm("init t[%0]:dp, r11" :: "r"(t) : "r11");
-    asm("init t[%0]:sp, %1"  :: "r"(t), "r"(sp));
-    asm("init t[%0]:pc, %1"  :: "r"(t), "r"(pc));
-    asm("ldap r11, " LABEL_YEILD ::: "r11");
-    asm("init t[%0]:lr, r11" :: "r"(t) : "r11");
+    // Initialise cp, dp, sp, pc, lr
+    asm("ldaw r11, cp[0] "
+        "; init t[%0]:cp, r11" ::"r"(t) : "r11");
+    asm("ldaw r11, dp[0] "
+        "; init t[%0]:dp, r11" :: "r"(t) : "r11");
+    asm("init t[%0]:sp, %1" :: "r"(t), "r"(_sp));
+    asm("ldap r11, " LABEL_RUN_THREAD 
+        " ; init t[%0]:pc, r11" :: "r"(t) : "r11");
+    asm("ldap r11, " LABEL_SLAVE_YEILD 
+        " ; init t[%0]:lr, r11" :: "r"(t) : "r11");
                              
     // Set senderId arg 
     asm("set t[%0]:r0, %1"  :: "r"(t), "r"(senderId));

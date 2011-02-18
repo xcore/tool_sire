@@ -111,4 +111,7 @@ unsigned getNode(unsigned);
 unsigned getCore(unsigned);
 unsigned destResId(unsigned);
 
+void     cfgWrite(unsigned, unsigned);
+unsigned cfgRead(unsigned);
+
 #endif

@@ -376,7 +376,7 @@ class Translate(NodeWalker):
 
         # Claim thread count
         self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-        self.out('_numThreads = _numThreads - {}'.format(num_slaves))
+        self.out('_numThreads = _numThreads - {};'.format(num_slaves))
         self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
 
         # Setup each slave thread
@@ -426,7 +426,7 @@ class Translate(NodeWalker):
         
         # Release thread count
         self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-        self.out('_numThreads = _numThreads + {}'.format(num_slaves))
+        self.out('_numThreads = _numThreads + {};'.format(num_slaves))
         self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
 
         self.blocker.end()

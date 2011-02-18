@@ -8,7 +8,7 @@
 #define LABEL_RUN_THREAD         "runThread"
 #define LABEL_WAIT_HANDLER       "waitHandler"
 #define LABEL_MAIN               "_main"
-#define LABEL_YEILD              "slaveYeild"
+#define LABEL_SLAVE_YEILD        "slaveYeild"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
 #define LABEL_MIGRATE            "_migrate"
