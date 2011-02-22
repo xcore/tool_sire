@@ -86,7 +86,6 @@ void sendClosure(unsigned c, unsigned closure[],
 
 // Send the header
 void sendHeader(unsigned c, int numArgs, int numProcs) {
-    
     OUTS(c, numArgs);
     OUTS(c, numProcs);
 }
@@ -130,8 +129,7 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[],
 #pragma unsafe arrays
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
     
-    unsigned procAddr, inst;
-    unsigned jumpTable, cp;
+    unsigned cp;
     
     // Get address of cp
     asm("ldaw r11, cp[0]\n\t"
@@ -150,6 +148,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
         
         // If the host doesn't have the procedure, send it.
         if(flag) {
+            unsigned procAddr; 
             unsigned procSize  = _sizetab[procIndex];
             OUTS(c, procSize);
             OUTS(c, _frametab[procIndex]);
@@ -158,6 +157,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
             asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
             
             for(int j=0; j<procSize/4; j++) {
+                unsigned inst;
                 asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
                 OUTS(c, inst);
             }

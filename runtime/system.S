@@ -1,14 +1,13 @@
 #include <xs1.h>
 #include "definitions.h"
 
-    .extern initSystem
+    .extern error
     .extern host
     .extern setHost
     .extern spawnHost
     .extern runThread
-    .extern slaveYeild
-    .extern error
-    .extern masterIdle
+    .extern slaveMasterIdle
+    .extern slaveMasterYeild
     .extern getThreadId
     .extern getAvailThreads
     .extern decrementAvailThreads
@@ -19,7 +18,13 @@
     .globl busyHostHandler
     .globl touchRegs
     .globl initPointers
-    .globl _setupthread, "f{0}(0)"
+    .globl _initThread, "f{0}(0)"
+
+// Set heap labels
+    .globl _bheap
+    .globl _eheap
+    .linkset _bheap, _edp.bss 
+    .linkset _eheap, RAM_BASE+RAM_SIZE-(KERNEL_SPACE+(MAX_THREADS*THREAD_STACK_SPACE))
 
     .text
 
@@ -64,9 +69,11 @@ idleHostHandler:
                            // else spawn
 
 .L.idle.spawn:
+    // Spawn a new host thread and return to being idle (explicitly as this was
+    // an event - not saving the pc)
     bl   spawnHost
-    ldap r11, masterIdle
-    stw  r11, sp[1] // spc = &idle
+    ldap r11, slaveMasterIdle
+    stw r11, sp[1] // spc = &idle
     bu   .L.idle.exit
 
 .L.idle.run:
@@ -78,8 +85,8 @@ idleHostHandler:
     ldap r11, runThread
     stw r11, sp[1]
 
-    // Set lr = &masterYeild
-    ldap r11, masterYeild
+    // Set lr = &slaveMasterYeild
+    ldap r11, slaveMasterYeild
     stw r11, sp[4]
 
     // Set mSpawnChan event vector = &busyHostHandler
@@ -255,9 +262,9 @@ initPointers:
 // mechanism and by synchronous thread creation with fork-join concurrent
 // composition
 //==========================================================
-    .cc_top _setupthread.function, _setupthread
+    .cc_top _initThread.function, _initThread
     .align 2
-_setupthread:
+_initThread:
    
     entsp 2
     stw r11, sp[0]
@@ -271,7 +278,7 @@ _setupthread:
     ldw r11, sp[0]
     retsp 2
     
-    .cc_bottom _setupthread.function
+    .cc_bottom _initThread.function
 
 //==========================================================
 // Constants

@@ -1,7 +1,7 @@
 #include "definitions.h"
    
     .extern _migrate
-    .extern _setupthread
+    .extern _initThread
     .extern _connect
     
     .globl _jumptab,  "a(:ui)"
@@ -16,7 +16,7 @@
 
 _jumptab:
     .word _migrate
-    .word _setupthread
+    .word _initThread
     .word _connect
     .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 

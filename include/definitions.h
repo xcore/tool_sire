@@ -7,14 +7,15 @@
 #define LABEL_BUSY_HOST_HANDLER  "busyHostHandler"
 #define LABEL_RUN_THREAD         "runThread"
 #define LABEL_WAIT_HANDLER       "waitHandler"
-#define LABEL_MAIN               "_main"
 #define LABEL_SLAVE_YEILD        "slaveYeild"
+#define LABEL_CHAN_ARRAY         "progChan"
+#define LABEL_MAIN               "_main"
+#define LABEL_BEGIN_BSS          "_fdp.bss"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
 #define LABEL_MIGRATE            "_migrate"
-#define LABEL_INIT_THREAD        "_setupthread"
+#define LABEL_INIT_THREAD        "_initThread"
 #define LABEL_CONNECT            "_connect"
-#define LABEL_CHAN_ARRAY         "progChan"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
 #define LABEL_FRAME_TABLE        "_frametab"
@@ -30,7 +31,7 @@
 #define JUMPI_CONNECT            2
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        3
+#define JUMP_INDEX_OFFSET        3 
 
 // Hardware specs
 #define RAM_BASE                 0x10000

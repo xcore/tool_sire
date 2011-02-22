@@ -7,10 +7,10 @@
 
 // Allocate all remaining channel ends then free them to ensure they are all
 // available
-void resetChannels() {
+void resetChanends() {
     
-    unsigned c = 1, c0;
-    c0 = GETR_CHANEND();
+    unsigned c = 1;
+    unsigned c0 = GETR_CHANEND();
 
     // Get all remaining channels
     while(c)
@@ -26,10 +26,8 @@ void resetChannels() {
 
 // Initialse the system: executed once by thread 0, for all threads
 #pragma unsafe arrays 
-void initSystem() {
+void initChanends() {
     
-    unsigned int led;
-
     // Get the migration channel and set the event vector
     // ASSERT: channel resource counter must be 0 
     mSpawnChan = GETR_CHANEND();
@@ -42,6 +40,10 @@ void initSystem() {
     // Get the remaining channels for program use
     for(int i=0; i<NUM_PROG_CHANS; i++)
         progChan[i] = GETR_CHANEND();
+}
+
+// Initialise system resource counters
+void initCounters() {
 
     // Set the function pointer (fp) to after the data section
     asm("ldap r11, " LABEL_END_BSS
@@ -55,11 +57,31 @@ void initSystem() {
 
     // Set available threads
     _numThreads = MAX_THREADS; 
+}
 
-    // Setup led port
-    led = LED_PORT;
-    asm("setc res[%0], 8" :: "r"(led));
-    asm("setclk res[%0], %1" :: "r"(led), "r"(6));
+// Initialise ports
+void initPorts() {
+    // Setup XMP-64 led port
+    asm("setc res[%0], 8 ; setclk res[%0], %1" :: "r"(LED_PORT), "r"(6));
+}
+
+// Initialise memory
+void initMemory() {
+
+    unsigned begin;
+    unsigned end;
+    int size;
+
+    // Zero-initialise .bss section
+    asm("ldap r11, " LABEL_BEGIN_BSS
+        "\n\tmov %0, r11" : "=r"(begin) :: "r11");
+    asm("ldap r11, " LABEL_END_BSS
+        "\n\tmov %0, r11" : "=r"(end) :: "r11");
+    size = (end - begin) / BYTES_PER_WORD;
+
+    for (int i=0; i<size; i++) {
+        asm("stw %0, %1[%2]" :: "r"(0), "r"(begin), "r"(i));
+    }
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
@@ -111,7 +133,7 @@ void _connect(unsigned to, int c1, int c2) {
 }
 
 // Idle (thread 0 only) for the next event to occur
-void masterIdle() {
+void slaveMasterIdle() {
 
     // Disable interrupts and events, switch to event mode
     asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
@@ -125,10 +147,10 @@ void masterIdle() {
     asm("waiteu");
 }
 
-// Yeild execution of the master thread, and enter idle state.
-void masterYeild() {
+// Yeild execution of the master thread (of a slave node), and enter idle state.
+void slaveMasterYeild() {
     incrementAvailThreads();
-    masterIdle();
+    slaveMasterIdle();
 }
 
 unsigned int getAvailThreads() {

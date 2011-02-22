@@ -1,10 +1,15 @@
+#include "definitions.h"
+
     .extern touchRegs
     .extern initPointers
-    .extern resetChannels
-    .extern initSystem
-    .extern _setupthread
+    .extern resetChanends
+    .extern initChanends
+    .extern initCounters
+    .extern initPorts
+    .extern initMemory
     .extern masterSync
     .extern initMaster
+    .extern _initThread
   
     .globl main
     .globl _start
@@ -23,12 +28,19 @@ main:
 _start:
 _master:
     
+    // Initialisation
     bl touchRegs
     bl initPointers
-    bl resetChannels
-    bl initSystem
-    bl _setupthread
+    bl resetChanends
+    bl initChanends
+    bl initCounters
+    bl initPorts
+    bl initMemory
+    bl __alloc_libc_hwlock
+    bl _initThread
     bl masterSync
+   
+    // Initialise and run master program
     bu initMaster
 
     .cc_bottom _master.function

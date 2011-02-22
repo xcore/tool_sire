@@ -4,6 +4,7 @@
 #include "system.h"
 #include "util.h"
 #include "host.h"
+#include "memory.h"
 
 extern void runProcedure      (unsigned int, int, int, unsigned int[]);
 
@@ -11,7 +12,7 @@ void       initGuestConnection(unsigned, unsigned);
 {int, int} receiveClosure     (unsigned, unsigned[], int[]);
 {int, int} receiveHeader      (unsigned);
 void       receiveArguments   (unsigned, int, unsigned[], int[]);
-int        receiveProcedures  (unsigned, int, unsigned);
+int        receiveProcedures  (unsigned, int);
 void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, unsigned[], int[]);
 void       newAsyncThread     (unsigned);
@@ -26,7 +27,7 @@ void runThread(unsigned senderId) {
     unsigned c = spawnChan[threadId];
     
     // Initialis1e this (new) thread
-    if(threadId != 0) _setupthread();
+    if(threadId != 0) _initThread();
 
     // Initialise connection with sender
     initGuestConnection(c, senderId);
@@ -107,11 +108,8 @@ void initGuestConnection(unsigned c, unsigned senderId) {
     // Receive arguments
     receiveArguments(c, numArgs, args, len);
 
-    // Load jump table address
-    asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
-
     // Receive the children
-    index = receiveProcedures(c, numProcs, jumpTable);
+    index = receiveProcedures(c, numProcs);
 
     // Release the lock
     RELEASE_LOCK(_fpLock);
@@ -148,6 +146,8 @@ void receiveArguments(unsigned c, int numArgs,
         // Receive an array: write to stack and set args[i] to start address
         else {
             args[i] = _fp;
+            //unsigned ptr = memAlloc(len[i]);
+            //args[i] = ptr;
 
             // Receive each element of the array and write straight to memory
             for(int j=0; j<len[i]; j++) {
@@ -164,11 +164,14 @@ void receiveArguments(unsigned c, int numArgs,
 
 // Receive the procedure and any children
 #pragma unsafe arrays
-int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
+int receiveProcedures(unsigned c, int numProcs) {
     
     int index;
-    unsigned inst;
-    
+    unsigned jumpTable;
+
+    // Load jump table address
+    asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
+
     for(int i=0; i<numProcs; i++) {
         
         // Jump index, size and frame size
@@ -187,7 +190,7 @@ int receiveProcedures(unsigned c, int numProcs, unsigned jumpTable) {
 
             // Instructions
             for(int j=0; j<procSize/4; j++) {
-                inst = INS(c);
+                unsigned inst = INS(c);
                 asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
             }
          

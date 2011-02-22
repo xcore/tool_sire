@@ -1,4 +1,3 @@
-//#include <platform.h>
 #include <syscall.h>
 #include "numcores.h"
 #include "definitions.h"
@@ -45,10 +44,3 @@ void initMaster() {
     _exit(0);
 }
 
-// Mapping function to trigger construction of a NUM_CORES binary. Images on
-// cores 1 to NUM_CORES-1 will be replaced by slave images.
-/*int main(void) {
-    par(int i=0; i<NUM_CORES; i++) {
-        on stdcore[i] : _master();
-    }
-}*/

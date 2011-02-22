@@ -2,11 +2,14 @@
 
     .extern touchRegs
     .extern initPointers
-    .extern resetChannels
-    .extern initSystem
-    .extern _setupthread
+    .extern resetChanends
+    .extern initChanends
+    .extern initCounters
+    .extern initPorts
+    .extern initMemory
     .extern slaveSync
-    .extern masterIdle
+    .extern slaveMasterIdle
+    .extern _initThread
 
     .globl _start
     .globl _slave, "f{0}(0)"
@@ -27,13 +30,20 @@
 _start:
 _slave:
 
+    // Initialisation
     bl touchRegs
     bl initPointers
-    bl resetChannels
-    bl initSystem
-    bl _setupthread
+    bl resetChanends
+    bl initChanends
+    bl initCounters
+    bl initPorts
+    bl initMemory
+    bl __alloc_libc_hwlock
+    bl _initThread
     bl slaveSync
-    bu masterIdle
+    
+    // Idle 
+    bu slaveMasterIdle
 
     .cc_bottom _slave.function
 

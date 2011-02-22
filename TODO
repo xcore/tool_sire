@@ -1,6 +1,9 @@
 Todo
 ====
 
+General compiler-related
+-------------------------------------------------------------------------------
+
 - Add more error cases to improve syntax error reporting.
 
 - Write tests for each rule of semantic analysis, check that it behaves well on
@@ -23,10 +26,14 @@ Todo
 - No system call funcitons can be used by processes moved to another core as the
   slave binaries do not have this linked in.
 
+on implementation
+-------------------------------------------------------------------------------
 - ON: Implement referenced variables (or restrict their use with on).
 
 - ON: Reclaim procedure and argument data stored in _fp after an 'on' has
   completed.
+
+- ON: Fail nicely with invalid core ids, e.g. core[0] or core[-1]
 
 Done
 ====

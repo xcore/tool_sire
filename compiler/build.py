@@ -89,7 +89,6 @@ class Build(object):
         self.cleanup(outfile)
         return s
 
-
     def compile_only(self, program_buf, outfile):
         """ Compile the program only
         """
@@ -187,7 +186,7 @@ class Build(object):
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'master.xc.o', 'master.S.o',
             'program.o',
-            #'memory.c.o', 
+            'memory.c.o', 
             'util.xc.o', 
             '-o', MASTER_XE] + LINK_FLAGS,
             self.showcalls)
@@ -203,7 +202,7 @@ class Build(object):
             'system.S.o', 'system.xc.o',
             'guest.xc.o', 'host.xc.o', 'host.S.o',
             'slave.xc.o', 'slave.S.o',
-            #'memory.c.o', 
+            'memory.c.o', 
             'util.xc.o', 
             '-o', SLAVE_XE] + LINK_FLAGS,
             self.showcalls)
@@ -221,12 +220,11 @@ class Build(object):
         """
         self.verbose_msg('Modifying assembly output')
         
-        lines.insert(0, '###### MODIFIED ######\n')
-        
         (lines, cp) = self.extract_constants(lines)
-        lines = self.insert_labels(lines)
-        lines = self.insert_framesizes(lines)
+        lines = self.insert_bottom_labels(lines)
+        lines = self.insert_frame_sizes(lines)
         lines = self.rewrite_calls(lines)
+        lines.insert(0, '###### MODIFIED ######\n')
 
         return (lines, cp)
 
@@ -290,7 +288,7 @@ class Build(object):
 
         return (new, cp)
 
-    def insert_labels(self, lines):
+    def insert_bottom_labels(self, lines):
         """ Insert bottom labels for each function 
         """
         # Look for the structure and insert:
@@ -322,7 +320,7 @@ class Build(object):
 
         return lines
 
-    def insert_framesizes(self, lines):
+    def insert_frame_sizes(self, lines):
         """ Insert labels with the value of the size of funciton frames
             (extracted from 'entsp n' instruction)
         """

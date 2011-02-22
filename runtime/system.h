@@ -1,15 +1,25 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-extern void _setupthread();
+extern void _initThread();
 extern void _connect(unsigned, int, int);
 
-void initSystem();
-void resetChannels();
+// Initialisation
+void resetChanends();
+void initChanends();
+void initCounters();
+void initPorts();
+void initMemory();
+
+// Synchronisation
 void masterSync();
 void slaveSync();
-void masterIdle();
-void slaveYeild();
+
+// Yeild and idling
+void slaveMasterIdle();
+void slaveMasterYeild();
+
+// Resource usage
 unsigned int getAvailThreads();
 void incrementAvailThreads();
 void decrementAvailThreads();
