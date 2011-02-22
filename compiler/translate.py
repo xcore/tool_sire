@@ -528,8 +528,11 @@ class Translate(NodeWalker):
                     if t.specifier == 'var':
                         self.comment('var')
                         self.out('_closure[{}] = TYPE_VAR;'.format(n)) ; n+=1
+                        # Trick xcc by reinterpreting the variable as an array
+                        # so it will load the address of it.
                         tmp = self.blocker.get_tmp()
-                        self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
+                        self.asm('mov %0, %1', outop=tmp, 
+                                inops=['('+x.elem.name+', unsigned[])'])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
                     elif t.specifier == 'val':
                         self.comment('val')
