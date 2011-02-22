@@ -1,17 +1,18 @@
 #include <xs1.h>
 #include "definitions.h"
+#include "language.h"
 #include "globals.h"
 #include "system.h"
 #include "util.h"
 #include "guest.h"
 
 void initHostConnection(unsigned, unsigned);
-void sendClosure       (unsigned, unsigned[], unsigned[], int[]);
+void sendClosure       (unsigned, unsigned[]);
 void sendHeader        (unsigned, int, int);
-void sendArguments     (unsigned, int, unsigned[], unsigned[], int[]);
+void sendArguments     (unsigned, int, unsigned[]);
 void sendProcedures    (unsigned, int, int, unsigned[]);
 void waitForCompletion (unsigned, int);
-void receiveResults    (unsigned, int, unsigned[], int[]);
+void receiveResults    (unsigned, int, unsigned[]);
 
 unsigned permDest(unsigned d) {
     if(d >= 16 && d <= 31)
@@ -24,8 +25,6 @@ unsigned permDest(unsigned d) {
 // Migrate a procedure to a destination
 void _migrate(unsigned dest, unsigned closure[]) {
     
-    unsigned args[NUM_ARGS];
-    int len[NUM_ARGS];
     unsigned threadId = getThreadId();
     unsigned c = spawnChan[threadId];
     unsigned destId = destResId(dest);
@@ -34,13 +33,13 @@ void _migrate(unsigned dest, unsigned closure[]) {
     initHostConnection(c, destId);
     
     // Transfer closure data
-    sendClosure(c, closure, args, len);
+    sendClosure(c, closure);
     
     // Wait for ececution to complete
     waitForCompletion(c, threadId);
 
     // Receive any results
-    receiveResults(c, closure[CLOSURE_NUM_ARGS], args, len);
+    receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
 }
 
 // Initialise the connection with the host thread
@@ -68,8 +67,7 @@ void initHostConnection(unsigned c, unsigned destId) {
 // Send a closure
 // NOTE: xcc adds in array bounds checking which assumes array length is an
 // implicit argument
-void sendClosure(unsigned c, unsigned closure[], 
-    unsigned args[], int len[]) {
+void sendClosure(unsigned c, unsigned closure[]) {
    
     unsigned numArgs  = closure[CLOSURE_NUM_ARGS];
     unsigned numProcs = closure[CLOSURE_NUM_PROCS];
@@ -78,7 +76,7 @@ void sendClosure(unsigned c, unsigned closure[],
     sendHeader(c, numArgs, numProcs);
 
     // Send arguments
-    sendArguments(c, numArgs, closure, args, len);
+    sendArguments(c, numArgs, closure);
 
     // Send the children
     sendProcedures(c, numProcs, CLOSURE_ARGS+2*numArgs, closure);
@@ -92,48 +90,54 @@ void sendHeader(unsigned c, int numArgs, int numProcs) {
 
 // Send the guest procedures arguments
 #pragma unsafe arrays
-void sendArguments(unsigned c, int numArgs, unsigned closure[],
-    unsigned args[], int len[]) {
+void sendArguments(unsigned c, int numArgs, unsigned closure[]) {
 
-    unsigned addr, value;
-    int cIndex;
+    int index = CLOSURE_ARGS;
 
     for(int i=0; i<numArgs; i++) {
+    
+        // Send the arument type
+        OUTS(c, closure[index]);
+  
+        switch(closure[index]) {
         
-        cIndex = CLOSURE_ARGS+i*2;
-        len[i] = closure[cIndex];
-        args[i] = closure[cIndex+1];
+        case TYPE_ALIAS:
+            // Send the array length
+            OUTS(c, closure[i+1]);
 
-        // Send the argument length
-        OUTS(c, len[i]);
-        
-        // Send a single value
-        if(len[i] == 1) {
-            OUTS(c, closure[cIndex+1]);
-        }
-        // Send an array
-        else {
-            for(int j=0; j<len[i]; j++) {
-                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(args[i]), "r"(j));
+            // Send each element of the array
+            for(int j=0; j<closure[i+1]; j++) {
+                unsigned value;
+                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[i+2]), "r"(j));
                 OUTS(c, value);
             }
+            index += 3;
+            break;
+        
+        case TYPE_VAR:
+            // Send the var value
+            OUTS(c, closure[index+1]);
+            index += 2;
+            break;
+        
+        case TYPE_VAL:
+            // Send the val value
+            OUTS(c, closure[index+1]);
+            index += 2;
+            break;
+        
+        default:
+            break;
         }
     }
 }
 
 // Send the guest procedure and any children it has
-// NOTE: the asm below causes bug in xcc optimisation
-/*asm("ldaw r11, cp[0]\n\t"
-    "ldw %0, r11[%1]"
-    :  "=r"(procAddr) : "r"(procIndex) : "r11");*/
 #pragma unsafe arrays
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
     
     unsigned cp;
-    
-    // Get address of cp
-    asm("ldaw r11, cp[0]\n\t"
-        "mov %0, r11" : "=r"(cp) :: "r11");
+    asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(cp) :: "r11");
 
     for(int i=0; i<numProcs; i++) {
 
@@ -180,20 +184,34 @@ void waitForCompletion(unsigned c, int threadId) {
 // Receive any array arguments that may have been updated by the migrated
 // procedure 
 #pragma unsafe arrays
-void receiveResults(unsigned c, int numArgs, unsigned args[], int len[]) {
+void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
 
-    unsigned value, length;
+    int index = CLOSURE_ARGS;
 
     for(int i=0; i<numArgs; i++) {
-        length = len[i];
-        if(length > 1) {
-
-            for(int j=0; j<length; j++) {
-                // Note can write this in one asm using r11 (but causes xcc fail)
-                //asm("in %0, res[%1]" : "=r"(value) : "r"(c));
-                value = INS(c);
-                asm("stw %0, %1[%2]" :: "r"(value), "r"(args[i]), "r"(j));
+        
+        switch(closure[index]) {
+        
+        case TYPE_ALIAS:
+            for(int j=0; j<closure[index+1]; j++) {
+                unsigned value = INS(c);
+                asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
             }
+            index += 3;
+            break;
+        
+        case TYPE_VAR:
+            { unsigned value = INS(c);
+            asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+1]), "r"(0));}
+            index += 2;
+            break;
+        
+        case TYPE_VAL:
+            index += 2;
+            break;
+        
+        default:
+            break;
         }
     }
 }

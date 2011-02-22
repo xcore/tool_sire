@@ -481,8 +481,13 @@ class Translate(NodeWalker):
         proc_name = node.pcall.name
         num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
         num_procs = len(self.child.children[proc_name]) + 1
-        # |closure| = |header| + 2*#args + #procs
-        closure_size = 2 + 2*num_args + num_procs;
+        
+        # Calculate closure size 
+        closure_size = 2 + num_procs;
+        for (i, x) in enumerate(node.pcall.args.expr):
+            t = self.sem.sig.lookup_param_type(proc_name, i)
+            if t.form == 'alias': closure_size = closure_size + 3
+            elif t.form == 'single': closure_size = closure_size + 2 
 
         self.comment('On')
         
@@ -528,10 +533,8 @@ class Translate(NodeWalker):
                     if t.specifier == 'var':
                         self.comment('var')
                         self.out('_closure[{}] = TYPE_VAR;'.format(n)) ; n+=1
-                        # Trick xcc by reinterpreting the variable as an array
-                        # so it will load the address of it.
                         tmp = self.blocker.get_tmp()
-                        self.asm('mov %0, %1', outop=tmp, 
+                        self.asm('mov %0, %1', outop=tmp,
                                 inops=['('+x.elem.name+', unsigned[])'])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
                     elif t.specifier == 'val':

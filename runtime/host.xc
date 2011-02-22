@@ -1,5 +1,6 @@
 #include <xs1.h>
 #include "definitions.h"
+#include "language.h"
 #include "globals.h"
 #include "system.h"
 #include "util.h"
@@ -9,19 +10,20 @@
 extern void runProcedure      (unsigned int, int, int, unsigned int[]);
 
 void       initGuestConnection(unsigned, unsigned);
-{int, int} receiveClosure     (unsigned, unsigned[], int[]);
+{int, int} receiveClosure     (unsigned, t_argument[], unsigned[], int[]);
 {int, int} receiveHeader      (unsigned);
-void       receiveArguments   (unsigned, int, unsigned[], int[]);
+void       receiveArguments   (unsigned, int, t_argument[], unsigned[], int[]);
 int        receiveProcedures  (unsigned, int);
 void       informCompleted    (unsigned, unsigned);
-void       sendResults        (unsigned, int, unsigned[], int[]);
+void       sendResults        (unsigned, int, t_argument[], unsigned[], int[]);
 void       newAsyncThread     (unsigned);
 
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
     
-    unsigned args[NUM_ARGS];
-    int len[NUM_ARGS];
+    t_argument argTypes[NUM_ARGS];
+    unsigned argValues[NUM_ARGS];
+    int argLengths[NUM_ARGS];
     int procIndex, numArgs;
     unsigned threadId = getThreadId();
     unsigned c = spawnChan[threadId];
@@ -33,16 +35,16 @@ void runThread(unsigned senderId) {
     initGuestConnection(c, senderId);
     
     // Receive closure data
-    {procIndex, numArgs} = receiveClosure(c, args, len);
+    {procIndex, numArgs} = receiveClosure(c, argTypes, argValues, argLengths);
 
     // Run the procedure
-    runProcedure(c, threadId, procIndex, (args, unsigned int[]));
+    runProcedure(c, threadId, procIndex, (argValues, unsigned int[]));
 
     // Complete the migration by sending back any results
     informCompleted(c, senderId);
     
     // Send any results back
-    sendResults(c, numArgs, args, len);
+    sendResults(c, numArgs, argTypes, argValues, argLengths);
 }
 
 // Initialise guest connection with this thread 0 as host.
@@ -94,7 +96,8 @@ void initGuestConnection(unsigned c, unsigned senderId) {
 }
 
 // Receive a closure
-{int, int} receiveClosure(unsigned c, unsigned args[], int len[]) {
+{int, int} receiveClosure(unsigned c, 
+        t_argument argTypes[], unsigned argValues[], int argLengths[]) {
   
     int numArgs, numProcs, index;
     unsigned inst, jumpTable;
@@ -103,16 +106,16 @@ void initGuestConnection(unsigned c, unsigned senderId) {
     {numArgs, numProcs} = receiveHeader(c);
 
     // Use and update the fp safely by obtaining a lock
-    ACQUIRE_LOCK(_fpLock); 
+    //ACQUIRE_LOCK(_fpLock); 
     
     // Receive arguments
-    receiveArguments(c, numArgs, args, len);
+    receiveArguments(c, numArgs, argTypes, argValues, argLengths);
 
     // Receive the children
     index = receiveProcedures(c, numProcs);
 
     // Release the lock
-    RELEASE_LOCK(_fpLock);
+    //RELEASE_LOCK(_fpLock);
     
     return {index, numArgs};
 }
@@ -129,33 +132,44 @@ void initGuestConnection(unsigned c, unsigned senderId) {
 // Receive the arguments to the migrated procedure
 #pragma unsafe arrays
 void receiveArguments(unsigned c, int numArgs, 
-        unsigned args[], int len[]) {
+        t_argument argTypes[], unsigned argValues[], int argLengths[]) {
 
     // For each argument
     for(int i=0; i<numArgs; i++) {
 
-        // Receive the length
-        len[i] = INS(c);
+        // Receive the argument type
+        argTypes[i] = INS(c);
 
-        // Receive a single value
-        if(len[i] == 1) {
-            args[i] = INS(c);
-        }
-        // Receive an array: write to stack and set args[i] to start address
-        else {
-            //args[i] = _fp;
-            unsigned ptr = memAlloc(len[i]);
-            args[i] = ptr;
-
+        switch(argTypes[i]) {
+        
+        case TYPE_ALIAS:
+            // Allocate space for the array
+            argLengths[i] = INS(c);
+            argValues[i] = memAlloc(argLengths[i]);
+            
             // Receive each element of the array and write straight to memory
-            for(int j=0; j<len[i]; j++) {
+            for(int j=0; j<argLengths[i]; j++) {
                 unsigned value = INS(c);
-                asm("stw %0, %1[%2]" :: "r"(value), "r"(ptr), "r"(j));
+                asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(j));
             }
-           
-            // Update fp, ensuring it is word aligned
-            //_fp += len[i]*4; 
-            //if(_fp % 4) _fp += 2;
+            break;
+        
+        case TYPE_VAR:
+            // Allocate space for the var and store it
+            argValues[i] = memAlloc(BYTES_PER_WORD);
+            argLengths[i] = 1;
+            {unsigned value = INS(c);
+            asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
+            break;
+        
+        case TYPE_VAL:
+            // Assign the val value directly
+            argValues[i] = INS(c);
+            argLengths[i] = 1;
+            break;
+        
+        default:
+            break;
         }
     }
 }
@@ -200,10 +214,6 @@ int receiveProcedures(unsigned c, int numProcs) {
             // Update the procSize and frameSize entry
             _sizetab[procIndex] = procSize;
             _frametab[procIndex] = frameSize;
-
-            // Update fp, ensuring it is word aligned
-            //_fp += procSize;
-            //if(_fp % 4) _fp += 2;
         }
         else {
             OUTS(c, 0);
@@ -232,19 +242,32 @@ void informCompleted(unsigned c, unsigned senderId) {
 // Send back any arrays that may have been updated by the execution of
 // the migrated procedure
 #pragma unsafe arrays
-void sendResults(unsigned c, int numArgs, unsigned args[], int len[]) {
+void sendResults(unsigned c, int numArgs, 
+    t_argument argTypes[], unsigned argValues[], int argLengths[]) {
 
     unsigned value, length, addr;
     
     for(int i=0; i<numArgs; i++) {
-        length = len[i];
-        if(length > 1) {
-
-            for(int j=0; j<length; j++) {
-                // Note can write this in one asm using r11 (but causes xcc fail)
-                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(args[i]), "r"(j));
+        
+        switch(argTypes[i]) {
+        
+        case TYPE_ALIAS:
+            for(int j=0; j<argLengths[i]; j++) {
+                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(j));
                 OUTS(c, value);
             }
+            break;
+        
+        case TYPE_VAR:
+            asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
+            OUTS(c, value);
+            break;
+        
+        case TYPE_VAL:
+            break;
+        
+        default:
+            break;
         }
     }
 }
