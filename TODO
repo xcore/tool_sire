@@ -26,6 +26,8 @@ General compiler-related
 - No system call funcitons can be used by processes moved to another core as the
   slave binaries do not have this linked in.
 
+- Check var arguments only accept a valid identifier (not an expression).
+
 on implementation
 -------------------------------------------------------------------------------
 - ON: Implement referenced variables (or restrict their use with on).

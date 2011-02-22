@@ -203,22 +203,17 @@ class Translate(NodeWalker):
         self.out('#include <syscall.h>')
         self.out('#include "numcores.h"')
         self.out('#include "globals.h"')
+        self.out('#include "language.h"')
         self.out('#include "util.h"')
         self.out('#include "guest.h"')
         self.out('')
   
-    def definitions(self):
-        self.out('#define TRUE 1')
-        self.out('#define FALSE 0')
-        self.out('')
-
     # Program ============================================
 
     def walk_program(self, node):
 
         # Walk the entire program
         self.header()
-        self.definitions()
         self.decls(node.decls)
         self.defs(node.defs, 0)
 
@@ -500,7 +495,10 @@ class Translate(NodeWalker):
         self.out('_closure[{}] = {};'.format(n, num_args)) ; n+=1
         self.out('_closure[{}] = {};'.format(n, num_procs)) ; n+=1
 
-        # Arguments: (size, value)*
+        # Arguments: 
+        #   Array: (0, length, address)
+        #   Var:   (1, address)
+        #   Val:   (2, value)
         if node.pcall.args.expr:
             for (i, x) in enumerate(node.pcall.args.expr):
                 t = self.sem.sig.lookup_param_type(proc_name, i)
@@ -510,7 +508,8 @@ class Translate(NodeWalker):
 
                     # Output the length of the array
                     q = self.sem.sig.lookup_array_qualifier(proc_name, i)
-                    self.comment('Arg: array')
+                    self.comment('alias')
+                    self.out('_closure[{}] = TYPE_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
                    
@@ -519,16 +518,22 @@ class Translate(NodeWalker):
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
-
                     # Otherwise, just assign
-                    else:
+                    if x.elem.symbol.type.form == 'alias':
                         self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
                 
-                # Otherwise, a single
-                else:
-                    self.comment('Arg: value')
-                    self.out('_closure[{}] = 1;'.format(n)) ; n+=1
-                    self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
+                # Otherwise, a var or val single
+                elif t.form == 'single':
+
+                    if t.specifier == 'var':
+                        self.comment('var')
+                        self.out('_closure[{}] = TYPE_VAR;'.format(n)) ; n+=1
+                        self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
+                        self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
+                    elif t.specifier == 'val':
+                        self.comment('val')
+                        self.out('_closure[{}] = TYPE_VAL;'.format(n)) ; n+=1
+                        self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
 
         # Procedures: (jumpindex)*
         self.comment('Proc: parent '+proc_name)

@@ -131,8 +131,6 @@ void initGuestConnection(unsigned c, unsigned senderId) {
 void receiveArguments(unsigned c, int numArgs, 
         unsigned args[], int len[]) {
 
-    unsigned length, value;
-
     // For each argument
     for(int i=0; i<numArgs; i++) {
 
@@ -145,19 +143,19 @@ void receiveArguments(unsigned c, int numArgs,
         }
         // Receive an array: write to stack and set args[i] to start address
         else {
-            args[i] = _fp;
-            //unsigned ptr = memAlloc(len[i]);
-            //args[i] = ptr;
+            //args[i] = _fp;
+            unsigned ptr = memAlloc(len[i]);
+            args[i] = ptr;
 
             // Receive each element of the array and write straight to memory
             for(int j=0; j<len[i]; j++) {
-                value = INS(c);
-                asm("stw %0, %1[%2]" :: "r"(value), "r"(_fp), "r"(j));
+                unsigned value = INS(c);
+                asm("stw %0, %1[%2]" :: "r"(value), "r"(ptr), "r"(j));
             }
            
             // Update fp, ensuring it is word aligned
-            _fp += len[i]*4; 
-            if(_fp % 4) _fp += 2;
+            //_fp += len[i]*4; 
+            //if(_fp % 4) _fp += 2;
         }
     }
 }
@@ -183,29 +181,29 @@ int receiveProcedures(unsigned c, int numProcs) {
             
             int procSize;
             int frameSize;
+            unsigned ptr;
             
             OUTS(c, 1);
             procSize = INS(c);
             frameSize = INS(c);
+            ptr = memAlloc(procSize);
 
             // Instructions
             for(int j=0; j<procSize/4; j++) {
                 unsigned inst = INS(c);
-                asm("stw %0, %1[%2]" :: "r"(inst), "r"(_fp), "r"(j));
+                asm("stw %0, %1[%2]" :: "r"(inst), "r"(ptr), "r"(j));
             }
          
             // Patch jump table entry
-            asm("stw %0, %1[%2]" :: "r"(_fp), "r"(jumpTable), "r"(procIndex));
+            asm("stw %0, %1[%2]" :: "r"(ptr), "r"(jumpTable), "r"(procIndex));
 
-            // Update the procSize entry
+            // Update the procSize and frameSize entry
             _sizetab[procIndex] = procSize;
-
-            // Update the frameSize entry
             _frametab[procIndex] = frameSize;
 
             // Update fp, ensuring it is word aligned
-            _fp += procSize;
-            if(_fp % 4) _fp += 2;
+            //_fp += procSize;
+            //if(_fp % 4) _fp += 2;
         }
         else {
             OUTS(c, 0);
@@ -245,7 +243,6 @@ void sendResults(unsigned c, int numArgs, unsigned args[], int len[]) {
             for(int j=0; j<length; j++) {
                 // Note can write this in one asm using r11 (but causes xcc fail)
                 asm("ldw %0, %1[%2]" : "=r"(value) : "r"(args[i]), "r"(j));
-                //asm("out res[%0], %1" :: "r"(c), "r"(value));
                 OUTS(c, value);
             }
         }
