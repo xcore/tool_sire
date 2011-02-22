@@ -116,7 +116,9 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[]) {
         
         case TYPE_VAR:
             // Send the var value
-            OUTS(c, closure[index+1]);
+            {unsigned value;
+            asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[i+1]), "r"(0));}
+            OUTS(c, value);
             index += 2;
             break;
         
