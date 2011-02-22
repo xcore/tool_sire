@@ -1,6 +1,8 @@
 #define TRUE       1
 #define FALSE      0
 
-#define TYPE_ALIAS 0
-#define TYPE_VAL   1
-#define TYPE_VAR   2
+enum {
+    TYPE_ALIAS,
+    TYPE_VAL,
+    TYPE_VAR
+};
