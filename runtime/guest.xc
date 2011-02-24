@@ -9,7 +9,7 @@
 void initHostConnection(unsigned, unsigned);
 void sendClosure       (unsigned, unsigned[]);
 void sendHeader        (unsigned, int, int);
-void sendArguments     (unsigned, int, unsigned[]);
+int  sendArguments     (unsigned, int, unsigned[]);
 void sendProcedures    (unsigned, int, int, unsigned[]);
 void waitForCompletion (unsigned, int);
 void receiveResults    (unsigned, int, unsigned[]);
@@ -71,15 +71,16 @@ void sendClosure(unsigned c, unsigned closure[]) {
    
     unsigned numArgs  = closure[CLOSURE_NUM_ARGS];
     unsigned numProcs = closure[CLOSURE_NUM_PROCS];
+    int procOffset;
 
     // Send the header
     sendHeader(c, numArgs, numProcs);
 
     // Send arguments
-    sendArguments(c, numArgs, closure);
+    procOffset = sendArguments(c, numArgs, closure);
 
     // Send the children
-    sendProcedures(c, numProcs, CLOSURE_ARGS+2*numArgs, closure);
+    sendProcedures(c, numProcs, procOffset, closure);
 }
 
 // Send the header
@@ -90,7 +91,7 @@ void sendHeader(unsigned c, int numArgs, int numProcs) {
 
 // Send the guest procedures arguments
 #pragma unsafe arrays
-void sendArguments(unsigned c, int numArgs, unsigned closure[]) {
+int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
 
     int index = CLOSURE_ARGS;
 
@@ -101,28 +102,28 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[]) {
   
         switch(closure[index]) {
         
-        case TYPE_ALIAS:
+        case t_arg_ALIAS:
             // Send the array length
-            OUTS(c, closure[i+1]);
+            OUTS(c, closure[index+1]);
 
             // Send each element of the array
-            for(int j=0; j<closure[i+1]; j++) {
+            for(int j=0; j<closure[index+1]; j++) {
                 unsigned value;
-                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[i+2]), "r"(j));
+                asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+2]), "r"(j));
                 OUTS(c, value);
             }
             index += 3;
             break;
         
-        case TYPE_VAR:
+        case t_arg_VAR:
             // Send the var value
             {unsigned value;
-            asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[i+1]), "r"(0));}
-            OUTS(c, value);
+            asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+1]), "r"(0));
+            OUTS(c, value);}
             index += 2;
             break;
         
-        case TYPE_VAL:
+        case t_arg_VAL:
             // Send the val value
             OUTS(c, closure[index+1]);
             index += 2;
@@ -132,6 +133,8 @@ void sendArguments(unsigned c, int numArgs, unsigned closure[]) {
             break;
         }
     }
+
+    return index;
 }
 
 // Send the guest procedure and any children it has
@@ -194,7 +197,7 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
         
         switch(closure[index]) {
         
-        case TYPE_ALIAS:
+        case t_arg_ALIAS:
             for(int j=0; j<closure[index+1]; j++) {
                 unsigned value = INS(c);
                 asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
@@ -202,13 +205,13 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
             index += 3;
             break;
         
-        case TYPE_VAR:
+        case t_arg_VAR:
             { unsigned value = INS(c);
             asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+1]), "r"(0));}
             index += 2;
             break;
         
-        case TYPE_VAL:
+        case t_arg_VAL:
             index += 2;
             break;
         

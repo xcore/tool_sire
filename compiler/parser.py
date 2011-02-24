@@ -326,6 +326,8 @@ class Parser(object):
                 | elem OR right
                 | elem AND right
                 | elem XOR right
+                | elem LOR right
+                | elem LAND right
                 | elem LSHIFT right
                 | elem RSHIFT right'''
         p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))

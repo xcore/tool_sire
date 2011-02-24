@@ -1,0 +1,21 @@
+proc foo(v) is
+  v := v lor 0xDEAD0000
+
+proc bar(v) is
+  v := v lor 0x0000BEEF
+
+% Test that we can use all the resources again
+proc main() is
+  var v;
+  var i;
+  var b;
+{ for i := 1 to 10 do
+  { v := 0
+  ; { on core[NUM_CORES-1] do foo(v)
+    | on core[NUM_CORES-1] do bar(v)
+    }
+  ; b := b = v
+  }
+; if b then printhexln(v)
+  else skip
+}

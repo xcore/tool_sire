@@ -20,6 +20,8 @@ op_conversion = {
     'or'  : '||',
     'and' : '&&',
     'xor' : '^',
+    '&'   : '&',
+    'lor' : '|',
     '~'   : '!',
     '<<'  : '<<',
     '>>'  : '>>',
@@ -514,7 +516,7 @@ class Translate(NodeWalker):
                     # Output the length of the array
                     q = self.sem.sig.lookup_array_qualifier(proc_name, i)
                     self.comment('alias')
-                    self.out('_closure[{}] = TYPE_ALIAS;'.format(n)) ; n+=1
+                    self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
                    
@@ -532,14 +534,14 @@ class Translate(NodeWalker):
 
                     if t.specifier == 'var':
                         self.comment('var')
-                        self.out('_closure[{}] = TYPE_VAR;'.format(n)) ; n+=1
+                        self.out('_closure[{}] = t_arg_VAR;'.format(n)) ; n+=1
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp,
                                 inops=['('+x.elem.name+', unsigned[])'])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
                     elif t.specifier == 'val':
                         self.comment('val')
-                        self.out('_closure[{}] = TYPE_VAL;'.format(n)) ; n+=1
+                        self.out('_closure[{}] = t_arg_VAL;'.format(n)) ; n+=1
                         self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
 
         # Procedures: (jumpindex)*

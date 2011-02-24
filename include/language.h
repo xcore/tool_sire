@@ -2,7 +2,7 @@
 #define FALSE      0
 
 typedef enum {
-    TYPE_ALIAS,
-    TYPE_VAL,
-    TYPE_VAR
+    t_arg_ALIAS,
+    t_arg_VAL,
+    t_arg_VAR
 } t_argument;

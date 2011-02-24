@@ -1,12 +1,14 @@
-proc a() is skip
-proc b() is a()
-proc c() is b()
-proc d() is c()
-proc e() is d()
-proc f() is e()
-proc g() is f()
-proc h() is g()
+proc a(v) is v := 0xDEADBEEF
+proc b(v) is a(v)
+proc c(v) is b(v)
+proc d(v) is c(v)
+proc e(v) is d(v)
+proc f(v) is e(v)
+proc g(v) is f(v)
+proc h(v) is g(v)
 
 proc main() is
-{ on core[NUM_CORES-1] do h()
+  var v;
+{ on core[NUM_CORES-1] do h(v)
+; printhexln(v)
 }

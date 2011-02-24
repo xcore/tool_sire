@@ -1,6 +1,8 @@
-proc foo() is 
-  skip
+proc foo(a) is 
+  a := 0xDEADBEEF
 
 proc main() is
-  on core[NUM_CORES-1] do foo()
-
+  var a;
+{ on core[NUM_CORES-1] do foo(a)
+; printhexln(a)
+}

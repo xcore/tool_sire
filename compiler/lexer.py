@@ -73,12 +73,14 @@ class Lexer(object):
         'or'       : 'OR',
         'and'      : 'AND',
         'xor'      : 'XOR',
+        'lor'      : 'LOR',
     }
 
     # All tokens
     tokens = (
         # Operators
-        'PLUS','MINUS','MULT','DIV','NOT',
+        'PLUS','MINUS','MULT','DIV',
+        'NOT', 'LAND', #REM, OR, AND, LOR
         'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
         # Assignment operators
         'ASS','IN','OUT',
@@ -93,18 +95,28 @@ class Lexer(object):
         'ID',
     ) + tuple(reserved.values())
 
-    # Operators
+    # Operators ================
+    
+    # Arithmetic
     t_PLUS     = r'\+'
     t_MINUS    = r'-'
     t_MULT     = r'\*'
     t_DIV      = r'/'
+    
+    # Logical ops
     #t_REM      = r'rem'
     #t_OR       = r'or'
     #t_AND      = r'and'
+    
+    # Bitwise ops
     #t_XOR      = r'xor'
+    #t_LOR       = r'lor'
+    t_LAND      = r'&'
     t_NOT      = r'~'
     t_LSHIFT   = r'<<'
     t_RSHIFT   = r'>>'
+    
+    # Relational
     t_LT       = r'<'
     t_GT       = r'>'
     t_LE       = r'<='

@@ -142,7 +142,7 @@ void receiveArguments(unsigned c, int numArgs,
 
         switch(argTypes[i]) {
         
-        case TYPE_ALIAS:
+        case t_arg_ALIAS:
             // Allocate space for the array
             argLengths[i] = INS(c);
             argValues[i] = memAlloc(argLengths[i]);
@@ -154,7 +154,7 @@ void receiveArguments(unsigned c, int numArgs,
             }
             break;
         
-        case TYPE_VAR:
+        case t_arg_VAR:
             // Allocate space for the var and store it
             argValues[i] = memAlloc(BYTES_PER_WORD);
             argLengths[i] = 1;
@@ -162,7 +162,7 @@ void receiveArguments(unsigned c, int numArgs,
             asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
             break;
         
-        case TYPE_VAL:
+        case t_arg_VAL:
             // Assign the val value directly
             argValues[i] = INS(c);
             argLengths[i] = 1;
@@ -251,19 +251,19 @@ void sendResults(unsigned c, int numArgs,
         
         switch(argTypes[i]) {
         
-        case TYPE_ALIAS:
+        case t_arg_ALIAS:
             for(int j=0; j<argLengths[i]; j++) {
                 asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(j));
                 OUTS(c, value);
             }
             break;
         
-        case TYPE_VAR:
+        case t_arg_VAR:
             asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
             OUTS(c, value);
             break;
         
-        case TYPE_VAL:
+        case t_arg_VAL:
             break;
         
         default:
