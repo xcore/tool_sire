@@ -1,0 +1,13 @@
+proc main() is
+  var i;
+  for i := 1 to 100 do
+  { skip 
+  | skip 
+  | skip 
+  | skip 
+  | skip 
+  | skip 
+  | skip 
+  | skip 
+  }
+
