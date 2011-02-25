@@ -102,6 +102,13 @@ void RELEASE_LOCK(unsigned l) {
     asm("out res[%0], r11" :: "r"(l) : "r11");
 }
 
+static inline
+unsigned GET_THREAD_ID() {
+   int id;
+   asm("get r11, id ; mov %0, r11" : "=r"(id) :: "r11");
+   return id;
+}
+
 unsigned chanResId(unsigned, int);
 unsigned genCRI(unsigned);
 void     raiseException();

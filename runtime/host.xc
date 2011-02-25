@@ -26,25 +26,24 @@ void runThread(unsigned senderId) {
     int argLengths[NUM_ARGS];
     int procIndex, numArgs;
     unsigned threadId = getThreadId();
-    unsigned c = spawnChan[threadId];
     
     // Initialis1e this (new) thread
     if(threadId != 0) _initThread();
 
     // Initialise connection with sender
-    initGuestConnection(c, senderId);
+    initGuestConnection(spawnChan[threadId], senderId);
     
     // Receive closure data
-    {procIndex, numArgs} = receiveClosure(c, argTypes, argValues, argLengths);
+    {procIndex, numArgs} = receiveClosure(spawnChan[threadId], argTypes, argValues, argLengths);
 
     // Run the procedure
-    runProcedure(c, threadId, procIndex, (argValues, unsigned int[]));
+    runProcedure(spawnChan[threadId], threadId, procIndex, (argValues, unsigned int[]));
 
     // Complete the migration by sending back any results
-    informCompleted(c, senderId);
+    informCompleted(spawnChan[threadId], senderId);
     
     // Send any results back
-    sendResults(c, numArgs, argTypes, argValues, argLengths);
+    sendResults(spawnChan[threadId], numArgs, argTypes, argValues, argLengths);
 }
 
 // Initialise guest connection with this thread 0 as host.
@@ -105,18 +104,12 @@ void initGuestConnection(unsigned c, unsigned senderId) {
     // Receive the header
     {numArgs, numProcs} = receiveHeader(c);
 
-    // Use and update the fp safely by obtaining a lock
-    //ACQUIRE_LOCK(_fpLock); 
-    
     // Receive arguments
     receiveArguments(c, numArgs, argTypes, argValues, argLengths);
 
     // Receive the children
     index = receiveProcedures(c, numProcs);
 
-    // Release the lock
-    //RELEASE_LOCK(_fpLock);
-    
     return {index, numArgs};
 }
 
@@ -275,26 +268,18 @@ void sendResults(unsigned c, int numArgs,
 // Spawn a new asynchronous thread
 void newAsyncThread(unsigned senderId) {
     
-    unsigned t;
-    int id;
-   
-    // Claim a thread and some stack space
-    decrementAvailThreads();
-    claimStackSpace();
+    // Claim a thread
+    unsigned t = claimAsyncThread();
     
-    // Get a new asynchronous thread
-    t = GET_ASYNC_THREAD();
-    if(t == 0) error();
-
-    // Get the thread's id (resource counter)
-    id = (t >> 8) && 0xF;
+    // Claim a stack slot
+    unsigned sp = claimStackSlot((t>>8) && 0xF);
     
     // Initialise cp, dp, sp, pc, lr
     asm("ldaw r11, cp[0] "
         "; init t[%0]:cp, r11" ::"r"(t) : "r11");
     asm("ldaw r11, dp[0] "
         "; init t[%0]:dp, r11" :: "r"(t) : "r11");
-    asm("init t[%0]:sp, %1" :: "r"(t), "r"(_sp));
+    asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
     asm("ldap r11, runThread" 
         " ; init t[%0]:pc, r11" :: "r"(t) : "r11");
     asm("ldap r11, slaveYeild"  
@@ -321,9 +306,8 @@ void newAsyncThread(unsigned senderId) {
 
 // Yeild execution of a slave thread (only 1-7)
 void slaveYeild() {
-    incrementAvailThreads();
-    releaseStackSpace();
+    releaseStackSlot(GET_THREAD_ID());
+    releaseThread();
     asm("freet");
 }
-
 

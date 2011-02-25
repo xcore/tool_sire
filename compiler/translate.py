@@ -310,6 +310,7 @@ class Translate(NodeWalker):
 
         # Get a synchronised thread
         self.out('unsigned _t;')
+        self.out('unsigned __sp;')
         self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
         # Setup pc = &setupthread (from jump table)
@@ -318,8 +319,8 @@ class Translate(NodeWalker):
                 inops=['_t'], clobber=['r11'])
 
         # Move sp away: sp -= THREAD_STACK_SPACE and save it
-        self.out('_sp = _sp - THREAD_STACK_SPACE;')
-        self.asm('init t[%0]:sp, %1', inops=['_t', '_sp'])
+        self.out('__sp = _sp - (((_t>>8)&&0xF) * THREAD_STACK_SPACE);')
+        self.asm('init t[%0]:sp, %1', inops=['_t', '__sp'])
 
         # Setup dp, cp
         self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
@@ -370,7 +371,7 @@ class Translate(NodeWalker):
 
         # Get the _sp lock
 #        self.out('ACQUIRE_LOCK(_spLock);')
-        self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
+        #self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
 
         # Claim thread count
         self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
@@ -386,7 +387,7 @@ class Translate(NodeWalker):
        
         # Release the _sp lock
 #        self.out('RELEASE_LOCK(_spLock);')
-        self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
+        #self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
 
         # Set lr = &instruction label
         self.comment('Initialise slave link registers')
@@ -420,9 +421,9 @@ class Translate(NodeWalker):
 
         # Restore stack pointer position
 #        self.out('ACQUIRE_LOCK(_spLock);')
-        self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
-        self.out('_sp = _sp + (THREAD_STACK_SPACE * {});'.format(num_slaves))
-        self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
+        #self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
+        #self.out('_sp = _sp + (THREAD_STACK_SPACE * {});'.format(num_slaves))
+        #self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
 #        self.out('RELEASE_LOCK(_spLock);')
         
         # Release thread count

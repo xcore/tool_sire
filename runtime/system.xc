@@ -149,7 +149,7 @@ void slaveMasterIdle() {
 
 // Yeild execution of the master thread (of a slave node), and enter idle state.
 void slaveMasterYeild() {
-    incrementAvailThreads();
+    releaseThread();
     slaveMasterIdle();
 }
 
@@ -161,28 +161,43 @@ unsigned int getAvailThreads() {
     return num;
 }
 
-void incrementAvailThreads() {
+unsigned claimAsyncThread() {
+    unsigned t;
+    ACQUIRE_LOCK(_numThreadsLock);
+    t = GET_ASYNC_THREAD();
+    if(t == 0) error();
+    _numThreads = _numThreads - 1;
+    RELEASE_LOCK(_numThreadsLock);
+    return t;
+}
+
+unsigned claimSyncThread(unsigned sync) {
+    unsigned t;
+    ACQUIRE_LOCK(_numThreadsLock);
+    t = GET_SYNC_THREAD(sync);
+    if(t == 0) error();
+    _numThreads = _numThreads - 1;
+    RELEASE_LOCK(_numThreadsLock);
+    return t;
+}
+
+void releaseThread() {
     ACQUIRE_LOCK(_numThreadsLock);
     _numThreads = _numThreads + 1;
     RELEASE_LOCK(_numThreadsLock);
 }
 
-void decrementAvailThreads() {
-    ACQUIRE_LOCK(_numThreadsLock);
-    _numThreads = _numThreads - 1;
-    RELEASE_LOCK(_numThreadsLock);
+unsigned claimStackSlot(int threadId) {
+    unsigned sp;
+    //ACQUIRE_LOCK(_spLock);
+    sp = _sp - (threadId * THREAD_STACK_SPACE);
+    //RELEASE_LOCK(_spLock);
+    return sp;
 }
 
-void claimStackSpace() {
-    ACQUIRE_LOCK(_spLock);
-    _sp = _sp - THREAD_STACK_SPACE; 
-    RELEASE_LOCK(_spLock);
+void releaseStackSlot(int threadId) {
+    //ACQUIRE_LOCK(_spLock);
+    //_sp = _sp + THREAD_STACK_SPACE; 
+    //RELEASE_LOCK(_spLock);
 }
-
-void releaseStackSpace() {
-    ACQUIRE_LOCK(_spLock);
-    _sp = _sp + THREAD_STACK_SPACE; 
-    RELEASE_LOCK(_spLock);
-}
-
 

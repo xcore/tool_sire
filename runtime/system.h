@@ -21,9 +21,10 @@ void slaveMasterYeild();
 
 // Resource usage
 unsigned int getAvailThreads();
-void incrementAvailThreads();
-void decrementAvailThreads();
-void claimStackSpace();
-void releaseStackSpace();
+unsigned claimAsyncThread();
+unsigned claimSyncThread(unsigned);
+void releaseThread();
+unsigned claimStackSlot(int);
+void releaseStackSlot(int);
 
 #endif

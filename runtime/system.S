@@ -10,7 +10,7 @@
     .extern slaveMasterYeild
     .extern getThreadId
     .extern getAvailThreads
-    .extern decrementAvailThreads
+    .extern releaseThread
     .extern raiseException
 
     .globl excepHandler
@@ -40,6 +40,18 @@
     //nop 
     .align 128
 excepHandler:
+
+/*    entsp 4
+    
+    stw spc, sp[1]
+    stw ssr, sp[2]
+    stw sed, sp[3]
+    stw lr,  sp[4]
+
+    ldw r11, sp[3]
+    testct r10, res[r11]
+    in r10, res[r11]
+*/
 
     clre
     waiteu
@@ -103,7 +115,7 @@ idleHostHandler:
     or  r11, r11, r10
     stw r11, sp[2]
    
-    bl   decrementAvailThreads
+    bl   releaseThread
     bu   .L.idle.exit
     
 .L.idle.excep:
