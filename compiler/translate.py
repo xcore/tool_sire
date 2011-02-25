@@ -310,7 +310,7 @@ class Translate(NodeWalker):
 
         # Get a synchronised thread
         self.out('unsigned _t;')
-        self.out('unsigned __sp;')
+        self.out('unsigned _spnew;')
         self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
 
         # Setup pc = &setupthread (from jump table)
@@ -319,8 +319,8 @@ class Translate(NodeWalker):
                 inops=['_t'], clobber=['r11'])
 
         # Move sp away: sp -= THREAD_STACK_SPACE and save it
-        self.out('__sp = _sp - (((_t>>8)&&0xF) * THREAD_STACK_SPACE);')
-        self.asm('init t[%0]:sp, %1', inops=['_t', '__sp'])
+        self.out('_spnew = _sp - (((_t>>8)&0xFF) * THREAD_STACK_SPACE);')
+        self.asm('init t[%0]:sp, %1', inops=['_t', '_spnew'])
 
         # Setup dp, cp
         self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
@@ -338,7 +338,7 @@ class Translate(NodeWalker):
             defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(self.parent)))
         self.blocker.begin()
         self.asm('ldw r11, %0[%1] ; stw r11, %2[%1]',
-                inops=['_spbase', '_j', '_sp'], clobber=['r11']) 
+                inops=['_spbase', '_j', '_spnew'], clobber=['r11']) 
         self.blocker.end()
 
         # Copy thread id to the array

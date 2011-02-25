@@ -272,7 +272,7 @@ void newAsyncThread(unsigned senderId) {
     unsigned t = claimAsyncThread();
     
     // Claim a stack slot
-    unsigned sp = claimStackSlot((t>>8) && 0xF);
+    unsigned sp = claimStackSlot(THREAD_ID(t));
     
     // Initialise cp, dp, sp, pc, lr
     asm("ldaw r11, cp[0] "

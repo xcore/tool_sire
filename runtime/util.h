@@ -109,6 +109,15 @@ unsigned GET_THREAD_ID() {
    return id;
 }
 
+static inline
+unsigned THREAD_ID(unsigned resId) {
+//    unsigned id;
+//    asm("shr %0, %1, 8" : "=r"(id) : "r"(resId));
+//   asm("ldc r11, 0xf ; and %0, %1, r11" : "=r"(id) : "r"(id) : "r11");
+//    return id;
+    return (resId >> 8) & 0xFF;
+}
+
 unsigned chanResId(unsigned, int);
 unsigned genCRI(unsigned);
 void     raiseException();

@@ -188,11 +188,7 @@ void releaseThread() {
 }
 
 unsigned claimStackSlot(int threadId) {
-    unsigned sp;
-    //ACQUIRE_LOCK(_spLock);
-    sp = _sp - (threadId * THREAD_STACK_SPACE);
-    //RELEASE_LOCK(_spLock);
-    return sp;
+    return _sp - (threadId * THREAD_STACK_SPACE);
 }
 
 void releaseStackSlot(int threadId) {
