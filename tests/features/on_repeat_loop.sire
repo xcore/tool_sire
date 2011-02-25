@@ -9,12 +9,13 @@ proc main() is
   var v;
   var i;
   var b;
-{ for i := 1 to 10 do
+{ b := true
+; for i := 1 to 10 do
   { v := 0
   ; { on core[NUM_CORES-1] do foo(v)
-    | on core[NUM_CORES-1] do bar(v)
+    ; on core[NUM_CORES-1] do bar(v)
     }
-  ; b := b = v
+  ; b := (v = 0xDEADBEEF) and b
   }
 ; if b then printhexln(v)
   else skip

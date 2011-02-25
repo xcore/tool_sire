@@ -49,12 +49,14 @@ on_tests = [
     Test('on_repeat_1',     'DEADBEEF\n', [4, 16]),
     Test('on_repeat_loop',  'DEADBEEF\n', [4, 16]),
     Test('on_array',        'DEADBEEF\n', [4, 16, 32, 64]),
-    Test('on_chain_1',      '', [4, 16, 32, 64]),
-    Test('on_chain_2',      '', [4, 16, 32, 64]),
-    Test('on_chain_3',      '', [4, 16, 32, 64]),
-    Test('on_chain_6',      '', [4, 16, 32, 64]),
-    Test('on_collision_1',  '', [4, 16, 32, 64]),
-    Test('on_collision_2',  '', [4, 16, 32, 64]),
+    Test('on_chain_1',      '', [4, 16, 64]),
+    Test('on_chain_2',      '', [4, 16, 64]),
+    Test('on_chain_3',      '', [4, 16, 64]),
+    Test('on_chain_6',      '', [4, 16, 64]),
+    Test('on_chain_8',      '', [4, 16, 64]),
+    Test('on_collision_1',  '', [4, 16, 64]),
+    Test('on_collision_2',  '', [4, 16, 64]),
+    Test('on_collision_4',  '', [4, 16, 64]),
 ]
 
 def init():
