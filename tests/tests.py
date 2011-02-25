@@ -17,6 +17,7 @@ class Test(object):
         self.cores = cores
         self.args = args
 
+
 program_tests = [ 
     Test('hello',           'hello world\n'),
     Test('factorial-loop',  '6\n120\n5040\n'),
@@ -39,13 +40,12 @@ thread_tests = [
     Test('thread_basic_4',  ''),
     Test('thread_basic_8',  ''),
     Test('thread_repeat_2', ''),
-    Test('thread_repeat_4', ''),
     Test('thread_repeat_8', ''),
 ]
 
 on_tests = [
-    Test('on_children',     'DEADBEEF\n', [4]),
     Test('on_basic',        'DEADBEEF\n', [4, 16, 32, 64]),
+    Test('on_children',     'DEADBEEF\n', [4]),
     Test('on_repeat_1',     'DEADBEEF\n', [4, 16]),
     Test('on_repeat_loop',  'DEADBEEF\n', [4, 16]),
     Test('on_array',        'DEADBEEF\n', [4, 16, 32, 64]),

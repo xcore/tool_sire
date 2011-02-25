@@ -412,13 +412,16 @@ class Translate(NodeWalker):
                 self.asm('ssync')
 
         # Ouput exit label 
-        self.comment('Exit, restore _sp and _numThreads')
+        self.comment('Exit, free _sync, restore _sp and _numThreads')
         self.asm(exit_label+':')
         
-        # Eestore stack pointer position
+        # Free synchroniser resource
+        self.asm('freer res[%0]', inops=['_sync'])
+
+        # Restore stack pointer position
 #        self.out('ACQUIRE_LOCK(_spLock);')
         self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
-        self.out('_sp = _sp - (THREAD_STACK_SPACE * {});'.format(num_slaves))
+        self.out('_sp = _sp + (THREAD_STACK_SPACE * {});'.format(num_slaves))
         self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
 #        self.out('RELEASE_LOCK(_spLock);')
         
