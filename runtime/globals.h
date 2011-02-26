@@ -4,15 +4,12 @@
 #include "definitions.h"
 
 // External globals
-extern unsigned _fp;
-extern unsigned _sp;
-extern unsigned _fpLock;
-extern unsigned _spLock;
-extern unsigned _numThreads;
-extern unsigned _numThreadsLock;
 extern unsigned mSpawnChan;
 extern unsigned spawnChan[MAX_THREADS];
 extern unsigned progChan[NUM_PROG_CHANS];  
+extern unsigned _numThreads;
+extern unsigned _numThreadsLock;
+extern unsigned _sp;
 extern unsigned _sizetab[SIZE_TABLE_SIZE];
 extern unsigned _frametab[FRAME_TABLE_SIZE];
 

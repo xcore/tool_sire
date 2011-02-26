@@ -45,14 +45,7 @@ void initChanends() {
 // Initialise system resource counters
 void initCounters() {
 
-    // Set the function pointer (fp) to after the data section
-    asm("ldap r11, " LABEL_END_BSS
-        "\n\tmov %0, r11" : "=r"(_fp) :: "r11");
-    if(_fp % 4) _fp += 2;
-
     // Get locks
-    _fpLock = GETR_LOCK();
-    _spLock = GETR_LOCK();
     _numThreadsLock = GETR_LOCK();
 
     // Set available threads
@@ -90,9 +83,9 @@ void masterSync() {
 
     if (NUM_CORES > 1) {
 
-        unsigned coreId = getCore(mSpawnChan);
+        unsigned coreId = GET_CORE_ID(mSpawnChan);
         // Configuration resource identifier
-        unsigned cri = genCRI(0); 
+        unsigned cri = GEN_CONFIG_RI(0); 
         unsigned c, v;
         unsigned t;
 
@@ -110,9 +103,9 @@ void masterSync() {
 // Ensure all cores are in a consistent state before completing initialisation
 void slaveSync() {
 
-    unsigned coreId = getCore(mSpawnChan);
+    unsigned coreId = GET_CORE_ID(mSpawnChan);
     // Configuration resource identifier
-    unsigned cri = genCRI(0); 
+    unsigned cri = GEN_CONFIG_RI(0); 
     unsigned c, v;
 
     // Get and set a chanend
@@ -127,7 +120,7 @@ void slaveSync() {
 
 // Connect a channel
 void _connect(unsigned to, int c1, int c2) {
-    unsigned destResId = chanResId(to, PROG_CHAN_OFF+c2);
+    unsigned destResId = GEN_CHAN_RI(to, PROG_CHAN_OFF+c2);
     //asm("setd res[%0], %1" :: "r"(progChan[c1]), "r"(destResId));
     SETD(progChan[c1], destResId);
 }
@@ -192,8 +185,5 @@ unsigned claimStackSlot(int threadId) {
 }
 
 void releaseStackSlot(int threadId) {
-    //ACQUIRE_LOCK(_spLock);
-    //_sp = _sp + THREAD_STACK_SPACE; 
-    //RELEASE_LOCK(_spLock);
 }
 

@@ -8,7 +8,6 @@
     .extern runThread
     .extern slaveMasterIdle
     .extern slaveMasterYeild
-    .extern getThreadId
     .extern getAvailThreads
     .extern releaseThread
     .extern raiseException
@@ -304,12 +303,9 @@ _initThread:
     .globl mSpawnChan,      "ui"
     .globl spawnChan,       "a(:ui)"
     .globl progChan,        "a(:ui)"
-    .globl _fpLock,         "ui"
-    .globl _spLock,         "ui"
     .globl _numThreadsLock, "ui"
-    .globl _fp,             "ui"
-    .globl _sp,             "ui"
     .globl _numThreads,     "ui"
+    .globl _sp,             "ui"
 	
 	.section .dp.data, "awd", @progbits
     .align BYTES_PER_WORD
@@ -334,39 +330,18 @@ progChan:
     .globl progChan.globound
     .set progChan.globound, NUM_PROG_CHANS*BYTES_PER_WORD
 
-// _fp lock identifier
-_fpLock:
-    .space BYTES_PER_WORD
-    //.globl _fpLock.globound
-    .set _fpLock.globound, BYTES_PER_WORD
-
-// _sp lock identifier
-_spLock:
-    .space BYTES_PER_WORD
-    //.globl _spLock.globound
-    .set _spLock.globound, BYTES_PER_WORD
-
 // _numThreads lock identifier
 _numThreadsLock:
     .space BYTES_PER_WORD
-    //.globl _numThreadsLock.globound
     .set _numThreadsLock.globound, BYTES_PER_WORD
-
-// Function pointer (for loading functions into memory)
-_fp:
-    .space BYTES_PER_WORD
-    //.globl _fp.globound
-    .set _fp.globound, BYTES_PER_WORD
-
-// Stack pointer pointer (for allocating new threads)
-_sp:
-    .space BYTES_PER_WORD
-    //.globl _sp.globound
-    .set _sp.globound, BYTES_PER_WORD
 
 // Record the number of available threads. 
 _numThreads:
     .space BYTES_PER_WORD
-    //.globl _numThreads.globound
     .set _numThreads.globound, BYTES_PER_WORD
+
+// Record the number of available threads. 
+_sp:
+    .space BYTES_PER_WORD
+    .set _sp.globound, BYTES_PER_WORD
 

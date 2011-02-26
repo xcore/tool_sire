@@ -25,9 +25,9 @@ unsigned permDest(unsigned d) {
 // Migrate a procedure to a destination
 void _migrate(unsigned dest, unsigned closure[]) {
     
-    unsigned threadId = getThreadId();
+    unsigned threadId = GET_THREAD_ID();
     unsigned c = spawnChan[threadId];
-    unsigned destId = destResId(dest);
+    unsigned destId = GEN_CHAN_RI_0(dest);
 
     // Initialise the connection with the host
     initHostConnection(c, destId);

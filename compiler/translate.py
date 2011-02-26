@@ -363,15 +363,11 @@ class Translate(NodeWalker):
         self.comment('Get a sync, sp base, _spLock and claim num threads')
         
         # Get a thread synchroniser
-#        self.out('_sync = GETR_SYNC();')
+        #self.out('_sync = GETR_SYNC();')
         self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
        
         # Load the address of sp
         self.asm('ldaw %0, sp[0x0]', outop='_spbase')
-
-        # Get the _sp lock
-#        self.out('ACQUIRE_LOCK(_spLock);')
-        #self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
 
         # Claim thread count
         self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
@@ -385,10 +381,6 @@ class Translate(NodeWalker):
         self.thread_set()
         self.blocker.end()
        
-        # Release the _sp lock
-#        self.out('RELEASE_LOCK(_spLock);')
-        #self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
-
         # Set lr = &instruction label
         self.comment('Initialise slave link registers')
         for (i, x) in enumerate(node.children()):
@@ -419,13 +411,6 @@ class Translate(NodeWalker):
         # Free synchroniser resource
         self.asm('freer res[%0]', inops=['_sync'])
 
-        # Restore stack pointer position
-#        self.out('ACQUIRE_LOCK(_spLock);')
-        #self.asm('in r11, res[%0]', inops=['_spLock'], clobber=['r11'])
-        #self.out('_sp = _sp + (THREAD_STACK_SPACE * {});'.format(num_slaves))
-        #self.asm('out res[%0], r11', inops=['_spLock'], clobber=['r11'])
-#        self.out('RELEASE_LOCK(_spLock);')
-        
         # Release thread count
         self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
         self.out('_numThreads = _numThreads + {};'.format(num_slaves))

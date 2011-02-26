@@ -25,7 +25,7 @@ void runThread(unsigned senderId) {
     unsigned argValues[NUM_ARGS];
     int argLengths[NUM_ARGS];
     int procIndex, numArgs;
-    unsigned threadId = getThreadId();
+    unsigned threadId = GET_THREAD_ID();
     
     // Initialis1e this (new) thread
     if(threadId != 0) _initThread();
