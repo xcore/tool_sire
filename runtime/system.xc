@@ -1,5 +1,5 @@
 #include <xs1.h>
-#include "numcores.h"
+#include "device.h"
 #include "definitions.h"
 #include "globals.h"
 #include "util.h"

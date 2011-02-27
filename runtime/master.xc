@@ -1,5 +1,5 @@
 #include <syscall.h>
-#include "numcores.h"
+#include "device.h"
 #include "definitions.h"
 #include "globals.h"
 #include "system.h"

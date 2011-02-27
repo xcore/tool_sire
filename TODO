@@ -28,9 +28,10 @@ General compiler-related
 
 - Check var arguments only accept a valid identifier (not an expression).
 
+- Read devices directory to determine valid number of cores.
+
 on implementation
 -------------------------------------------------------------------------------
-- ON: Implement referenced variables (or restrict their use with on).
 
 - ON: Reclaim procedure and argument data stored in _fp after an 'on' has
   completed.
@@ -52,6 +53,8 @@ Done
 - ON: Use master thread for hosting last instead of first
 
 - ON: raise proper exception when no avilable threads
+
+- ON: Implement referenced variables (or restrict their use with on).
 
 Skipped
 =======

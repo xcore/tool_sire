@@ -203,11 +203,11 @@ class Translate(NodeWalker):
         self.out('#include <xs1.h>')
         self.out('#include <print.h>')
         self.out('#include <syscall.h>')
-        self.out('#include "numcores.h"')
         self.out('#include "globals.h"')
-        self.out('#include "language.h"')
         self.out('#include "util.h"')
         self.out('#include "guest.h"')
+        self.out('#include "device.h"')
+        self.out('#include "language.h"')
         self.out('')
   
     # Program ============================================

@@ -19,7 +19,7 @@ class Test(object):
 
 
 program_tests = [ 
-    Test('hello',           'hello world\n'),
+    Test('hello',           'hello world\n', [1, 2, 4, 16, 32, 64]),
     Test('factorial-loop',  '6\n120\n5040\n'),
     Test('factorial-rec',   '6\n120\n5040\n'),
     Test('fibonacci-loop',  '8\n89\n987\n'),
@@ -135,5 +135,5 @@ if __name__ == '__main__':
     if init():
         sys.argv.append('-v')
         generate_program_tests()
-        generate_feature_tests()
+     #   generate_feature_tests()
         unittest.main()

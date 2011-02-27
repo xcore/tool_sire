@@ -18,6 +18,7 @@ import printer
 import semantics
 import children
 import translate
+import device
 import build
 
 # Constants
@@ -49,14 +50,14 @@ def setup_argparse():
             help='output filename')
     
     p.add_argument('-n', '--numcores', nargs=1, metavar='<n>', 
-            dest='numcores', default=[DEFAULT_NUM_CORES],
+            dest='num_cores', default=[DEFAULT_NUM_CORES],
             help='number of cores')
     
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
     
     p.add_argument('-e', '--display-calls', action='store_true',
-            dest='showcalls', help='display external commands invoked ')
+            dest='show_calls', help='display external commands invoked ')
     
     p.add_argument('-r', '--parse', action='store_true', dest='parse_only', 
             help='parse the input file and quit')
@@ -78,6 +79,10 @@ def setup_argparse():
             dest='compile_only',
             help='compile but do not assemble and link')
     
+    p.add_argument('-d', '--devices', action='store_true',
+            dest='display_devices',
+            help='display available devices')
+    
     return p
 
 def setup_globals(a):
@@ -86,8 +91,8 @@ def setup_globals(a):
     """
     
     global verbose
-    global showcalls
-    global numcores
+    global show_calls
+    global num_cores
     global infile
     global outfile
     global parse_only
@@ -97,8 +102,8 @@ def setup_globals(a):
     global translate_only
     
     verbose        = a.verbose
-    showcalls      = a.showcalls
-    numcores       = int(a.numcores[0])
+    show_calls     = a.show_calls
+    num_cores       = int(a.num_cores[0])
     infile         = a.infile
     parse_only     = a.parse_only
     sem_only       = a.sem_only
@@ -114,6 +119,19 @@ def setup_globals(a):
     else:
         outfile = a.outfile[0]
 
+def set_device(num_cores):
+    """ Check num_cores is valid for an available device """
+    #d = AVAILABLE_DEVICES.find(lambda x: num_cores==x.num_cores())
+    d = [x for x in device.AVAILABLE_DEVICES if num_cores == x.num_cores()]
+    if d:
+        return d[0]
+    else:
+        sys.stderr.write('Invalid number of cores ({}), valid devices:\n'.format(
+            num_cores))
+        for x in device.AVAILABLE_DEVICES:
+            sys.stderr.write('  {}\n'.format(x.name))
+        return None
+    
 def parse(logging=False):
     """ Parse an input string to produce an AST 
     """
@@ -166,12 +184,12 @@ def builder(outfile, compile_only):
     """
     global proceede
     verbose_msg('[Building an executable for {} cores]\n'.format(
-            numcores))
-    builder = build.Build(numcores, sem, verbose, showcalls)
+            num_cores))
+    builder = build.Build(num_cores, sem, verbose, show_calls)
     if compile_only:
         proceede = builder.compile_only(translate_buf, outfile)
     else:
-        proceede = builder.run(translate_buf, outfile)
+        proceede = builder.run(translate_buf, outfile, device)
 
 def verbose_msg(msg):
     if verbose: 
@@ -189,6 +207,7 @@ def main(args):
     global translate_buf
     global sem
     global child
+    global device
 
     # Setup the error object
     err = error.Error()
@@ -208,6 +227,11 @@ def main(args):
     a = argp.parse_args(args)
     setup_globals(a)
 
+    # TODO: display devices
+    device = set_device(num_cores)
+    if not device:
+        return FAILURE
+    
     # Read the input from stdin or from a file 
     input = util.read_file(infile) if infile else sys.stdin.read()
     if not input: 

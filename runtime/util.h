@@ -2,6 +2,7 @@
 #define UTIL_H
 
 #include "definitions.h"
+#include "device.h"
 
 // String wrapper
 #define S_(x) #x
@@ -126,9 +127,9 @@ unsigned THREAD_ID(unsigned resId) {
 // The node bits are written in MSB first, so need to be reversed
 static inline
 unsigned GEN_CHAN_RI_0(unsigned dest) {
-    unsigned n = dest/CORES_PER_NODE;
+    unsigned n = dest/NUM_CORES_PER_NODE;
     asm("bitrev %0, %1" : "=r"(n) : "r"(n));
-    return n | (dest % CORES_PER_NODE) << 16 | 0x2;
+    return n | (dest % NUM_CORES_PER_NODE) << 16 | 0x2;
 }
 
 // Create a channel resource identifier with a particular count
@@ -167,7 +168,7 @@ unsigned GET_CORE_ID(unsigned resId) {
     asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
     n &= 0xFF;
     c = (resId >> 16) & 0xFF;
-    return (n * CORES_PER_NODE) + c;
+    return (n * NUM_CORES_PER_NODE) + c;
 }
 
 void raiseException();

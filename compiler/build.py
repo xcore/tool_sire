@@ -8,9 +8,10 @@ import subprocess
 import builtin
 import definitions as defs
 import config
+import device
 from math import floor
 
-NUMCORES_HDR     = 'numcores.h'
+DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'
 PROGRAM_SRC      = PROGRAM+'.xc'
 PROGRAM_ASM      = PROGRAM+'.S'
@@ -26,7 +27,7 @@ XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
 COMPILE_FLAGS    = ['-S', '-O0', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
-LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
+LINK_FLAGS       = ['-nostartfiles']#, '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
@@ -36,8 +37,8 @@ class Build(object):
     """ A class to compile, assemble and link the program source with the
         runtime into an executable multi-core binary.
     """
-    def __init__(self, numcores, semantics, verbose=False, showcalls=False):
-        self.numcores = numcores
+    def __init__(self, num_cores, semantics, verbose=False, showcalls=False):
+        self.num_cores = num_cores
         self.sem = semantics
         self.verbose = verbose
         self.showcalls = showcalls
@@ -51,15 +52,15 @@ class Build(object):
         COMPILE_FLAGS += include_dirs
         ASSEMBLE_FLAGS += include_dirs
 
-    def run(self, program_buf, outfile):
+    def run(self, program_buf, outfile, device):
         """ Run the full build
         """
-
+        
         # Create headers
-        s = self.create_headers()
+        s = self.create_headers(device)
 
         # Generate the assembly
-        s = self.generate_assembly(program_buf)
+        if s: s = self.generate_assembly(program_buf)
         if s: (lines, cp) = s
 
         # Write the program back out and assemble
@@ -81,9 +82,9 @@ class Build(object):
             s = self.assemble(MASTER_TABLES, 'S', buf.getvalue())
         
         # Assemble and link the rest
-        if s: s = self.assemble_runtime()
-        if s: s = self.link_master()
-        if s: s = self.link_slave()
+        if s: s = self.assemble_runtime(device)
+        if s: s = self.link_master(device)
+        if s: s = self.link_slave(device)
         if s: s = self.replace_slaves()
         
         self.cleanup(outfile)
@@ -107,10 +108,13 @@ class Build(object):
         
         return s
 
-    def create_headers(self):
-        self.verbose_msg('Creating header '+NUMCORES_HDR)
-        s = util.write_file(NUMCORES_HDR, '#define NUM_CORES {}'.format(self.numcores));
-        return s
+    def create_headers(self, device):
+        self.verbose_msg('Creating device header '+DEVICE_HDR)
+        s =  '#define NUM_CORES {}\n'.format(device.num_cores())
+        s += '#define NUM_NODES {}\n'.format(device.num_nodes)
+        s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
+        r = util.write_file(DEVICE_HDR, s)
+        return r
 
     def generate_assembly(self, program_buf):
         """ Given the program buffer containing the XC translation, generate the
@@ -161,25 +165,25 @@ class Build(object):
             os.remove(srcfile)
         return s
 
-    def assemble_runtime(self):
+    def assemble_runtime(self, device):
         self.verbose_msg('Compiling runtime:')
         s = True
         for x in RUNTIME_FILES:
             objfile = x+'.o'
             self.verbose_msg('  '+x+' -> '+objfile)
-            s = util.call([XCC, self.target(), config.RUNTIME_PATH+'/'+x, 
+            s = util.call([XCC, self.target(device), config.RUNTIME_PATH+'/'+x, 
                 '-o', objfile] + ASSEMBLE_FLAGS, self.showcalls)
             if not s: 
                 break
         return s
 
-    def link_master(self):
+    def link_master(self, device):
         """ The jump table must be located at _cp and the common elements of the
             constant and data pools must be in the same positions relative to _cp
             and _dp in the master and slave images.
         """
         self.verbose_msg('Linking master -> '+MASTER_XE)
-        s = util.call([XCC, self.target(), 
+        s = util.call([XCC, self.target(device), 
             '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
             '-first', CONST_POOL+'.o',
             'system.S.o', 'system.xc.o',
@@ -192,11 +196,11 @@ class Build(object):
             self.showcalls)
         return s
 
-    def link_slave(self):
+    def link_slave(self, device):
         """ As above
         """
         self.verbose_msg('Linking slave -> '+SLAVE_XE)
-        s = util.call([XCC, self.target(), 
+        s = util.call([XCC, self.target(device), 
             '-first', 'slavetables.S.o',
             '-first', CONST_POOL+'.o',
             'system.S.o', 'system.xc.o',
@@ -449,12 +453,12 @@ class Build(object):
         
         # Remove specific files
         util.rename_file(SLAVE_XE, output_xe)
-        util.remove_file('master.xe')
+        util.remove_file(MASTER_XE)
         util.remove_file('image_n0c0.elf')
         util.remove_file('config.xml')
         util.remove_file('platform_def.xn')
         util.remove_file('program_info.txt')
-        util.remove_file('numcores.h')
+        util.remove_file(DEVICE_HDR)
         
         # Remove unused master images
         for x in glob.glob('image_n*c*elf'):
@@ -464,16 +468,8 @@ class Build(object):
         for x in glob.glob('*.o'):
             util.remove_file(x)
 
-    def target(self):
-        # TODO: Ensure the number of nodes is compatible with an available
-        # device
-        numcores = self.numcores
-        available = [1, 4, 16, 32, 64]
-        if numcores in available:
-            return '{}/XMP-{}.xn'.format(config.DEVICE_PATH, 
-                    1 if numcores < defs.CORES_PER_NODE else numcores)
-        else:
-            sys.stderr.write('Invalid number of cores: {}'.format(numcores))
+    def target(self, device):
+        return '{}/{}.xn'.format(config.DEVICE_PATH, device.name)
 
     def function_label_top(self, name):
         return '.'+name+'.top'
