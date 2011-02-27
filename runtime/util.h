@@ -127,7 +127,7 @@ unsigned THREAD_ID(unsigned resId) {
 // The node bits are written in MSB first, so need to be reversed
 static inline
 unsigned GEN_CHAN_RI_0(unsigned dest) {
-    unsigned n = dest/NUM_CORES_PER_NODE;
+    unsigned n = dest / NUM_CORES_PER_NODE;
     asm("bitrev %0, %1" : "=r"(n) : "r"(n));
     return n | (dest % NUM_CORES_PER_NODE) << 16 | 0x2;
 }

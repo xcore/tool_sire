@@ -8,6 +8,7 @@ class Device(object):
         return self.num_nodes * self.num_cores_per_node
 
 
+# TODO: read these in automatically?
 AVAILABLE_DEVICES = [
     Device(1,  1, 'XMP-1'),
     Device(2,  1, 'XMP-2'),

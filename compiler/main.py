@@ -91,6 +91,7 @@ def setup_globals(a):
     """
     
     global verbose
+    global display_devices
     global show_calls
     global num_cores
     global infile
@@ -101,16 +102,17 @@ def setup_globals(a):
     global pprint
     global translate_only
     
-    verbose        = a.verbose
-    show_calls     = a.show_calls
+    verbose         = a.verbose
+    display_devices = a.display_devices
+    show_calls      = a.show_calls
     num_cores       = int(a.num_cores[0])
-    infile         = a.infile
-    parse_only     = a.parse_only
-    sem_only       = a.sem_only
-    compile_only   = a.compile_only
-    show_ast       = a.show_ast
-    pprint         = a.pprint
-    translate_only = a.translate_only
+    infile          = a.infile
+    parse_only      = a.parse_only
+    sem_only        = a.sem_only
+    compile_only    = a.compile_only
+    show_ast        = a.show_ast
+    pprint          = a.pprint
+    translate_only  = a.translate_only
 
     if not a.outfile:
         if translate_only: outfile = DEFAULT_OUTPUT_XC 
@@ -131,7 +133,11 @@ def set_device(num_cores):
         for x in device.AVAILABLE_DEVICES:
             sys.stderr.write('  {}\n'.format(x.name))
         return None
-    
+
+def show_devices():
+    print('Available devices:')
+    [print('  '+x.name) for x in device.AVAILABLE_DEVICES]
+
 def parse(logging=False):
     """ Parse an input string to produce an AST 
     """
@@ -227,7 +233,12 @@ def main(args):
     a = argp.parse_args(args)
     setup_globals(a)
 
-    # TODO: display devices
+    # Display devices
+    if display_devices:
+        show_devices()
+        return SUCCESS
+
+    # Set the device
     device = set_device(num_cores)
     if not device:
         return FAILURE
