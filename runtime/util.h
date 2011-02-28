@@ -160,21 +160,19 @@ unsigned GET_NODE_ID(unsigned resId) {
     return n & 0xFF;
 }
 
-// Given a resource id, return the core label. I.e. not separate node and core
-// values
+// Given a resource id, return the core identifier
+static inline
+unsigned GET_CORE_ID(unsigned resId) {
+    return (resId >> 16) & 0xFF;
+}
+
+// Given a resource id, return the global core label.
 static inline
 unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
-    unsigned int n, c;
-    asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
-    n &= 0xFF;
-    c = (resId >> 16) & 0xFF;
-    return (n * NUM_CORES_PER_NODE) + c;
+    return (GET_NODE_ID(resId) * NUM_CORES_PER_NODE) + GET_CORE_ID(resId);
 }
 
 void raiseException();
 void error();
-
-void cfgWrite(unsigned, unsigned);
-unsigned cfgRead(unsigned);
 
 #endif

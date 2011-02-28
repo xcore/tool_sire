@@ -19,7 +19,7 @@ class Test(object):
 
 
 program_tests = [ 
-    Test('hello',           'hello world\n', [1, 2, 4, 16, 32, 64]),
+    Test('hello',           'hello world\n', [1, 4, 16, 32, 64]),
     Test('factorial-loop',  '6\n120\n5040\n'),
     Test('factorial-rec',   '6\n120\n5040\n'),
     Test('fibonacci-loop',  '8\n89\n987\n'),
@@ -91,7 +91,7 @@ def generate_program_tests():
     """ Dynamically generate all the program tests """
     for t in program_tests:
         for num_cores in t.cores:
-            name = 'test_program_{}_{}'.format(t.name, num_cores)
+            name = 'test_program_{}_{}c'.format(t.name, num_cores)
             test = test_generator(t.name, TEST_PROGRAMS_PATH, t.output, num_cores)
             setattr(FeatureTests, name, test)
 
@@ -99,7 +99,7 @@ def generate_feature_tests():
     """ Dynamically generate all the feature tests """
     for t in thread_tests + on_tests:
         for num_cores in t.cores:
-            name = 'test_feature_{}_{}'.format(t.name, num_cores)
+            name = 'test_feature_{}_{}c'.format(t.name, num_cores)
             test = test_generator(t.name, TEST_FEATURES_PATH, t.output, num_cores)
             setattr(FeatureTests, name, test)
 
