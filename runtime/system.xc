@@ -38,8 +38,8 @@ void initChanends() {
         spawnChan[i] = GETR_CHANEND();
 
     // Get the remaining channels for program use
-    for(int i=0; i<NUM_PROG_CHANS; i++)
-        progChan[i] = GETR_CHANEND();
+    /*for(int i=0; i<NUM_PROG_CHANS; i++)
+        progChan[i] = GETR_CHANEND();*/
 }
 
 // Initialise system resource counters
@@ -77,52 +77,66 @@ void initMemory() {
     }
 }
 
+//int read_sswitch_reg(unsigned coreid, unsigned reg, unsigned &data);
+//int write_sswitch_reg(unsigned coreid, unsigned reg, unsigned data);
+
 // Ensure all cores are in a consistent state before completing initialisation
 // Assume that master is always core 0
 void masterSync() {
 
     if (NUM_CORES > 1) {
 
-        unsigned coreId = GET_CORE_ID(mSpawnChan);
-        // Configuration resource identifier
-        unsigned cri = GEN_CONFIG_RI(0); 
+        /*unsigned coreId = GET_CORE_ID(mSpawnChan);
+        unsigned switchCRI = GEN_CONFIG_RI(0); 
         unsigned c, v;
         unsigned t;
 
         // Get and set a chanend
         c = progChan[0];
-        asm("setd res[%0], %1" :: "r"(c), "r"(cri));
+        asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
 
         // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
         cfgWrite(c, 1);
         while(cfgRead(c) != NUM_CORES)
-            continue;
+            continue;*/
+
+        unsigned v;
+        write_sswitch_reg(0, SWITCH_SCRATCH_REG, 1);
+        read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+       // asm("waiteu");
+        while (v != NUM_CORES)
+            read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
     }
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
 void slaveSync() {
 
-    unsigned coreId = GET_CORE_ID(mSpawnChan);
-    // Configuration resource identifier
-    unsigned cri = GEN_CONFIG_RI(0); 
+    /*unsigned coreId = GET_CORE_ID(mSpawnChan);
+    unsigned switchCRI = GEN_CONFIG_RI(0); 
     unsigned c, v;
 
     // Get and set a chanend
     c = progChan[0];
-    asm("setd res[%0], %1" :: "r"(c), "r"(cri));
+    asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
 
     // Otherwise wait until the value reaches coreId and write coreId+1
     while(cfgRead(c) != coreId)
         continue;
-    cfgWrite(c, coreId+1);
+    cfgWrite(c, coreId+1);*/
+   
+    unsigned coreId = GET_GLOBAL_CORE_ID(mSpawnChan);
+    unsigned v;
+    read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+    //asm("waiteu");
+    while (v != coreId)
+        read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+    write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
 }
 
 // Connect a channel
 void _connect(unsigned to, int c1, int c2) {
-    unsigned destResId = GEN_CHAN_RI(to, PROG_CHAN_OFF+c2);
-    //asm("setd res[%0], %1" :: "r"(progChan[c1]), "r"(destResId));
-    SETD(progChan[c1], destResId);
+    SETD(progChan[c1], GEN_CHAN_RI(to, PROG_CHAN_OFF+c2));
 }
 
 // Idle (thread 0 only) for the next event to occur

@@ -27,7 +27,7 @@ XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
 COMPILE_FLAGS    = ['-S', '-O0', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
-LINK_FLAGS       = ['-nostartfiles']#, '-Xmapper', '--nochaninit']
+LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 

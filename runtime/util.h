@@ -163,7 +163,7 @@ unsigned GET_NODE_ID(unsigned resId) {
 // Given a resource id, return the core label. I.e. not separate node and core
 // values
 static inline
-unsigned GET_CORE_ID(unsigned resId) {
+unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
     unsigned int n, c;
     asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
     n &= 0xFF;

@@ -39,7 +39,6 @@
 #define BYTES_PER_WORD           4
 #define MAX_THREADS              8
 #define MAX_CHANNELS             32
-#define CORES_PER_NODE           4
                                 
 // Runtime specs                
 #define NUM_ARGS                 4
@@ -71,7 +70,6 @@
 // Control tokens
 #define CT_COMPLETED             0x5
 
-// For cmp/codegen.c
-//#define RES_TYPE_SYNC            0x3
+#define SWITCH_SCRATCH_REG       3
 
 #endif
