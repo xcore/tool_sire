@@ -21,10 +21,11 @@ void       newAsyncThread     (unsigned);
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
     
-    t_argument argTypes[NUM_ARGS];
-    unsigned argValues[NUM_ARGS];
-    int argLengths[NUM_ARGS];
-    int procIndex, numArgs;
+    int procIndex;
+    int numArgs;
+    t_argument argTypes[MAX_PROC_PARAMETERS];
+    unsigned argValues[MAX_PROC_PARAMETERS];
+    int argLengths[MAX_PROC_PARAMETERS];
     unsigned threadId = GET_THREAD_ID();
     
     // Initialis1e this (new) thread
@@ -34,10 +35,11 @@ void runThread(unsigned senderId) {
     initGuestConnection(spawnChan[threadId], senderId);
     
     // Receive closure data
-    {procIndex, numArgs} = receiveClosure(spawnChan[threadId], argTypes, argValues, argLengths);
+    {procIndex, numArgs} = receiveClosure(spawnChan[threadId], 
+            argTypes, argValues, argLengths);
 
     // Run the procedure
-    runProcedure(procIndex, (argValues, unsigned int[]), numArgs);
+    runProcedure(procIndex, argValues, numArgs);
 
     // Complete the migration by sending back any results
     informCompleted(spawnChan[threadId], senderId);
@@ -157,8 +159,8 @@ void receiveArguments(unsigned c, int numArgs,
         
         case t_arg_VAL:
             // Assign the val value directly
-            argValues[i] = INS(c);
             argLengths[i] = 1;
+            argValues[i] = INS(c);
             break;
         
         default:
@@ -282,7 +284,7 @@ void newAsyncThread(unsigned senderId) {
     asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
     asm("ldap r11, runThread" 
         " ; init t[%0]:pc, r11" :: "r"(t) : "r11");
-    asm("ldap r11, slaveYeild"  
+    asm("ldap r11, slaveYeild" 
         " ; init t[%0]:lr, r11" :: "r"(t) : "r11");
                              
     // Set senderId arg 

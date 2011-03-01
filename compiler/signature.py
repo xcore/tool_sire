@@ -1,6 +1,7 @@
 import sys
 from type import Type
 import semantics
+import definitions as defs
 
 # Valid types that can be taken by each formal type
 param_conversions = {
@@ -26,9 +27,14 @@ class SignatureTable(object):
 
     def insert(self, type, node):
         """ Insert a procedure signature """
+        if (node.formals.params 
+                and len(node.formals.params) > defs.MAX_PROC_PARAMETERS):
+            return False
+
         self.tab[node.name] = Signature(node.name, type, node.formals.params)
         if(self.debug):
             print("Inserted sig for '{}' ({})".format(node.name, type))
+        return True
 
     def lookup_param_type(self, name, i):
         return self.tab[name].params[i].type

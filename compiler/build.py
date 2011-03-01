@@ -90,12 +90,12 @@ class Build(object):
         self.cleanup(outfile)
         return s
 
-    def compile_only(self, program_buf, outfile):
+    def compile_only(self, program_buf, outfile, device):
         """ Compile the program only
         """
         
         # Create headers
-        s = self.create_headers()
+        s = self.create_headers(device)
         
         # Generate the assembly
         (lines, cp) = self.generate_assembly(program_buf)

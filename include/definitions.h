@@ -41,7 +41,7 @@
 #define MAX_CHANNELS             32
                                 
 // Runtime specs                
-#define NUM_ARGS                 4
+#define MAX_PROC_PARAMETERS      8
 #define MAX_PROCS                10
 //#define JUMP_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET)
 //#define SIZE_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET) 

@@ -301,7 +301,7 @@ class Parser(object):
     def p_expr_list(self, p):
         '''expr_list : empty
                      | expr_seq'''
-        p[0] = ast.ExprList(p[1] if p[1] else None, self.coord(p))
+        p[0] = ast.ExprList(p[1] if p[1] else [], self.coord(p))
 
     def p_expr_seq(self, p):
         '''expr_seq : expr

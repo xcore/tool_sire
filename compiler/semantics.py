@@ -116,6 +116,11 @@ class Semantics(ast.NodeVisitor):
         self.error.report_error("procedure '{}' already declared"
                 .format(name), coord)
 
+    def procedure_def_error(self, name, coord):
+        """ Re-definition error """
+        self.error.report_error("procedure '{}' definition invalid"
+                .format(name), coord)
+
     def unused_warning(self, name, coord):
         """ Unused variable warning """
         self.error.report_warning("variable '{}' declared but not used"
@@ -154,7 +159,8 @@ class Semantics(ast.NodeVisitor):
         if node.name == 'main':
             node.name = '_'+node.name
         if self.sym.insert(node.name, node.type, node.coord):
-            self.sig.insert(node.type, node)
+            if not self.sig.insert(node.type, node):
+                self.procedure_def_error(node.name, node.coord)
         else:
             self.redecl_error(node.name, node.coord)
         self.proc_names.append(node.name)

@@ -193,7 +193,7 @@ def builder(outfile, compile_only):
             num_cores))
     builder = build.Build(num_cores, sem, verbose, show_calls)
     if compile_only:
-        proceede = builder.compile_only(translate_buf, outfile)
+        proceede = builder.compile_only(translate_buf, outfile, device)
     else:
         proceede = builder.run(translate_buf, outfile, device)
 

@@ -13,7 +13,8 @@
 runProcedure:
 
 // NOTE: maximum of 8 arguments can be used
-    entsp 9
+
+    entsp 8 
     stw r8,  sp[5]
     stw r9,  sp[6]
     stw r10, sp[7]
@@ -27,7 +28,7 @@ runProcedure:
     eq r9, r10, r2    // r9 = i == numArgs
     bt r9, .LrunProc  // if (i == numArgs) runProc
 
-    ldw r9, r11[r10]  // r9 = args[i]
+    ldw r9, r1[r10]   // r9 = args[i]
     sub r8, r10, 3    // r8 = i - 3
     stw r9, r3[r8]    // sp[i-3] = args[i]
     
@@ -54,7 +55,7 @@ runProcedure:
     ldw r8,  sp[5]
     ldw r9,  sp[6]
     ldw r10, sp[7]
-    retsp 9
+    retsp 8
 
     .cc_bottom runProcedure.function
 

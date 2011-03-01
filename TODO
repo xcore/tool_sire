@@ -6,6 +6,9 @@ General compiler-related
 
 - Add more error cases to improve syntax error reporting.
 
+- Add more error synchronisation points in the parser to reduce erronous parsing
+  after a syntax error.
+
 - Write tests for each rule of semantic analysis, check that it behaves well on
   all cases that cause errors and warnings.
 
@@ -38,8 +41,6 @@ on implementation
 
 - ON: Fail nicely with invalid core ids, e.g. core[0] or core[-1]
 
-- ON: load args 5 onwards on to the stack.
-
 Done
 ====
 
@@ -57,6 +58,8 @@ Done
 - ON: raise proper exception when no avilable threads
 
 - ON: Implement referenced variables (or restrict their use with on).
+
+- ON: load args 5 onwards on to the stack.
 
 Skipped
 =======
