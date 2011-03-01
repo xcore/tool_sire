@@ -1,0 +1,34 @@
+val LENGTH := 10;
+
+proc foo(val a, val b, val c, val d, val e, val f, val g, val h) is
+  var r;
+  r := a+b+c+d+e+f+g+h
+
+proc bar(val a, val b, val c, val d, e[n], val n) is
+  var i;
+  var r;
+{ r := a+b+c+d
+; for i:=0 to n-1 do r := r + e[n]
+}
+
+proc baz(val a, val b, val c, val d, e[n], val n, f[m], val m) is
+  var i;
+  var r;
+{ r := a+b+c+d
+; for i:=0 to n-1 do r := r + e[n]
+; for i:=0 to m-1 do r := r + f[n]
+}
+
+proc main() is
+  var i;
+  var a[LENGTH];
+  var b[2*LENGTH];
+{ on core[NUM_CORES-1] do foo(1, 2, 3, 4, 5, 6, 7, 8)
+; for i:=0 to LENGTH-1 do 
+    a[i] := 1
+; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, LENGTH)
+; for i:=0 to (2*LENGTH)-1 do 
+    b[i] := 1
+; on core[NUM_CORES-1] do baz(1, 2, 3, 4, a, LENGTH, b, 2*LENGTH)
+}
+

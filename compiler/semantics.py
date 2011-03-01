@@ -90,8 +90,9 @@ class Semantics(ast.NodeVisitor):
     def check_elem_types(self, elem, types):
         """ Given an elem and a set of types, check if one matches """
         t = self.get_elem_type(elem)
-        for x in types:
-            if x == t: return True
+        if t:
+            for x in types:
+                if x == t: return True
         return False
 
     # Errors and warnings =================================
