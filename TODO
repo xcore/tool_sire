@@ -38,6 +38,8 @@ on implementation
 
 - ON: Fail nicely with invalid core ids, e.g. core[0] or core[-1]
 
+- ON: load args 5 onwards on to the stack.
+
 Done
 ====
 

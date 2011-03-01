@@ -7,7 +7,7 @@
 #include "host.h"
 #include "memory.h"
 
-extern void runProcedure      (unsigned int, int, int, unsigned int[]);
+extern void runProcedure      (int, unsigned int[], int);
 
 void       initGuestConnection(unsigned, unsigned);
 {int, int} receiveClosure     (unsigned, t_argument[], unsigned[], int[]);
@@ -37,7 +37,7 @@ void runThread(unsigned senderId) {
     {procIndex, numArgs} = receiveClosure(spawnChan[threadId], argTypes, argValues, argLengths);
 
     // Run the procedure
-    runProcedure(spawnChan[threadId], threadId, procIndex, (argValues, unsigned int[]));
+    runProcedure(procIndex, (argValues, unsigned int[]), numArgs);
 
     // Complete the migration by sending back any results
     informCompleted(spawnChan[threadId], senderId);

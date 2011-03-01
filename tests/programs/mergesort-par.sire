@@ -1,62 +1,87 @@
-port led : 0x00010600;
-val LENGTH:=1500;
-val THRESHOLD:=1000;
+%port led : 0x00010600;
+val LENGTH:=4;
+val THRESHOLD:=4;
 var a[LENGTH];
+var scratch[LENGTH];
 
 % Merge
-proc merge(a[], b[], c[], val m, val n) is
+proc merge(a[m], b[n], array[o], scratch[o], val m, val n, val o) is
   var i;
   var j;
   var k;
-{ i:=0
-; j:=0
+{ i:=0 
+; j:=0 
 ; k:=0
-; while (i<m) and (j<n) do 
-  { if(a[i] <= b[j]) 
-    then
-    { c[k] := a[i] 
-    ; i:=i+1 
-    ; k:=k+1
+; while (i < m) and (j < n) do 
+  { if(a[i] <= b[j])
+    then 
+    { scratch[k] := a[i]
+    ; i := i+1
     } 
     else 
-    { c[k] := b[j]
-    ; j:=j+1 
-    ; k:=k+1
+    { scratch[k] := b[j]
+    ; j := j+1 
     }
+    ; k := k+1
   }
-; if i<m then c[k] := a[i] else skip
-; if j<n then c[k] := b[j] else skip
+; if i<m then
+    while i<m do
+    {  scratch[k] := a[i] 
+    ; k := k+1
+    ; i := i+1
+    }
+  else skip
+; if j<n then 
+    while j<n do
+    { scratch[k] := b[j] 
+    ; k := k+1
+    ; j := j+1
+    }
+  else skip
+
+  % Copy scratch back into the array
+; for i:=0 to o-1 do
+    array[i] := scratch[i]
 }
 
 % Merge sort
-proc msort(val t, val n, array[], val len) is
+proc msort(val t, val n, array[len], scratch[len], val len) is
   var a[];
   var b[];
+  var sa[];
+  var sb[];
   var i;
   var j;
-{ led ! 1
-; if len > 1 then 
+{ %led ! 1
+  if len > 1 then 
   { i := len / 2
   ; j := len - i
   ; a aliases array[0..]
   ; b aliases array[i..]
-  ; if len > THRESHOLD then
-    { msort(t, n/2, a, i) 
-    | on core[t+(n/2)] : msort(t+(n/2), n/2, b, j) 
+  ; sa aliases scratch[0..]
+  ; sb aliases scratch[i..]
+  ; %if len > THRESHOLD then
+    if n = 1 then skip
+    else
+    { msort(t, n/2, a, sa, i) 
+    | on core[t+(n/2)] do msort(t+(n/2), n/2, b, sb, j) 
     }
-    else 
-    { msort(t, n/2, a, i) 
-    ; msort(t+(n/2), n/2, b, j) 
-    }
-  ; merge(a, b, array, i, j)
+    %else
+    %{ msort(t, n/2, a, scratch, i) 
+    %; msort(t+(n/2), n/2, b, scratch, j) 
+    %}
+  %; merge(a, b, array, scratch, i, j, len)
   }
   else skip
-; led ! 0
+%; led ! 0
 }
 
-% Main
+% Ouput: 0123456789
 proc main() is
   var i;
-{ for i:=0 to LENGTH-1 do a[i] := LENGTH-i
-; msort(0, NUM_CORES, a, LENGTH)
+{ for i:=0 to LENGTH-1 do a[i] := LENGTH-(i+1)
+; msort(0, NUM_CORES, a, scratch, LENGTH)
+; for i:=0 to LENGTH-1 do printval(a[i])
+; printstrln("")
 }
+

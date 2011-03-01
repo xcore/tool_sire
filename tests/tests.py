@@ -135,5 +135,5 @@ if __name__ == '__main__':
     if init():
         sys.argv.append('-v')
         generate_program_tests()
-     #   generate_feature_tests()
+        generate_feature_tests()
         unittest.main()
