@@ -1,34 +1,62 @@
-val LENGTH := 10;
+val LENGTH := 2;
 
-proc foo(val a, val b, val c, val d, val e, val f, val g, val h) is
-  var r;
-  r := a+b+c+d+e+f+g+h
+proc foo(val a, val b, val c, val d, val e, val f, val g, r) is
+  r := a+b+c+d+e+f+g
 
-proc bar(val a, val b, val c, val d, e[n], val n) is
+proc bar(val a, val b, val c, val d, e[n], val n, r) is
   var i;
-  var r;
 { r := a+b+c+d
-; for i:=0 to n-1 do r := r + e[n]
+; for i:=0 to n-1 do r := r + e[i]
 }
 
-proc baz(val a, val b, val c, val d, e[n], val n, f[m], val m) is
+proc baz(val a, val b, val c, r, e[n], val n, f[m], val m) is
+  var i;
+{ r := a+b+c
+; for i:=0 to n-1 do r := r + e[i]
+; for i:=0 to m-1 do r := r + f[i]
+}
+
+proc cat(val a, val b, val c, val d, w[a], x[b], y[c], z[d]) is
   var i;
   var r;
-{ r := a+b+c+d
-; for i:=0 to n-1 do r := r + e[n]
-; for i:=0 to m-1 do r := r + f[n]
+{ r := 0
+; for i:=0 to a-1 do r := r + w[i]
+; for i:=0 to b-1 do r := r + x[i]
+; for i:=0 to c-1 do r := r + y[i]
+; for i:=0 to d-1 do r := r + z[i]
 }
 
 proc main() is
   var i;
+  var r;
   var a[LENGTH];
   var b[2*LENGTH];
-{ on core[NUM_CORES-1] do foo(1, 2, 3, 4, 5, 6, 7, 8)
+  var c[3*LENGTH];
+  var d[4*LENGTH];
+{ 
+  % All 8 arguments with a referenced var
+  on core[NUM_CORES-1] do foo(1, 2, 3, 4, 5, 6, 7, r)
+; printvalln(r)
+
+  % An array onto the stack with a referenced var
 ; for i:=0 to LENGTH-1 do 
-    a[i] := 1
-; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, LENGTH)
+    a[i] := 5+i
+; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, LENGTH, r)
+; printvalln(r)
+
+  % Two arrays onto the stack
+; for i:=0 to LENGTH-1 do 
+    a[i] := 4+i
 ; for i:=0 to (2*LENGTH)-1 do 
-    b[i] := 1
-; on core[NUM_CORES-1] do baz(1, 2, 3, 4, a, LENGTH, b, 2*LENGTH)
+    b[i] := a[LENGTH-1]+i
+; on core[NUM_CORES-1] do baz(1, 2, 3, r, a, LENGTH, b, 2*LENGTH)
+; printvalln(r)
+
+  % Four arrays onto the stack
+; for i:=0 to (3*LENGTH)-1 do 
+    c[i] := i 
+; for i:=0 to (4*LENGTH)-1 do 
+    d[i] := i 
+; on core[NUM_CORES-1] do cat(LENGTH, LENGTH*2, LENGTH*3, LENGTH*4, a, b, c, d)
 }
 

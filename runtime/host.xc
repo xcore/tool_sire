@@ -140,7 +140,7 @@ void receiveArguments(unsigned c, int numArgs,
         case t_arg_ALIAS:
             // Allocate space for the array
             argLengths[i] = INS(c);
-            argValues[i] = memAlloc(argLengths[i]);
+            argValues[i] = memAlloc(argLengths[i]*BYTES_PER_WORD);
             
             // Receive each element of the array and write straight to memory
             for(int j=0; j<argLengths[i]; j++) {

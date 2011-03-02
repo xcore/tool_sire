@@ -30,6 +30,7 @@ program_tests = [
     Test('bubblesort',      '0123456789\n'),
     Test('quicksort',       '0123456789\n'),
     Test('mergesort-seq',   '0123456789\n'),
+    Test('mergesort-par',   '0123456789101112131415\n', [4, 16]),
     Test('euclid-loop',     '8\n7\n1\n'),
     Test('euclid-rec',      '8\n7\n1\n'),
     Test('distribute',      '', [4, 16, 32, 64]),

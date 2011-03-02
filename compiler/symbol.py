@@ -68,9 +68,14 @@ class SymbolTable(object):
     # each new scope
     def lookup(self, key):
         """ Lookup a symbol in scope order """
+        symbol = None
         for x in reversed(self.scope):
-            if x.name == key: return x
-        return None
+            if x.name == key: 
+                symbol = x
+                break
+        #if self.debug:
+        #    print('Lookup: '+key+' found {}'.format(symbol))
+        return symbol
 
     def lookup_scoped(self, key):
         """ Lookup a symbol in the current scope """
@@ -80,8 +85,9 @@ class SymbolTable(object):
 
     def check_decl(self, key):
         """ Check a symbol has been declared """
-        #return self.tab.haskey(key)
-        return key in self.tab
+        s = self.lookup(key) 
+        #print("check decl: "+key+" is {}".format(not s == None))
+        return not s == None
 
     def check_form(self, key, forms):
         """ Check a symbol has been declared with the correct form """

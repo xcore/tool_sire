@@ -61,17 +61,21 @@ class Semantics(ast.NodeVisitor):
         
         # If its a single identifer, look it up (if it exists)
         elif isinstance(elem, ast.ElemId):
-            if self.sym.check_decl(elem.name):
-                return self.sym.lookup(elem.name).type
+            s = self.sym.lookup(elem.name)
+            if s: 
+                return s.type
             else:
                 self.nodecl_error(elem.name, 'single', None)
+                return None
         
         # If its a subscripted identifier, lookup and return subscripted type
         elif isinstance(elem, ast.ElemSub):
-            if self.sym.check_decl(elem.name):
-                return self.sym.lookup(elem.name).type.subscriptOf()
+            s = self.sym.lookup(elem.name)
+            if s:
+                return s.type.subscriptOf()
             else:
                 self.nodecl_error(elem.name, 'array', None)
+                return None
         
         # Otherwise, return the specified elem type
         else:
@@ -90,10 +94,7 @@ class Semantics(ast.NodeVisitor):
     def check_elem_types(self, elem, types):
         """ Given an elem and a set of types, check if one matches """
         t = self.get_elem_type(elem)
-        if t:
-            for x in types:
-                if x == t: return True
-        return False
+        return True if t and any([x==t for x in types]) else False
 
     # Errors and warnings =================================
 
@@ -241,7 +242,7 @@ class Semantics(ast.NodeVisitor):
 
     def visit_stmt_aliases(self, node):
         if not self.sym.check_form(node.dest, ['alias']):
-            self.type_error('alias', node.left, node.coord)
+            self.type_error('alias', node.dest, node.coord)
         if not self.sym.check_form(node.name, ['var', 'alias', 'array']):
             self.type_error('alias', node.name, node.coord)
 

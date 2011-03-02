@@ -62,6 +62,7 @@ class Build(object):
         # Generate the assembly
         if s: s = self.generate_assembly(program_buf)
         if s: (lines, cp) = s
+        #print(''.join(cp))
 
         # Write the program back out and assemble
         if s: s = self.assemble(PROGRAM, 'S', ''.join(lines))
@@ -224,6 +225,7 @@ class Build(object):
         """
         self.verbose_msg('Modifying assembly output')
         
+        #print(''.join(lines))
         (lines, cp) = self.extract_constants(lines)
         lines = self.insert_bottom_labels(lines)
         lines = self.insert_frame_sizes(lines)
@@ -277,8 +279,11 @@ class Build(object):
                     if x.find('.section .cp.const') >= 0:
                         x = '\t.section .cp.rodata, "ac", @progbits\n'
 
-                    # Omit elimination directives (for strings).
-                    if x.find('.cc_top')==-1 and x.find('.cc_bottom')==-1:
+                    # Leave .call and .globreads where they are
+                    if (x.find('.call')!=-1 or x.find('.globread')!=-1):
+                        new.append(x)
+                    # Omit elimination directives (for strings), 
+                    elif (x.find('.cc_top')==-1 and x.find('.cc_bottom')==-1):
                         cp.append(x)
 
                 # If we're outside a cp section, add to a new list
