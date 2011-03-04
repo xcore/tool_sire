@@ -1,3 +1,6 @@
+Vim sire syntax file
+--------------------
+
 To install vim syntax file for the sire language:
 
 (instructions in vim > :help new-filetype)

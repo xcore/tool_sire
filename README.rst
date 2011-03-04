@@ -3,7 +3,7 @@ sire
 
 :Stable release: Unreleased
 :Status: Experimental
-:Maintainer: jameshanlon
+:Maintainer: http://github.com/jameshanlon
 :Description: A language and runtime system for dynamic process creation on the XMOS XS1 architecture
 
 sire is a small block-structured, imperative language with features to
