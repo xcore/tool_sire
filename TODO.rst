@@ -1,8 +1,8 @@
 Todo
-====
+....
 
 General compiler-related
--------------------------------------------------------------------------------
+========================
 
 - Add more error cases to improve syntax error reporting.
 
@@ -34,15 +34,19 @@ General compiler-related
 - Read devices directory to determine valid number of cores.
 
 on implementation
--------------------------------------------------------------------------------
+=================
 
 - ON: Reclaim procedure and argument data stored in _fp after an 'on' has
   completed.
 
 - ON: Fail nicely with invalid core ids, e.g. core[0] or core[-1]
 
+
 Done
-====
+....
+
+General compiler-related
+========================
 
 - Add NUM_CORES keyword
 
@@ -50,6 +54,9 @@ Done
 
 - Adjust syntax to enforce array bounds for on statements, e.g. 
     proc foo(a[n], val n)
+
+on implementation
+=================
 
 - ON: Check for a copy of a procedure before receiving.
 
@@ -61,8 +68,9 @@ Done
 
 - ON: load args 5 onwards on to the stack.
 
+
 Skipped
-=======
+.......
 
 - Find out why asm expressions produce syntax errors, e.g. 
     .set .foo (_cp/4)+3
