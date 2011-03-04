@@ -31,8 +31,7 @@ Known issues
 Dependencies
 ============
 
-- Python 3.2 or 3.1 with the argparse module avilable as 'python' on the command
-   line.
+- Python 3.2 or 3.1 with the argparse module avilable as 'python' on the command line.
 - PLY (Python Lex-Yacc) 3.3+, http://www.dabeaz.com/ply/.
 - XMOS tools (4.4.2+): xcc, xas, xsim, xobjdump and xrun.
 
