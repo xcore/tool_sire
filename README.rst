@@ -31,9 +31,26 @@ Known issues
 Dependencies
 ============
 
- - Python 3.2 (latest) or 3.1 with the argparse module.
+ - Python 3.2 or 3.1 with the argparse module avilable as 'python' on the command
+   line.
  - PLY (Python Lex-Yacc) 3.3+, http://www.dabeaz.com/ply/.
  - XMOS tools (4.4.2+): xcc, xas, xsim, xobjdump and xrun.
+
+Installation
+============
+
+Ensure the above dependencies are satisfied and add SIRE_INSTALL_PATH to your
+environment and PATH:
+
+  export SIRE_INSTALL_PATH=/home/jamie/sire
+  PATH=$SIRE_INSTALL_PATH:$PATH
+
+Getting started
+===============
+
+  $ echo 'proc main() is printstrln("hello world")' | sire
+  $ xsim a.xe
+  hello world
 
 Issues
 ======
