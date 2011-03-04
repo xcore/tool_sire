@@ -1,11 +1,11 @@
-#! /usr/bin/env python3
+#! /usr/bin/env python
 
 import sys
 import io
 import os
 import argparse
 
-from ply import *
+#from ply import *
 from parser import Parser
 import logging
 
