@@ -21,18 +21,22 @@ Key features
 To do
 =====
 
-- See TODO.rst
+- See TODO.rst.
 
 Known issues
 ============
 
-- See TODO.rst
+- Plenty, see TODO.rst.
 
+Required repositories
+=====================
+
+- xdoc git@github.com:xcore/xdoc.git
+  
 Dependencies
 ============
 
-- Python 3.2 or 3.1 with the argparse module avilable as 'python' on the command
-    line.
+- Python 3.2 or 3.1 with the argparse module avilable as 'python3' on the command line.
 - PLY (Python Lex-Yacc) 3.3+, http://www.dabeaz.com/ply/.
 - XMOS tools (4.4.2+): xcc, xas, xsim, xobjdump and xrun.
 
@@ -40,7 +44,7 @@ Installation
 ============
 
 Ensure the above dependencies are satisfied and add SIRE_INSTALL_PATH to your
-environment and PATH::
+environment and PATH by adding the following to your .bashrc file::
 
   export SIRE_INSTALL_PATH=/home/jamie/sire
   PATH=$SIRE_INSTALL_PATH:$PATH

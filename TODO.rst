@@ -36,42 +36,13 @@ General compiler-related
 on implementation
 -----------------
 
-- ON: Reclaim procedure and argument data stored in _fp after an 'on' has
+- Reclaim procedure and argument data stored in _fp after an 'on' has
   completed.
 
-- ON: Fail nicely with invalid core ids, e.g. core[0] or core[-1]
+- Fail nicely with invalid core ids, e.g. core[0] or core[-1]
 
+- Raise proper exception when no avilable threads.
 
-Done
-====
-
-General compiler-related
-------------------------
-
-- Add NUM_CORES keyword
-
-- Constant pool (ideally) needs to be replicated amongst slaves.
-
-- Adjust syntax to enforce array bounds for on statements, e.g. 
-    proc foo(a[n], val n)
-
-on implementation
------------------
-
-- ON: Check for a copy of a procedure before receiving.
-
-- ON: Use master thread for hosting last instead of first
-
-- ON: raise proper exception when no avilable threads
-
-- ON: Implement referenced variables (or restrict their use with on).
-
-- ON: load args 5 onwards on to the stack.
-
-
-Skipped
-=======
-
-- Find out why asm expressions produce syntax errors, e.g. 
-    .set .foo (_cp/4)+3
+- Free heap-allocated memory for arguments (and procedures?) when remote
+  execution completes.
 
