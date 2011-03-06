@@ -272,7 +272,8 @@ def main(args):
 
     # Display (pretty-print) the AST
     if pprint: 
-        walker.walk_program(printer.Printer())
+        walker = printer.Printer()
+        walker.walk_program(ast)
         return SUCCESS
    
     # Translate the AST
