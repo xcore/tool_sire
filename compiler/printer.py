@@ -3,6 +3,7 @@ import ast
 from walker import NodeWalker
 
 INDENT = 2
+FIRST_INDENT = '^'
 SEQ_INDENT = ';' + ' '*(INDENT-1)
 PAR_INDENT = '|' + ' '*(INDENT-1) 
 
@@ -19,8 +20,11 @@ class Printer(NodeWalker):
         self.buf.write(self.indt(d)+s)
 
     def indt(self, d):
-        """ Produce an indent """
-        return (' '*INDENT)*(d-1) + (self.indent[-1] if d>0 else '')
+        """ Produce an indent. If its the first statement of a seq or par block
+            we only produce a single space. 
+        """
+        return (' ' if self.indent[-1]==FIRST_INDENT else 
+            (' '*INDENT)*(d-1) + (self.indent[-1] if d>0 else ''))
     
     # Program ============================================
 
@@ -58,8 +62,9 @@ class Printer(NodeWalker):
             self.defn(p, d)
 
     def defn(self, node, d):
+        name = node.name if node.name != '_main' else 'main'
         self.buf.write('{} {}({}) is\n'.format(
-                node.type.specifier, node.name, self.formals(node.formals)))
+                node.type.specifier, name, self.formals(node.formals)))
         self.decls(node.decls, d+1)
         self.stmt(node.stmt, d+1)
         self.buf.write('\n\n')
@@ -72,7 +77,7 @@ class Printer(NodeWalker):
     def param(self, node):
         s = '{}'.format(node.name)
         if node.type.form == 'alias':
-            s += '[{}]'.format(node.expr)
+            s += '[{}]'.format(self.expr(node.expr))
         if node.type.specifier == 'var':
             pass
         else:
@@ -82,20 +87,26 @@ class Printer(NodeWalker):
     # Statements ==========================================
 
     def stmt_seq(self, node, d):
-        self.buf.write(self.indt(d-1)+'{\n')
-        self.indent.append(SEQ_INDENT)
-        for x in node.children(): 
+        self.buf.write(self.indt(d-1)+'{')
+        self.indent.append(FIRST_INDENT)
+        for (i, x) in enumerate(node.children()): 
             self.stmt(x, d)
             self.buf.write('\n')
+            if i==0:
+                self.indent.pop()
+                self.indent.append(SEQ_INDENT)
         self.indent.pop()
         self.buf.write(self.indt(d-1)+'}')
 
     def stmt_par(self, node, d):
-        self.buf.write(self.indt(d-1)+'{\n')
-        self.indent.append(PAR_INDENT)
-        for x in node.children():
+        self.buf.write(self.indt(d-1)+'{')
+        self.indent.append(FIRST_INDENT)
+        for (i, x) in enumerate(node.children()):
             self.stmt(x, d)
             self.buf.write('\n')
+            if i==0:
+                self.indent.pop()
+                self.indent.append(PAR_INDENT)
         self.indent.pop()
         self.buf.write(self.indt(d-1)+'}')
 
@@ -134,15 +145,15 @@ class Printer(NodeWalker):
         self.indent.pop()
 
     def stmt_for(self, node, d):
-        self.out(d, 'for {} to {} do\n'.format(self.elem(node.var),
-            self.expr(node.init), self.expr(node.bound)))
+        self.out(d, 'for {} := {} to {} do\n'.format(
+            self.elem(node.var), self.expr(node.init), self.expr(node.bound)))
         self.indent.append(' '*INDENT)
         self.stmt(node.stmt, d+1)
         self.indent.pop()
 
     def stmt_on(self, node, d):
-        self.out(d, 'on {}: '.format(self.elem(node.core)))
-        self.stmt(node.pcall, d)
+        self.out(d, 'on {} do {}'.format(self.elem(node.core), 
+            self.elem(node.pcall)))
 
     def stmt_connect(self, node, d):
         self.out(d, 'connect {} to {} : {}'.format(
@@ -179,7 +190,10 @@ class Printer(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_fcall(self, node):
-        return '{}({})'.format(node.name, self.exprlist(node.args))
+        return '{}({})'.format(node.name, self.expr_list(node.args))
+
+    def elem_pcall(self, node):
+        return '{}({})'.format(node.name, self.expr_list(node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)

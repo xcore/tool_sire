@@ -303,6 +303,17 @@ class Semantics(ast.NodeVisitor):
         #if not self.sym.check_form(node.name, ['array','alias']):
         #    self.form_error('subscript', node.name, node.coord)
 
+    def visit_elem_pcall(self, node):
+        # Check the name is declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'process', node.coord)
+        else:
+            # Check the arguments are correct
+            if not self.sig.check_args('proc', node):
+                self.badargs_error(node.name, node.coord)
+            # And mark the symbol as used
+            self.sym.mark_decl(node.name)
+
     def visit_elem_fcall(self, node):
         # Check the name is declared
         if not self.sym.check_decl(node.name):

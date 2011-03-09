@@ -52,6 +52,7 @@ class NodeVisitor(object):
     def visit_elem_group(self, node): pass
     def visit_elem_sub(self, node): pass
     def visit_elem_fcall(self, node): pass
+    def visit_elem_pcall(self, node): pass
     def visit_elem_number(self, node): pass
     def visit_elem_boolean(self, node): pass
     def visit_elem_string(self, node): pass
@@ -718,6 +719,30 @@ class ElemFcall(Node):
 
     def __repr__(self):
         s =  'ElemFcall('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class ElemPcall(Node):
+    def __init__(self, name, args, coord=None):
+        self.name = name
+        self.args = args
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.args is not None: c.append(self.args)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_elem_pcall(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ElemPcall('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.1
+#!/usr/bin/env python3
 
 #-----------------------------------------------------------------
 # Generate ast module from a specification

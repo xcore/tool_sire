@@ -281,7 +281,7 @@ class Parser(object):
     def p_stmt_on(self, p):
         'stmt : ON left DO name LPAREN expr_list RPAREN'
         p[0] = ast.StmtOn(p[2], 
-                ast.StmtPcall(p[4], p[6], self.coord(p)), 
+                ast.ElemPcall(p[4], p[6], self.coord(p)), 
                 self.coord(p))
 
     def p_stmt_connect(self, p):
