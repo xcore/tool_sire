@@ -1,4 +1,9 @@
 sire documentation
 ==================
 
-Todo.
+.. toctree::
+   :maxdepth: 2
+
+   usage
+   definition
+   implementation

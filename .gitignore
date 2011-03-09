@@ -6,13 +6,13 @@
 # *~
 
 *.py[co]
+parsetab.py
+parselog.txt
+parser.out
 compiler/parsetab.py
 compiler/parselog.txt
 compiler/parser.out
 include/numcores.h
-parsetab.py
-parselog.txt
-parser.out
 lextab.py
 out.x[ce]
 test.sire
@@ -20,3 +20,4 @@ dump.txt
 a.*
 *.o
 numcores.h
+doc/_build

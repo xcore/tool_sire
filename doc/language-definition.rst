@@ -1,4 +1,0 @@
-sire language definition
-========================
-
-Todo.
