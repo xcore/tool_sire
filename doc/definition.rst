@@ -187,32 +187,35 @@ while loop, which implements an algorithm to calculate the factorial of a number
 The ``for`` loop
 ================
 
-The \ttt{for} loop repetitively executes a loop body based on a pre and post
+The ``for`` loop repetitively executes a loop body based on a pre and post
 condition on a incrementing counter. This allows a simple iteration to be more
 simply expressed. The following code again implements the factorial algorithm,
-but with a for loop:
-\kwd{var} i, factorial: \kwd{int};
-factorial = 1;
-\kwd{for} i:=1 \kwd{to} n \kwd{do}
-  factorial := factorial * i
+but with a for loop::
+
+    var i;
+    var factorial;
+    { factorial =: 1
+    ; for i:=1 to n do
+        factorial := factorial * i
+    }
 
 The ``if`` statement
 ====================
 
-The \ttt{if} statement allows the conditional execution of statements. The
+The ``if`` statement allows the conditional execution of statements. The
 condition is evaluated as an arithmetic expression and if non-zero then the
-\ttt{then} part is executed, otherwise the \ttt{else} part is. The \ttt{else}
-part is required to solve the dangling else problem. The following code
-implements a recursive factorial algorithm, demonstrating the use of an if
-statement:
-\kwd{func} factorial(n: \kwd{int}) \kwd{is}
-  \kwd{if} n = 0 \kwd{then} \kwd{return} 1 \kwd{else} \kwd{return} n * factorial(n-1)
+``then`` part is executed, otherwise the ``else`` part is. The ``else`` part is
+required to solve the dangling else problem. The following code implements a
+recursive factorial algorithm, demonstrating the use of an if statement::
+
+    func factorial(val n) is
+      if n = 0 then return 1 else return n * factorial(n-1)
 
 The ``skip`` statement
 ======================
 
-The \ttt{skip} statement does nothing, but is used to fill an empty
-if statement's \ttt{else}.
+The ``skip`` statement does nothing, but is used to fill an empty if statement's
+``else``.
 
 Processes and functions
 =======================
@@ -221,40 +224,42 @@ Processes and functions
 .. % return statement
 .. % Recursion?
 
-\emph{Processes} and \emph{functions}, both types of \emph{procedure}, are a
+*Processes* and *functions*, both types of *procedure*, are a
 collection of one or more statements that perform some task. Functions are a
-special procedure type that do not cause any \emph{side effects} and only
-return a value. A function causes a side effect if apart from producing a value,
-it also modifies some state. This might include, for instance, changing the
+special procedure type that do not cause any *side effects* and only
+return a value. A function causes a side effect if it also modifies some
+external state. This might include, for instance, changing the
 value of a global variable, or modifying the contents of a referenced array. To
 prevent this from happening, functions cannot write to global variables or
 referenced parameters, invoke processes or use input or output operators. In
 contrast, processes do not return a value but have no such restrictions on side
 effects. 
 
-A process is defined using the \ttt{proc} keyword, followed by the process name,
+A process is defined using the ``proc`` keyword, followed by the process name,
 formal parameters, local variable declarations and then the body.  For example,
-the following process definition implements the bubble sort algorithm:
+the following process definition implements the bubble sort algorithm::
 
-\kwd{proc} sort(a: \kwd{int}[]; len: \kwd{int}) \kwd{is}
-  \kwd{var} i, j, tmp: \kwd{int};
-  \kwd{for} i:=0 \kwd{to} len-1 \kwd{do}   
-    \kwd{for} j:=0 \kwd{to} len-1 \kwd{do}
-      \kwd{if} a[j] > a[j+1]
-      \kwd{then} \{ tmp := a[j]; a[j] := a[j+1]; a[j+1] := tmp \}
-      \kwd{else} \kwd{skip}
+    proc sort(a[len]; len: int) is
+     var i;
+     var j;
+     var tmp;
+     for i:=0 to len-1 do 
+       for j:=0 to len-1 do
+         if a[j] > a[j+1]
+           then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+           else skip
 
-A process is invoked by naming the process and specifying any input parameters:
-\excode{\kwd{var} a: int[10];\\sort(a, 10)}
+A process is invoked by naming the process and specifying any input parameters::
 
-A function is defined in the same way as a process except with the \ttt{func}
-keyword, it must also complete with a \ttt{return} statement. The following
-function recursively calculates the \ttt{n}\textsuperscript{th} Fibonacci
-number:
+    sort(a, 10)
 
-\kwd{func} fib(n: \kwd{int}) \kwd{is}
-  \kwd{if} n > 1 \kwd{then} \kwd{return} fib(n-1) + fib(n-2)
-  \kwd{else} if n = 0 \kwd{then} \kwd{return} 0 \kwd{else} \kwd{return} 1
+A function is defined in the same way as a process except with the ``func``
+keyword, it must also complete with a ``return`` statement. The following
+function recursively calculates the ``n`` th Fibonacci number::
+
+    func fib(n: int) is
+      if n > 1 then return fib(n-1) + fib(n-2)
+      else if n = 0 then return 0 else return 1
 
 Functions can be called in the same way as processes or as part of an
 expression, as it is in the above example.  The formal parameters of a function
@@ -276,93 +281,95 @@ mutual-recursion is not supported.
 Program structure
 =================
 
-% What about visibility of function definitions?
+.. What about visibility of function definitions?
 
-A \sire program consists of a set of \emph{processes} and \emph{functions} and
-possibly some global state. The structure of a \sire program is as follows.
-Any constant, port or global variable declarations are made at the beginning,
+A sire program consists of a set of *processes* and *functions* and
+possibly some global state. The structure of a sire program is as follows.
+Any value, variable or port global declarations are made at the beginning,
 before any process or function definitions. Processes and functions may then be
 defined in any order. A program must contain a process called ``main`` as
 execution will start at this point. For example, a complete example sorting
-program may be defined as:
+program may be defined as::
 
-\kwd{const} LEN := 10;
-\kwd{var} a: int[LEN];
+    val LEN := 10;
+    var a[LEN];
 
-\kwd{proc} sort(a: \kwd{int}[]; len: \kwd{int}) \kwd{is}
-  \kwd{var} i, j, tmp: \kwd{int};
-  \kwd{for} i:=0 \kwd{to} len-1 \kwd{do}   
-    \kwd{for} j:=0 \kwd{to} len-1 \kwd{do}
-      \kwd{if} a[j] > a[j+1]
-      \kwd{then} \{ tmp := a[j]; a[j] := a[j+1]; a[j+1] := tmp \}
-      \kwd{else} \kwd{skip}
+    proc sort(a[len], val len) is
+      var i;
+      var j;
+      var tmp;
+      for i:=0 to len-1 do 
+        for j:=0 to len-1 do
+          if a[j] > a[j+1]
+          then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+          else skip
 
-\kwd{proc} main() \kwd{is}
-  sort(a, LEN)
+    proc main() is
+      sort(a, LEN)
 
--------------
-Communication
--------------
+..
+    -------------
+    Communication
+    -------------
 
-Concurrently executing processes are able to communicate by means of
-\emph{channels}. A channel is a bidirectional communication medium, established
-through \emph{connected} channel ends. Channel ends are available in a global
-address space, and accessed by a special system channel end array called
-\ttt{chan}. Before a channel can be used it must first be connected to another
-channel end, this is achieved with the connect statement. For example, execution
-of the statement: \excode{\kwd{connect} chan[0] \kwd{to} core[10] : chan[0]} on
-core 0 connects the local channel end \ttt{chan[0]} to the channel end
-\ttt{chan[0]} on core 10. This is sufficient to make a unidirectional
-connection, allowing messages to be received from core 0 by core 10, but when it
-is \emph{fully} connected and messages can be exchanged in both directions. To
-allow this, a connection must also be made at the other end:
-\excode{\kwd{connect} chan[0] \kwd{to} core[0] : chan[0]}
+    Concurrently executing processes are able to communicate by means of
+    \emph{channels}. A channel is a bidirectional communication medium, established
+    through \emph{connected} channel ends. Channel ends are available in a global
+    address space, and accessed by a special system channel end array called
+    \ttt{chan}. Before a channel can be used it must first be connected to another
+    channel end, this is achieved with the connect statement. For example, execution
+    of the statement: \excode{connect} chan[0] to} core[10] : chan[0]} on
+    core 0 connects the local channel end \ttt{chan[0]} to the channel end
+    \ttt{chan[0]} on core 10. This is sufficient to make a unidirectional
+    connection, allowing messages to be received from core 0 by core 10, but when it
+    is \emph{fully} connected and messages can be exchanged in both directions. To
+    allow this, a connection must also be made at the other end:
+    \excode{connect} chan[0] to} core[0] : chan[0]}
 
-Once a channel is connected, values can be sent and received using the
-\emph{input} and \emph{output} operators: '\ttt{?}' and '\ttt{!}'. The following
-code implements a buffer, illustrating the use of these operations:
+    Once a channel is connected, values can be sent and received using the
+    \emph{input} and \emph{output} operators: '\ttt{?}' and '\ttt{!}'. The following
+    code implements a buffer, illustrating the use of these operations:
 
-\kwd{proc} buffer() \kwd{is}
-    \kwd{var} x: \kwd{int};
-    \kwd{while} true \kwd{do} \{ chan[IN] ? x ; chan[OUT] ! x \}
+     proc} buffer() is}
+        var} x: int};
+        while} true do} \{ chan[IN] ? x ; chan[OUT] ! x \}
 
-The buffer simply copies values from the \ttt{IN} channel to the
-\ttt{OUT} channel. The output operator can also be used with ports.
+    The buffer simply copies values from the \ttt{IN} channel to the
+    \ttt{OUT} channel. The output operator can also be used with ports.
+..
 
+----------------
 Process creation
 ----------------
-\label{sec:closure}
 
-Process creation is the key feature of the \sire language and is provided with
-the \ttt{on} statement. Semantically, \ttt{on} is exactly the same as a regular
+Process creation is the key feature of the sire language and is provided with
+the ``on`` statement. Semantically, ``on`` is exactly the same as a regular
 process call, except that the computation is performed remotely. It is
-\emph{synchronous} in that it blocks the sending processes thread of execution
+*synchronous* in that it blocks the sending processes thread of execution
 until the new process has terminated; this behavior fits naturally with
 composing it in parallel with other tasks.
 
 The transmission of a process to a remote processor for execution requires a
-\emph{closure} of the process to be created. A closure is a data structure that
+*closure* of the process to be created. A closure is a data structure that
 contains the process' instructions, and a representation of the functions
-\emph{lexical environment}, that is the set of available variables and their
+*lexical environment*, that is the set of available variables and their
 values. \sire processes may have formal parameters of type integer value or
 array reference, so these must be included as part of the closure. Referenced
 arrays are copied and replicated at the destination. On completion, any
 referenced arrays are sent back to reflect any changes that were made in the
-original copy. 
+original copy. The statement::
 
-The statement:
+    var a[10];
+    on core[3] : sort(a, 10)
 
-\kwd{var} a: \kwd{int}[10]
-\kwd{on} core[10] : sort(a, 10)
-\end{egcode}
-spawns the \ttt{sort} process on core 10. The \ttt{core} array is a system
-variable, like the \ttt{chan} array, and is used to address the set of
-processing cores comprising the system. Because the \ttt{on} statement is
-synchronous, it is natural to to compose this in parallel with other statements.
-For example, the block:
-\begin{egcode}
-\kwd{var} a, b: \kwd{int}[10]
-\{ \kwd{on} core[10] : sort(a, 10) | sort(b, 10) \}
+spawns the ``sort`` process on core 3. The ``core`` array is a system variable
+and is used to address the set of processing cores comprising the system.
+Because the ``on`` statement is synchronous, it is natural to to compose this in
+parallel with other statements.  For example, the block::
+
+    var a[10];
+    var b[10];
+    { on core[10] do sort(a, 10) | sort(b, 10) }
 
 allows the thread to execute another sorting process whilst the spawned one is
 performed remotely.
@@ -371,8 +378,8 @@ performed remotely.
 References
 ----------
 
- .. [Hoare78] C. A. R. Hoare. Communicating sequential processes. *Commun. ACM*,
-     21(8):666–677, 1978.
+.. [Hoare78] C. A. R. Hoare. Communicating sequential processes. *Commun. ACM*,
+     21(8):666-677, 1978.
 
- .. [Occam82] David May. Occam. *SIGPLAN Not.*, 18(4):69–79, 1983.
+.. [Occam82] David May. Occam. *SIGPLAN Not.*, 18(4):69-79, 1983.
 

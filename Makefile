@@ -56,8 +56,8 @@ TEST_SUBDIRS =
 
 %.all:
 	cd $* && xmake all
-	cp -r doc/_build/html* ../tool_sire_gh-pages
-	cp -r doc/_build/.doctrees ../tool_sire_gh-pages
+	cp -r doc/_build/html/* ../tool_sire_gh-pages
+	cp -r doc/_build/html/.doctrees ../tool_sire_gh-pages
 
 %.clean:
 	cd $* && xmake clean

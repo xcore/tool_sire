@@ -5,19 +5,27 @@
 # *.[oa]
 # *~
 
+# Compiler
 *.py[co]
 parsetab.py
+lextab.py
 parselog.txt
 parser.out
-compiler/parsetab.py
-compiler/parselog.txt
-compiler/parser.out
-include/numcores.h
-lextab.py
+
+# Runtime
+numcores.h
 out.x[ce]
 test.sire
 dump.txt
 a.*
 *.o
-numcores.h
+
+# Documentation
 doc/_build
+doc/sire_documentation.aux
+doc/sire_documentation.idx
+doc/sire_documentation.log
+doc/sire_documentation.out
+doc/sire_documentation.pdf
+doc/sire_documentation.tex
+
