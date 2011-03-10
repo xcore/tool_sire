@@ -14,7 +14,7 @@ func factorial(val x) is
 
 % Ouput: 6, 120, 5040
 proc main() is
-{  printvalln(factorial(3))
-;  printvalln(factorial(5))
-;  printvalln(factorial(7))
+{ printvalln(factorial(3))
+; printvalln(factorial(5))
+; printvalln(factorial(7))
 }

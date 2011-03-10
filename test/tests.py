@@ -70,8 +70,8 @@ def init():
                 out=sys.stderr)
         return False
     else:
-        globals()['TEST_PROGRAMS_PATH'] = INSTALL_PATH+'/tests/programs'
-        globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+'/tests/features'
+        globals()['TEST_PROGRAMS_PATH'] = INSTALL_PATH+'/test/programs'
+        globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+'/test/features'
         return True
 
 def run_test(self, name, path, output, num_cores, args=[]):

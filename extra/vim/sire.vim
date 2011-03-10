@@ -14,12 +14,12 @@ syn keyword	xKeyword       true false skip
 syn keyword	xKeyword       on is with
 
 syn keyword	xStructure     if then else
-syn keyword     xRepeat        while do to for when
+syn keyword     xRepeat        while do for step until
 
 syn match       xBrackets       /\[\|\]/
 syn match       xParentheses    /(\|)/
 
-syn keyword  	xOperator      and or xor
+syn keyword  	xOperator      and or xor lor land
 syn match       xOperator      /:=\|!\|?\|!!\|??\|::=/
 syn match       xOperator      /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
 syn match       xOperator      /<<\|>>\|^\|&\||/

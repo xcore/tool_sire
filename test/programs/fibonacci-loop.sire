@@ -20,7 +20,7 @@ func fibonacci(val n) is
 
 % Output: 8, 89, 987
 proc main() is
-{  printvalln(fibonacci(6)) 
-;  printvalln(fibonacci(11))
-;  printvalln(fibonacci(16))
+{ printvalln(fibonacci(6)) 
+; printvalln(fibonacci(11))
+; printvalln(fibonacci(16))
 }

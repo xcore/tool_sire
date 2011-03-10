@@ -187,15 +187,15 @@ while loop, which implements an algorithm to calculate the factorial of a number
 The ``for`` loop
 ================
 
-The ``for`` loop repetitively executes a loop body based on a pre and post
-condition on a incrementing counter. This allows a simple iteration to be more
-simply expressed. The following code again implements the factorial algorithm,
-but with a for loop::
+The ``for`` loop repetitively executes a loop body based an index variable with
+pre and post conditions and an increment value. This allows a simple iteration
+to be clearly expressed. The following code again implements the factorial
+algorithm, but with a for loop::
 
     var i;
     var factorial;
     { factorial =: 1
-    ; for i:=1 to n do
+    ; for i:=1 step 1 until n do
         factorial := factorial * i
     }
 
@@ -243,7 +243,7 @@ the following process definition implements the bubble sort algorithm::
      var i;
      var j;
      var tmp;
-     for i:=0 to len-1 do 
+     for i:=0 step 1 until len-1 do 
        for j:=0 to len-1 do
          if a[j] > a[j+1]
            then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
@@ -298,7 +298,7 @@ program may be defined as::
       var i;
       var j;
       var tmp;
-      for i:=0 to len-1 do 
+      for i:=0 step 1 until len-1 do 
         for j:=0 to len-1 do
           if a[j] > a[j+1]
           then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
