@@ -13,7 +13,7 @@ parselog.txt
 parser.out
 
 # Runtime
-numcores.h
+device.h
 out.x[ce]
 test.sire
 dump.txt

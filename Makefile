@@ -49,15 +49,15 @@ PLUGIN_SUBDIRS =
 
 # This variable should contain a space separated list of all
 # the directories containing applications with a 'test' make target
-TEST_SUBDIRS = 
+TEST_SUBDIRS = test 
 
 # Provided that the above variables are set you shouldn't need to modify
 # the targets below here. 
 
 %.all:
 	cd $* && xmake all
-	cp -r doc/_build/html/* ../tool_sire_gh-pages
-	cp -r doc/_build/html/.doctrees ../tool_sire_gh-pages
+	cp -r doc/_build/html/* ../tool_sire_gh-pages/
+	cp -r doc/_build/html/.doctrees ../tool_sire_gh-pages/
 
 %.clean:
 	cd $* && xmake clean
