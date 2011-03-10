@@ -1,4 +1,0 @@
-Implementation notes
-====================
-
-To do.
