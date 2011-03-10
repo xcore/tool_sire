@@ -60,7 +60,24 @@ document.getElementById('d1').style.height=h2 + "px";
             
   <div class="section" id="using-sire">
 <h1>Using sire<a class="headerlink" href="#using-sire" title="Permalink to this headline">¶</a></h1>
-<p>To do.</p>
+<div class="section" id="setup-and-installation">
+<h2>Setup and installation<a class="headerlink" href="#setup-and-installation" title="Permalink to this headline">¶</a></h2>
+<p>Ensure the above dependencies are satisfied and add SIRE_INSTALL_PATH to your
+environment and PATH by adding the following to your .bashrc file, for example:</p>
+<div class="highlight-none"><div class="highlight"><pre>export SIRE_INSTALL_PATH=/path/to/sire
+PATH=$SIRE_INSTALL_PATH:$PATH
+</pre></div>
+</div>
+</div>
+<div class="section" id="getting-started">
+<h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
+<p>Compile and run &#8216;hello world&#8217;:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire
+$ xsim a.xe
+hello world
+</pre></div>
+</div>
+</div>
 </div>
 
 
@@ -72,7 +89,11 @@ document.getElementById('d1').style.height=h2 + "px";
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">sire documentation (0v1)</a></h3>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Using sire</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Using sire</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#setup-and-installation">Setup and installation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="definition.html">sire language definition</a></li>
 <li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation notes</a></li>
 </ul>
