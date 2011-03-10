@@ -1,0 +1,548 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>sire language definition &mdash; sire documentation v0v1 documentation</title>
+    <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '0v1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
+    <link rel="top" title="sire documentation v0v1 documentation" href="index.html" />
+    <link rel="next" title="Implementation notes" href="implementation.html" />
+    <link rel="prev" title="Using sire" href="usage.html" /> 
+
+<script>
+function setheight() {
+h1 = document.getElementById('d1').style.height;
+h2 = document.getElementById('d2').style.height;
+
+if (parseInt(h1) > parseInt(h2)) {
+document.getElementById('d2').style.height=h1 + "px";
+}
+else {
+document.getElementById('d1').style.height=h2 + "px";
+}
+
+}
+</script>
+</head>
+
+<body onload="setheight();">
+
+  
+
+    <div class="document" id='d1'>
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+<div style="float: right">
+<a href="usage.html"
+                        title="previous chapter"> &lt&lt </a>
+<a href="implementation.html"
+                        title="next chapter"> &gt&gt </a></p>
+</div>
+
+            
+  <div class="section" id="sire-language-definition">
+<h1>sire language definition<a class="headerlink" href="#sire-language-definition" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this headline">¶</a></h2>
+<blockquote>
+<div>&#8211; <strong>sire</strong> <em>verb</em>. To create or bear.</div></blockquote>
+<p>The sire language is a simple imperative, block structured language with syntax
+similar to Pascal and features inspired from CSP <a class="reference internal" href="#hoare78">[Hoare78]</a> and Occam
+<a class="reference internal" href="#occam82">[Occam82]</a>. It is indented to provide a platform on which to implement and
+test the mechanism for <em>dynamic process creation</em>. It includes simple
+sequential constructs and features for message passing concurrency, but omits
+features such as user defined data types for simplicity. This document gives an
+informal description of the syntax and semantics.</p>
+</div>
+<div class="section" id="variables-values-and-types">
+<h2>Variables, values and types<a class="headerlink" href="#variables-values-and-types" title="Permalink to this headline">¶</a></h2>
+<p>Variables hold a value state which is changed by statements operating on this
+state. Variable instances are declared with the <tt class="docutils literal"><span class="pre">var</span></tt> keyword:</p>
+<div class="highlight-none"><div class="highlight"><pre>val a, b;
+</pre></div>
+</div>
+<p>declares variables <tt class="docutils literal"><span class="pre">a</span></tt> and <tt class="docutils literal"><span class="pre">b</span></tt> of type <tt class="docutils literal"><span class="pre">val</span></tt>, a signed integer value.
+Variable declarations of different types are separated by a semicolon, for
+example:</p>
+<div class="highlight-none"><div class="highlight"><pre>var a;
+var b[10];
+</pre></div>
+</div>
+<p>declares <tt class="docutils literal"><span class="pre">a</span></tt> of type integer and <tt class="docutils literal"><span class="pre">b</span></tt> of type integer array. The assignment
+statement is used to change the value of a variable:</p>
+<div class="highlight-none"><div class="highlight"><pre>a := 7
+</pre></div>
+</div>
+<p>changes the value of <tt class="docutils literal"><span class="pre">a</span></tt> to 7. Any expression can appear on the right hand
+side of the assignment statement.  Signed integers are the only basic variable
+type in sire.</p>
+<div class="section" id="numbers">
+<h3>Numbers<a class="headerlink" href="#numbers" title="Permalink to this headline">¶</a></h3>
+<p>Integer valued numbers can be represented in binary, decimal and hex decimal
+forms by prefixing with <tt class="docutils literal"><span class="pre">0b</span></tt>, nothing and <tt class="docutils literal"><span class="pre">0x</span></tt> respectively.  The
+reserved symbols <tt class="docutils literal"><span class="pre">true</span></tt> and <tt class="docutils literal"><span class="pre">false</span></tt> represent the values 1 and 0
+respectively.</p>
+</div>
+<div class="section" id="operators">
+<h3>Operators<a class="headerlink" href="#operators" title="Permalink to this headline">¶</a></h3>
+<p>All arithmetic in sire is performed on signed integers. The table below gives
+the arithmetic operators available with their type, associativity and
+precedence. Precedence 0 relates to the highest precedence.</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="14%" />
+<col width="10%" />
+<col width="22%" />
+<col width="17%" />
+<col width="36%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Symbol</th>
+<th class="head">Type</th>
+<th class="head">Associativity</th>
+<th class="head">Precedence</th>
+<th class="head">Meaning</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><tt class="docutils literal"><span class="pre">-</span></tt></td>
+<td>unary</td>
+<td>right</td>
+<td>1</td>
+<td>Negation</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">~</span></tt></td>
+<td>unary</td>
+<td>right</td>
+<td>1</td>
+<td>Bitwise not</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">*</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>2</td>
+<td>Multiplication</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">/</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>2</td>
+<td>Division</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">+</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>3</td>
+<td>Addition</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">-</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>3</td>
+<td>Subtraction</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">rem</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Modulo</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">or</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Bitwise or</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">and</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Bitwise and</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">xor</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Bitwise xor</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&lt;&lt;</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Bitwise left shift</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&gt;&gt;</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>4</td>
+<td>Bitwise right shift</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">lor</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>5</td>
+<td>Logical or</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">land</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>5</td>
+<td>Logical and</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">=</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Equal</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">~=</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Not equal</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&lt;</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Less than</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&lt;=</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Less than or equal</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&gt;</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Greater than</td>
+</tr>
+<tr><td><tt class="docutils literal"><span class="pre">&gt;=</span></tt></td>
+<td>binary</td>
+<td>left</td>
+<td>6</td>
+<td>Greater than or equal</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="arrays">
+<h3>Arrays<a class="headerlink" href="#arrays" title="Permalink to this headline">¶</a></h3>
+<p>An array is created by suffixing a type with square brackets enclosing an
+integer expression specifying the length:</p>
+<div class="highlight-none"><div class="highlight"><pre>var a[10];
+</pre></div>
+</div>
+<p>declares a length 10 array of signed integers. The elements are accessed with
+the array subscript notation, for example, <tt class="docutils literal"><span class="pre">a[0]</span></tt> accesses the lowest element
+of <tt class="docutils literal"><span class="pre">a</span></tt>, legal accesses may be made up to <tt class="docutils literal"><span class="pre">a[9]</span></tt>. Currently, only one
+dimensional arrays are supported. Array references are also used for array
+slicing and formal parameters. For example:</p>
+<div class="highlight-none"><div class="highlight"><pre>var b[];
+</pre></div>
+</div>
+<p>declares <tt class="docutils literal"><span class="pre">b</span></tt> as an uninitialised array reference.</p>
+<p>Array slicing is provided by the <em>alias</em> statement. This is a special type of
+assignment that assigns the value of a variable of type array reference to a
+valid position of the source array. For example, the statement:</p>
+<div class="highlight-none"><div class="highlight"><pre>b aliases a[6..]
+</pre></div>
+</div>
+<p>causes <tt class="docutils literal"><span class="pre">b</span></tt> to reference the last half of <tt class="docutils literal"><span class="pre">a</span></tt>. Aliasing simply duplicates an
+offset array reference, no copying is involved.</p>
+</div>
+<div class="section" id="constant-values">
+<h3>Constant values<a class="headerlink" href="#constant-values" title="Permalink to this headline">¶</a></h3>
+<p>Constant values represent static integer values. The declaration:</p>
+<div class="highlight-none"><div class="highlight"><pre>val c := 4;
+</pre></div>
+</div>
+<p>sets the value of <tt class="docutils literal"><span class="pre">c</span></tt> to 4, <tt class="docutils literal"><span class="pre">c</span></tt> cannot then be changed by any assignment
+statement during execution.</p>
+</div>
+<div class="section" id="ports">
+<h3>Ports<a class="headerlink" href="#ports" title="Permalink to this headline">¶</a></h3>
+<p>Ports are a special constant-valued variable that may be used as a source or
+destination in an input or output operation. The declaration:</p>
+<div class="highlight-none"><div class="highlight"><pre>port p : 0x10600
+</pre></div>
+</div>
+<p>sets the value of <tt class="docutils literal"><span class="pre">p</span></tt> to <tt class="docutils literal"><span class="pre">0x10600</span></tt>.</p>
+</div>
+<div class="section" id="scope">
+<h3>Scope<a class="headerlink" href="#scope" title="Permalink to this headline">¶</a></h3>
+<p>There are only two levels of scoping for variables in sire: global, at the
+program level, and local, at the process/function level. Variable declarations
+may be made either globally or locally, but constant and port declarations may
+<em>only</em> be made globally.</p>
+</div>
+</div>
+<div class="section" id="structuring">
+<h2>Structuring<a class="headerlink" href="#structuring" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sequential-and-parallel-composition">
+<h3>Sequential and parallel composition<a class="headerlink" href="#sequential-and-parallel-composition" title="Permalink to this headline">¶</a></h3>
+<p><em>Processes</em> and <em>functions</em> are composed of a set of block-structured
+statements. Statements can either be composed <em>sequentially</em> or in <em>parallel</em>. This
+is denoted by the use of the sequential separator &#8216;<tt class="docutils literal"><span class="pre">;</span></tt>&#8216;, or the parallel
+separator &#8216;<tt class="docutils literal"><span class="pre">|</span></tt>&#8216;. The block:</p>
+<div class="highlight-none"><div class="highlight"><pre>{ process1() ; process2() ; process3() }
+</pre></div>
+</div>
+<p>is composed sequentially, so processes 1, 2 and 3 will be executed one after
+another. Execution of the block will complete when <tt class="docutils literal"><span class="pre">process3</span></tt> has completed.
+In contrast, the block:</p>
+<div class="highlight-none"><div class="highlight"><pre>{ process1() | process2() | process3() }
+</pre></div>
+</div>
+<p>is composed in parallel, so on entry to the block, two new threads are created
+for processes 2 and 3 and then execution of all three processes commences in
+parallel. Execution of the block will terminate only when the last process has
+completed.</p>
+</div>
+<div class="section" id="the-while-loop">
+<h3>The <tt class="docutils literal"><span class="pre">while</span></tt> loop<a class="headerlink" href="#the-while-loop" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">while</span></tt> loop repetitively executes a body while a condition remains
+true. This is checked each time prior to the execution of the body. When it
+becomes false, the loop terminates. The following code demonstrates the use of a
+while loop, which implements an algorithm to calculate the factorial of a number
+<tt class="docutils literal"><span class="pre">n</span></tt>, n!:</p>
+<div class="highlight-none"><div class="highlight"><pre>var i;
+var factorial;
+{ i := 0
+; factorial = 1
+; while i &lt; n do
+  { factorial := factorial * i
+  ; i := i + 1
+  }
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-for-loop">
+<h3>The <tt class="docutils literal"><span class="pre">for</span></tt> loop<a class="headerlink" href="#the-for-loop" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">for</span></tt> loop repetitively executes a loop body based on a pre and post
+condition on a incrementing counter. This allows a simple iteration to be more
+simply expressed. The following code again implements the factorial algorithm,
+but with a for loop:</p>
+<div class="highlight-none"><div class="highlight"><pre>var i;
+var factorial;
+{ factorial =: 1
+; for i:=1 to n do
+    factorial := factorial * i
+}
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-if-statement">
+<h3>The <tt class="docutils literal"><span class="pre">if</span></tt> statement<a class="headerlink" href="#the-if-statement" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">if</span></tt> statement allows the conditional execution of statements. The
+condition is evaluated as an arithmetic expression and if non-zero then the
+<tt class="docutils literal"><span class="pre">then</span></tt> part is executed, otherwise the <tt class="docutils literal"><span class="pre">else</span></tt> part is. The <tt class="docutils literal"><span class="pre">else</span></tt> part is
+required to solve the dangling else problem. The following code implements a
+recursive factorial algorithm, demonstrating the use of an if statement:</p>
+<div class="highlight-none"><div class="highlight"><pre>func factorial(val n) is
+  if n = 0 then return 1 else return n * factorial(n-1)
+</pre></div>
+</div>
+</div>
+<div class="section" id="the-skip-statement">
+<h3>The <tt class="docutils literal"><span class="pre">skip</span></tt> statement<a class="headerlink" href="#the-skip-statement" title="Permalink to this headline">¶</a></h3>
+<p>The <tt class="docutils literal"><span class="pre">skip</span></tt> statement does nothing, but is used to fill an empty if statement&#8217;s
+<tt class="docutils literal"><span class="pre">else</span></tt>.</p>
+</div>
+<div class="section" id="processes-and-functions">
+<h3>Processes and functions<a class="headerlink" href="#processes-and-functions" title="Permalink to this headline">¶</a></h3>
+<p><em>Processes</em> and <em>functions</em>, both types of <em>procedure</em>, are a
+collection of one or more statements that perform some task. Functions are a
+special procedure type that do not cause any <em>side effects</em> and only
+return a value. A function causes a side effect if it also modifies some
+external state. This might include, for instance, changing the
+value of a global variable, or modifying the contents of a referenced array. To
+prevent this from happening, functions cannot write to global variables or
+referenced parameters, invoke processes or use input or output operators. In
+contrast, processes do not return a value but have no such restrictions on side
+effects.</p>
+<p>A process is defined using the <tt class="docutils literal"><span class="pre">proc</span></tt> keyword, followed by the process name,
+formal parameters, local variable declarations and then the body.  For example,
+the following process definition implements the bubble sort algorithm:</p>
+<div class="highlight-none"><div class="highlight"><pre>proc sort(a[len]; len: int) is
+ var i;
+ var j;
+ var tmp;
+ for i:=0 to len-1 do
+   for j:=0 to len-1 do
+     if a[j] &gt; a[j+1]
+       then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+       else skip
+</pre></div>
+</div>
+<p>A process is invoked by naming the process and specifying any input parameters:</p>
+<div class="highlight-none"><div class="highlight"><pre>sort(a, 10)
+</pre></div>
+</div>
+<p>A function is defined in the same way as a process except with the <tt class="docutils literal"><span class="pre">func</span></tt>
+keyword, it must also complete with a <tt class="docutils literal"><span class="pre">return</span></tt> statement. The following
+function recursively calculates the <tt class="docutils literal"><span class="pre">n</span></tt> th Fibonacci number:</p>
+<div class="highlight-none"><div class="highlight"><pre>func fib(n: int) is
+  if n &gt; 1 then return fib(n-1) + fib(n-2)
+  else if n = 0 then return 0 else return 1
+</pre></div>
+</div>
+<p>Functions can be called in the same way as processes or as part of an
+expression, as it is in the above example.  The formal parameters of a function
+or process may only be of integer or integer array reference types.</p>
+<div class="section" id="scoping">
+<h4>Scoping<a class="headerlink" href="#scoping" title="Permalink to this headline">¶</a></h4>
+<p>A process or function becomes visible only at the beginning of its definition.
+Hence, a procedure cannot be used before it is defined.</p>
+</div>
+<div class="section" id="recursion">
+<h4>Recursion<a class="headerlink" href="#recursion" title="Permalink to this headline">¶</a></h4>
+<p>Recursion is permitted, but only for self-recursive procedures. Due to simple
+scoping for procedure names which would require the need for forward references,
+mutual-recursion is not supported.</p>
+</div>
+</div>
+<div class="section" id="program-structure">
+<h3>Program structure<a class="headerlink" href="#program-structure" title="Permalink to this headline">¶</a></h3>
+<p>A sire program consists of a set of <em>processes</em> and <em>functions</em> and
+possibly some global state. The structure of a sire program is as follows.
+Any value, variable or port global declarations are made at the beginning,
+before any process or function definitions. Processes and functions may then be
+defined in any order. A program must contain a process called <tt class="docutils literal"><span class="pre">main</span></tt> as
+execution will start at this point. For example, a complete example sorting
+program may be defined as:</p>
+<div class="highlight-none"><div class="highlight"><pre>val LEN := 10;
+var a[LEN];
+
+proc sort(a[len], val len) is
+  var i;
+  var j;
+  var tmp;
+  for i:=0 to len-1 do
+    for j:=0 to len-1 do
+      if a[j] &gt; a[j+1]
+      then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+      else skip
+
+proc main() is
+  sort(a, LEN)
+</pre></div>
+</div>
+<div class="section" id="process-creation">
+<h4>Process creation<a class="headerlink" href="#process-creation" title="Permalink to this headline">¶</a></h4>
+<p>Process creation is the key feature of the sire language and is provided with
+the <tt class="docutils literal"><span class="pre">on</span></tt> statement. Semantically, <tt class="docutils literal"><span class="pre">on</span></tt> is exactly the same as a regular
+process call, except that the computation is performed remotely. It is
+<em>synchronous</em> in that it blocks the sending processes thread of execution
+until the new process has terminated; this behavior fits naturally with
+composing it in parallel with other tasks.</p>
+<p>The transmission of a process to a remote processor for execution requires a
+<em>closure</em> of the process to be created. A closure is a data structure that
+contains the process&#8217; instructions, and a representation of the functions
+<em>lexical environment</em>, that is the set of available variables and their
+values. sire processes may have formal parameters of type integer value or
+array reference, so these must be included as part of the closure. Referenced
+arrays are copied and replicated at the destination. On completion, any
+referenced arrays are sent back to reflect any changes that were made in the
+original copy. The statement:</p>
+<div class="highlight-none"><div class="highlight"><pre>var a[10];
+on core[3] : sort(a, 10)
+</pre></div>
+</div>
+<p>spawns the <tt class="docutils literal"><span class="pre">sort</span></tt> process on core 3. The <tt class="docutils literal"><span class="pre">core</span></tt> array is a system variable
+and is used to address the set of processing cores comprising the system.
+Because the <tt class="docutils literal"><span class="pre">on</span></tt> statement is synchronous, it is natural to to compose this in
+parallel with other statements.  For example, the block:</p>
+<div class="highlight-none"><div class="highlight"><pre>var a[10];
+var b[10];
+{ on core[10] do sort(a, 10) | sort(b, 10) }
+</pre></div>
+</div>
+<p>allows the thread to execute another sorting process whilst the spawned one is
+performed remotely.</p>
+</div>
+</div>
+</div>
+<div class="section" id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<table class="docutils citation" frame="void" id="hoare78" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[Hoare78]</a></td><td>C. A. R. Hoare. Communicating sequential processes. <em>Commun. ACM</em>,
+21(8):666-677, 1978.</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="occam82" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id2">[Occam82]</a></td><td>David May. Occam. <em>SIGPLAN Not.</em>, 18(4):69-79, 1983.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" id='d2'>
+        <div class="sphinxsidebarwrapper">
+<h3><a href="index.html">sire documentation (0v1)</a></h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="usage.html">Using sire</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">sire language definition</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables-values-and-types">Variables, values and types</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#structuring">Structuring</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation notes</a></li>
+</ul>
+
+<div id="searchbox" style="display: none">
+  <h3>Search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+
+
+
+    <div class="footer">
+    </div>
+  </body>
+</html>
+
+
+
