@@ -6,5 +6,5 @@ XDOC_DIR ?= ../../xdoc
 include $(XDOC_DIR)/Makefile.inc
 
 
-#all: html pdf
-all: html
+all: html pdf
+#all: html

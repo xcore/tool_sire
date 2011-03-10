@@ -1,8 +1,18 @@
+==========
 Change log
 ==========
 
+---------
+Version 0
+---------
+
+Language
+========
+
+- For statements now also specify a step (increment).
+
 General compiler-related
-------------------------
+========================
 
 - Add NUM_CORES keyword in language.
 
@@ -12,22 +22,25 @@ General compiler-related
 - When spawning synchronous threads, the whole stack is copied from and by the
   master.
 
-- Adjust syntax to enforce array bounds for on statements, e.g.:: 
+- Array procedure parameter syntax to enforce array bounds for on statements,
+  e.g.:: 
     proc foo(a[n], val n)
 
-on implementation
------------------
+Process creation
+================
 
-- Check for a copy of a procedure before receiving.
+- The host checks for a copy of a procedure contained in an incoming closure
+  before receiving.
 
-- Use master thread for hosting last instead of first leaving it more available
-  to serve requests and other jobs to get on.
+- Master thread (0) on each core is prioritised. It will be used last for
+  hosting instead of first leaving it more available to serve requests and other
+  jobs to get on.
 
-- Implement referenced variables (or restrict their use with on).
+- Referenced variables now work with 'on'.
 
-- load args 5 onwards on to the stack, allowing maximum of 8 arguments.
+- Allowing upto a maximum of 8 arguments, host 'runProcedure' load args 5
+  onwards on to the stack before executing a new procedure.
 
-- Use malloc to allocate memory on the heap for procedures and incoming
-  arguments.
-
+- Dynamic heap allocation (XS1 malloc implementation) used allocate space for
+  incoming procedures and referenced arguments.
 
