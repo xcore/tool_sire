@@ -40,7 +40,7 @@
 # This variable should contain a space separated list of all
 # the directories containing buildable applications (usually
 # prefixed with the app_ prefix)
-BUILD_SUBDIRS = 
+BUILD_SUBDIRS = doc 
 
 # This variable should contain a space separated list of all
 # the directories containing buildable plugins (usually
@@ -56,6 +56,8 @@ TEST_SUBDIRS =
 
 %.all:
 	cd $* && xmake all
+	cp -r doc/_build/html* ../tool_sire_gh-pages
+	cp -r doc/_build/.doctrees ../tool_sire_gh-pages
 
 %.clean:
 	cd $* && xmake clean
@@ -63,8 +65,8 @@ TEST_SUBDIRS =
 %.test:
 	cd $* && xmake test
 
-all: $(foreach x, $(BUILD_SUBDIRS), $x.all) 
-plugins: $(foreach x, $(PLUGIN_SUBDIRS), $x.all) 
-clean: $(foreach x, $(BUILD_SUBDIRS), $x.clean)
+all:           $(foreach x, $(BUILD_SUBDIRS), $x.all) 
+plugins:       $(foreach x, $(PLUGIN_SUBDIRS), $x.all) 
+clean:         $(foreach x, $(BUILD_SUBDIRS), $x.clean)
 clean_plugins: $(foreach x, $(PLUGIN_SUBDIRS), $x.clean) 
-test: $(foreach x, $(TEST_SUBDIRS), $x.test)
+test:          $(foreach x, $(TEST_SUBDIRS), $x.test)
