@@ -4,6 +4,7 @@ sire
 
 :Stable release: Unreleased
 :Status: Experimental/ongoing
+:Current version: 0
 :Maintainer: http://github.com/jameshanlon
 :Description: A language and runtime system for dynamic process creation on the XMOS XS1 architecture
 
