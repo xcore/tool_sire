@@ -21,10 +21,11 @@
    
     .text
 
-// Set the _DoSyscall symbol to an inaccessable pc because it persists between
-// loadables for mulit-node simulations cauising a retsp to be executed. Slave
+// set the _dosyscall symbol to an inaccessable pc because it persists between
+// loadables for mulit-node simulations cauising a retsp to be executed. slave
 // nodes should never use this symbol
-    .set _DoSyscall, 0
+    //.set _DoSyscall, 0 // This causes problems with 11.2.0 release (not 10.4.2)
+    .set _DoSyscall, RAM_BASE+RAM_SIZE 
 
 //==========================================================
 // This initilises the execution of thread 0, core i for i>0

@@ -56,6 +56,13 @@ Process creation
 - Free heap-allocated memory for arguments (and procedures?) when remote
   execution completes.
 
+-------------
+Miscellaneous
+-------------
+
+- Setting _DoSyscall symbol to 0 (on slave cores) breaks the event handler with
+  the 11.2.0 tools and not 10.4.2 - find out why this is.
+
 --------------------------------
 Possible improvements/extensions
 --------------------------------

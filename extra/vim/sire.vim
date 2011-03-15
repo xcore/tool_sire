@@ -8,36 +8,47 @@ elseif exists("b:current_syntax")
 endif
 
 syn case match
-syn keyword	xType	       module var val port chanend chan
-syn keyword	xKeyword       proc func return skip aliases connect
-syn keyword	xKeyword       true false skip
-syn keyword	xKeyword       on is with
 
-syn keyword	xStructure     if then else
-syn keyword     xRepeat        while do for step until
+" Keywords
+syn keyword	sType	     module var val port chanend chan
+syn keyword	sKeyword     proc func return skip aliases connect
+syn keyword	sKeyword     true false skip
+syn keyword	sKeyword     on is with
 
-syn match       xBrackets       /\[\|\]/
-syn match       xParentheses    /(\|)/
+" Control structures
+syn keyword	sStructure   if then else
+syn keyword     sRepeat      while do for step until
 
-syn keyword  	xOperator      and or xor lor land
-syn match       xOperator      /:=\|!\|?\|!!\|??\|::=/
-syn match       xOperator      /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
-syn match       xOperator      /<<\|>>\|^\|&\||/
+" Bracketing
+syn match       sBrackets     /\[\|\]/
+syn match       sParentheses  /(\|)/
 
-syn match       xNumber        "[0-9]+"
-syn match       xNumber        "0[xX][0-9a-fA-F]+"
-syn match       xNumber        "0[bB][0-1]*"
+" Operators
+syn keyword  	sOperator    and or xor lor land
+syn match       sOperator    /:=\|!\|?\|!!\|??\|::=/
+syn match       sOperator    /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
+syn match       sOperator    /<<\|>>\|^\|&\||/
 
-syn match       xSpecialChar	/\\'\|\\\|*#\(\[0-9A-F_\]\+\)/ contained
+" Numbers
+syn match       sNumber      "[0-9]+"
+syn match       sNumber      "0[xX][0-9a-fA-F]+"
+syn match       sNumber      "0[bB][0-1]*"
 
-syn match       xIdentifier    /\<[A-Z.][A-Z.0-9]*\>/
-syn match       xFunction      /\<[A-Za-z.][A-Za-z0-9.]*\>/ contained
+" Special characters
+syn match       sSpecialChar  /\\'\|\\\|*#\(\[0-9A-F_\]\+\)/ contained
 
-syn region      xString        start=/"/ skip=/\M*"/ end=/"/ contains=xSpecialChar
-syn region      xCharString    start=/'/ end=/'/ contains=xSpecialChar
+" Identifiers
+syn match       sIdentifier  /\<[A-Z][A-Z0-9_]*\>/
+syn match       sProcedure   /\<[A-Za-z.][A-Za-z0-9.]*\>/ contained
 
-syn match       xComment       "%.*"
-"syn region      xComment       start=/\/*/ end=/*\//
+" String
+syn region      sString      start=/"/ skip=/\M*"/ end=/"/ contains=xSpecialChar
+
+" Character literal
+syn region      sCharString  start=/'/ end=/'/ contains=xSpecialChar
+
+" Comments
+syn match       sComment     "%.*"
 
 if version >= 508 || !exists("did_x_syntax_inits")
   if version < 508
@@ -47,18 +58,18 @@ if version >= 508 || !exists("did_x_syntax_inits")
     command -nargs=+ HiLink hi def link <args>
   endif
   
-    HiLink xKeyword     Keyword
-    HiLink xType        Type
-    HiLink xStructure   Structure
-    HiLink xRepeat      Repeat
-    HiLink xIdentifier  Identifier
-    HiLink xOperator    Operator
-    HiLink xNumber      Number
-    HiLink xBrackets    Type
-    HiLink xParentheses Delimiter
-    HiLink xString      String
-    HiLink xCharString  String
-    HiLink xComment     Comment
+  HiLink sKeyword     Keyword
+  HiLink sType        Type
+  HiLink sStructure   Structure
+  HiLink sRepeat      Repeat
+  HiLink sIdentifier  Identifier
+  HiLink sOperator    Operator
+  HiLink sNumber      Number
+  HiLink sBrackets    Type
+  HiLink sParentheses Delimiter
+  HiLink sString      String
+  HiLink sCharString  String
+  HiLink sComment     Comment
 
   delcommand HiLink
 endif
