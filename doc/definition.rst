@@ -1,6 +1,6 @@
-========================
-sire language definition
-========================
+===================
+Language definition
+===================
 
 ------------
 Introduction

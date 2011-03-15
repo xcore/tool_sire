@@ -6,4 +6,4 @@ sire documentation
 
    usage
    definition
-   implementation
+   internals
