@@ -440,9 +440,10 @@ class StmtWhile(Node):
         return s
 
 class StmtFor(Node):
-    def __init__(self, var, init, bound, stmt, coord=None):
+    def __init__(self, var, init, step, bound, stmt, coord=None):
         self.var = var
         self.init = init
+        self.step = step
         self.bound = bound
         self.stmt = stmt
         self.coord = coord
@@ -451,6 +452,7 @@ class StmtFor(Node):
         c = []
         if self.var is not None: c.append(self.var)
         if self.init is not None: c.append(self.init)
+        if self.step is not None: c.append(self.step)
         if self.bound is not None: c.append(self.bound)
         if self.stmt is not None: c.append(self.stmt)
         return tuple(c)

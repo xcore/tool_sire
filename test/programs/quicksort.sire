@@ -17,7 +17,7 @@ proc partition(array[len], val len) is
 ; array[len-1] := pivotValue
 
   % Reorder list (upto the pivot)
-; for i:=0 to len-2 do 
+; for i:=0 step 1 until len-2 do 
     if array[i] <= pivotValue then 
     { hold := array[i]
     ; array[i] := array[storeIndex]
@@ -52,10 +52,10 @@ proc qsort(array[len], val len) is
 % Ouput: 0123456789
 proc main() is
   var i;
-{ for i:=0 to LENGTH-1 do 
+{ for i:=0 step 1 until LENGTH-1 do 
     a[i] := LENGTH-(i+1)
 ; qsort(a, LENGTH)
-; for i:=0 to LENGTH-1 do
+; for i:=0 step 1 until LENGTH-1 do
     printval(a[i])
 ; printstrln("")
 }

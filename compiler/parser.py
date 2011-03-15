@@ -280,8 +280,8 @@ class Parser(object):
         p[0] = ast.StmtWhile(p[2], p[4], self.coord(p))
 
     def p_stmt_for(self, p):
-        'stmt : FOR left ASS expr TO expr DO stmt'
-        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8])
+        'stmt : FOR left ASS expr STEP expr UNTIL expr DO stmt'
+        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8], p[10])
 
     def p_stmt_on(self, p):
         'stmt : ON left DO name LPAREN expr_list RPAREN'

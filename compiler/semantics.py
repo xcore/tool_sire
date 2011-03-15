@@ -235,7 +235,8 @@ class Semantics(ast.NodeVisitor):
         pass
 
     def visit_stmt_for(self, node):
-        pass
+        if not self.check_elem_types(node.var, [Type('var', 'single')]):
+            self.type_error('output', node.var.name, node.coord)
 
     def visit_stmt_on(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):

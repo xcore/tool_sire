@@ -5,8 +5,8 @@ proc bsort(a[len], val len) is
   var i;
   var j;
   var tmp;
-{ for i:=0 to len-1 do 
-    for j:=0 to len-i-2 do
+{ for i:=0 step 1 until len-1 do 
+    for j:=0 step 1 until len-i-2 do
       if a[j] > a[j+1] then 
       { tmp := a[j]
       ; a[j] := a[j+1]
@@ -18,10 +18,10 @@ proc bsort(a[len], val len) is
 % Ouput: 0123456789
 proc main() is
   var i;
-{ for i:=0 to LENGTH-1 do 
+{ for i:=0 step 1 until LENGTH-1 do 
     a[i] := LENGTH-(i+1)
 ; bsort(a, LENGTH)
-; for i:=0 to LENGTH-1 do
+; for i:=0 step 1 until LENGTH-1 do
     printval(a[i])
 ; printstrln("")
 }
