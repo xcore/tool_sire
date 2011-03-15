@@ -1,3 +1,8 @@
+# Copyright (c) 2011, James Hanlon, All rights reserved
+# This software is freely distributable under a derivative of the
+# University of Illinois/NCSA Open Source License posted in
+# LICENSE.txt and at <http://github.xcore.com/>
+
 class Device(object):
     def __init__(self, num_nodes, num_cores_per_node, name):
         self.num_nodes = num_nodes

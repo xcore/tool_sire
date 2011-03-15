@@ -1,3 +1,8 @@
+# Copyright (c) 2011, James Hanlon, All rights reserved
+# This software is freely distributable under a derivative of the
+# University of Illinois/NCSA Open Source License posted in
+# LICENSE.txt and at <http://github.xcore.com/>
+
 import sys
 import os
 import io
@@ -25,7 +30,7 @@ SLAVE_XE         = 'slave.xe'
 XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O0', '-fverbose-asm', '-Wno-timing']
+COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
