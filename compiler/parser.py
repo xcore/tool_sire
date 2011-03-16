@@ -68,7 +68,7 @@ class Parser(object):
     precedence = (
         ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
         ('left', 'LSHIFT', 'RSHIFT'),
-        ('left', 'AND', 'OR', 'XOR', 'REM'),
+        ('left', 'AND', 'OR', 'XOR', 'REM', 'LOR', 'LAND'),
         ('left', 'PLUS', 'MINUS'),
         ('left', 'MULT', 'DIV'),
         ('right', 'UMINUS', 'UNOT')

@@ -10,55 +10,83 @@ Introduction
 
 The sire language is a simple imperative, block structured language with syntax
 similar to Pascal and features inspired from CSP [Hoare78]_ and Occam
-[Occam82]_. It is indented to provide a platform on which to implement and
-test the mechanism for *dynamic process creation*. It includes simple
-sequential constructs and features for message passing concurrency, but omits
-features such as user defined data types for simplicity. This document gives an
-informal description of the syntax and semantics.
+[Occam82]_. It is indented to provide a platform on which to demonstrate a
+mechanism for *dynamic process creation*. It includes simple sequential
+constructs and features for message passing concurrency, but omits features such
+as user defined data types for simplicity. This document gives an informal
+description of the syntax and semantics.
 
 ---------------------------
-Variables, values and types
+Variables and values
 ---------------------------
+
+Signed integers are the basic type in sire. They are represented either
+statically in *values* or dynamically in *variables*.
+
+Values
+======
+
+Value entities represent constant integer values. The declaration::
+
+    val c := 8; 
+    
+sets the value of ``c`` to 8. ``c`` cannot then be the target of any assignment
+statement. All declarations must be terminated with a semicolon.
+
+Variables
+=========
 
 Variables hold a value state which is changed by statements operating on this
 state. Variable instances are declared with the ``var`` keyword::
     
-    val a, b;
+    var a;
 
-declares variables ``a`` and ``b`` of type ``val``, a signed integer value.
-Variable declarations of different types are separated by a semicolon, for
-example::
+declares the variable ``a``. Variable declarations are separated on new lines,
+for example::
     
     var a; 
     var b[10];
 
-declares ``a`` of type integer and ``b`` of type integer array. The assignment
-statement is used to change the value of a variable::
+declares a *single* ``a`` and an *array* ``b``. The assignment statement is used
+to change the value of a variable::
     
-    a := 7 
+    a := 5 
 
-changes the value of ``a`` to 7. Any expression can appear on the right hand
-side of the assignment statement.  Signed integers are the only basic variable
-type in sire.
+changes the value of ``a`` to 5. Any expression can appear on the right hand
+side of the assignment statement.  
 
-Numbers
-=======
+Arrays
+======
 
-Integer valued numbers can be represented in binary, decimal and hex decimal
-forms by prefixing with ``0b``, nothing and ``0x`` respectively.  The
-reserved symbols ``true`` and ``false`` represent the values 1 and 0
-respectively.
+An array is created by suffixing a type with square brackets enclosing an
+expression specifying the length, for example::
+
+    var a[10];
+
+declares a length 10 array of variables. The elements are accessed with
+the array subscript notation, for example, ``a[0]`` accesses the lowest element
+of ``a``, legal accesses may be made up to ``a[9]``. Currently, only one
+dimensional arrays are supported. Array references are also used for array
+slicing and formal parameters. For example, the declaration::
+
+    var b[];
+    
+declares ``b`` as an uninitialised *array reference*.
+
+Array slicing is provided by the *alias* statement. This is a special type of
+assignment that assigns the value of a variable of type array reference to a
+valid position of the source array. For example, the statement::
+    
+    b aliases a[4..]
+
+causes ``b`` to reference the last half of ``a``. Aliasing simply duplicates an
+offset array reference, no copying is involved.
 
 Operators
 =========
 
-All arithmetic in sire is performed on signed integers. The table below gives
-the arithmetic operators available with their type, associativity and
-precedence. Precedence 0 relates to the highest precedence. 
-
-.. The operators bitwise and, or, xor, and plus and multiply are fully
- associative and do not need bracketing. All other operators may only occur only
- once in a single, or bracketed sub expression.
+The table below gives the arithmetic operators available with their type,
+associativity and precedence. Precedence 0 relates to the highest precedence. 
 
 ======== ====== ============= ========== =====================
 Symbol   Type   Associativity Precedence Meaning
@@ -77,68 +105,45 @@ Symbol   Type   Associativity Precedence Meaning
 ``>>``   binary left          4          Bitwise right shift
 ``lor``  binary left          5          Logical or
 ``land`` binary left          5          Logical and
-``=``    binary left          6          Equal
-``~=``   binary left          6          Not equal
-``<``    binary left          6          Less than
-``<=``   binary left          6          Less than or equal
-``>``    binary left          6          Greater than
-``>=``   binary left          6          Greater than or equal
+``=``    binary none          6          Equal
+``~=``   binary none          6          Not equal
+``<``    binary none          6          Less than
+``<=``   binary none          6          Less than or equal
+``>``    binary none          6          Greater than
+``>=``   binary none          6          Greater than or equal
 ======== ====== ============= ========== =====================
 
-Arrays
-======
+Numbers
+=======
 
-An array is created by suffixing a type with square brackets enclosing an
-integer expression specifying the length::
+Integer valued numbers can be represented in binary, decimal and hex decimal
+forms by prefixing with ``0b``, nothing and ``0x`` respectively. For example,
+expressions may conatain any numbers::
 
-    var a[10];
+    val v := 0b11001 + 3 + 0xABCD
 
-declares a length 10 array of signed integers. The elements are accessed with
-the array subscript notation, for example, ``a[0]`` accesses the lowest element
-of ``a``, legal accesses may be made up to ``a[9]``. Currently, only one
-dimensional arrays are supported. Array references are also used for array
-slicing and formal parameters. For example::
+The reserved symbols ``true`` and ``false`` represent the values 1 and 0
+respectively.
 
-    var b[];
-    
-declares ``b`` as an uninitialised array reference.
+..
+    Ports
+    =====
 
-Array slicing is provided by the *alias* statement. This is a special type of
-assignment that assigns the value of a variable of type array reference to a
-valid position of the source array. For example, the statement::
-    
-    b aliases a[6..]
+    Ports are a special constant-valued variable that may be used as a source or
+    destination in an input or output operation. The declaration::
 
-causes ``b`` to reference the last half of ``a``. Aliasing simply duplicates an
-offset array reference, no copying is involved.
-
-Constant values
-===============
-
-Constant values represent static integer values. The declaration::
-
-    val c := 4; 
-    
-sets the value of ``c`` to 4, ``c`` cannot then be changed by any assignment
-statement during execution.
-
-Ports
-=====
-
-Ports are a special constant-valued variable that may be used as a source or
-destination in an input or output operation. The declaration::
-
-    port p : 0x10600 
-    
-sets the value of ``p`` to ``0x10600``.
+        port p : 0x10600 
+        
+    sets the value of ``p`` to ``0x10600``.
+..
 
 Scope
 =====
 
 There are only two levels of scoping for variables in sire: global, at the
 program level, and local, at the process/function level. Variable declarations
-may be made either globally or locally, but constant and port declarations may
-*only* be made globally.
+may be made either globally or locally, but value declarations may *only* be
+made globally.
 
 -----------
 Structuring
@@ -209,12 +214,14 @@ required to solve the dangling else problem. The following code implements a
 recursive factorial algorithm, demonstrating the use of an if statement::
 
     func factorial(val n) is
-      if n = 0 then return 1 else return n * factorial(n-1)
+      if n = 0 
+      then return 1 
+      else return n * factorial(n-1)
 
 The ``skip`` statement
 ======================
 
-The ``skip`` statement does nothing, but is used to fill an empty if statement's
+The ``skip`` statement does nothing, but can be used to fill an empty if statement's
 ``else``.
 
 Processes and functions
@@ -224,16 +231,15 @@ Processes and functions
 .. % return statement
 .. % Recursion?
 
-*Processes* and *functions*, both types of *procedure*, are a
-collection of one or more statements that perform some task. Functions are a
-special procedure type that do not cause any *side effects* and only
-return a value. A function causes a side effect if it also modifies some
-external state. This might include, for instance, changing the
-value of a global variable, or modifying the contents of a referenced array. To
-prevent this from happening, functions cannot write to global variables or
-referenced parameters, invoke processes or use input or output operators. In
-contrast, processes do not return a value but have no such restrictions on side
-effects. 
+*Processes* and *functions*, both types of *procedure*, are a collection of one
+or more statements that perform some task. Functions are a special procedure
+type that do not cause any *side effects* and only return a value. A function
+causes a side effect if it also modifies some external state. This might
+include, for instance, changing the value of a global variable, or modifying the
+contents of a referenced array. To prevent this from happening, functions cannot
+write to global variables or referenced parameters, invoke processes or use
+input or output operators. In contrast, processes do not return a value but have
+no such restrictions on side effects. 
 
 A process is defined using the ``proc`` keyword, followed by the process name,
 formal parameters, local variable declarations and then the body.  For example,
@@ -246,7 +252,11 @@ the following process definition implements the bubble sort algorithm::
      for i:=0 step 1 until len-1 do 
        for j:=0 to len-1 do
          if a[j] > a[j+1]
-           then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+           then 
+           { tmp := a[j] 
+           ; a[j] := a[j+1] 
+           ; a[j+1] := tmp
+           }
            else skip
 
 A process is invoked by naming the process and specifying any input parameters::
@@ -258,7 +268,8 @@ keyword, it must also complete with a ``return`` statement. The following
 function recursively calculates the ``n`` th Fibonacci number::
 
     func fib(n: int) is
-      if n > 1 then return fib(n-1) + fib(n-2)
+      if n > 1
+      then return fib(n-1) + fib(n-2)
       else if n = 0 then return 0 else return 1
 
 Functions can be called in the same way as processes or as part of an
@@ -301,7 +312,11 @@ program may be defined as::
       for i:=0 step 1 until len-1 do 
         for j:=0 to len-1 do
           if a[j] > a[j+1]
-          then { tmp := a[j] ; a[j] := a[j+1] ; a[j+1] := tmp }
+          then 
+          { tmp := a[j] 
+          ; a[j] := a[j+1] 
+          ; a[j+1] := tmp 
+          }
           else skip
 
     proc main() is
@@ -360,7 +375,7 @@ referenced arrays are sent back to reflect any changes that were made in the
 original copy. The statement::
 
     var a[10];
-    on core[3] : sort(a, 10)
+    on core[3] do sort(a, 10)
 
 spawns the ``sort`` process on core 3. The ``core`` array is a system variable
 and is used to address the set of processing cores comprising the system.
@@ -369,7 +384,9 @@ parallel with other statements.  For example, the block::
 
     var a[10];
     var b[10];
-    { on core[10] do sort(a, 10) | sort(b, 10) }
+    { on core[10] do sort(a, 10) 
+    | sort(b, 10) 
+    }
 
 allows the thread to execute another sorting process whilst the spawned one is
 performed remotely.
