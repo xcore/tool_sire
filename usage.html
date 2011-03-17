@@ -6,7 +6,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Using sire &mdash; sire documentation v0v1 documentation</title>
+    <title>Usage &mdash; sire documentation v0v1 documentation</title>
     <link rel="stylesheet" href="_static/xdoc.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript">
@@ -23,7 +23,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="http://mathjax.connectmv.com/MathJax.js"></script>
     <link rel="top" title="sire documentation v0v1 documentation" href="index.html" />
-    <link rel="next" title="sire language definition" href="definition.html" />
+    <link rel="next" title="Language definition" href="definition.html" />
     <link rel="prev" title="sire documentation" href="index.html" /> 
 
 <script>
@@ -58,24 +58,188 @@ document.getElementById('d1').style.height=h2 + "px";
 </div>
 
             
-  <div class="section" id="using-sire">
-<h1>Using sire<a class="headerlink" href="#using-sire" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="setup-and-installation">
-<h2>Setup and installation<a class="headerlink" href="#setup-and-installation" title="Permalink to this headline">¶</a></h2>
-<p>Ensure the above dependencies are satisfied and add SIRE_INSTALL_PATH to your
-environment and PATH by adding the following to your .bashrc file, for example:</p>
+  <div class="section" id="usage">
+<h1>Usage<a class="headerlink" href="#usage" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="setting-up-the-dependencies">
+<h3>Setting up the dependencies<a class="headerlink" href="#setting-up-the-dependencies" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="python-3-including-the-argparse-module">
+<h4>Python 3 (including the argparse module)<a class="headerlink" href="#python-3-including-the-argparse-module" title="Permalink to this headline">¶</a></h4>
+<p>Download and install the latest release of Python 3
+(<a class="reference external" href="http://www.python.org/download/">http://www.python.org/download/</a>). This should then be available on the PATH as
+&#8216;python3&#8217;. To do this <em>append</em> /python3/install/path/bin to PATH, for example:</p>
+<div class="highlight-none"><div class="highlight"><pre>export PATH=/python3/install/path/bin:$PATH
+</pre></div>
+</div>
+<p>The <tt class="docutils literal"><span class="pre">argparse</span></tt> module is included as part of the standard library from
+version 3.2+. For older versions, this will need to be installed manually.</p>
+</div>
+<div class="section" id="ply-python-lex-yacc">
+<h4>PLY (Python Lex-Yacc)<a class="headerlink" href="#ply-python-lex-yacc" title="Permalink to this headline">¶</a></h4>
+<p>Download and install the latest version of PLY (<a class="reference external" href="http://www.dabeaz.com/ply/">http://www.dabeaz.com/ply/</a>). You
+can copy the <tt class="docutils literal"><span class="pre">lexer.py</span></tt> and <tt class="docutils literal"><span class="pre">parser.py</span></tt> files into
+<tt class="docutils literal"><span class="pre">tool_sire/compiler/ply</span></tt> or install PLY using <tt class="docutils literal"><span class="pre">distutils</span></tt>:</p>
+<div class="highlight-none"><div class="highlight"><pre>cd ply-3.4
+python3 setup.py install
+</pre></div>
+</div>
+</div>
+<div class="section" id="xmos-development-tools">
+<h4>XMOS development tools<a class="headerlink" href="#xmos-development-tools" title="Permalink to this headline">¶</a></h4>
+<p>Download and install the latest version of the XMOS development tools
+(<a class="reference external" href="https://www.xmos.com/products/development-tools">https://www.xmos.com/products/development-tools</a>). To make them accessible from
+the command line you then need to run:</p>
+<div class="highlight-none"><div class="highlight"><pre>source SetEnv
+</pre></div>
+</div>
+<p>from <tt class="docutils literal"><span class="pre">XMOS/DevelopmentTools/11.2.0/</span></tt> or copy the contents into your
+<tt class="docutils literal"><span class="pre">.bashrc</span></tt> and change <tt class="docutils literal"><span class="pre">installpath</span></tt> to the installation path.</p>
+</div>
+<div class="section" id="documentation">
+<h4>Documentation<a class="headerlink" href="#documentation" title="Permalink to this headline">¶</a></h4>
+<p>To build the documentation you will need the xcore/xdoc repository in the same
+directory as the sire repository:</p>
+<div class="highlight-none"><div class="highlight"><pre>git clone https://github.com/xcore/xdoc.git
+</pre></div>
+</div>
+<p>You can then build the HTML and PDF targets by running <tt class="docutils literal"><span class="pre">make</span></tt> in the root
+directory.</p>
+</div>
+</div>
+<div class="section" id="setting-up-sire">
+<h3>Setting up sire<a class="headerlink" href="#setting-up-sire" title="Permalink to this headline">¶</a></h3>
+<p>Once the dependencies are satisfied, the sire compiler can be setup by adding
+SIRE_INSTALL_PATH to your environment and PATH by adding the following to your
+.bashrc file, for example:</p>
 <div class="highlight-none"><div class="highlight"><pre>export SIRE_INSTALL_PATH=/path/to/sire
 PATH=$SIRE_INSTALL_PATH:$PATH
 </pre></div>
 </div>
 </div>
+</div>
 <div class="section" id="getting-started">
 <h2>Getting started<a class="headerlink" href="#getting-started" title="Permalink to this headline">¶</a></h2>
-<p>Compile and run &#8216;hello world&#8217;:</p>
+<p>Compile and simulate &#8216;hello world&#8217;:</p>
 <div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire
 $ xsim a.xe
 hello world
 </pre></div>
+</div>
+<p>Display help to view available command line options:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ sire -h
+usage: sire [-h] [-o &lt;file&gt;] [-n &lt;n&gt;] [-v] [-e] [-r] [-s] [-a] [-p] [-t] [-c]
+            [-d]
+            [&lt;input-file&gt;]
+
+sire compiler
+
+positional arguments:
+  &lt;input-file&gt;          input filename
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -o &lt;file&gt;             output filename
+  -n &lt;n&gt;, --numcores &lt;n&gt;
+                        number of cores
+  -v, --verbose         display status messages
+  -e, --display-calls   display external commands invoked
+  -r, --parse           parse the input file and quit
+  -s, --sem             perform semantic analysis and quit
+  -a, --display-ast     display the AST and quit
+  -p, --pprint-ast      pretty-print the AST and quit
+  -t, --translate       translate but do not compile
+  -c, --compile         compile but do not assemble and link
+  -d, --devices         display available devices
+</pre></div>
+</div>
+<div class="section" id="useful-options">
+<h3>Useful options<a class="headerlink" href="#useful-options" title="Permalink to this headline">¶</a></h3>
+<p>Display the Abstract Syntax Tree (AST):</p>
+<div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire -a
+Program()
+  Decls()
+  Defs()
+    Def(_main, Type(proc, procedure))
+      Formals()
+      Decls()
+      StmtPcall(printstrln)
+        ExprList()
+          ExprSingle()
+            ElemString(&quot;hello world&quot;)
+</pre></div>
+</div>
+<p>Display a pretty-printed AST, and compile it:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire -p
+
+proc main() is
+  printstrln(&quot;hello world&quot;)
+
+$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire -p | sire
+</pre></div>
+</div>
+<p>Perform XC-translation only:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire -t
+$ cat a.xc
+#include &lt;xs1.h&gt;
+#include &lt;print.h&gt;
+#include &lt;syscall.h&gt;
+#include &quot;globals.h&quot;
+#include &quot;util.h&quot;
+#include &quot;guest.h&quot;
+#include &quot;device.h&quot;
+#include &quot;language.h&quot;
+
+#pragma unsafe arrays
+void _main()
+{
+  {
+    printstrln(&quot;hello world&quot;);
+  }
+}
+</pre></div>
+</div>
+<p>Compile with verbose messages:</p>
+<div class="highlight-none"><div class="highlight"><pre>$ echo &#39;proc main() is printstrln(&quot;hello world&quot;)&#39; | sire -v
+Parsing file &#39;stdin&#39;
+Performing semantic analysis
+Performing child analysis
+Translating AST
+[Building an executable for 1 cores]
+Creating device header device.h
+Compiling program.xc -&gt; program.S
+Modifying assembly output
+  Extracting constants
+  Inserting function labels
+  Inserting frame sizes
+  Rewriting calls
+Assembling program.S -&gt; program.o
+Assembling constpool.S -&gt; constpool.o
+Building master jump table
+Assembling masterjumptab.S -&gt; masterjumptab.o
+Building master size table
+Building master frame table
+Assembling mastertables.S -&gt; mastertables.o
+Compiling runtime:
+  guest.xc -&gt; guest.xc.o
+  host.S -&gt; host.S.o
+  host.xc -&gt; host.xc.o
+  master.S -&gt; master.S.o
+  master.xc -&gt; master.xc.o
+  slave.S -&gt; slave.S.o
+  slave.xc -&gt; slave.xc.o
+  slavetables.S -&gt; slavetables.S.o
+  system.S -&gt; system.S.o
+  system.xc -&gt; system.xc.o
+  util.xc -&gt; util.xc.o
+  memory.c -&gt; memory.c.o
+Linking master -&gt; master.xe
+Linking slave -&gt; slave.xe
+Replacing master image in node 0, core 0
+Cleaning up
+Produced file: a.xe
+</pre></div>
+</div>
 </div>
 </div>
 </div>
@@ -89,13 +253,13 @@ hello world
         <div class="sphinxsidebarwrapper">
 <h3><a href="index.html">sire documentation (0v1)</a></h3>
 <ul class="current">
-<li class="toctree-l1 current"><a class="current reference internal" href="">Using sire</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#setup-and-installation">Setup and installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="">Usage</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#installation">Installation</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#getting-started">Getting started</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="definition.html">sire language definition</a></li>
-<li class="toctree-l1"><a class="reference internal" href="implementation.html">Implementation notes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="definition.html">Language definition</a></li>
+<li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
 </ul>
 
 <div id="searchbox" style="display: none">
