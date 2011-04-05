@@ -4,8 +4,9 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-import builtin
-from ast import NodeVisitor
+
+from ast.ast import NodeVisitor
+import analysis.builtin as builtin
 
 class Children(NodeVisitor):
     """ An AST walker class to determine the children of each procedure

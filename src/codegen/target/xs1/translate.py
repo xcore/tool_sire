@@ -4,12 +4,12 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-import ast
-import printer
-import definitions as defs
-import config
-from walker import NodeWalker
-from type import Type
+
+import common.definitions as defs
+import common.config as config
+import ast.ast as ast
+from ast.walker import NodeWalker
+from analysis.type import Type
 
 INDENT      = '  '
 MAX_TEMPS   = 100

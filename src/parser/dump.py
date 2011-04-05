@@ -5,7 +5,8 @@
 
 import sys
 import collections
-from ast import NodeVisitor
+
+from ast.ast import NodeVisitor
 
 class Dump(NodeVisitor):
     """ An AST visitor class to display the tree

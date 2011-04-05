@@ -7,14 +7,15 @@ import sys
 import os
 import io
 import re
-import util
 import glob
 import subprocess
-import builtin
-import definitions as defs
-import config
-import device
 from math import floor
+
+import common.definitions as defs
+import common.config as config
+import common.util as util
+import analysis.builtin as builtin
+from . import device
 
 DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'

@@ -4,14 +4,17 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-import error
-import util
-import ast
-import symbol
-import signature
-import definitions as defs
-from builtin import functions
-from type import Type
+
+import common.error as error
+import common.util as util
+import common.definitions as defs
+
+from ast.ast import NodeVisitor
+
+import analysis.symbol as symbol
+import analysis.signature as signature
+from analysis.builtin import functions
+from analysis.type import Type
 
 elem_types = {
     'elem_sub'     : None,
@@ -24,7 +27,7 @@ elem_types = {
     'elem_char'    : Type('val', 'single'),
 }
 
-class Semantics(ast.NodeVisitor):
+class Semantics(NodeVisitor):
     """ An AST visitor class to check the semantics of a sire program
     """
     def __init__(self, error):

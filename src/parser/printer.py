@@ -5,7 +5,8 @@
 
 import sys
 import ast
-from walker import NodeWalker
+
+from ast.walker import NodeWalker
 
 INDENT = 2
 FIRST_INDENT = '^'

@@ -4,10 +4,10 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-import ast
-import semantics
-import definitions as defs
-from type import Type
+
+import common.definitions as defs
+#from . import semantics
+from .type import Type
 
 scopes = ['system', 'module', 'proc', 'func']
 

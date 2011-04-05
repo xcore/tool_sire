@@ -9,22 +9,23 @@ import sys
 import io
 import os
 import argparse
-
-#from ply import *
-from parser import Parser
 import logging
 
-import error
-import util
-import definitions
-import config
-import dump
-import printer
-import semantics
-import children
-import translate
-import device
-import build
+import common.error as error
+import common.util as util
+import common.config as config
+import common.definitions as defs
+
+from parser.parser import Parser
+import parser.dump
+import parser.printer
+
+import analysis.semantics
+import analysis.children
+
+import codegen.target.xs1.device as device
+import codegen.target.xs1.translate as translate
+import codegen.target.xs1.build as build
 
 # Constants
 SUCCESS                  = 0
@@ -229,7 +230,7 @@ def main(args):
         return FAILURE
 
     # Load definitions
-    proceede = definitions.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
+    proceede = defs.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
     if not proceede:
         return FAILURE
 

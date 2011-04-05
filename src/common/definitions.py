@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-import util
+import common.util as util
 
 def convert_value(s):
     """ Convert a string value from a #define
