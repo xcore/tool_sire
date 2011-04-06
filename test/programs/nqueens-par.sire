@@ -1,0 +1,63 @@
+val N := 8;
+
+% Check no queens in same row or column, runs in O(N)
+func valid(val i, val j, val q[N]) is
+  var valid;
+  var k;
+{ valid := true
+; k := 0
+; while k < i and valid do
+    if q[i] = q[k] or (q[i]-q[k]) = (i-k) then
+    { valid := false
+    ; k := k + 1
+    }
+    else skip
+; return valid
+}
+
+% Try queen i in position j
+proc try(val i, val j, val _q[N], var succ, var result[N]) is
+  var q[N];
+  var k;
+{ succ := true
+; if valid(i, j, _q) then
+  { for k:=0 to N-1 do q[k] = _q[k]
+  ; q[i] := j
+  ; if i < N
+    then tryall(i+1, q)
+    else
+    { for k:=0 to N-1 do result[k] := q[k]
+    ; succ := true
+    }
+  }
+  else skip
+}
+
+% Try all positons of queen i in parallel
+proc tryall(val i, val q[N], var succ, var result[N]) is
+  var succ[N];
+  var results[N*N];
+  var j;
+  var k;
+{ par j:=1 for N do try(i, j, q, succ[j:j], results[j*N:(j+1)*N])
+; succ := false
+; for j:=0 to N-1 do
+    if succ[j] then
+    { for k:=0 to N-1 do result[k] := results[j*N+k]
+    ; succ := true
+    }
+    else skip
+}
+
+proc main() is
+  var q[N];
+  var result[N];
+  var succ;
+  var i;
+{ for i:=0 step 1 to N-1 do a[i] := N+1
+; tryall(0, q, succ, result)
+; if succ then 
+    for i:=0 to N-1 do printval(x[i])
+  else skip
+; println()
+}

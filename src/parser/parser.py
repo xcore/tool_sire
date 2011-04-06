@@ -7,8 +7,8 @@ import ply.yacc as yacc
 from parser.lexer import Lexer
 from analysis.type import Type
 
-import common.error
-import ast.ast
+import common.error as error
+import ast.ast as ast
 
 class Coord(object):
     """ Coordinates (file, line, col) of a syntactic element. """

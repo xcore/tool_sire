@@ -133,7 +133,6 @@ class Translate(NodeWalker):
         self.buf = buf
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
-        self.printer = printer.Printer(buf)
         self.label_counter = 0
         self.parent = None
 
@@ -161,7 +160,6 @@ class Translate(NodeWalker):
     def ppt(self, method, node):
         """ Display a pretty-printed AST node in a comment """
         self.out('/*\n')
-        #getattr(self.printer, method)(node, 0)
         self.out('\n')
         self.out('*/\n')
 

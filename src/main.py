@@ -17,11 +17,11 @@ import common.config as config
 import common.definitions as defs
 
 from parser.parser import Parser
-import parser.dump
-import parser.printer
+import parser.dump as dump
+import parser.printer as printer
 
-import analysis.semantics
-import analysis.children
+import analysis.semantics as semantics
+import analysis.children as children
 
 import codegen.target.xs1.device as device
 import codegen.target.xs1.translate as translate
