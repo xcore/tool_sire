@@ -1,0 +1,56 @@
+val fixsize := 25
+val xmin := -2;
+val ymin := -1.25;
+val xmax := 0.5;
+val ymax := 1.25;
+val XDIM := 80;
+val YDIM := 40;
+val COUNT := 40;
+
+func mul(val a, val b) is skip
+func div(val a, val b) is skip
+func fix(val a) is skip
+func int(val a) is skip
+
+func plot(val i) is
+  if i > 32 then printchar(' ')
+  else if i > 16 printchar('*')
+  else if i > 8  printchar('&')
+  else if i > 3  printchar('%')
+  else if i > 1  printchar(':')
+  else           printchar('.')
+
+proc compute() is
+  var dx;
+  var dy;
+  var xn;
+  var x0;
+  var y0;
+  var p;
+  var q;
+  var i;
+  var x;
+  var y;
+{ dx := div(fix(xmax-xmin), fix(XDIM))
+; dy := div(fix(ymax-ymin), fix(YDIM))
+; for y:=0 to YDIM-1 do
+  { for x:=0 to XDIM-1 do
+    { p := fix(xmin) + mul(fix(x), dx)
+    ; q := fix(ymin) + mul(fix(y), dy)
+    ; xn := 0
+    ; x0 := 0
+    ; y0 := 0
+    ; i := 0
+    ; while mul(px,px)+mul(py,py) > fix(4.0) and i < COUNT do
+      { i := i + 1
+      ; xn := mul((x0+y0), (x0-y0)) + p
+      ; y0 := mul(fix(2), mul(x0, y0)) + q
+      ; x0 := xn
+      }
+    ; plot(i)
+    }
+  ; println()
+  }
+
+proc main() is
+  compute()
