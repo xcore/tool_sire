@@ -14,6 +14,8 @@ COMPILE          = 'sire'
 SIMULATE         = 'xsim'
 SIM_FLAGS        = []
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
+EXAMPLES_DIR     = '/test/examples-old' 
+FEATURES_DIR     = '/test/features' 
 
 class Test(object):
     def __init__(self, name, output, cores=[1], args=[]):
@@ -23,7 +25,7 @@ class Test(object):
         self.args = args
 
 
-program_tests = [ 
+example_tests = [ 
     Test('hello',           'hello world\n', [1, 4, 16, 32, 64]),
     Test('factorial-loop',  '6\n120\n5040\n'),
     Test('factorial-rec',   '6\n120\n5040\n'),
@@ -75,8 +77,8 @@ def init():
                 out=sys.stderr)
         return False
     else:
-        globals()['TEST_PROGRAMS_PATH'] = INSTALL_PATH+'/test/programs'
-        globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+'/test/features'
+        globals()['TEST_EXAMPLES_PATH'] = INSTALL_PATH+EXAMPLES_DIR
+        globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+FEATURES_DIR
         return True
 
 def run_test(self, name, path, output, num_cores, args=[]):
@@ -94,12 +96,12 @@ def test_generator(name, path, output, num_cores):
         run_test(self, name, path, output, num_cores)
     return test
 
-def generate_program_tests():
-    """ Dynamically generate all the program tests """
-    for t in program_tests:
+def generate_example_tests():
+    """ Dynamically generate all the example tests """
+    for t in example_tests:
         for num_cores in t.cores:
-            name = 'test_program_{}_{}c'.format(t.name, num_cores)
-            test = test_generator(t.name, TEST_PROGRAMS_PATH, t.output, num_cores)
+            name = 'test_example_{}_{}c'.format(t.name, num_cores)
+            test = test_generator(t.name, TEST_EXAMPLES_PATH, t.output, num_cores)
             setattr(FeatureTests, name, test)
 
 def generate_feature_tests():
@@ -141,6 +143,6 @@ class FeatureTests(unittest.TestCase):
 if __name__ == '__main__':
     if init():
         sys.argv.append('-v')
-        generate_program_tests()
+        generate_example_tests()
         generate_feature_tests()
         unittest.main()
