@@ -1,4 +1,4 @@
-val FIX := 25;
+val FIX := 25
 val XDIM := 80;
 val YDIM := 40;
 val COUNT := 40;
@@ -16,37 +16,42 @@ func plot(val i) is
   else if i > 1  printchar(':')
   else           printchar('.')
 
-proc compute(val xmin, val ymin, val xmax, val ymax) is
-  var dx;
-  var dy;
+proc body(val x, val y, val dx, val dy) is
   var xn;
   var x0;
   var y0;
   var p;
   var q;
   var i;
+{ p := fix(xmin) + mul(fix(x), dx)
+; q := fix(ymin) + mul(fix(y), dy)
+; xn := 0
+; x0 := 0
+; y0 := 0
+; i := 0
+; while mul(px,px)+mul(py,py) > fix(4.0) and i < COUNT do
+  { i := i + 1
+  ; xn := mul((x0+y0), (x0-y0)) + p
+  ; y0 := mul(fix(2), mul(x0, y0)) + q
+  ; x0 := xn
+  }
+; plot(i)
+}
+
+proc inner(val y, val dx, val dy) is
   var x;
+{ par x:=0 for XDIM do body(y, dx, dy)
+; println()
+}
+
+proc compute() is
+  var dx;
+  var dy;
   var y;
 { dx := div(fix(xmax-xmin), fix(XDIM))
 ; dy := div(fix(ymax-ymin), fix(YDIM))
-; for y:=0 to YDIM-1 do
-  { for x:=0 to XDIM-1 do
-    { p := fix(xmin) + mul(fix(x), dx)
-    ; q := fix(ymin) + mul(fix(y), dy)
-    ; xn := 0
-    ; x0 := 0
-    ; y0 := 0
-    ; i := 0
-    ; while mul(px,px)+mul(py,py) > fix(4.0) and i < COUNT do
-      { i := i + 1
-      ; xn := mul((x0+y0), (x0-y0)) + p
-      ; y0 := mul(fix(2), mul(x0, y0)) + q
-      ; x0 := xn
-      }
-    ; plot(i)
-    }
-  ; println()
-  }
+; par y:=0 for YDIM do inner(y, dx, dy)
+}
 
 proc main() is
   var xmin;
@@ -59,3 +64,4 @@ proc main() is
 ; ymax := 1.25
 ; compute(xmin, ymin, xmax, ymax)
 }
+
