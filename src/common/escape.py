@@ -1,9 +1,8 @@
 import sys
 
-class Error(Exception):
-    """ A generic error Exception class
+class Escape(Exception):
+    """ An exception to cause a compiler stage to halt the process
     """
-    
     def __init__(self, value):
         self.value = value
 

@@ -11,7 +11,9 @@ import os
 import argparse
 import logging
 
-import common.error as error
+from common.error import Error
+from common.escape import Escape
+import common.errorlog as error
 import common.util as util
 import common.config as config
 import common.definitions as defs
@@ -23,61 +25,74 @@ import parser.printer as printer
 import analysis.semantics as semantics
 import analysis.children as children
 
-import codegen.target.xs1.device as device
-import codegen.target.xs1.translate as translate
-import codegen.target.xs1.build as build
+import codegen.codegen as codegen
 
 # Constants
+VERSION                  = 0.1
 SUCCESS                  = 0
 FAILURE                  = 1
+DONE                     = SUCCESS
 DEFINITIONS_FILE         = 'definitions.h'
-DEFAULT_TRANSLATION_FILE = 'program.xc'
-DEFAULT_OUTPUT_XC        = 'a.xc'
-DEFAULT_OUTPUT_S         = 'a.S'
-DEFAULT_OUTPUT_XE        = 'a.xe'
 PARSE_LOG_FILE           = 'parselog.txt'
+DEFAULT_TRANSLATION_FILE = 'program.xc'
+DEFAULT_OUTPUT           = 'a'
+DEFAULT_OUTPUT_XC        = DEFAULT_OUTPUT+'.xc'
+DEFAULT_OUTPUT_S         = DEFAULT_OUTPUT+'.S'
+DEFAULT_OUTPUT_XE        = DEFAULT_OUTPUT+'.xe'
 DEFAULT_NUM_CORES        = 1
+TARGET_SYSTEMS           = ['xs1', 'mpi']
 
 # Globals
 verbose = False
-proceede = True
 
 def setup_argparse():
     """ Configure an argument parser object 
     """
-    p = argparse.ArgumentParser(description='sire compiler', prog='sire')
+    p = argparse.ArgumentParser(description=
+            'sire compiler v{}'.format(VERSION), prog='sire')
     
-    p.add_argument('infile', nargs='?', metavar='<input-file>', 
-            default=None,
+    # Input/output targets
+
+    p.add_argument('infile', nargs='?', metavar='<input-file>', default=None,
             help='input filename')
     
     p.add_argument('-o', nargs=1, metavar='<file>', 
             dest='outfile', default=None,
-            help='output filename')
+            help="output filename (default: '"+DEFAULT_OUTPUT+".*')")
+   
+    # System parameters
+
+    p.add_argument('-t', nargs=1, choices=TARGET_SYSTEMS, required=True, 
+            dest='target_system',
+            help='target system')
     
-    p.add_argument('-n', '--numcores', nargs=1, metavar='<n>', 
-            dest='num_cores', default=[DEFAULT_NUM_CORES],
-            help='number of cores')
+    p.add_argument('-n', nargs=1, metavar='<n>', type=int, 
+            dest='num_cores', default=DEFAULT_NUM_CORES,
+            help='number of cores (default: {})'.format(DEFAULT_NUM_CORES))
     
+    # Verbosity
+
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
     
     p.add_argument('-e', '--display-calls', action='store_true',
             dest='show_calls', help='display external commands invoked ')
     
+    # Stages
+
     p.add_argument('-r', '--parse', action='store_true', dest='parse_only', 
             help='parse the input file and quit')
 
     p.add_argument('-s', '--sem', action='store_true', dest='sem_only', 
             help='perform semantic analysis and quit')
     
-    p.add_argument('-a', '--display-ast', action='store_true', dest='show_ast',
+    p.add_argument('-p', '--print-ast', action='store_true', dest='print_ast',
             help='display the AST and quit')
     
-    p.add_argument('-p', '--pprint-ast', action='store_true', dest='pprint',
+    p.add_argument('-P', '--pprint_ast-ast', action='store_true', dest='pprint_ast',
             help='pretty-print the AST and quit')
     
-    p.add_argument('-t', '--translate', action='store_true',
+    p.add_argument('-T', '--translate', action='store_true',
             dest='translate_only',
             help='translate but do not compile')
     
@@ -85,41 +100,41 @@ def setup_argparse():
             dest='compile_only',
             help='compile but do not assemble and link')
     
-    p.add_argument('-d', '--devices', action='store_true',
-            dest='display_devices',
-            help='display available devices')
-    
     return p
 
 def setup_globals(a):
-    """ Setup global variables for this module to control execution of
-        compilation
+    """ Setup global variables representing compilation parameters
     """
-    
+   
+    # Verbosity
     global verbose
-    global display_devices
     global show_calls
+    verbose         = a.verbose
+    show_calls      = a.show_calls
+    
+    # System paramters
+    global target_system
     global num_cores
-    global infile
-    global outfile
+    target_system   = a.target_system
+    num_cores       = int(a.num_cores[0])
+
+    # Stages
+    global print_ast
+    global pprint_ast
     global parse_only
     global sem_only
-    global show_ast
-    global pprint
     global translate_only
-    
-    verbose         = a.verbose
-    display_devices = a.display_devices
-    show_calls      = a.show_calls
-    num_cores       = int(a.num_cores[0])
-    infile          = a.infile
     parse_only      = a.parse_only
     sem_only        = a.sem_only
     compile_only    = a.compile_only
-    show_ast        = a.show_ast
-    pprint          = a.pprint
+    print_ast       = a.print_ast
+    pprint_ast      = a.pprint_ast
     translate_only  = a.translate_only
 
+    # Input/output targets
+    global infile
+    global outfile
+    infile = a.infile
     if not a.outfile:
         if translate_only: outfile = DEFAULT_OUTPUT_XC 
         elif compile_only: outfile = DEFAULT_OUTPUT_S
@@ -127,28 +142,24 @@ def setup_globals(a):
     else:
         outfile = a.outfile[0]
 
-def set_device(num_cores):
-    """ Check num_cores is valid for an available device """
+def set_target(target_system, num_cores):
+    """ Check num_cores is valid for an available device
+    """
     #d = AVAILABLE_DEVICES.find(lambda x: num_cores==x.num_cores())
     d = [x for x in device.AVAILABLE_DEVICES if num_cores == x.num_cores()]
     if d:
         return d[0]
     else:
-        sys.stderr.write('Invalid number of cores ({}), valid devices:\n'.format(
-            num_cores))
-        for x in device.AVAILABLE_DEVICES:
-            sys.stderr.write('  {}\n'.format(x.name))
-        return None
+        raise Error('Invalid number of cores ({}), valid devices:\n'
+                .format(num_cores))
+        #for x in device.AVAILABLE_DEVICES:
+        #    sys.stderr.write('  {}\n'.format(x.name))
 
-def show_devices():
-    print('Available devices:')
-    [print('  '+x.name) for x in device.AVAILABLE_DEVICES]
-
-def parse(logging=False):
+def produce_ast(input_file, err, logging=False):
     """ Parse an input string to produce an AST 
     """
-    global ast
     verbose_msg("Parsing file '{}'\n".format(infile if infile else 'stdin'))
+    
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,
@@ -158,141 +169,107 @@ def parse(logging=False):
         log = logging.getLogger()
     else:
         log = 0
+   
+    # Create the parser and produce the AST
     parser = Parser(err, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
-    ast = parser.parse(input, infile, debug=log)
+    ast = parser.parse(input_file, infile, debug=log)
+    
+    if err.any():
+        raise Error('parsing')
+    
+    # Perform parsing only
+    if parse_only: 
+        raise Escape()
+    
+    # Display (dump) the AST
+    if print_ast:
+        ast.accept(dump.Dump())
+        raise Escape()
 
-def semantic_analysis():
+    # Display (pretty-print) the AST
+    if pprint_ast: 
+        printer.Printer().walk_program(ast)
+        raise Escape()
+
+    return ast
+
+def semantic_analysis(ast, err):
     """ Perform semantic analysis on an AST 
     """
-    global sem
     verbose_msg("Performing semantic analysis\n")
     sem = semantics.Semantics(err)
     ast.accept(sem)
+    if err.any():
+        raise Error('semantic analysis')
+    if sem_only: 
+        raise Escape()
+    return sem
 
-def child_analysis():
+def child_analysis(ast, sem):
     """ Determine children
     """
-    global child
     verbose_msg("Performing child analysis\n")
     child = children.Children(sem.proc_names)
     ast.accept(child)
     child.build()
     #child.display()
-
-def translate_ast():
-    """ Transform an AST into XC 
-    """
-    global translate_buf
-    verbose_msg("Translating AST\n")
-    translate_buf = io.StringIO()
-    walker = translate.Translate(sem, child, translate_buf)
-    walker.walk_program(ast)
-    if translate_only:
-        util.write_file(outfile, translate_buf.getvalue())
-
-def builder(outfile, compile_only):
-    """ Build the program executable 
-    """
-    global proceede
-    verbose_msg('[Building an executable for {} cores]\n'.format(
-            num_cores))
-    builder = build.Build(num_cores, sem, verbose, show_calls)
-    if compile_only:
-        proceede = builder.compile_only(translate_buf, outfile, device)
-    else:
-        proceede = builder.run(translate_buf, outfile, device)
+    return child
 
 def verbose_msg(msg):
     if verbose: 
         sys.stdout.write(msg)
         sys.stdout.flush()
 
-# TODO: Ensure proper error handling for each stage here
-
 def main(args):
     
-    global proceede
-    global err
-    global ast
-    global input
-    global translate_buf
-    global sem
-    global child
-    global device
+    try:
 
-    # Setup the error object
-    err = error.Error()
+        # Setup the configuration variables and definitions
+        config.init()
+        defs.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
 
-    # Setup the configuration variables
-    proceede = config.init(err)
-    if not proceede:
-        return FAILURE
+        # Setup parser, parse arguments and initialise globals
+        argp = setup_argparse()
+        a = argp.parse_args(args)
+        setup_globals(a)
 
-    # Load definitions
-    proceede = defs.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
-    if not proceede:
-        return FAILURE
+        # Set a (valid) target system
+        set_target(target_system, num_cores)
+        
+        # Read the input from stdin or from a file 
+        input_file = util.read_file(infile) if infile else sys.stdin.read()
 
-    # Setup parser, parse arguments and initialise globals
-    argp = setup_argparse()
-    a = argp.parse_args(args)
-    setup_globals(a)
+        # Setup the error object
+        err = error.Error()
+        
+        # Parse the input file and produce an AST
+        ast = produce_ast(input_file, err)
 
-    # Display devices
-    if display_devices:
-        show_devices()
-        return SUCCESS
+        # Perform semantic analysis on the AST
+        sem = semantic_analysis(ast, err)
 
-    # Set the device
-    device = set_device(num_cores)
-    if not device:
+        # Perform child analysis
+        child = child_analysis(ast)
+
+        # Generate code
+        codegen.generate(ast, sem, child, 
+                target_system, num_cores, 
+                translate_only, compile_only)
+
+    # Handle any early exits
+    except Escape:
+        return DONE
+
+    # Handle any specific compilation errors
+    except Error as e:
+        sys.stderr.write('Error: '+e)
         return FAILURE
     
-    # Read the input from stdin or from a file 
-    input = util.read_file(infile) if infile else sys.stdin.read()
-    if not input: 
-        return FAILURE
-
-    # Parse the input file and produce an AST
-    parse()
-    if err.any(): 
-        return FAILURE
-    if parse_only: 
-        return SUCCESS
-
-    # Perform semantic analysis on the AST
-    semantic_analysis()
-    if err.any(): 
-        return FAILURE
-    if sem_only: 
-        return SUCCESS
-
-    # Perform child analysis
-    child_analysis()
-
-    # Display (dump) the AST
-    if show_ast:
-        ast.accept(dump.Dump())
-        return SUCCESS
-
-    # Display (pretty-print) the AST
-    if pprint: 
-        walker = printer.Printer()
-        walker.walk_program(ast)
-        return SUCCESS
-   
-    # Translate the AST
-    translate_ast()
-    if translate_only:
-        return SUCCESS
-
-    # Compile, assemble and link with the runtime
-    builder(outfile, a.compile_only)
-    if not proceede:
-        return FAILURE
-
-    verbose_msg('Produced file: '+outfile+'\n')
+    # Anything else
+    except:
+        print("Unexpected error:", sys.exc_info()[0])
+        raise
     
     return SUCCESS
 

@@ -22,29 +22,34 @@ New
 
 - Allow slice of a single array element to 'val' or 'var'.
 
-------------------------
-General compiler-related
-------------------------
+- Prohibit globals?
+
+------
+Driver
+------
+
+- Make sure errors are dealt with properly at each stage of the main function
+
+- Add a CompileStage class to record time and stats etc
+
+--------------
+Lexing/parsing
+--------------
 
 - Add more error cases to improve syntax error reporting.
 
 - Add more error synchronisation points in the parser to reduce erronous parsing
   after a syntax error.
 
+-----------------
+Semantic analysis
+-----------------
+
 - Write tests for each rule of semantic analysis, check that it behaves well on
   all cases that cause errors and warnings.
 
-- Make sure errors are dealt with properly at each stage of the main function
-
 - Ideally, symbol lookup should be O(1) by creating new tables for
   each new scope
-
-- Write language feature test cases in a unittest framework.
-
-- Make sure all runtime variables can't clash with sire variables - rename all
-  with underscores.
-
-- Add a CompileStage class to record time and stats etc
 
 - Semantic analysis should check formal array qualifiers are valid.
 
@@ -55,10 +60,17 @@ General compiler-related
 
 - Function uses must occur after their definition.
 
+- Check var arguments only accept a valid identifier (not an expression).
+
 - No system call funcitons can be used by processes moved to another core as the
   slave binaries do not have this linked in.
 
-- Check var arguments only accept a valid identifier (not an expression).
+---------------
+Code generation
+---------------
+
+- Make sure all runtime variables can't clash with sire variables - rename all
+  with underscores.
 
 - Read devices directory to determine valid number of cores.
 
@@ -89,11 +101,4 @@ Possible improvements/extensions
 
 - Complete code generation: add a complete back-end to produce assembly output
   natively or target LLVM.
-
-- Allow the expression of more complex programs by allowing state to be
-  associated with a function, rather than the current local/global scoping. This
-  could be in the form of object orientated, modular structuring or nested
-  process definitions.
-
-- Multi-dimensional arrays.
 
