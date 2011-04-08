@@ -45,7 +45,7 @@ proc_conversion = {
     'exit'       : '_exit',
 }
 
-class TranslateXS1(NodeWalker):
+class TranslateMPI(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
     

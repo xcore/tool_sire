@@ -15,7 +15,8 @@ import common.definitions as defs
 import common.config as config
 import common.util as util
 import analysis.builtin as builtin
-from . import device
+from codegen.target.xs1.device import AVAILABLE_DEVICES
+from codegen.build import Build
 
 DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'
@@ -31,7 +32,7 @@ SLAVE_XE         = 'slave.xe'
 XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
+COMPILE_FLAGS    = ['-S', '-O0', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
@@ -39,26 +40,27 @@ RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc',
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
         'util.xc', 'memory.c']
 
-class Build(object):
-    """ A class to compile, assemble and link the program source with the
-        runtime into an executable multi-core binary.
-    """
-    def __init__(self, num_cores, semantics, verbose=False, showcalls=False):
-        self.num_cores = num_cores
-        self.sem = semantics
-        self.verbose = verbose
-        self.showcalls = showcalls
+class BuildXS1(Build):
+    
+    def compile_asm(self, program_buf, outfile, device):
+        """ Compile the translated program into assembly.
+        """
+        
+        # Create headers
+        s = self.create_headers(device)
+        
+        # Generate the assembly
+        (lines, cp) = self.generate_assembly(program_buf)
 
-        # Add the include paths once they have been set
-        global COMPILE_FLAGS
-        global ASSEMBLE_FLAGS
-        include_dirs = ['-I', config.RUNTIME_PATH]
-        include_dirs += ['-I', config.INCLUDE_PATH]
-        include_dirs += ['-I', '.']
-        COMPILE_FLAGS += include_dirs
-        ASSEMBLE_FLAGS += include_dirs
+        # Write the program back out and assemble
+        if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
 
-    def run(self, program_buf, outfile, device):
+        # Rename the output file
+        if s: os.rename(PROGRAM_ASM, outfile)
+        
+        return s
+
+    def compile_binary(self, program_buf, outfile, device):
         """ Run the full build
         """
         
@@ -95,24 +97,6 @@ class Build(object):
         if s: s = self.replace_slaves()
         
         self.cleanup(outfile)
-        return s
-
-    def compile_only(self, program_buf, outfile, device):
-        """ Compile the program only
-        """
-        
-        # Create headers
-        s = self.create_headers(device)
-        
-        # Generate the assembly
-        (lines, cp) = self.generate_assembly(program_buf)
-
-        # Write the program back out and assemble
-        if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
-
-        # Rename the output file
-        if s: os.rename(PROGRAM_ASM, outfile)
-        
         return s
 
     def create_headers(self, device):
@@ -490,9 +474,4 @@ class Build(object):
 
     def function_label_framesize(self, name):
         return '.'+name+'.framesize'
-
-    def verbose_msg(self, msg, end='\n'):
-        if self.verbose: 
-            sys.stdout.write(msg+end)
-            sys.stdout.flush()
 

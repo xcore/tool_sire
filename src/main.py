@@ -12,8 +12,7 @@ import argparse
 import logging
 
 from common.error import Error
-from common.escape import Escape
-import common.errorlog as error
+from common.errorlog import ErrorLog
 import common.util as util
 import common.config as config
 import common.definitions as defs
@@ -75,7 +74,7 @@ def setup_argparse():
     p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
             help='display status messages')
     
-    p.add_argument('-e', '--display-calls', action='store_true',
+    p.add_argument('-c', '--display-calls', action='store_true',
             dest='show_calls', help='display external commands invoked ')
     
     # Stages
@@ -96,7 +95,7 @@ def setup_argparse():
             dest='translate_only',
             help='translate but do not compile')
     
-    p.add_argument('-c', '--compile', action='store_true',
+    p.add_argument('-C', '--compile', action='store_true',
             dest='compile_only',
             help='compile but do not assemble and link')
     
@@ -155,7 +154,7 @@ def set_target(target_system, num_cores):
         #for x in device.AVAILABLE_DEVICES:
         #    sys.stderr.write('  {}\n'.format(x.name))
 
-def produce_ast(input_file, err, logging=False):
+def produce_ast(input_file, errorlog, logging=False):
     """ Parse an input string to produce an AST 
     """
     verbose_msg("Parsing file '{}'\n".format(infile if infile else 'stdin'))
@@ -171,39 +170,39 @@ def produce_ast(input_file, err, logging=False):
         log = 0
    
     # Create the parser and produce the AST
-    parser = Parser(err, lex_optimise=True, 
+    parser = Parser(errorlog, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
     ast = parser.parse(input_file, infile, debug=log)
     
-    if err.any():
+    if errorlog.any():
         raise Error('parsing')
     
     # Perform parsing only
     if parse_only: 
-        raise Escape()
+        raise SystemExit()
     
     # Display (dump) the AST
     if print_ast:
         ast.accept(dump.Dump())
-        raise Escape()
+        raise SystemExit()
 
     # Display (pretty-print) the AST
     if pprint_ast: 
         printer.Printer().walk_program(ast)
-        raise Escape()
+        raise SystemExit()
 
     return ast
 
-def semantic_analysis(ast, err):
+def semantic_analysis(ast, errorlog):
     """ Perform semantic analysis on an AST 
     """
     verbose_msg("Performing semantic analysis\n")
-    sem = semantics.Semantics(err)
+    sem = semantics.Semantics(errlog)
     ast.accept(sem)
-    if err.any():
+    if errorlog.any():
         raise Error('semantic analysis')
     if sem_only: 
-        raise Escape()
+        raise SystemExit()
     return sem
 
 def child_analysis(ast, sem):
@@ -241,7 +240,7 @@ def main(args):
         input_file = util.read_file(infile) if infile else sys.stdin.read()
 
         # Setup the error object
-        err = error.Error()
+        errorlog = ErrorLog()
         
         # Parse the input file and produce an AST
         ast = produce_ast(input_file, err)
@@ -257,16 +256,16 @@ def main(args):
                 target_system, num_cores, 
                 translate_only, compile_only)
 
-    # Handle any early exits
-    except Escape:
-        return DONE
-
     # Handle any specific compilation errors
     except Error as e:
         sys.stderr.write('Error: '+e)
         return FAILURE
     
-    # Anything else
+    # Handle system exits
+    except SystemExit:
+        return DONE
+  
+    # Anything else we weren't expecting
     except:
         print("Unexpected error:", sys.exc_info()[0])
         raise
