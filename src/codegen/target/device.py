@@ -3,8 +3,8 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from codegen.target.xs1.device import AVAILABLE_XS1_DEVICES
-from codegen.target.mpi.device import MPIDevice
+from codegen.target.xs1.device import get_xs1_device
+from codegen.target.mpi.device import get_mpi_device
 
 TARGET_SYSTEMS = ['xs1', 'mpi']
 DEFAULT_NUM_CORES = 1
@@ -26,15 +26,10 @@ def set_device(target_system, num_cores):
     """
     # XS1
     if target_system == 'xs1':
-        d = [x for x in AVAILABLE_XS1_DEVICES if num_cores==x.num_cores()]
-        if d:
-            return d[0]
-        else:
-            raise Error('invalid XS1 target ({} cores)'.format(num_cores))
-
+        get_xs1_device(num_cores)
     # MPI
     elif target_system == 'mpi':
-        return MPIDevice(num_cores)
+        get_mpi_device(num_cores)
 
     # Otherwise
     else:

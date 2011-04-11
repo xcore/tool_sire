@@ -13,6 +13,7 @@ import logging
 
 from common.error import Error
 from common.errorlog import ErrorLog
+from common.util import verbose_msg
 import common.util as util
 import common.config as config
 import common.definitions as defs
@@ -134,7 +135,8 @@ def produce_ast(input_file, errorlog, logging=False):
     """ Parse an input string to produce an AST 
     """
     verbose_msg("Parsing file '{}'\n".format(infile if infile else 'stdin'))
-    
+   
+    # Setup logging if we need to
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,
@@ -173,28 +175,29 @@ def semantic_analysis(ast, errorlog):
     """ Perform semantic analysis on an AST 
     """
     verbose_msg("Performing semantic analysis\n")
+    
     sem = semantics.Semantics(errlog)
     ast.accept(sem)
+    
     if errorlog.any():
         raise Error('semantic analysis')
+    
     if sem_only: 
         raise SystemExit()
+    
     return sem
 
 def child_analysis(ast, sem):
     """ Determine children
     """
     verbose_msg("Performing child analysis\n")
+    
     child = children.Children(sem.proc_names)
     ast.accept(child)
     child.build()
     #child.display()
+    
     return child
-
-def verbose_msg(msg):
-    if verbose: 
-        sys.stdout.write(msg)
-        sys.stdout.flush()
 
 def main(args):
     

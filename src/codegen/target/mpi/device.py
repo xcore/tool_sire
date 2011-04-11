@@ -22,4 +22,6 @@ class MPIDevice(Device):
     def get_binary_file_ext(self):
         return BINARY_FILE_EXT
 
+def get_xs1_device(num_cores):
+    return MPIDevice('MPI', num_cores)
 

@@ -16,8 +16,7 @@ import common.config as config
 import common.util as util
 from common.util import verbose_msg
 import analysis.builtin as builtin
-from codegen.target.xs1.device import AVAILABLE_DEVICES
-from codegen.build import Build
+#from codegen.target.xs1.device import AVAILABLE_XS1_DEVICES
 
 DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'

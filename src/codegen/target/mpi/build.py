@@ -14,7 +14,6 @@ from math import floor
 import common.definitions as defs
 import common.util as util
 import analysis.builtin as builtin
-from codegen.build import Build
 
 PROGRAM          = 'program'
 PROGRAM_SRC      = PROGRAM+'.c'

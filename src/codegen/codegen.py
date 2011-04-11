@@ -8,10 +8,10 @@ import analysis.semantics as semantics
 import analysis.children as children
 
 from codegen.target.xs1.translate import TranslateXS1
-from codegen.target.xs1.build import BuildXS1
+from codegen.target.xs1.build import build_xs1
 
 from codegen.target.mpi.translate import TranslateMPI
-from codegen.target.mpi.build import BuildMPI
+from codegen.target.mpi.build import build_mpi
 
 def translate(ast, sem, child, target_system):
     """ Translate the AST to target system. 
@@ -47,7 +47,7 @@ def build(sem, buf, device, outfile, compile_only):
 
     verbose_msg('Produced file: '+outfile+'\n')
 
-def generate(ast, sem, child, device, outfile 
+def generate(ast, sem, child, device, outfile, 
         translate_only, compile_only):
     """ Generate code intermediate/machine/binary from AST.
     """

@@ -34,3 +34,10 @@ class XS1Device(Device):
     def get_binary_file_ext(self):
         return BINARY_FILE_EXT
 
+def get_xs1_device(num_cores):
+    d = [x for x in AVAILABLE_XS1_DEVICES if num_cores==x.num_cores()]
+    if d:
+        return d[0]
+    else:
+        raise Error('invalid XS1 target ({} cores)'.format(num_cores))
+
