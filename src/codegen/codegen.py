@@ -33,7 +33,7 @@ def translate(ast, sem, child, target_system):
 
     return translate_buf
 
-def build(sem, buf, outfile, compile_only):
+def build(sem, buf, device, outfile, compile_only):
     """ Compile the translated AST for the target system.
     """
     verbose_msg('Compiling an executable for {} cores\n'
@@ -41,25 +41,24 @@ def build(sem, buf, outfile, compile_only):
 
     # Create a Build object
     if target_system == 'xs1':
-        builder = BuildXS1(num_cores, sem, verbose, show_calls)
+        build_xs1(sem, device, buf, outfile, verbose, compile_only, show_calls)
     elif target_system == 'mpi':
-        builder = BuildMPI(num_cores, sem, verbose, show_calls)
+        build_mpi(sem, device, buf, outfile, verbose, compile_only, show_calls)
 
-    builder.build(buf, outfile, compile_only)
     verbose_msg('Produced file: '+outfile+'\n')
 
-def generate(ast, sem, child, target_system, num_cores, 
+def generate(ast, sem, child, device, outfile 
         translate_only, compile_only):
     """ Generate code intermediate/machine/binary from AST.
     """
     
     # Translate the AST
-    buf = translate(ast, child)
+    buf = translate(ast, child, outfile)
     
     if translate_only:
         verbose_msg('Produced file: '+outfile+'\n')
         raise SystemExit()
 
     # Compile, assemble and link with the runtime
-    build(sem, buf, outfile, compile_only)
+    build(sem, buf, device, outfile, compile_only)
 

@@ -23,45 +23,63 @@ PROGRAM_OBJ      = PROGRAM+'.o'
 
 RUNTIME_FILES = ['guest.c', 'host.c', 'master.c', 'slave.c', 'system.c', 'util.c']
 
-class BuildMPI(Build):
+def build_mpi(self, semantics, device, program_buf, outfile, compile_only, 
+        verbose=False, showcalls=False):
+    """ Run the build process to create either the assembly output or the
+        complete binary.
+    """
+    # Add the include paths once they have been set
+    include_dirs = ['-I', config.XS1_RUNTIME_PATH]
+    include_dirs += ['-I', config.INCLUDE_PATH]
+    include_dirs += ['-I', '.']
+    
+    global COMPILE_FLAGS
+    global ASSEMBLE_FLAGS
+    COMPILE_FLAGS += include_dirs
+    ASSEMBLE_FLAGS += include_dirs
 
-    def compile_asm(self, program_buf, outfile, device):
-        """ Compile the translated program into assembly.
-        """
+    if compile_only:
+        compile_asm(program_buf, device, outfile)
+    else:
+        compile_binary(program_buf, device, outfile)
 
-        # ...
+def compile_asm(self, program_buf, device, outfile):
+    """ Compile the translated program into assembly.
+    """
 
-        # Write the program back out and assemble
-        if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
+    # ...
 
-        # Rename the output file
-        if s: os.rename(PROGRAM_ASM, outfile)
-        
-        return s
+    # Write the program back out and assemble
+    if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
 
-    def compile_binary(self, program_buf, outfile, device):
-        """ Run the full build
-        """
-        
-        # ...
+    # Rename the output file
+    if s: os.rename(PROGRAM_ASM, outfile)
+    
+    return s
 
-        self.cleanup(outfile)
-        return s
+def compile_binary(self, program_buf, outfile, device):
+    """ Run the full build
+    """
+    
+    # ...
 
-    def cleanup(self, output_xe):
-        """ Renanme the output file and delete any temporary files
-        """
-        self.verbose_msg('Cleaning up')
-        
-        # Remove specific files
-        #util.remove_file(DEVICE_HDR)
-        
-        # Remove unused master images
-        #for x in glob.glob('image_n*c*elf'):
-        #    util.remove_file(x)
+    self.cleanup(outfile)
+    return s
 
-        # Remove runtime objects
-        #for x in glob.glob('*.o'):
-        #    util.remove_file(x)
+def cleanup(self, output_xe):
+    """ Renanme the output file and delete any temporary files
+    """
+    self.verbose_msg('Cleaning up')
+    
+    # Remove specific files
+    #util.remove_file(DEVICE_HDR)
+    
+    # Remove unused master images
+    #for x in glob.glob('image_n*c*elf'):
+    #    util.remove_file(x)
+
+    # Remove runtime objects
+    #for x in glob.glob('*.o'):
+    #    util.remove_file(x)
 
 

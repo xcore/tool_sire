@@ -25,21 +25,15 @@ import analysis.semantics as semantics
 import analysis.children as children
 
 import codegen.codegen as codegen
+from codegen.target.device import set_device
+from codegen.target.device import TARGET_SYSTEMS
+from codegen.target.device import DEFAULT_NUM_CORES
 
 # Constants
-VERSION                  = 0.1
-SUCCESS                  = 0
-FAILURE                  = 1
-DONE                     = SUCCESS
-DEFINITIONS_FILE         = 'definitions.h'
-PARSE_LOG_FILE           = 'parselog.txt'
-DEFAULT_TRANSLATION_FILE = 'program.xc'
-DEFAULT_OUTPUT           = 'a'
-DEFAULT_OUTPUT_XC        = DEFAULT_OUTPUT+'.xc'
-DEFAULT_OUTPUT_S         = DEFAULT_OUTPUT+'.S'
-DEFAULT_OUTPUT_XE        = DEFAULT_OUTPUT+'.xe'
-DEFAULT_NUM_CORES        = 1
-TARGET_SYSTEMS           = ['xs1', 'mpi']
+VERSION             = '0.1'
+DEFINITIONS_FILE    = 'definitions.h'
+PARSE_LOG_FILE      = 'parselog.txt'
+DEFAULT_OUTPUT_FILE = 'a'
 
 # Globals
 verbose = False
@@ -48,7 +42,7 @@ def setup_argparse():
     """ Configure an argument parser object 
     """
     p = argparse.ArgumentParser(description=
-            'sire compiler v{}'.format(VERSION), prog='sire')
+            'sire compiler v'+VERSION, prog='sire')
     
     # Input/output targets
 
@@ -88,7 +82,7 @@ def setup_argparse():
     p.add_argument('-p', '--print-ast', action='store_true', dest='print_ast',
             help='display the AST and quit')
     
-    p.add_argument('-P', '--pprint_ast-ast', action='store_true', dest='pprint_ast',
+    p.add_argument('-P', '--pprint-ast', action='store_true', dest='pprint_ast',
             help='pretty-print the AST and quit')
     
     p.add_argument('-T', '--translate', action='store_true',
@@ -134,25 +128,7 @@ def setup_globals(a):
     global infile
     global outfile
     infile = a.infile
-    if not a.outfile:
-        if translate_only: outfile = DEFAULT_OUTPUT_XC 
-        elif compile_only: outfile = DEFAULT_OUTPUT_S
-        else:              outfile = DEFAULT_OUTPUT_XE
-    else:
-        outfile = a.outfile[0]
-
-def set_target(target_system, num_cores):
-    """ Check num_cores is valid for an available device
-    """
-    #d = AVAILABLE_DEVICES.find(lambda x: num_cores==x.num_cores())
-    d = [x for x in device.AVAILABLE_DEVICES if num_cores == x.num_cores()]
-    if d:
-        return d[0]
-    else:
-        raise Error('Invalid number of cores ({}), valid devices:\n'
-                .format(num_cores))
-        #for x in device.AVAILABLE_DEVICES:
-        #    sys.stderr.write('  {}\n'.format(x.name))
+    outfile = a.outfile[0] if a.outfile else DEFAULT_OUTPUT_FILE
 
 def produce_ast(input_file, errorlog, logging=False):
     """ Parse an input string to produce an AST 
@@ -233,8 +209,8 @@ def main(args):
         a = argp.parse_args(args)
         setup_globals(a)
 
-        # Set a (valid) target system
-        set_target(target_system, num_cores)
+        # Create a (valid) target system device oject (before anything else)
+        device = set_target(target_system, num_cores)
         
         # Read the input from stdin or from a file 
         input_file = util.read_file(infile) if infile else sys.stdin.read()
@@ -252,25 +228,24 @@ def main(args):
         child = child_analysis(ast)
 
         # Generate code
-        codegen.generate(ast, sem, child, 
-                target_system, num_cores, 
+        codegen.generate(ast, sem, child, device, outfile, 
                 translate_only, compile_only)
 
     # Handle any specific compilation errors
     except Error as e:
         sys.stderr.write('Error: '+e)
-        return FAILURE
+        return 1
     
     # Handle system exits
     except SystemExit:
-        return DONE
+        return 0
   
     # Anything else we weren't expecting
     except:
         print("Unexpected error:", sys.exc_info()[0])
         raise
     
-    return SUCCESS
+    return 0
 
 if __name__ == '__main__':
     sys.exit(main(sys.argv[1:]))

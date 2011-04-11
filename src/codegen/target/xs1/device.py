@@ -3,24 +3,34 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-class Device(object):
-    def __init__(self, num_nodes, num_cores_per_node, name):
-        self.num_nodes = num_nodes
+from codegen.target.device import Device
+
+SOURCE_FILE_EXT = 'xc'
+ASSEMBLY_FILE_EXT = 'S'
+BINARY_FILE_EXT = 'xe'
+
+AVAILABLE_XS1_DEVICES = [
+    XS1Device('XMP-1',  1,  1),
+    XS1Device('XMP-4',  1,  4),
+    XS1Device('XMP-16', 4,  4),
+    XS1Device('XMP-32', 8,  4),
+    XS1Device('XMP-64', 16, 4),
+]
+
+class XS1Device(Device):
+    def __init__(self, name, num_nodes, num_cores_per_node):
+        super(XS1Device, self).__init__('xs1', name, num_nodes)
         self.num_cores_per_node = num_cores_per_node
-        self.name = name
 
     def num_cores(self):
         return self.num_nodes * self.num_cores_per_node
 
+    def get_source_file_ext(self):
+        return SOURCE_FILE_EXT
 
-# TODO: read these in automatically?
-AVAILABLE_DEVICES = [
-    Device(1,  1, 'XMP-1'),
-    Device(2,  1, 'XMP-2'),
-    Device(1,  4, 'XMP-4'),
-    Device(4,  4, 'XMP-16'),
-    Device(8,  4, 'XMP-32'),
-    Device(16, 4, 'XMP-64'),
-]
-    
+    def get_assembly_file_ext(self):
+        return ASSEMBLY_FILE_EXT
+
+    def get_binary_file_ext(self):
+        return BINARY_FILE_EXT
 

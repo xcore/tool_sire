@@ -74,4 +74,11 @@ def indexed_dict(elements):
     """ Return a dictionary of indexes for item keys 
     """
     return dict([(e,i) for i, e in list(enumerate(elements))])
+    
+def verbose_msg(self, msg, end='\n'):
+    """ Output a message that is displayed in verbose mode.
+    """
+    if self.verbose: 
+        sys.stdout.write(msg+end)
+        sys.stdout.flush()
 

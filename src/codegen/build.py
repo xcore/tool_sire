@@ -10,8 +10,8 @@ class Build(object):
         runtime into an executable binary. This class is extended by particular
         targets which implement compile_asm() and compile_binary().
     """
-    def __init__(self, num_cores, semantics, verbose=False, showcalls=False):
-        self.num_cores = num_cores
+    def __init__(self, semantics, device, verbose=False, showcalls=False):
+        self.device = device
         self.sem = semantics
         self.verbose = verbose
         self.showcalls = showcalls
@@ -30,14 +30,7 @@ class Build(object):
             complete binary.
         """
         if compile_only:
-            compile_asm(program_buf, outfile, None)
+            compile_asm(program_buf, self.device, outfile)
         else:
-            compile_binary(program_buf, outfile, None)
-    
-    def verbose_msg(self, msg, end='\n'):
-        """ Output a message that is displayed in verbose mode.
-        """
-        if self.verbose: 
-            sys.stdout.write(msg+end)
-            sys.stdout.flush()
+            compile_binary(program_buf, device, outfile)
     
