@@ -37,33 +37,49 @@ def build_mpi(self, semantics, device, program_buf, outfile, compile_only,
     COMPILE_FLAGS += include_dirs
     ASSEMBLE_FLAGS += include_dirs
 
-    if compile_only:
-        compile_asm(program_buf, device, outfile)
-    else:
-        compile_binary(program_buf, device, outfile)
+    try:
+        
+        # ...
+        
+        if compile_only:
+            
+            # Write the program back out and assemble
+            util.write_file(PROGRAM_ASM, ''.join(lines))
 
-def compile_asm(self, program_buf, device, outfile):
-    """ Compile the translated program into assembly.
-    """
+            # Rename the output file
+            outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+                    outfile+'.'+device.assembly_file_ext())
+            os.rename(PROGRAM_ASM, outfile)
 
-    # ...
+            raise SystemExit() 
 
-    # Write the program back out and assemble
-    if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
+        # ...
 
-    # Rename the output file
-    if s: os.rename(PROGRAM_ASM, outfile)
+        # Write the program back out and assemble
+        if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
+
+        # Rename the output file
+        if s: os.rename(PROGRAM_ASM, outfile)
+        
+        # Rename the output file
+        outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+                outfile+'.'+device.binary_file_ext())
+        os.rename(SLAVE_XE, outfile)
+
+        vmsg(v, 'Produced file: '+outfile)
+
+    except Error as e:
+        cleanup()
+        raise Error(e.args)
     
-    return s
-
-def compile_binary(self, program_buf, outfile, device):
-    """ Run the full build
-    """
-    
-    # ...
-
-    self.cleanup(outfile)
-    return s
+    except SystemExit:
+        raise SystemExit()
+  
+    except:
+        raise
+        
+    finally:
+        cleanup(v)
 
 def cleanup(self, output_xe):
     """ Renanme the output file and delete any temporary files
@@ -73,12 +89,7 @@ def cleanup(self, output_xe):
     # Remove specific files
     #util.remove_file(DEVICE_HDR)
     
-    # Remove unused master images
-    #for x in glob.glob('image_n*c*elf'):
-    #    util.remove_file(x)
-
     # Remove runtime objects
-    #for x in glob.glob('*.o'):
-    #    util.remove_file(x)
-
+    for x in glob.glob('*.o'):
+        util.remove_file(x)
 

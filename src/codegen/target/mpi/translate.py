@@ -48,9 +48,8 @@ proc_conversion = {
 class TranslateMPI(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
-    
     def __init__(self, semantics, children, buf):
-        super(Translate, self).__init__()
+        super(TranslateMPI, self).__init__()
         self.sem = semantics
         self.child = children
         self.buf = buf
@@ -60,11 +59,13 @@ class TranslateMPI(NodeWalker):
         self.parent = None
 
     def out(self, s):
-        """ Write an indented line """
+        """ Write an indented line
+        """
         self.blocker.insert(s)
 
     def asm(self, template, outop=None, inops=None, clobber=None):
-        """ Write an inline assembly statement """
+        """ Write an inline assembly statement
+        """
         self.out('asm("{}"{}{}{}{}{}{});'.format(
             #template.replace('\n', ' ; '),
             template,
@@ -77,11 +78,13 @@ class TranslateMPI(NodeWalker):
             ))
 
     def comment(self, s):
-        """ Write a comment """
+        """ Write a comment
+        """
         self.out('// '+s)
 
     def stmt_block(self, stmt):
-        """ Decide whether the statement needs a block """
+        """ Decide whether the statement needs a block
+        """
         if not (isinstance(stmt, ast.StmtSeq) 
                 or isinstance(stmt, ast.StmtPar)):
             self.blocker.begin()
@@ -91,7 +94,8 @@ class TranslateMPI(NodeWalker):
             self.stmt(stmt)
         
     def procedure_name(self, name):
-        """ If a procedure name has a conversion, return it """
+        """ If a procedure name has a conversion, return it
+        """
         return proc_conversion[name] if name in proc_conversion else name
 
     def arguments(self, arg_list):
@@ -114,22 +118,27 @@ class TranslateMPI(NodeWalker):
         return ', '.join(args)
 
     def get_label(self):
-        """ Get the next unique label """
+        """ Get the next unique label
+        """
         l = '_L{}'.format(self.label_counter)
         self.label_counter += 1
         return l
 
     def header(self):
-        self.out('#include <xs1.h>')
-        self.out('#include <print.h>')
+        self.out('#include <mpi.h>')
+        self.out('#include <stdlib.h>')
+        self.out('#include <stdio.h>')
         self.out('#include <syscall.h>')
-        self.out('#include "globals.h"')
-        self.out('#include "util.h"')
-        self.out('#include "guest.h"')
-        self.out('#include "device.h"')
+        #self.out('#include "globals.h"')
+        #self.out('#include "util.h"')
+        #self.out('#include "guest.h"')
+        #self.out('#include "device.h"')
         self.out('#include "language.h"')
         self.out('')
-  
+ 
+    def create_main(self):
+        self.out(MAIN_FUNCTION)
+
     # Program ============================================
 
     def walk_program(self, node):
@@ -138,7 +147,7 @@ class TranslateMPI(NodeWalker):
         self.header()
         self.decls(node.decls)
         self.defs(node.defs, 0)
-
+   
         # Output the buffered blocks
         self.blocker.output()
     
@@ -178,7 +187,6 @@ class TranslateMPI(NodeWalker):
             self.defn(p, d)
 
     def defn(self, node, d):
-        self.out('#pragma unsafe arrays')
         s = ''
         s += 'void' if node.name == '_main' else 'int'
         s += ' {}({})'.format(
@@ -223,118 +231,15 @@ class TranslateMPI(NodeWalker):
             self.stmt(x)
         self.blocker.end()
 
-    def thread_set(self):
-        """ Generate the initialisation for a slave thread, in the body of a for
-            loop with _i indexing the thread number
-        """
-
-        # Get a synchronised thread
-        self.out('unsigned _t;')
-        self.out('unsigned _spnew;')
-        self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
-
-        # Setup pc = &setupthread (from jump table)
-        self.asm('ldw r11, cp[{}] ; init t[%0]:pc, r11'
-                .format(defs.JUMPI_INIT_THREAD), 
-                inops=['_t'], clobber=['r11'])
-
-        # Move sp away: sp -= THREAD_STACK_SPACE and save it
-        self.out('_spnew = _sp - (((_t>>8)&0xFF) * THREAD_STACK_SPACE);')
-        self.asm('init t[%0]:sp, %1', inops=['_t', '_spnew'])
-
-        # Setup dp, cp
-        self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
-                 inops=['_t'], clobber=['r11'])
-        self.asm('ldaw r11, cp[0x0] ; init t[%0]:cp, r11', 
-                 inops=['_t'], clobber=['r11'])
-
-        # Copy register values
-        self.comment('Copy thread registers')
-        for i in range(12):
-            self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
-        
-        self.comment('Copy thread stack')
-        self.out('for(int _j=0; _j<_frametab[{}]; _j++)'.format(
-            defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(self.parent)))
-        self.blocker.begin()
-        self.asm('ldw r11, %0[%1] ; stw r11, %2[%1]',
-                inops=['_spbase', '_j', '_spnew'], clobber=['r11']) 
-        self.blocker.end()
-
-        # Copy thread id to the array
-        self.out('_threads[_i] = _t;')
-
     def stmt_par(self, node):
-        """ Generate a parallel block """
+        """ Generate a parallel block
+        """
         self.blocker.begin()
-        num_slaves = len(node.children()) - 1
-        exit_label = self.get_label()
-
         self.comment('Parallel block')
 
-        # Declare sync variable and array to store thread identifiers
-        self.out('unsigned _sync;')
-        self.out('unsigned _spbase;')
-        self.out('unsigned _threads[{}];'.format(num_slaves))
-
-        # Get a label for each thread
-        thread_labels = [self.get_label() for i in range(num_slaves + 1)]
-
-        self.comment('Get a sync, sp base, _spLock and claim num threads')
-        
-        # Get a thread synchroniser
-        #self.out('_sync = GETR_SYNC();')
-        self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
-       
-        # Load the address of sp
-        self.asm('ldaw %0, sp[0x0]', outop='_spbase')
-
-        # Claim thread count
-        self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-        self.out('_numThreads = _numThreads - {};'.format(num_slaves))
-        self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
-
-        # Setup each slave thread
-        self.comment('Initialise slave threads')
-        self.out('for(int _i=0; _i<{}; _i++)'.format(num_slaves))
-        self.blocker.begin()
-        self.thread_set()
-        self.blocker.end()
-       
-        # Set lr = &instruction label
-        self.comment('Initialise slave link registers')
-        for (i, x) in enumerate(node.children()):
-            if not i == 0:
-                self.asm('ldap r11, '+thread_labels[i]+' ; init t[%0]:lr, r11',
-                    inops=['_threads[{}]'.format(i-1)], clobber=['r11'])
-
-        # Master synchronise
-        self.comment('Master synchronise')
-        self.asm('msync res[%0]', inops=['_sync'])
-
-        # Output each thread's instructions followed by a slave synchronise or
-        # for the master, a master join and branch out of the block.
         for (i, x) in enumerate(node.children()):
             self.comment('Thread {}'.format(i))
-            self.asm(thread_labels[i]+':')
             self.stmt(x)
-            if i == 0:
-                self.asm('mjoin res[%0]', inops=['_sync'])
-                self.asm('bu '+exit_label)
-            else:
-                self.asm('ssync')
-
-        # Ouput exit label 
-        self.comment('Exit, free _sync, restore _sp and _numThreads')
-        self.asm(exit_label+':')
-        
-        # Free synchroniser resource
-        self.asm('freer res[%0]', inops=['_sync'])
-
-        # Release thread count
-        self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-        self.out('_numThreads = _numThreads + {};'.format(num_slaves))
-        self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
 
         self.blocker.end()
 
@@ -342,8 +247,6 @@ class TranslateMPI(NodeWalker):
         pass
 
     def stmt_pcall(self, node):
-        #if self.parent == node.name:
-        #    self.out('#pragma stackcalls 10')
         self.out('{}({});'.format(
             self.procedure_name(node.name), self.arguments(node.args)))
 
@@ -486,44 +389,12 @@ class TranslateMPI(NodeWalker):
         return ', '.join([self.expr(x) for x in node.children()])
     
     def expr_single(self, node):
-
-        # If the elem is an alias subscript, generate a load
-        if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
-                tmp = self.blocker.get_tmp()
-                self.asm('ldw %0, %1[%2]', outop=tmp,
-                        inops=[node.elem.name, self.expr(node.elem.expr)])
-                return tmp
-
-        # Otherwise, just return the regular syntax
         return self.elem(node.elem)
 
     def expr_unary(self, node):
-        
-        # If the elem is an alias subscript, generate a load
-        if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
-                tmp = self.blocker.get_tmp()
-                self.asm('ldw %0, %1[%2]', outop=tmp,
-                        inops=[node.elem.name, self.expr(node.elem.expr)])
-                return '({}{})'.format(node.op, tmp)
-        
-        # Otherwise, just return the regular syntax
-        else:
-            return '({}{})'.format(node.op, self.elem(node.elem))
+        return '({}{})'.format(node.op, self.elem(node.elem))
 
     def expr_binop(self, node):
-        
-        # If the elem is an alias subscript, generate a load
-        if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
-                tmp = self.blocker.get_tmp()
-                self.asm('ldw %0, %1[%2]', outop=tmp,
-                        inops=[node.elem.name, self.expr(node.elem.expr)])
-                return '{} {} {}'.format(tmp,
-                        op_conversion[node.op], self.expr(node.right))
-        
-        # Otherwise, just return the regular syntax
         return '{} {} {}'.format(self.elem(node.elem), 
                 op_conversion[node.op], self.expr(node.right))
     
