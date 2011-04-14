@@ -4,11 +4,11 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import ply.yacc as yacc
-from parser.lexer import Lexer
-from analysis.type import Type
+from lexer import Lexer
+from type import Type
 
-import common.error as error
-import ast.ast as ast
+import error
+import ast
 
 class Coord(object):
     """ Coordinates (file, line, col) of a syntactic element. """

@@ -11,9 +11,9 @@ import glob
 import subprocess
 from math import floor
 
-import common.definitions as defs
-import common.util as util
-import analysis.builtin as builtin
+import definitions as defs
+import util
+import builtin
 
 PROGRAM          = 'program'
 PROGRAM_SRC      = PROGRAM+'.c'

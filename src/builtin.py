@@ -3,8 +3,8 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from ast.ast import Def, Formals, Param
-from analysis.type import Type
+from ast import Def, Formals, Param
+from type import Type
 
 printchar = Def(
         'printchar', 

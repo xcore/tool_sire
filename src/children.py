@@ -5,8 +5,8 @@
 
 import sys
 
-from ast.ast import NodeVisitor
-import analysis.builtin as builtin
+from ast import NodeVisitor
+import builtin
 
 class Children(NodeVisitor):
     """ An AST walker class to determine the children of each procedure

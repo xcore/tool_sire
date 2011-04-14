@@ -4,9 +4,9 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-import ast
 
-from ast.walker import NodeWalker
+import ast
+from walker import NodeWalker
 
 INDENT = 2
 FIRST_INDENT = '^'

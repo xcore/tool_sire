@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from common.error import Error
+from error import Error
 from codegen.target.xs1.device import get_xs1_device
 from codegen.target.mpi.device import get_mpi_device
 

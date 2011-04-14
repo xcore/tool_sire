@@ -5,9 +5,9 @@
 
 import sys
 
-import common.definitions as defs
-from analysis.type import Type
-import analysis.semantics
+import definitions as defs
+from type import Type
+import semantics
 
 # Valid types that can be taken by each formal type
 param_conversions = {

@@ -11,20 +11,18 @@ import os
 import argparse
 import logging
 
-from common.error import Error
-from common.errorlog import ErrorLog
-from common.util import vmsg
-from common.util import vhdr
-import common.util as util
-import common.config as config
-import common.definitions as defs
-
-from parser.parser import Parser
-import parser.dump as dump
-import parser.printer as printer
-
-import analysis.semantics as semantics
-import analysis.children as children
+from error import Error
+from errorlog import ErrorLog
+from util import vmsg
+from util import vhdr
+import util
+import config
+import definitions as defs
+from parser import Parser
+import dump as dump
+import printer as printer
+import semantics as semantics
+import children as children
 
 import codegen.codegen as codegen
 from codegen.target.config import set_device

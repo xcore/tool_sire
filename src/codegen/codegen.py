@@ -5,14 +5,13 @@
 
 import io
 
-import common.util as util
-import common.definitions as defs
-from common.util import vmsg
-from common.util import vhdr
-
-import ast.ast as ast
-import analysis.semantics as semantics
-import analysis.children as children
+import util
+import definitions as defs
+from util import vmsg
+from util import vhdr
+import ast
+import semantics
+import children
 
 from codegen.target.xs1.translate import TranslateXS1
 from codegen.target.xs1.build import build_xs1

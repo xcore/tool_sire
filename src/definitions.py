@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-import common.util as util
+import util as util
 
 # Constants
 VERSION             = '0.1'

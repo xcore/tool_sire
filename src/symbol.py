@@ -5,9 +5,8 @@
 
 import sys
 
-import common.definitions as defs
-#from . import semantics
-from .type import Type
+import definitions as defs
+from type import Type
 
 scopes = ['system', 'module', 'proc', 'func']
 

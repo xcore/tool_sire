@@ -5,17 +5,17 @@
 
 import sys
 
-import common.error as error
-import common.util as util
-import common.definitions as defs
+import error
+import util
+import definitions as defs
 
-import ast.ast as ast
-from ast.ast import NodeVisitor
+import ast
+from ast import NodeVisitor
 
-import analysis.symbol as symbol
-import analysis.signature as signature
-from analysis.builtin import functions
-from analysis.type import Type
+import symbol
+import signature
+from builtin import functions
+from type import Type
 
 elem_types = {
     'elem_sub'     : None,

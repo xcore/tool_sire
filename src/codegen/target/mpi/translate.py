@@ -5,11 +5,11 @@
 
 import sys
 
-import common.definitions as defs
-import common.config as config
-import ast.ast as ast
-from ast.walker import NodeWalker
-from analysis.type import Type
+import definitions as defs
+import config as config
+import ast
+from walker import NodeWalker
+from type import Type
 from codegen.blocker import Blocker
 
 INDENT      = '  '

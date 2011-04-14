@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from common.util import indexed_dict
+from util import indexed_dict
 
 specifier_names = ['proc','func', 'var', 'val', 'chanend', 'chan', 'port', 'core', 'tag']
 specifiers = indexed_dict(specifier_names)

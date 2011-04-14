@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-import common.util as util
+import util
 
 class NodeWalker(object):
     """ A base class for walking an AST """  

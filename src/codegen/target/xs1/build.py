@@ -11,12 +11,12 @@ import glob
 import subprocess
 from math import floor
 
-import common.definitions as defs
-import common.config as config
-import common.util as util
-from common.util import vmsg
-from common.error import Error
-import analysis.builtin as builtin
+import definitions as defs
+import config
+import util
+from util import vmsg
+from error import Error
+import builtin
 
 DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'
