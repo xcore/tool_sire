@@ -3,6 +3,11 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+INDENT      = '  '
+MAX_TEMPS   = 100
+BEGIN_BLOCK = '^'
+END_BLOCK   = '*'
+
 class Blocker(object):
     """ A class to buffer c-style blocks containing sequences of statements.
         Also allows temporary variables to be allocated in blocks.

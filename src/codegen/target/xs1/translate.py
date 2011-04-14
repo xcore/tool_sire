@@ -11,11 +11,7 @@ import ast.ast as ast
 from ast.walker import NodeWalker
 from analysis.type import Type
 from codegen.blocker import Blocker
-
-INDENT      = '  '
-MAX_TEMPS   = 100
-BEGIN_BLOCK = '^'
-END_BLOCK   = '*'
+from codegen.blocker import INDENT
 
 op_conversion = {
     '+'   : '+',
@@ -50,7 +46,7 @@ class TranslateXS1(NodeWalker):
     """
     
     def __init__(self, semantics, children, buf):
-        super(Translate, self).__init__()
+        super(TranslateXS1, self).__init__()
         self.sem = semantics
         self.child = children
         self.buf = buf

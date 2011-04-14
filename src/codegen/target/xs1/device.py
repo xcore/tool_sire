@@ -5,17 +5,9 @@
 
 from codegen.target.device import Device
 
-SOURCE_FILE_EXT = 'xc'
-ASSEMBLY_FILE_EXT = 'S'
-BINARY_FILE_EXT = 'xe'
-
-AVAILABLE_XS1_DEVICES = [
-    XS1Device('XMP-1',  1,  1),
-    XS1Device('XMP-4',  1,  4),
-    XS1Device('XMP-16', 4,  4),
-    XS1Device('XMP-32', 8,  4),
-    XS1Device('XMP-64', 16, 4),
-]
+XS1_SOURCE_FILE_EXT = 'xc'
+XS1_ASSEMBLY_FILE_EXT = 'S'
+XS1_BINARY_FILE_EXT = 'xe'
 
 class XS1Device(Device):
     def __init__(self, name, num_nodes, num_cores_per_node):
@@ -25,14 +17,22 @@ class XS1Device(Device):
     def num_cores(self):
         return self.num_nodes * self.num_cores_per_node
 
-    def get_source_file_ext(self):
-        return SOURCE_FILE_EXT
+    def source_file_ext(self):
+        return XS1_SOURCE_FILE_EXT
 
-    def get_assembly_file_ext(self):
-        return ASSEMBLY_FILE_EXT
+    def assembly_file_ext(self):
+        return XS1_ASSEMBLY_FILE_EXT
 
-    def get_binary_file_ext(self):
-        return BINARY_FILE_EXT
+    def binary_file_ext(self):
+        return XS1_BINARY_FILE_EXT
+
+AVAILABLE_XS1_DEVICES = [
+    XS1Device('XMP-1',  1,  1),
+    XS1Device('XMP-4',  1,  4),
+    XS1Device('XMP-16', 4,  4),
+    XS1Device('XMP-32', 8,  4),
+    XS1Device('XMP-64', 16, 4),
+]
 
 def get_xs1_device(num_cores):
     d = [x for x in AVAILABLE_XS1_DEVICES if num_cores==x.num_cores()]

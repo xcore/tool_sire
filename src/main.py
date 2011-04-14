@@ -13,7 +13,7 @@ import logging
 
 from common.error import Error
 from common.errorlog import ErrorLog
-from common.util import verbose_msg
+from common.util import vmsg
 import common.util as util
 import common.config as config
 import common.definitions as defs
@@ -26,24 +26,19 @@ import analysis.semantics as semantics
 import analysis.children as children
 
 import codegen.codegen as codegen
-from codegen.target.device import set_device
-from codegen.target.device import TARGET_SYSTEMS
-from codegen.target.device import DEFAULT_NUM_CORES
-
-# Constants
-VERSION             = '0.1'
-DEFINITIONS_FILE    = 'definitions.h'
-PARSE_LOG_FILE      = 'parselog.txt'
-DEFAULT_OUTPUT_FILE = 'a'
+from codegen.target.config import set_device
+from codegen.target.config import TARGET_SYSTEMS
+from codegen.target.config import DEFAULT_NUM_CORES
+from codegen.target.config import DEFAULT_TARGET_SYSTEM
 
 # Globals
-verbose = False
+v = False
 
 def setup_argparse():
     """ Configure an argument parser object 
     """
     p = argparse.ArgumentParser(description=
-            'sire compiler v'+VERSION, prog='sire')
+            'sire compiler v'+defs.VERSION, prog='sire')
     
     # Input/output targets
 
@@ -52,16 +47,16 @@ def setup_argparse():
     
     p.add_argument('-o', nargs=1, metavar='<file>', 
             dest='outfile', default=None,
-            help="output filename (default: '"+DEFAULT_OUTPUT+".*')")
+            help="output filename (default: '"+defs.DEFAULT_OUT_FILE+".*')")
    
     # System parameters
 
-    p.add_argument('-t', nargs=1, choices=TARGET_SYSTEMS, required=True, 
-            dest='target_system',
-            help='target system')
+    p.add_argument('-t', nargs=1, choices=TARGET_SYSTEMS, 
+            dest='target_system', default=[DEFAULT_TARGET_SYSTEM],
+            help='target system (default: '+DEFAULT_TARGET_SYSTEM+')')
     
     p.add_argument('-n', nargs=1, metavar='<n>', type=int, 
-            dest='num_cores', default=DEFAULT_NUM_CORES,
+            dest='num_cores', default=[DEFAULT_NUM_CORES],
             help='number of cores (default: {})'.format(DEFAULT_NUM_CORES))
     
     # Verbosity
@@ -82,7 +77,7 @@ def setup_argparse():
     
     p.add_argument('-p', '--print-ast', action='store_true', dest='print_ast',
             help='display the AST and quit')
-    
+        
     p.add_argument('-P', '--pprint-ast', action='store_true', dest='pprint_ast',
             help='pretty-print the AST and quit')
     
@@ -103,14 +98,14 @@ def setup_globals(a):
     # Verbosity
     global verbose
     global show_calls
-    verbose         = a.verbose
-    show_calls      = a.show_calls
+    v = a.verbose
+    show_calls = a.show_calls
     
     # System paramters
     global target_system
     global num_cores
-    target_system   = a.target_system
-    num_cores       = int(a.num_cores[0])
+    target_system = a.target_system[0]
+    num_cores = int(a.num_cores[0])
 
     # Stages
     global print_ast
@@ -118,29 +113,31 @@ def setup_globals(a):
     global parse_only
     global sem_only
     global translate_only
-    parse_only      = a.parse_only
-    sem_only        = a.sem_only
-    compile_only    = a.compile_only
-    print_ast       = a.print_ast
-    pprint_ast      = a.pprint_ast
-    translate_only  = a.translate_only
+    global compile_only
+    parse_only = a.parse_only
+    sem_only = a.sem_only
+    compile_only = a.compile_only
+    print_ast = a.print_ast
+    pprint_ast = a.pprint_ast
+    translate_only = a.translate_only
+    compile_only = a.compile_only
 
     # Input/output targets
     global infile
     global outfile
     infile = a.infile
-    outfile = a.outfile[0] if a.outfile else DEFAULT_OUTPUT_FILE
+    outfile = a.outfile[0] if a.outfile else defs.DEFAULT_OUT_FILE
 
 def produce_ast(input_file, errorlog, logging=False):
     """ Parse an input string to produce an AST 
     """
-    verbose_msg("Parsing file '{}'\n".format(infile if infile else 'stdin'))
+    vmsg(v, "Parsing file '{}'\n".format(infile if infile else 'stdin'))
    
     # Setup logging if we need to
     if logging:
         logging.basicConfig(
             level = logging.DEBUG,
-            filename = PARSE_LOG_FILE,
+            filename = defs.PARSE_LOG_FILE,
             filemode = "w",
             format = "%(filename)10s:%(lineno)4d:%(message)s")
         log = logging.getLogger()
@@ -174,9 +171,9 @@ def produce_ast(input_file, errorlog, logging=False):
 def semantic_analysis(ast, errorlog):
     """ Perform semantic analysis on an AST 
     """
-    verbose_msg("Performing semantic analysis\n")
+    vmsg(v, "Performing semantic analysis\n")
     
-    sem = semantics.Semantics(errlog)
+    sem = semantics.Semantics(errorlog)
     ast.accept(sem)
     
     if errorlog.any():
@@ -190,7 +187,7 @@ def semantic_analysis(ast, errorlog):
 def child_analysis(ast, sem):
     """ Determine children
     """
-    verbose_msg("Performing child analysis\n")
+    vmsg(v, "Performing child analysis\n")
     
     child = children.Children(sem.proc_names)
     ast.accept(child)
@@ -205,7 +202,7 @@ def main(args):
 
         # Setup the configuration variables and definitions
         config.init()
-        defs.load(config.INCLUDE_PATH+'/'+DEFINITIONS_FILE)
+        defs.load(config.INCLUDE_PATH)
 
         # Setup parser, parse arguments and initialise globals
         argp = setup_argparse()
@@ -213,7 +210,7 @@ def main(args):
         setup_globals(a)
 
         # Create a (valid) target system device oject (before anything else)
-        device = set_target(target_system, num_cores)
+        device = set_device(target_system, num_cores)
         
         # Read the input from stdin or from a file 
         input_file = util.read_file(infile) if infile else sys.stdin.read()
@@ -222,17 +219,17 @@ def main(args):
         errorlog = ErrorLog()
         
         # Parse the input file and produce an AST
-        ast = produce_ast(input_file, err)
+        ast = produce_ast(input_file, errorlog)
 
         # Perform semantic analysis on the AST
-        sem = semantic_analysis(ast, err)
+        sem = semantic_analysis(ast, errorlog)
 
         # Perform child analysis
-        child = child_analysis(ast)
+        child = child_analysis(ast, sem)
 
         # Generate code
         codegen.generate(ast, sem, child, device, outfile, 
-                translate_only, compile_only)
+                translate_only, compile_only, v)
 
     # Handle any specific compilation errors
     except Error as e:
@@ -245,7 +242,7 @@ def main(args):
   
     # Anything else we weren't expecting
     except:
-        print("Unexpected error:", sys.exc_info()[0])
+        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
         raise
     
     return 0

@@ -5,6 +5,12 @@
 
 import common.util as util
 
+# Constants
+VERSION             = '0.1'
+DEFINITIONS_FILE    = 'definitions.h'
+PARSE_LOG_FILE      = 'parselog.txt'
+DEFAULT_OUT_FILE    = 'a'
+
 def convert_value(s):
     """ Convert a string value from a #define
     """
@@ -21,8 +27,10 @@ def convert_value(s):
     else:
         return s
 
-def load(filename):
-    lines = util.read_file(filename, readlines=True)
+def load(path):
+    """ Load definitions from a c header file.
+    """
+    lines = util.read_file(path+'/'+DEFINITIONS_FILE, read_lines=True)
     if lines:
         for x in lines:
             frags = x.split()

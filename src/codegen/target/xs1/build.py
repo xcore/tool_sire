@@ -14,9 +14,9 @@ from math import floor
 import common.definitions as defs
 import common.config as config
 import common.util as util
-from common.util import verbose_msg
+from common.util import vmsg
+from common.error import Error
 import analysis.builtin as builtin
-#from codegen.target.xs1.device import AVAILABLE_XS1_DEVICES
 
 DEVICE_HDR       = 'device.h'
 PROGRAM          = 'program'
@@ -40,8 +40,8 @@ RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc',
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
         'util.xc', 'memory.c']
     
-def build_xs1(self, semantics, device, program_buf, outfile, compile_only, 
-        verbose=False, showcalls=False):
+def build_xs1(sem, device, buf, outfile, 
+        compile_only, show_calls=False, v=False):
     """ Run the build process to create either the assembly output or the
         complete binary.
     """
@@ -56,143 +56,154 @@ def build_xs1(self, semantics, device, program_buf, outfile, compile_only,
     ASSEMBLE_FLAGS += include_dirs
 
     if compile_only:
-        compile_asm(program_buf, device, outfile)
+        compile_asm(sem, device, buf, outfile, show_calls, v)
     else:
-        compile_binary(program_buf, device, outfile)
+        compile_binary(buf, device, outfile)
 
-def compile_asm(self, program_buf, device, outfile):
+def compile_asm(sem, buf, device, outfile, show_calls, v):
     """ Compile the translated program into assembly.
     """
-    
-    # Create headers
-    s = self.create_headers(device)
-    
-    # Generate the assembly
-    (lines, cp) = self.generate_assembly(program_buf)
 
-    # Write the program back out and assemble
-    if s: s = util.write_file(PROGRAM_ASM, ''.join(lines))
+    try:
 
-    # Rename the output file
-    if s: os.rename(PROGRAM_ASM, outfile)
+        # Create headers
+        create_headers(device)
+        
+        # Generate the assembly
+        (lines, cp) = generate_assembly(buf)
+
+        # Write the program back out and assemble
+        util.write_file(PROGRAM_ASM, ''.join(lines))
+
+        # Rename the output file
+        outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+                outfile+'.'+device.assembly_file_ext())
+        os.rename(PROGRAM_ASM, outfile)
+
+    except Error as e:
+        sys.stderr.write('Error: '+e)
+        raise
     
-    return s
+    except:
+        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
+        raise
 
-def compile_binary(self, program_buf, device, outfile):
+def compile_binary(program_buf, device, outfile, show_calls, v):
     """ Run the full build
     """
-    
-    # Create headers
-    s = self.create_headers(device)
 
-    # Generate the assembly
-    if s: s = self.generate_assembly(program_buf)
-    if s: (lines, cp) = s
-    #print(''.join(cp))
+    try:
 
-    # Write the program back out and assemble
-    if s: s = self.assemble(PROGRAM, 'S', ''.join(lines))
+        # Create headers
+        create_headers(device, v)
 
-    # Write the cp out and assemble
-    if s: s = self.assemble(CONST_POOL, 'S', ''.join(cp))
+        # Generate the assembly
+        (lines, cp) = generate_assembly(program_buf, show_calls, v)
 
-    # Output and assemble the master jump and size tables
-    if s: 
+        # Write the program back out and assemble
+        assemble_str(PROGRAM, 'S', ''.join(lines), show_calls, v)
+
+        # Write the cp out and assemble
+        assemble_str(CONST_POOL, 'S', ''.join(cp), show_calls, v)
+
+        # Output and assemble the master jump table
         buf = io.StringIO()
-        self.build_jumptab(buf)
-        s = self.assemble(MASTER_JUMPTAB, 'S', buf.getvalue())
-    if s: 
-        buf = io.StringIO()
-        self.build_sizetab(buf)
-        self.build_frametab(buf)
-        #print(buf.getvalue())
-        s = self.assemble(MASTER_TABLES, 'S', buf.getvalue())
-    
-    # Assemble and link the rest
-    if s: s = self.assemble_runtime(device)
-    if s: s = self.link_master(device)
-    if s: s = self.link_slave(device)
-    if s: s = self.replace_slaves()
-    
-    self.cleanup(outfile)
-    return s
+        build_jumptab(buf, v)
+        assemble_str(MASTER_JUMPTAB, 'S', buf.getvalue(), show_calls, v)
 
-def create_headers(self, device):
-    self.verbose_msg('Creating device header '+DEVICE_HDR)
+        # Output and assemble the master size table
+        buf = io.StringIO()
+        build_sizetab(buf, v)
+        build_frametab(buf, v)
+        s = assemble(MASTER_TABLES, 'S', buf.getvalue(), show_calls, v)
+        
+        # Assemble and link the rest
+        assemble_runtime(device, v)
+        link_master(device, v)
+        link_slave(device, v)
+        replace_slaves(v)
+        
+        # Rename the output file
+        outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+                outfile+'.'+device.assembly_file_ext())
+        os.rename(SLAVE_XE, outfile)
+        cleanup()
+
+    except Error as e:
+        sys.stderr.write('Error: '+e)
+        cleanup()
+        return 1
+    
+    except:
+        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
+        cleanup()
+        raise
+    
+
+def create_headers(device, v):
+    vmsg(v, 'Creating device header '+DEVICE_HDR)
     s =  '#define NUM_CORES {}\n'.format(device.num_cores())
     s += '#define NUM_NODES {}\n'.format(device.num_nodes)
     s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
-    r = util.write_file(DEVICE_HDR, s)
-    return r
+    util.write_file(DEVICE_HDR, s)
 
-def generate_assembly(self, program_buf):
+def generate_assembly(buf, show_calls, v):
     """ Given the program buffer containing the XC translation, generate the
         program and constant pool assembly.
     """
 
     # Compile the program into an assembly file
-    s = self.compile(PROGRAM, program_buf.getvalue())
-    program_buf.close()
+    compile_str(PROGRAM, buf.getvalue(), show_calls, v)
+    buf.close()
 
     # Read the assembly back in
-    if s:
-        lines = util.read_file(PROGRAM_ASM, readlines=True)
-        s = False if not lines else True
+    lines = util.read_file(PROGRAM_ASM, read_lines=True)
 
     # Make modifications
-    if s: 
-        (lines, cp) = self.modify_assembly(lines)
+    (lines, cp) = modify_assembly(lines)
     
-    return (lines, cp) if s else None
+    return (lines, cp)
 
-def compile(self, name, s, cleanup=True):
+def compile_str(name, string, show_calls, v, cleanup=True):
     """ Compile a buffer containing an XC program
     """
     srcfile = name + '.xc'
     outfile = name + '.S'
-    self.verbose_msg('Compiling '+srcfile+' -> '+outfile)
+    vmsg(v, 'Compiling '+srcfile+' -> '+outfile)
     util.write_file(srcfile, s)
-    s = util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS,
-            self.showcalls)
-    if s and cleanup:
+    util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS, show_calls)
+    if cleanup:
         os.remove(srcfile)
-    return s
 
-def assemble(self, name, ext, s, cleanup=True):
+def assemble_str(name, ext, s, show_calls, v, cleanup=True):
     """ Assemble a buffer containing an XC or assembly program
     """
     srcfile = name + '.' + ext
     outfile = name + '.o'
-    self.verbose_msg('Assembling '+srcfile+' -> '+outfile)
+    vmsg(v, 'Assembling '+srcfile+' -> '+outfile)
     util.write_file(srcfile, s)
     if ext == 'xc':
-        s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS,
-                self.showcalls)
+        util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS, show_calls)
     elif ext == 'S':
-        s = util.call([XAS, srcfile, '-o', outfile], self.showcalls)
-    if s and cleanup: 
+        util.call([XAS, srcfile, '-o', outfile], show_calls)
+    if cleanup: 
         os.remove(srcfile)
-    return s
 
-def assemble_runtime(self, device):
-    self.verbose_msg('Compiling runtime:')
-    s = True
+def assemble_runtime(device, v):
+    verbose_msg(v, 'Compiling runtime:')
     for x in RUNTIME_FILES:
         objfile = x+'.o'
-        self.verbose_msg('  '+x+' -> '+objfile)
-        s = util.call([XCC, self.target(device), config.RUNTIME_PATH+'/'+x, 
-            '-o', objfile] + ASSEMBLE_FLAGS, self.showcalls)
-        if not s: 
-            break
-    return s
+        verbose_msg('  '+x+' -> '+objfile)
+        util.call([XCC, target(device), config.RUNTIME_PATH+'/'+x, 
+            '-o', objfile] + ASSEMBLE_FLAGS, showcalls)
 
-def link_master(self, device):
+def link_master(device, show_calls, v):
     """ The jump table must be located at _cp and the common elements of the
         constant and data pools must be in the same positions relative to _cp
         and _dp in the master and slave images.
     """
-    self.verbose_msg('Linking master -> '+MASTER_XE)
-    s = util.call([XCC, self.target(device), 
+    vmsg(v, 'Linking master -> '+MASTER_XE)
+    util.call([XCC, target(device), 
         '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
         '-first', CONST_POOL+'.o',
         'system.S.o', 'system.xc.o',
@@ -202,14 +213,13 @@ def link_master(self, device):
         'memory.c.o', 
         'util.xc.o', 
         '-o', MASTER_XE] + LINK_FLAGS,
-        self.showcalls)
-    return s
+        show_calls)
 
-def link_slave(self, device):
+def link_slave(device, show_calls, v):
     """ As above
     """
-    self.verbose_msg('Linking slave -> '+SLAVE_XE)
-    s = util.call([XCC, self.target(device), 
+    vmsg(v, 'Linking slave -> '+SLAVE_XE)
+    util.call([XCC, target(device), 
         '-first', 'slavetables.S.o',
         '-first', CONST_POOL+'.o',
         'system.S.o', 'system.xc.o',
@@ -218,31 +228,28 @@ def link_slave(self, device):
         'memory.c.o', 
         'util.xc.o', 
         '-o', SLAVE_XE] + LINK_FLAGS,
-        self.showcalls)
-    return s
+        show_calls)
 
-def replace_slaves(self):
-    self.verbose_msg('Replacing master image in node 0, core 0')
-    s = util.call([XOBJDUMP, '--split', MASTER_XE], self.showcalls)
-    s = util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'],
-            self.showcalls)
-    return s
+def replace_slaves(show_calls, v):
+    vmsg(v, 'Replacing master image in node 0, core 0')
+    util.call([XOBJDUMP, '--split', MASTER_XE], show_calls)
+    util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], show_calls)
 
-def modify_assembly(self, lines):
+def modify_assembly(lines, v):
     """ Perform modifications on assembly output
     """
-    self.verbose_msg('Modifying assembly output')
+    vmsg(v, 'Modifying assembly output')
     
     #print(''.join(lines))
-    (lines, cp) = self.extract_constants(lines)
-    lines = self.insert_bottom_labels(lines)
-    lines = self.insert_frame_sizes(lines)
-    lines = self.rewrite_calls(lines)
+    (lines, cp) = extract_constants(lines, v)
+    lines = insert_bottom_labels(lines, v)
+    lines = insert_frame_sizes(lines, v)
+    lines = rewrite_calls(lines, v)
     lines.insert(0, '###### MODIFIED ######\n')
 
     return (lines, cp)
 
-def extract_constants(self, lines):
+def extract_constants(lines, v):
     """ Extract constant sections only within the elimination block of a
         function. This covers all constants local to a function. This is to
         differentiate constants associated with and declared global.
@@ -251,7 +258,7 @@ def extract_constants(self, lines):
         NOTE: this assumes a constant section will be terminated with a
         .text, (which may not always be true?).
     """
-    self.verbose_msg('  Extracting constants')
+    vmsg(v, '  Extracting constants')
     cp = []
     new = []
     sect = False
@@ -305,7 +312,7 @@ def extract_constants(self, lines):
 
     return (new, cp)
 
-def insert_bottom_labels(self, lines):
+def insert_bottom_labels(lines, v):
     """ Insert bottom labels for each function 
     """
     # Look for the structure and insert:
@@ -315,36 +322,36 @@ def insert_bottom_labels(self, lines):
     # > <bottom-label>
     #   .cc_bottom foo.function
     
-    self.verbose_msg('  Inserting function labels')
+    vmsg(v, '  Inserting function labels')
     
     # For each function, for each line...
     # (Create a new list and modify it each time...)
     b = False
-    for x in self.sem.proc_names:
+    for x in sem.proc_names:
         new = []
         for (i, y) in enumerate(lines):
             new.append(y)
             if y == x+':\n' and not b:
                 new.insert(len(new)-1, 
-                        '.globl '+self.function_label_bottom(x)+'\n')
+                        '.globl '+function_label_bottom(x)+'\n')
                 b = True
             elif y[0] == '.' and b:
                 if y.split()[0] == '.cc_bottom':
                     new.insert(len(new)-1, 
-                            self.function_label_bottom(x)+':\n')
+                            function_label_bottom(x)+':\n')
                     b = False
         lines = new
 
     return lines
 
-def insert_frame_sizes(self, lines):
+def insert_frame_sizes(lines, v):
     """ Insert labels with the value of the size of funciton frames
         (extracted from 'entsp n' instruction)
     """
-    self.verbose_msg('  Inserting frame sizes')
+    vmsg(v, '  Inserting frame sizes')
         
     b = False
-    for x in self.sem.proc_names:
+    for x in sem.proc_names:
         new = []
         for (i, y) in enumerate(lines):
             new.append(y)
@@ -352,32 +359,32 @@ def insert_frame_sizes(self, lines):
                 size = int(y.strip().split()[1][2:], 16)
                 #print(x+' is of size {}'.format(size))
                 new.insert(len(new)-1, '.set {}, {}\n'.format(
-                    self.function_label_framesize(x), size))
+                    function_label_framesize(x), size))
                 b = False
             if y == x+':\n':
                 new.insert(len(new)-1, '.globl {}\n'.format(
-                    self.function_label_framesize(x)))
+                    function_label_framesize(x)))
                 b = True          
         lines = new
 
     return lines
 
-def rewrite_calls(self, lines):
+def rewrite_calls(lines, v):
     """ Rewrite calls to program functions to branch through the jump table
     """
-    self.verbose_msg('  Rewriting calls')
+    vmsg(v, '  Rewriting calls')
 
     for (i, x) in enumerate(lines):
         frags = x.strip().split()
-        names = builtin.runtime_functions + self.sem.proc_names 
+        names = builtin.runtime_functions + sem.proc_names 
         if frags and frags[0] == 'bl' and frags[1] in names:
             lines[i] = '\tbla cp[{}]\n'.format(names.index(frags[1]))
 
     return lines
 
-def build_jumptab(self, buf):
+def build_jumptab(buf, v):
 
-    self.verbose_msg('Building master jump table')
+    vmsg(v, 'Building master jump table')
     
     # Constant section
     buf.write('#include "definitions.h"\n')
@@ -396,17 +403,17 @@ def build_jumptab(self, buf):
     buf.write('\t.word '+defs.LABEL_CONNECT+'\n')
 
     # Program entries
-    for x in self.sem.proc_names:
+    for x in sem.proc_names:
         buf.write('\t.word '+x+'\n')
 
     # Pad any unused space
     remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(self.sem.proc_names))
+            len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_sizetab(self, buf):
+def build_sizetab(buf, v):
 
-    self.verbose_msg('Building master size table')
+    vmsg(v, 'Building master size table')
     
     # Data section
     buf.write('\t.section .dp.data, "awd", @progbits\n')
@@ -423,18 +430,18 @@ def build_sizetab(self, buf):
         buf.write('\t.word 0\n')
 
     # Program procedure entries
-    for x in self.sem.proc_names:
+    for x in sem.proc_names:
         buf.write('\t.word {}-{}+{}\n'.format(
-            self.function_label_bottom(x), x, defs.BYTES_PER_WORD))
+            function_label_bottom(x), x, defs.BYTES_PER_WORD))
     
     # Pad any unused space
     remaining = defs.SIZE_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(self.sem.proc_names))
+            len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_frametab(self, buf):
+def build_frametab(buf, v):
 
-    self.verbose_msg('Building master frame table')
+    vmsg(v, 'Building master frame table')
     
     # Constant section
     buf.write('\t.section .dp.data, "awd", @progbits\n')
@@ -451,21 +458,20 @@ def build_frametab(self, buf):
         buf.write('\t.word 0\n')
 
     # Program procedure entries
-    for x in self.sem.proc_names:
-        buf.write('\t.word {}\n'.format(self.function_label_framesize(x)))
+    for x in sem.proc_names:
+        buf.write('\t.word {}\n'.format(function_label_framesize(x)))
     
     # Pad any unused space
     remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(self.sem.proc_names))
+            len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def cleanup(self, output_xe):
+def cleanup(v):
     """ Renanme the output file and delete any temporary files
     """
-    self.verbose_msg('Cleaning up')
+    vmsg(v, 'Cleaning up')
     
     # Remove specific files
-    util.rename_file(SLAVE_XE, output_xe)
     util.remove_file(MASTER_XE)
     util.remove_file('image_n0c0.elf')
     util.remove_file('config.xml')
@@ -481,15 +487,15 @@ def cleanup(self, output_xe):
     for x in glob.glob('*.o'):
         util.remove_file(x)
 
-def target(self, device):
+def target(device):
     return '{}/{}.xn'.format(config.DEVICE_PATH, device.name)
 
-def function_label_top(self, name):
+def function_label_top(name):
     return '.'+name+'.top'
 
-def function_label_bottom(self, name):
+def function_label_bottom(name):
     return '.'+name+'.bottom'
 
-def function_label_framesize(self, name):
+def function_label_framesize( name):
     return '.'+name+'.framesize'
 

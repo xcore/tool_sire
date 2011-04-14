@@ -8,13 +8,13 @@ import re
 import os
 import subprocess
 
-def read_file(filename, readlines=False):
+def read_file(filename, read_lines=False):
     """ Read a file and return its contents as a string 
     """
     try:
         contents=None
         file = open(filename, 'r')
-        if readlines:
+        if read_lines:
             contents = file.readlines()
         else:
             contents = file.read()
@@ -75,10 +75,10 @@ def indexed_dict(elements):
     """
     return dict([(e,i) for i, e in list(enumerate(elements))])
     
-def verbose_msg(self, msg, end='\n'):
+def vmsg(verbose, msg, end='\n'):
     """ Output a message that is displayed in verbose mode.
     """
-    if self.verbose: 
+    if verbose: 
         sys.stdout.write(msg+end)
         sys.stdout.flush()
 

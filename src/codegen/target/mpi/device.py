@@ -5,23 +5,23 @@
 
 from codegen.target.device import Device
 
-SOURCE_FILE_EXT = 'c'
-ASSEMBLY_FILE_EXT = 'S'
-BINARY_FILE_EXT = None
+MPI_SOURCE_FILE_EXT = 'c'
+MPI_ASSEMBLY_FILE_EXT = 'S'
+MPI_BINARY_FILE_EXT = None
 
 class MPIDevice(Device):
     def __init__(self, name, num_nodes):
-        super(XS1Device, self).__init__('mpi', name, num_nodes)
+        super(MPIDevice, self).__init__('mpi', name, num_nodes)
     
-    def get_source_file_ext(self):
-        return SOURCE_FILE_EXT
+    def source_file_ext(self):
+        return MPI_SOURCE_FILE_EXT
 
-    def get_assembly_file_ext(self):
-        return ASSEMBLY_FILE_EXT
+    def assembly_file_ext(self):
+        return MPI_ASSEMBLY_FILE_EXT
 
-    def get_binary_file_ext(self):
-        return BINARY_FILE_EXT
+    def binary_file_ext(self):
+        return MPI_BINARY_FILE_EXT
 
-def get_xs1_device(num_cores):
+def get_mpi_device(num_cores):
     return MPIDevice('MPI', num_cores)
 
