@@ -13,11 +13,10 @@ import ast
 import semantics
 import children
 
-from codegen.target.xs1.translate import TranslateXS1
-from codegen.target.xs1.build import build_xs1
-
-from codegen.target.mpi.translate import TranslateMPI
-from codegen.target.mpi.build import build_mpi
+from target.xs1.translate import TranslateXS1
+from target.mpi.translate import TranslateMPI
+from target.xs1.build import build_xs1
+from target.mpi.build import build_mpi
 
 def translate(ast, sem, child, device, outfile, translate_only, v):
     """ Translate the AST to target system. 

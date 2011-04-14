@@ -3,11 +3,11 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from codegen.target.device import Device
+from target.device import Device
 
 MPI_SOURCE_FILE_EXT = 'c'
 MPI_ASSEMBLY_FILE_EXT = 'S'
-MPI_BINARY_FILE_EXT = None
+MPI_BINARY_FILE_EXT = 'out'
 
 class MPIDevice(Device):
     def __init__(self, name, num_nodes):

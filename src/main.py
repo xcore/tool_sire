@@ -24,11 +24,11 @@ import printer as printer
 import semantics as semantics
 import children as children
 
-import codegen.codegen as codegen
-from codegen.target.config import set_device
-from codegen.target.config import TARGET_SYSTEMS
-from codegen.target.config import DEFAULT_NUM_CORES
-from codegen.target.config import DEFAULT_TARGET_SYSTEM
+from codegen import generate
+from target.config import set_device
+from target.config import TARGET_SYSTEMS
+from target.config import DEFAULT_NUM_CORES
+from target.config import DEFAULT_TARGET_SYSTEM
 
 # Globals
 v = False
@@ -229,12 +229,12 @@ def main(args):
 
         # Generate code
         vhdr(v, 'Generating code for {}'.format(device))
-        codegen.generate(ast, sem, child, device, outfile, 
+        generate(ast, sem, child, device, outfile, 
                 translate_only, compile_only, show_calls, v)
 
     # Handle any specific compilation errors
     except Error as e:
-        sys.stderr.write('Error: '+e)
+        sys.stderr.write('Error: {}\n'.format(e))
         return 1
     
     # Handle system exits
@@ -243,7 +243,7 @@ def main(args):
   
     # Anything else we weren't expecting
     except:
-        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
+        sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
         raise
     
     return 0

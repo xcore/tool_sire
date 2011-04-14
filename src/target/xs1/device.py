@@ -3,7 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-from codegen.target.device import Device
+from target.device import Device
 
 XS1_SOURCE_FILE_EXT = 'xc'
 XS1_ASSEMBLY_FILE_EXT = 'S'

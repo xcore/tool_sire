@@ -10,8 +10,8 @@ import config
 import ast
 from walker import NodeWalker
 from type import Type
-from codegen.blocker import Blocker
-from codegen.blocker import INDENT
+from blocker import Blocker
+from blocker import INDENT
 
 op_conversion = {
     '+'   : '+',

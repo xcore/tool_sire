@@ -7,6 +7,7 @@ import sys
 import re
 import os
 import subprocess
+from error import Error
 
 def read_file(filename, read_lines=False):
     """ Read a file and return its contents as a string 
@@ -24,7 +25,7 @@ def read_file(filename, read_lines=False):
         raise Error('Error reading input ({}): {}'
                 .format(err.errno, err.strerror))
     except:
-        raise Exception('Unexpected error:', sys.exc_info()[0])
+        raise Exception('Unexpected error: {}'.format(sys.exc_info()[0]))
 
 def write_file(filename, s):
     """ Write the output to a file 
@@ -38,7 +39,7 @@ def write_file(filename, s):
         raise Error('writing output ({}): {}'
                 .format(err.errno, err.strerror))
     except:
-        raise Exception('Unexpected error:', sys.exc_info()[0])
+        raise Exception('Unexpected error: {}'.format(sys.exc_info()[0]))
 
 def call(args, verbose=False):
     """ Try to execute a shell command
@@ -47,10 +48,11 @@ def call(args, verbose=False):
         if verbose:
             print(' '.join(args))
         s = subprocess.check_output(args, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as err:
-        s = err.output.decode('utf-8').replace("\\n", "\n")
-        raise Error('executing command:\n\n{}\n\nouput:\n\n{}'
-                .format(' '.join(err.cmd), s))
+    except subprocess.CalledProcessError as e:
+        s = e.output.decode('utf-8').replace("\\n", "\n")
+        #print(e)
+        raise Error('executing command:\n\n{}\n\nOuput:\n\n{}'
+                .format(' '.join(e.cmd), s))
 
 def remove_file(filename):
     """ Remove a file if it exists

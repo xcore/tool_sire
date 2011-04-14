@@ -10,12 +10,8 @@ import config as config
 import ast
 from walker import NodeWalker
 from type import Type
-from codegen.blocker import Blocker
-
-INDENT      = '  '
-MAX_TEMPS   = 100
-BEGIN_BLOCK = '^'
-END_BLOCK   = '*'
+from blocker import Blocker
+from blocker import INDENT
 
 op_conversion = {
     '+'   : '+',
@@ -40,9 +36,7 @@ op_conversion = {
 }
 
 proc_conversion = {
-    'printval'   : 'printint',
-    'printvalln' : 'printintln',
-    'exit'       : '_exit',
+    'printstrln' : 'printf',
 }
 
 class TranslateMPI(NodeWalker):
@@ -132,7 +126,8 @@ class TranslateMPI(NodeWalker):
         #self.out('#include "globals.h"')
         #self.out('#include "util.h"')
         #self.out('#include "guest.h"')
-        #self.out('#include "device.h"')
+        self.out('#include "program.h"')
+        self.out('#include "device.h"')
         self.out('#include "language.h"')
         self.out('')
  

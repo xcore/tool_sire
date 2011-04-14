@@ -4,8 +4,8 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from error import Error
-from codegen.target.xs1.device import get_xs1_device
-from codegen.target.mpi.device import get_mpi_device
+from target.xs1.device import get_xs1_device
+from target.mpi.device import get_mpi_device
 
 TARGET_SYSTEMS = ['xs1', 'mpi']
 DEFAULT_TARGET_SYSTEM = TARGET_SYSTEMS[0]
