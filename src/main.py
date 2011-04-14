@@ -14,6 +14,7 @@ import logging
 from common.error import Error
 from common.errorlog import ErrorLog
 from common.util import vmsg
+from common.util import vhdr
 import common.util as util
 import common.config as config
 import common.definitions as defs
@@ -96,7 +97,7 @@ def setup_globals(a):
     """
    
     # Verbosity
-    global verbose
+    global v
     global show_calls
     v = a.verbose
     show_calls = a.show_calls
@@ -131,7 +132,7 @@ def setup_globals(a):
 def produce_ast(input_file, errorlog, logging=False):
     """ Parse an input string to produce an AST 
     """
-    vmsg(v, "Parsing file '{}'\n".format(infile if infile else 'stdin'))
+    vmsg(v, "Parsing file '{}'".format(infile if infile else 'stdin'))
    
     # Setup logging if we need to
     if logging:
@@ -171,7 +172,7 @@ def produce_ast(input_file, errorlog, logging=False):
 def semantic_analysis(ast, errorlog):
     """ Perform semantic analysis on an AST 
     """
-    vmsg(v, "Performing semantic analysis\n")
+    vmsg(v, "Performing semantic analysis")
     
     sem = semantics.Semantics(errorlog)
     ast.accept(sem)
@@ -187,7 +188,7 @@ def semantic_analysis(ast, errorlog):
 def child_analysis(ast, sem):
     """ Determine children
     """
-    vmsg(v, "Performing child analysis\n")
+    vmsg(v, "Performing child analysis")
     
     child = children.Children(sem.proc_names)
     ast.accept(child)
@@ -213,6 +214,7 @@ def main(args):
         device = set_device(target_system, num_cores)
         
         # Read the input from stdin or from a file 
+        vhdr(v, 'Front end')
         input_file = util.read_file(infile) if infile else sys.stdin.read()
 
         # Setup the error object
@@ -228,8 +230,9 @@ def main(args):
         child = child_analysis(ast, sem)
 
         # Generate code
+        vhdr(v, 'Generating code for {}'.format(device))
         codegen.generate(ast, sem, child, device, outfile, 
-                translate_only, compile_only, v)
+                translate_only, compile_only, show_calls, v)
 
     # Handle any specific compilation errors
     except Error as e:

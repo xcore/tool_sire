@@ -24,6 +24,6 @@ def init_paths():
     """
     globals()['INCLUDE_PATH'] = INSTALL_PATH+'/include'
     globals()['XS1_DEVICE_PATH']  = INSTALL_PATH+'/target/xs1/devices'
-    globals()['XS1_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/target/xs1'
-    globals()['MPI_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/target/xs1'
+    globals()['XS1_RUNTIME_PATH'] = INSTALL_PATH+'/src/runtime/target/xs1'
+    globals()['MPI_RUNTIME_PATH'] = INSTALL_PATH+'/src/runtime/target/mpi'
     

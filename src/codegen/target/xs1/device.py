@@ -26,6 +26,7 @@ class XS1Device(Device):
     def binary_file_ext(self):
         return XS1_BINARY_FILE_EXT
 
+
 AVAILABLE_XS1_DEVICES = [
     XS1Device('XMP-1',  1,  1),
     XS1Device('XMP-4',  1,  4),

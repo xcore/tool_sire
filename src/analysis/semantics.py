@@ -9,6 +9,7 @@ import common.error as error
 import common.util as util
 import common.definitions as defs
 
+import ast.ast as ast
 from ast.ast import NodeVisitor
 
 import analysis.symbol as symbol

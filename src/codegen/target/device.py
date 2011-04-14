@@ -13,4 +13,7 @@ class Device(object):
 
     def num_cores(self):
         return self.num_nodes
+    
+    def __str__(self):
+        return '{} ({}, {} core)'.format(self.name, self.system, self.num_cores())
 

@@ -8,6 +8,7 @@ import io
 import common.util as util
 import common.definitions as defs
 from common.util import vmsg
+from common.util import vhdr
 
 import ast.ast as ast
 import analysis.semantics as semantics
@@ -22,7 +23,7 @@ from codegen.target.mpi.build import build_mpi
 def translate(ast, sem, child, device, outfile, translate_only, v):
     """ Translate the AST to target system. 
     """
-    vmsg(v, 'Translating AST for '+device.system+'\n')
+    vmsg(v, 'Translating AST...')
 
     buf = io.StringIO()
     ext = None
@@ -44,10 +45,10 @@ def translate(ast, sem, child, device, outfile, translate_only, v):
 
     return buf
 
-def build(sem, buf, device, outfile, compile_only, v):
+def build(sem, buf, device, outfile, compile_only, show_calls, v):
     """ Compile the translated AST for the target system.
     """
-    vmsg(v, 'Compiling an executable for {} cores\n'.format(num_cores))
+    vmsg(v, 'Creating executable...')
 
     # Create a Build object
     if device.system == 'xs1':
@@ -55,10 +56,8 @@ def build(sem, buf, device, outfile, compile_only, v):
     elif device.system == 'mpi':
         build_mpi(sem, device, buf, outfile, compile_only, show_calls, v)
 
-    verbose_msg('Produced file: '+outfile+'\n')
-
 def generate(ast, sem, child, device, outfile, 
-        translate_only, compile_only, v):
+        translate_only, compile_only, show_calls, v):
     """ Generate code intermediate/machine/binary from AST.
     """
     
@@ -66,5 +65,5 @@ def generate(ast, sem, child, device, outfile,
     buf = translate(ast, sem, child, device, outfile, translate_only, v)
     
     # Compile, assemble and link with the runtime
-    build(sem, buf, device, outfile, compile_only, v)
+    build(sem, buf, device, outfile, compile_only, show_calls, v)
 

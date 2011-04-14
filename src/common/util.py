@@ -75,8 +75,17 @@ def indexed_dict(elements):
     """
     return dict([(e,i) for i, e in list(enumerate(elements))])
     
+def vhdr(verbose, msg, end='\n'):
+    """ Verbose header: output a message that is displayed in verbose mode.
+    """
+    if verbose: 
+        sys.stdout.write('-'*len(str(msg))+'\n')
+        sys.stdout.write(msg+end)
+        sys.stdout.write('-'*len(str(msg))+'\n')
+        sys.stdout.flush()
+
 def vmsg(verbose, msg, end='\n'):
-    """ Output a message that is displayed in verbose mode.
+    """ Verbose message: output a message that is displayed in verbose mode.
     """
     if verbose: 
         sys.stdout.write(msg+end)

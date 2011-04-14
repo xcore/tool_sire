@@ -40,7 +40,7 @@ RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc',
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
         'util.xc', 'memory.c']
     
-def build_xs1(sem, device, buf, outfile, 
+def build_xs1(sem, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):
     """ Run the build process to create either the assembly output or the
         complete binary.
@@ -55,50 +55,27 @@ def build_xs1(sem, device, buf, outfile,
     COMPILE_FLAGS += include_dirs
     ASSEMBLE_FLAGS += include_dirs
 
-    if compile_only:
-        compile_asm(sem, device, buf, outfile, show_calls, v)
-    else:
-        compile_binary(buf, device, outfile)
-
-def compile_asm(sem, buf, device, outfile, show_calls, v):
-    """ Compile the translated program into assembly.
-    """
-
-    try:
-
-        # Create headers
-        create_headers(device)
-        
-        # Generate the assembly
-        (lines, cp) = generate_assembly(buf)
-
-        # Write the program back out and assemble
-        util.write_file(PROGRAM_ASM, ''.join(lines))
-
-        # Rename the output file
-        outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
-                outfile+'.'+device.assembly_file_ext())
-        os.rename(PROGRAM_ASM, outfile)
-
-    except Error as e:
-        sys.stderr.write('Error: '+e)
-        raise
-    
-    except:
-        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
-        raise
-
-def compile_binary(program_buf, device, outfile, show_calls, v):
-    """ Run the full build
-    """
-
+    # Try to run the build, pass any Error or SystemExit exceptions along to
+    # main driver after having cleaned up and temporary files.
     try:
 
         # Create headers
         create_headers(device, v)
 
         # Generate the assembly
-        (lines, cp) = generate_assembly(program_buf, show_calls, v)
+        (lines, cp) = generate_assembly(sem, program_buf, show_calls, v)
+
+        if compile_only:
+            
+            # Write the program back out and assemble
+            util.write_file(PROGRAM_ASM, ''.join(lines))
+
+            # Rename the output file
+            outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+                    outfile+'.'+device.assembly_file_ext())
+            os.rename(PROGRAM_ASM, outfile)
+
+            raise SystemExit() 
 
         # Write the program back out and assemble
         assemble_str(PROGRAM, 'S', ''.join(lines), show_calls, v)
@@ -108,37 +85,40 @@ def compile_binary(program_buf, device, outfile, show_calls, v):
 
         # Output and assemble the master jump table
         buf = io.StringIO()
-        build_jumptab(buf, v)
+        build_jumptab(sem, buf, v)
         assemble_str(MASTER_JUMPTAB, 'S', buf.getvalue(), show_calls, v)
 
         # Output and assemble the master size table
         buf = io.StringIO()
-        build_sizetab(buf, v)
-        build_frametab(buf, v)
-        s = assemble(MASTER_TABLES, 'S', buf.getvalue(), show_calls, v)
+        build_sizetab(sem, buf, v)
+        build_frametab(sem, buf, v)
+        assemble_str(MASTER_TABLES, 'S', buf.getvalue(), show_calls, v)
         
         # Assemble and link the rest
-        assemble_runtime(device, v)
-        link_master(device, v)
-        link_slave(device, v)
-        replace_slaves(v)
+        assemble_runtime(device, show_calls, v)
+        link_master(device, show_calls, v)
+        link_slave(device, show_calls, v)
+        replace_slaves(show_calls, v)
         
         # Rename the output file
         outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
-                outfile+'.'+device.assembly_file_ext())
+                outfile+'.'+device.binary_file_ext())
         os.rename(SLAVE_XE, outfile)
-        cleanup()
+
+        vmsg(v, 'Produced file: '+outfile)
 
     except Error as e:
-        sys.stderr.write('Error: '+e)
         cleanup()
-        return 1
+        raise Error(e.args)
     
+    except SystemExit:
+        raise SystemExit()
+  
     except:
-        sys.stderr.write("Unexpected error:", sys.exc_info()[0])
-        cleanup()
         raise
-    
+        
+    finally:
+        cleanup(v)
 
 def create_headers(device, v):
     vmsg(v, 'Creating device header '+DEVICE_HDR)
@@ -147,7 +127,7 @@ def create_headers(device, v):
     s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
     util.write_file(DEVICE_HDR, s)
 
-def generate_assembly(buf, show_calls, v):
+def generate_assembly(sem, buf, show_calls, v):
     """ Given the program buffer containing the XC translation, generate the
         program and constant pool assembly.
     """
@@ -160,7 +140,7 @@ def generate_assembly(buf, show_calls, v):
     lines = util.read_file(PROGRAM_ASM, read_lines=True)
 
     # Make modifications
-    (lines, cp) = modify_assembly(lines)
+    (lines, cp) = modify_assembly(sem, lines, v)
     
     return (lines, cp)
 
@@ -170,18 +150,18 @@ def compile_str(name, string, show_calls, v, cleanup=True):
     srcfile = name + '.xc'
     outfile = name + '.S'
     vmsg(v, 'Compiling '+srcfile+' -> '+outfile)
-    util.write_file(srcfile, s)
+    util.write_file(srcfile, string)
     util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS, show_calls)
     if cleanup:
         os.remove(srcfile)
 
-def assemble_str(name, ext, s, show_calls, v, cleanup=True):
+def assemble_str(name, ext, string, show_calls, v, cleanup=True):
     """ Assemble a buffer containing an XC or assembly program
     """
     srcfile = name + '.' + ext
     outfile = name + '.o'
     vmsg(v, 'Assembling '+srcfile+' -> '+outfile)
-    util.write_file(srcfile, s)
+    util.write_file(srcfile, string)
     if ext == 'xc':
         util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS, show_calls)
     elif ext == 'S':
@@ -189,13 +169,13 @@ def assemble_str(name, ext, s, show_calls, v, cleanup=True):
     if cleanup: 
         os.remove(srcfile)
 
-def assemble_runtime(device, v):
-    verbose_msg(v, 'Compiling runtime:')
+def assemble_runtime(device, show_calls, v):
+    vmsg(v, 'Compiling runtime:')
     for x in RUNTIME_FILES:
         objfile = x+'.o'
-        verbose_msg('  '+x+' -> '+objfile)
-        util.call([XCC, target(device), config.RUNTIME_PATH+'/'+x, 
-            '-o', objfile] + ASSEMBLE_FLAGS, showcalls)
+        vmsg(v, '  '+x+' -> '+objfile)
+        util.call([XCC, target(device), config.XS1_RUNTIME_PATH+'/'+x, 
+            '-o', objfile] + ASSEMBLE_FLAGS, show_calls)
 
 def link_master(device, show_calls, v):
     """ The jump table must be located at _cp and the common elements of the
@@ -235,16 +215,16 @@ def replace_slaves(show_calls, v):
     util.call([XOBJDUMP, '--split', MASTER_XE], show_calls)
     util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], show_calls)
 
-def modify_assembly(lines, v):
+def modify_assembly(sem, lines, v):
     """ Perform modifications on assembly output
     """
     vmsg(v, 'Modifying assembly output')
     
     #print(''.join(lines))
     (lines, cp) = extract_constants(lines, v)
-    lines = insert_bottom_labels(lines, v)
-    lines = insert_frame_sizes(lines, v)
-    lines = rewrite_calls(lines, v)
+    lines = insert_bottom_labels(sem, lines, v)
+    lines = insert_frame_sizes(sem, lines, v)
+    lines = rewrite_calls(sem, lines, v)
     lines.insert(0, '###### MODIFIED ######\n')
 
     return (lines, cp)
@@ -312,7 +292,7 @@ def extract_constants(lines, v):
 
     return (new, cp)
 
-def insert_bottom_labels(lines, v):
+def insert_bottom_labels(sem, lines, v):
     """ Insert bottom labels for each function 
     """
     # Look for the structure and insert:
@@ -344,7 +324,7 @@ def insert_bottom_labels(lines, v):
 
     return lines
 
-def insert_frame_sizes(lines, v):
+def insert_frame_sizes(sem, lines, v):
     """ Insert labels with the value of the size of funciton frames
         (extracted from 'entsp n' instruction)
     """
@@ -369,7 +349,7 @@ def insert_frame_sizes(lines, v):
 
     return lines
 
-def rewrite_calls(lines, v):
+def rewrite_calls(sem, lines, v):
     """ Rewrite calls to program functions to branch through the jump table
     """
     vmsg(v, '  Rewriting calls')
@@ -382,7 +362,7 @@ def rewrite_calls(lines, v):
 
     return lines
 
-def build_jumptab(buf, v):
+def build_jumptab(sem, buf, v):
 
     vmsg(v, 'Building master jump table')
     
@@ -411,7 +391,7 @@ def build_jumptab(buf, v):
             len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_sizetab(buf, v):
+def build_sizetab(sem, buf, v):
 
     vmsg(v, 'Building master size table')
     
@@ -439,7 +419,7 @@ def build_sizetab(buf, v):
             len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_frametab(buf, v):
+def build_frametab(sem, buf, v):
 
     vmsg(v, 'Building master frame table')
     
@@ -488,7 +468,7 @@ def cleanup(v):
         util.remove_file(x)
 
 def target(device):
-    return '{}/{}.xn'.format(config.DEVICE_PATH, device.name)
+    return '{}/{}.xn'.format(config.XS1_DEVICE_PATH, device.name)
 
 def function_label_top(name):
     return '.'+name+'.top'
