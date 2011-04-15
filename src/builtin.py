@@ -54,6 +54,12 @@ printstrln = Def(
         Formals([Param('v', Type('var', 'alias'), None)]),
         None, None)
 
+println = Def(
+        'println', 
+        Type('proc', 'procedure'), 
+        Formals([Param('v', Type('var', 'alias'), None)]),
+        None, None)
+
 exit = Def(
         'exit', 
         Type('proc', 'procedure'), 
@@ -69,9 +75,11 @@ functions = (
 	printhexln,
     printstr,
 	printstrln,
+	println,
     exit,
 )
 
+# Must relate to the above list
 names = (
 	'printchar',
 	'printcharln',
@@ -81,6 +89,7 @@ names = (
 	'printhexln',
     'printstr',
 	'printstrln',
+	'println',
     'exit',
 )
 

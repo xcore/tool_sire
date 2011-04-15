@@ -1,6 +1,6 @@
 proc main() is
   var i;
-  for i := 1 step 1 until 100 do
+  for i := 1 to 100 do
   { skip 
   | skip 
   }

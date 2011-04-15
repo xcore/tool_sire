@@ -8,14 +8,15 @@ New
 
 - Add println() builtin
 
-- Allow constant values in array length specifiers
-
-- 'val' array parameters
-
 - For loop: for <index>:=<init> to <bound> (step <increment>)? do
 
 - Par loop: par <index>:=<init> for <count> do
 
+- Parallel composition of process calls only.
+
+- Allow constant values in array length specifiers
+
+- 'val' array parameters
 - 'val' and 'var' specifiers on all formal parameters
 
 - In place array aliases (slicing)

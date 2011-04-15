@@ -5,7 +5,8 @@ var a[LENGTH];
 var scratch[LENGTH];
 
 % Merge
-proc merge(a[m], b[n], array[o], scratch[o], val m, val n, val o) is
+proc merge(var a[m], var b[n], var array[o], var scratch[o], 
+    val m, val n, val o) is
   var i;
   var j;
   var k;
@@ -45,7 +46,7 @@ proc merge(a[m], b[n], array[o], scratch[o], val m, val n, val o) is
 }
 
 % Merge sort
-proc msort(val t, val n, array[len], scratch[len], val len) is
+proc msort(val t, val n, var array[len], var scratch[len], val len) is
   var a[];
   var b[];
   var sa[];
@@ -84,5 +85,4 @@ proc main() is
     printval(a[i])
 ; printstrln("")
 }
-
 

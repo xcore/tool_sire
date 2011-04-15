@@ -53,9 +53,8 @@ class Lexer(object):
     # Reserved tokens
     reserved = {
         'aliases'  : 'ALIASES',
-        'chan'     : 'CHAN',
-        'chanend'  : 'CHANEND',
         'connect'  : 'CONNECT',
+        'count'    : 'COUNT',
         'do'       : 'DO',
         'else'     : 'ELSE',
         'false'    : 'FALSE',
@@ -64,6 +63,7 @@ class Lexer(object):
         'if'       : 'IF',
         'is'       : 'IS',
         'on'       : 'ON',
+        'par'      : 'PAR',
         'proc'     : 'PROC',
         'port'     : 'PORT',
         'return'   : 'RETURN',
@@ -72,7 +72,6 @@ class Lexer(object):
         'then'     : 'THEN',
         'to'       : 'TO',
         'true'     : 'TRUE',
-        'until'    : 'UNTIL',
         'val'      : 'VAL',
         'var'      : 'VAR',
         'while'    : 'WHILE',

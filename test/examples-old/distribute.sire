@@ -1,12 +1,15 @@
 %port led : 0x00010600;
+  
+proc spawn(val t, val n) is 
+{ printvalln(t) 
+; on core[t] do d(t, n) 
+}
 
 proc d(val t, val n) is
   %if n = 1 then led ! 1
   if n = 1 then skip
   else 
-  { d(t, n/2) 
-  | { printvalln(t+(n/2)) ; on core[t+(n/2)] do d(t+(n/2), n/2) }
-  }
+  { d(t, n/2) | spawn(t+(n/2), n/2) }
 
 proc main() is 
   d(0, NUM_CORES)

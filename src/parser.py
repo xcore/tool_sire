@@ -89,6 +89,18 @@ class Parser(object):
         self.parse_error('Syntax error', p, 1)
         p[0] = None
 
+    # Type specifiers ==========================================
+
+    # 'val' type specifier
+    def p_type_specifier_val(self, p):
+        'type_specifier : VAL'
+        p[0] = 'val'
+
+    # 'var' type specifier
+    def p_type_specifier_val(self, p):
+        'type_specifier : VAR'
+        p[0] = 'var'
+
     # Variable declarations ====================================
 
     def p_var_decls(self, p):
@@ -105,40 +117,33 @@ class Parser(object):
     # Variable declaration sequence error
     def p_var_decl_seq_err(self, p):
         'var_decl_seq : error SEMI'
-        print('Syntax error at line {}:{}'.format(
-                p.lineno(1), p.lexpos(1)))
+        print('Syntax error at line {}:{}'.format(p.lineno(1), p.lexpos(1)))
 
-    # Var declaration
-    def p_var_decl_var(self, p):
-        'var_decl : type name'
+    # Single declaration
+    def p_var_decl_single(self, p):
+        'var_decl : type_specifier name'
         p[0] = ast.Decl(p[2], Type(p[1], 'single'), None, 
                 self.coord(p))
 
     # Array declaration
     def p_var_decl_array(self, p):
-        '''var_decl : type name LBRACKET RBRACKET
-                    | type name LBRACKET expr RBRACKET'''
-        p[0] = ast.Decl(p[2], 
+        '''var_decl : VAR name LBRACKET RBRACKET
+                    | VAR name LBRACKET expr RBRACKET'''
+        p[0] = ast.Decl('var', 
                 Type(p[1], 'array' if len(p)==6 else 'alias'), 
                 p[4] if len(p)==6 else None, self.coord(p))
 
-    # Val declaration
-    def p_var_decl_val(self, p):
-        'var_decl : VAL name ASS expr'
-        p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], 
-                self.coord(p))
-
     # Port declaration
-    def p_var_decl_port(self, p):
-        'var_decl : PORT name COLON expr'
-        p[0] = ast.Decl(p[2], Type('port', 'single'), p[4], 
-                self.coord(p))
+    #def p_var_decl_port(self, p):
+    #    'var_decl : PORT name COLON expr'
+    #    p[0] = ast.Decl(p[2], Type('port', 'single'), p[4], 
+    #            self.coord(p))
 
-    # Variable types
-    def p_type_id(self, p):
-        '''type : VAR
-                | CHAN'''
-        p[0] = p[1]
+    # Process call =============================================
+
+    def p_pcall(self, p):
+        'pcall : name LPAREN expr_list RPAREN'
+        p[0] = ast.Pcall(p[1], p[3], self.coord(p))
 
     # Procedure declarations ===================================
 
@@ -188,29 +193,17 @@ class Parser(object):
                        | param_decl COMMA formals_seq'''
         p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-    # Var parameter
+    # single parameter
     def p_param_decl_var(self, p):
-        'param_decl : name'
-        p[0] = ast.Param(p[1], Type('var', 'single'), None,
+        'param_decl : type_specifier name'
+        p[0] = ast.Param(p[1], Type(p[1], 'single'), None,
                 self.coord(p))
 
-    # Array alias parameter
+    # Array (alias) parameter
     def p_param_decl_alias(self, p):
-        'param_decl : name LBRACKET name RBRACKET'
-        p[0] = ast.Param(p[1], Type('var', 'alias'), 
+        'param_decl : type_specifier name LBRACKET name RBRACKET'
+        p[0] = ast.Param(p[1], Type(p[2], 'alias'), 
                 ast.ExprSingle(ast.ElemId(p[3])),
-                self.coord(p))
-
-    # Val parameter
-    def p_param_decl_val(self, p):
-        'param_decl : VAL name'
-        p[0] = ast.Param(p[2], Type('val', 'single'), None,
-                self.coord(p))
-
-    # Chanend parameter
-    def p_param_decl_chanend(self, p):
-        'param_decl : CHANEND name'
-        p[0] = ast.Param(p[2], Type('chanend', 'single'), None,
                 self.coord(p))
 
     # Statement blocks =========================================
@@ -233,11 +226,11 @@ class Parser(object):
 
     # Par
     def p_stmt_par(self, p):
-        '''stmt_par : stmt BAR stmt'''
+        '''stmt_par : pcall BAR pcall'''
         p[0] = [p[1]] + [p[3]]
 
     def p_stmt_par_seq(self, p):
-        '''stmt_par : stmt BAR stmt_par'''
+        '''stmt_par : pcall BAR stmt_par'''
         p[0] = [p[1]] + p[3]
 
     # Seq error
@@ -264,13 +257,13 @@ class Parser(object):
         'stmt : left ASS expr'
         p[0] = ast.StmtAss(p[1], p[3], self.coord(p))
 
-    def p_stmt_in(self, p):
-        'stmt : left IN expr'
-        p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
+    #def p_stmt_in(self, p):
+    #    'stmt : left IN expr'
+    #    p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
 
-    def p_stmt_out(self, p):
-        'stmt : left OUT expr'
-        p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
+    #def p_stmt_out(self, p):
+    #    'stmt : left OUT expr'
+    #    p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
 
     def p_stmt_if(self, p):
         'stmt : IF expr THEN stmt ELSE stmt'
@@ -280,23 +273,35 @@ class Parser(object):
         'stmt : WHILE expr DO stmt'
         p[0] = ast.StmtWhile(p[2], p[4], self.coord(p))
 
+    # for index:=init to bound do ...
     def p_stmt_for(self, p):
-        'stmt : FOR left ASS expr STEP expr UNTIL expr DO stmt'
-        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8], p[10])
-
-    def p_stmt_on(self, p):
-        'stmt : ON left DO name LPAREN expr_list RPAREN'
-        p[0] = ast.StmtOn(p[2], 
-                ast.ElemPcall(p[4], p[6], self.coord(p)), 
+        'stmt : FOR left ASS expr TO expr DO stmt'
+        p[0] = ast.StmtFor(p[2], p[4], p[6], 
+                ast.Expr(ast.ElemNumber(1)), p[10],
                 self.coord(p))
 
-    def p_stmt_connect(self, p):
-        'stmt : CONNECT left TO left COLON left'
-        p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
+    # for index:=init to bound step increment do ...
+    def p_stmt_for(self, p):
+        'stmt : FOR left ASS expr TO expr STEP expr DO stmt'
+        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8], p[10],
+                self.coord(p))
 
-    def p_stmt_aliases(self, p):
-        'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
-        p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
+    # par index:=init for count do ...
+    def p_stmt_par(self, p):
+        'stmt : PAR left ASS expr FOR expr DO pcall'
+        p[0] = ast.StmtRep(p[2], p[4], p[6], p[8], self.coord(p))
+
+    def p_stmt_on(self, p):
+        'stmt : ON left DO pcall'
+        p[0] = ast.StmtOn(p[2], p[4], self.coord(p))
+
+    #def p_stmt_connect(self, p):
+    #    'stmt : CONNECT left TO left COLON left'
+    #    p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
+
+    #def p_stmt_aliases(self, p):
+    #    'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
+    #    p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
 
     def p_stmt_return(self, p):
         'stmt : RETURN expr'
@@ -382,6 +387,10 @@ class Parser(object):
     def p_elem_sub(self, p):
         'elem : name LBRACKET expr RBRACKET'
         p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
+
+    def p_elem_slice(self, p):
+        'elem : name LBRACKET expr DOTS expr RBRACKET'
+        p[0] = ast.ElemSlice(p[1], p[3], self.coord(p))
 
     def p_elem_fcall(self, p):
         'elem : name LPAREN expr_list RPAREN'

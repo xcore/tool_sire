@@ -13,11 +13,11 @@ syn case match
 syn keyword	sType	     module var val port chanend chan
 syn keyword	sKeyword     proc func return skip aliases connect
 syn keyword	sKeyword     true false skip
-syn keyword	sKeyword     on is with par
+syn keyword	sKeyword     on is
 
 " Control structures
 syn keyword	sStructure   if then else
-syn keyword     sRepeat      while do for step until to
+syn keyword     sRepeat      while do for until to par
 
 " Bracketing
 syn match       sBrackets     /\[\|\]/
