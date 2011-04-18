@@ -14,30 +14,38 @@ from blocker import Blocker
 from blocker import INDENT
 
 op_conversion = {
-    '+'   : '+',
-    '-'   : '-',
-    '*'   : '*',
-    '/'   : '/',
-    'rem' : '%',
-    'or'  : '||',
-    'and' : '&&',
-    'xor' : '^',
-    '&'   : '&',
-    'lor' : '|',
-    '~'   : '!',
-    '<<'  : '<<',
-    '>>'  : '>>',
-    '<'   : '<',
-    '>'   : '>',
-    '<='  : '<=',
-    '>='  : '>=',
-    '='   : '==',
-    '~='  : '!=',
-}
+  '+'   : '+',
+  '-'   : '-',
+  '*'   : '*',
+  '/'   : '/',
+  'rem' : '%',
+  'or'  : '||',
+  'and' : '&&',
+  'xor' : '^',
+  '&'   : '&',
+  'lor' : '|',
+  '~'   : '!',
+  '<<'  : '<<',
+  '>>'  : '>>',
+  '<'   : '<',
+  '>'   : '>',
+  '<='  : '<=',
+  '>='  : '>=',
+  '='   : '==',
+  '~='  : '!=',
+  }
 
-proc_conversion = {
-    'printstrln' : 'printf',
-}
+builtin_conversion = {
+  'printchar'   : '_PRINTCHAR',
+  'printcharln' : '_PRINTCHARLN',
+  'printval'    : '_PRINTVAL',
+  'printvalln'  : '_PRINTVALLN',
+  'printhex'    : '_PRINTHEX',
+  'printhexln'  : '_PRINTHEXLN',
+  'printstr'    : '_PRINTSTR',
+  'printstrln'  : '_PRINTSTRLN',
+  'println'     : '_PRINTLN',
+  }
 
 class TranslateMPI(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
@@ -75,7 +83,7 @@ class TranslateMPI(NodeWalker):
     def procedure_name(self, name):
         """ If a procedure name has a conversion, return it
         """
-        return proc_conversion[name] if name in proc_conversion else name
+        return builtin_conversion[name] if name in builtin_conversion else name
 
     def arguments(self, arg_list):
         """ Build the list of arguments. If there is an array reference 

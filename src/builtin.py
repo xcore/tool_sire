@@ -67,32 +67,32 @@ println = Def(
 #        None, None)
 
 functions = (
-	printchar,
-	printcharln,
-    printval,
-	printvalln,
-    printhex,
-	printhexln,
-    printstr,
-	printstrln,
-	println,
-)
+  printchar,
+  printcharln,
+  printval,
+  printvalln,
+  printhex,
+  printhexln,
+  printstr,
+  printstrln,
+  println,
+  )
 
 # Must relate to the above list
 names = (
-	'printchar',
-	'printcharln',
-    'printval',
-	'printvalln',
-    'printhex',
-	'printhexln',
-    'printstr',
-	'printstrln',
-	'println',
-)
+  'printchar',
+  'printcharln',
+  'printval',
+  'printvalln',
+  'printhex',
+  'printhexln',
+  'printstr',
+  'printstrln',
+  'println',
+  )
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
 runtime_functions = [ 
-    '_migrate',
-    '_setupthread',
-]
+  '_migrate',
+  '_setupthread',
+  ]
