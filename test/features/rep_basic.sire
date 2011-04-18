@@ -1,0 +1,8 @@
+val BOUND := 8;
+
+proc foo() is skip
+
+proc main() is
+  var i;
+{ par i := 1 for BOUND do foo()
+}

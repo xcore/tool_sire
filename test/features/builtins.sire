@@ -1,0 +1,13 @@
+
+proc main() is
+{ printchar('x')
+; printcharln('y')
+; printval(123)
+; printvalln(456)
+; printhex(0x123)
+; printhexln(0x456)
+; printstr("hello ")
+; printstrln("world")
+; println()
+}
+

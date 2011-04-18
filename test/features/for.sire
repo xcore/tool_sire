@@ -1,0 +1,11 @@
+BOUND := 10;
+
+proc main() is
+  var i;
+{ for i := 1 to BOUND do
+    printvalln(i)
+; for i := 1 to BOUND step 1 do
+    printvalln(i)
+; for i := 1 to BOUND step 3 do
+    printvalln(i)
+}

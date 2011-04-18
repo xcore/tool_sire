@@ -1,3 +1,3 @@
 test:
-	./tests.py
+	./main.py
 

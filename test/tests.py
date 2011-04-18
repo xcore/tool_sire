@@ -1,18 +1,10 @@
-#!/usr/bin/env python3
-
 # Copyright (c) 2011, James Hanlon, All rights reserved
 # This software is freely distributable under a derivative of the
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-import os
-import sys
-import subprocess
 import unittest
 
-COMPILE          = 'sire'
-SIMULATE         = 'xsim'
-SIM_FLAGS        = []
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 EXAMPLES_DIR     = '/test/examples-old' 
 FEATURES_DIR     = '/test/features' 
@@ -23,106 +15,6 @@ class Test(object):
         self.output = output
         self.cores = cores
         self.args = args
-
-
-example_tests = [ 
-    Test('hello',           'hello world\n', [1, 4, 16, 32, 64]),
-    Test('factorial-loop',  '6\n120\n5040\n'),
-    Test('factorial-rec',   '6\n120\n5040\n'),
-    Test('fibonacci-loop',  '8\n89\n987\n'),
-    Test('fibonacci-rec',   '8\n89\n987\n'),
-    Test('power',           '32\n729\n78125\n'),
-    Test('ackermann',       '3\n11\n29\n'),
-    Test('primetest',       '1010101000101000101000100\n'),
-    Test('bubblesort',      '0123456789\n'),
-    Test('quicksort',       '0123456789\n'),
-    Test('mergesort-seq',   '0123456789\n'),
-    Test('mergesort-par',   '0123456789101112131415\n', [4, 16]),
-    Test('euclid-loop',     '8\n7\n1\n'),
-    Test('euclid-rec',      '8\n7\n1\n'),
-    Test('distribute',      '', [4, 16, 32, 64]),
-]
-    
-thread_tests = [
-    Test('thread_basic_2',  ''),
-    Test('thread_basic_4',  ''),
-    Test('thread_basic_8',  ''),
-    Test('thread_repeat_2', ''),
-    Test('thread_repeat_8', ''),
-]
-
-on_tests = [
-    Test('on_basic',        'DEADBEEF\n',  [4, 16, 32, 64]),
-    Test('on_children',     'DEADBEEF\n',  [4]),
-    Test('on_arguments',    '28\n21\n41\n',[4]),
-    Test('on_repeat_1',     'DEADBEEF\n',  [4, 16]),
-    Test('on_repeat_loop',  'DEADBEEF\n',  [4, 16]),
-    Test('on_array',        'DEADBEEF\n',  [4, 16, 32, 64]),
-    Test('on_chain_1',      '', [4, 16, 64]),
-    Test('on_chain_2',      '', [4, 16, 64]),
-    Test('on_chain_3',      '', [4, 16, 64]),
-    Test('on_chain_6',      '', [4, 16, 64]),
-    Test('on_chain_8',      '', [4, 16, 64]),
-    Test('on_collision_1',  '', [4, 16, 64]),
-    Test('on_collision_2',  '', [4, 16, 64]),
-    Test('on_collision_4',  '', [4, 16, 64]),
-]
-
-def init():
-    """ Initialise configuration """
-    global INSTALL_PATH
-    INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
-    if not INSTALL_PATH:
-        print("Error: no '"+INSTALL_PATH_env+"' enviromnent variable", 
-                out=sys.stderr)
-        return False
-    else:
-        globals()['TEST_EXAMPLES_PATH'] = INSTALL_PATH+EXAMPLES_DIR
-        globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+FEATURES_DIR
-        return True
-
-def run_test(self, name, path, output, num_cores, args=[]):
-    """ Run a single test """
-    r = call([COMPILE, path+'/'+name+'.sire'] 
-            + ['-n', '{}'.format(num_cores)] + args)
-    self.assertTrue(r[0])
-    r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
-    self.assertTrue(r[0])
-    self.assertEqual(r[1], output)
-
-def test_generator(name, path, output, num_cores):
-    """ Generate the test harness """
-    def test(self):
-        run_test(self, name, path, output, num_cores)
-    return test
-
-def generate_example_tests():
-    """ Dynamically generate all the example tests """
-    for t in example_tests:
-        for num_cores in t.cores:
-            name = 'test_example_{}_{}c'.format(t.name, num_cores)
-            test = test_generator(t.name, TEST_EXAMPLES_PATH, t.output, num_cores)
-            setattr(FeatureTests, name, test)
-
-def generate_feature_tests():
-    """ Dynamically generate all the feature tests """
-    for t in thread_tests + on_tests:
-        for num_cores in t.cores:
-            name = 'test_feature_{}_{}c'.format(t.name, num_cores)
-            test = test_generator(t.name, TEST_FEATURES_PATH, t.output, num_cores)
-            setattr(FeatureTests, name, test)
-
-def call(args):
-    """ Execute a shell command, return (success, output)
-    """
-    try:
-        # Returning non-zero will riase CalledProcessError
-        s = subprocess.check_output(args, stderr=subprocess.STDOUT)
-        return (True, s.decode('utf-8'))
-    except subprocess.CalledProcessError as err:
-        s = err.output.decode('utf-8').replace("\\n", "\n")
-        print('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
-        return (False, None)
 
 class ProgramTests(unittest.TestCase):
 
@@ -140,9 +32,59 @@ class FeatureTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-if __name__ == '__main__':
-    if init():
-        sys.argv.append('-v')
-        generate_example_tests()
-        generate_feature_tests()
-        unittest.main()
+# Examples =====================================================
+
+example_tests = { 
+  'hello'          : Test('hello',          'hello world\n'),
+  'factorial-loop' : Test('factorial-loop', '6\n120\n5040\n'),
+  'factorial-rec'  : Test('factorial-rec',  '6\n120\n5040\n'),
+  'fibonacci-loop' : Test('fibonacci-loop', '8\n89\n987\n'),
+  'fibonacci-rec'  : Test('fibonacci-rec',  '8\n89\n987\n'),
+  'power'          : Test('power',          '32\n729\n78125\n'),
+  'ackermann'      : Test('ackermann',      '3\n11\n29\n'),
+  'primetest'      : Test('primetest',      '1010101000101000101000100\n'),
+  'bubblesort'     : Test('bubblesort',     '0123456789\n'),
+  'quicksort'      : Test('quicksort',      '0123456789\n'),
+  'mergesort-seq'  : Test('mergesort-seq',  '0123456789\n'),
+  'mergesort-par'  : Test('mergesort-par',  '0123456789101112131415\n'),
+  'euclid-loop'    : Test('euclid-loop',    '8\n7\n1\n'),
+  'euclid-rec'     : Test('euclid-rec',     '8\n7\n1\n'),
+  'distribute'     : Test('distribute',     ''),
+  }
+
+# Features =====================================================
+
+array_tests = {
+  }
+
+for_tests = {
+  }
+
+on_tests = {
+  'on_basic'       : Test('on_basic',       'DEADBEEF\n'),
+  'on_children'    : Test('on_children',    'DEADBEEF\n'),
+  'on_arguments'   : Test('on_arguments',   '28\n21\n41\n'),
+  'on_repeat_1'    : Test('on_repeat_1',    'DEADBEEF\n'),
+  'on_repeat_loop' : Test('on_repeat_loop', 'DEADBEEF\n'),
+  'on_array'       : Test('on_array',       'DEADBEEF\n'),
+  'on_chain_1'     : Test('on_chain_1',     ''),
+  'on_chain_2'     : Test('on_chain_2',     ''),
+  'on_chain_3'     : Test('on_chain_3',     ''),
+  'on_chain_6'     : Test('on_chain_6',     ''),
+  'on_chain_8'     : Test('on_chain_8',     ''),
+  'on_collision_1' : Test('on_collision_1', ''),
+  'on_collision_2' : Test('on_collision_2', ''),
+  'on_collision_4' : Test('on_collision_4', ''),
+  }
+
+thread_tests = {
+  'thread_basic_2'  : Test('thread_basic_2',  ''),
+  'thread_basic_4'  : Test('thread_basic_4',  ''),
+  'thread_basic_8'  : Test('thread_basic_8',  ''),
+  'thread_repeat_2' : Test('thread_repeat_2', ''),
+  'thread_repeat_8' : Test('thread_repeat_8', ''),
+  }
+
+replicator_tests = {
+  }
+
