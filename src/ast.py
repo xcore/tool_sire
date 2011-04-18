@@ -42,7 +42,6 @@ class NodeVisitor(object):
     def visit_stmt_for(self, node): pass
     def visit_stmt_rep(self, node): pass
     def visit_stmt_on(self, node): pass
-    def visit_stmt_connect(self, node): pass
     def visit_stmt_return(self, node): pass
     def visit_expr_list(self, node): pass
     def visit_expr_single(self, node): pass
@@ -337,17 +336,15 @@ class StmtAss(Node):
         return s
 
 class StmtAlias(Node):
-    def __init__(self, dest, name, begin, end, coord=None):
-        self.dest = dest
-        self.name = name
-        self.begin = begin
-        self.end = end
+    def __init__(self, left, slice, coord=None):
+        self.left = left
+        self.slice = slice
         self.coord = coord
 
     def children(self):
         c = []
-        if self.begin is not None: c.append(self.begin)
-        if self.end is not None: c.append(self.end)
+        if self.left is not None: c.append(self.left)
+        if self.slice is not None: c.append(self.slice)
         return tuple(c)
 
     def accept(self, visitor):
@@ -359,7 +356,6 @@ class StmtAlias(Node):
 
     def __repr__(self):
         s =  'StmtAlias('
-        s += ', '.join('%s' % v for v in [self.dest, self.name])
         s += ')'
         return s
 
@@ -492,32 +488,6 @@ class StmtOn(Node):
 
     def __repr__(self):
         s =  'StmtOn('
-        s += ')'
-        return s
-
-class StmtConnect(Node):
-    def __init__(self, src, core, dest, coord=None):
-        self.src = src
-        self.core = core
-        self.dest = dest
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.core is not None: c.append(self.core)
-        if self.dest is not None: c.append(self.dest)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_connect(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtConnect('
-        s += ', '.join('%s' % v for v in [self.src])
         s += ')'
         return s
 

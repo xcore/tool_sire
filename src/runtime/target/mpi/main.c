@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[])
 { 
-  int rank, size;
+  int rank, size, rc;
 
   rc = MPI_Init(&argc, &argv);
   if (rc != MPI_SUCCESS) 

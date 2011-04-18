@@ -2,6 +2,8 @@
 Todo
 ====
 
+- name* and ElemSlice in alias, check during translate source array type.
+
 ---
 New
 ---

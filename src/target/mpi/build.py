@@ -27,7 +27,7 @@ COMPILE_FLAGS    = ['-S', '-O2']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = []
 
-RUNTIME_FILES = ['main.c']
+RUNTIME_FILES = ['main.c', 'slave.c', 'guest.c', 'host.c']
 
 def build_mpi(sem, device, buf, outfile, 
         compile_only, show_calls=False, v=False):
@@ -101,7 +101,7 @@ def link(show_calls, v):
     """
     vmsg(v, 'Linking executable -> '+BINARY)
     util.call([MPICC, 
-        'main.c.o', 'program.c.o',
+        'main.c.o', 'program.c.o', 'slave.c.o', 'host.c.o', 'guest.c.o',
         '-o', BINARY] + LINK_FLAGS, show_calls)
 
 def cleanup(v):

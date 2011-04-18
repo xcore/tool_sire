@@ -41,7 +41,7 @@ def translate(ast, sem, child, device, outfile, translate_only, v):
         outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
                 outfile+'.'+device.source_file_ext())
         util.write_file(outfile, buf.getvalue())
-        vmsg(v, 'Produced file: '+outfile+'\n')
+        vmsg(v, 'Produced file: '+outfile)
         raise SystemExit()
 
     return buf

@@ -102,7 +102,7 @@ class TranslateMPI(NodeWalker):
         self.out('#include <syscall.h>')
         self.out('#include "guest.h"')
         self.out('#include "program.h"')
-        self.out('#include "mpi_definitons.h"')
+        self.out('#include "mpi_definitions.h"')
         self.out('#include "device.h"')
         self.out('#include "language.h"')
         self.out('')
@@ -133,19 +133,14 @@ class TranslateMPI(NodeWalker):
     def decl(self, node):
         s = '{}'.format(node.name)
 
-        # Declaration forms
-        if node.type.form == 'array':
-            s += '[{}]'.format(self.expr(node.expr))
-        elif node.type.form == 'alias':
-            return 'unsigned '+s+';'
-        
-        # Declaration secifiers
-        if node.type.specifier == 'var':
+        if node.type == Type('var', 'array'):
+            s = 'int {}[{}];'.format(s, self.expr(node.expr))
+        elif node.type == Type('var', 'alias'):
+            s = 'int **'+s+';'
+        elif node.type == Type('var', 'single'):
             s = 'int {}'.format(s)+';'
-        elif node.type.specifier == 'val':
+        elif node.type == Type('val', 'single'):
             s = '#define {} {}'.format(s, self.expr(node.expr))
-        elif node.type.specifier == 'port':
-            s = 'const unsigned {} = {};'.format(s, self.expr(node.expr))
         else:
             s = '{} {}'.format(node.type.specifier, s)
         
@@ -184,9 +179,9 @@ class TranslateMPI(NodeWalker):
         elif node.type == Type('var', 'single'):
             s = 'int *'+s
         elif node.type == Type('var', 'alias'):
-            s = 'int **'+s
+            s = 'int '+s+'[]'
         elif node.type == Type('val', 'alias'):
-            s = 'const int **'+s
+            s = 'int '+s+'[]'
 
         return s
 
@@ -222,9 +217,9 @@ class TranslateMPI(NodeWalker):
             self.elem(node.left), self.expr(node.expr)))
 
     def stmt_alias(self, node):
-        self.out('{} = &{} + ({} * size(int));'.format(
-            node.dest, node.name, 
-            self.expr(node.begin)))
+        # TODO: if node.name is array don't take address
+        self.out('{} = (int **) ((int) (&{}) + ({} * sizeof(int)));'.format(
+            node.dest, node.name, self.expr(node.begin)))
 
     def stmt_if(self, node):
         self.out('if ({})'.format(self.expr(node.cond)))
@@ -355,7 +350,7 @@ class TranslateMPI(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        return '(&{} + (({}) * size(int)))'.format(node.name, 
+        return '((int)(&{}) + (({}) * sizeof(int)))'.format(node.name, 
                 self.expr(node.begin))
 
     def elem_fcall(self, node):

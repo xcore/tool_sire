@@ -325,7 +325,13 @@ class Semantics(NodeVisitor):
         #    self.form_error('subscript', node.name, node.coord)
 
     def visit_elem_slice(self, node):
-        pass
+        # Check the symbol has been declared
+        if not self.sym.check_decl(node.name):
+            self.nodecl_error(node.name, 'array or alias', node.coord)
+        # Mark it as used if it has and link to the symbol
+        else:
+            node.symbol = self.sym.lookup(node.name)
+            self.sym.mark_decl(node.name)
 
     def visit_elem_pcall(self, node):
         # Check the name is declared
