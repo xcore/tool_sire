@@ -97,7 +97,7 @@ class Parser(object):
         p[0] = 'val'
 
     # 'var' type specifier
-    def p_type_specifier_val(self, p):
+    def p_type_specifier_var(self, p):
         'type_specifier : VAR'
         p[0] = 'var'
 
@@ -119,17 +119,21 @@ class Parser(object):
         'var_decl_seq : error SEMI'
         print('Syntax error at line {}:{}'.format(p.lineno(1), p.lexpos(1)))
 
-    # Single declaration
-    def p_var_decl_single(self, p):
-        'var_decl : type_specifier name'
-        p[0] = ast.Decl(p[2], Type(p[1], 'single'), None, 
-                self.coord(p))
+    # Single variable declaration
+    def p_var_decl_var(self, p):
+        'var_decl : VAR name'
+        p[0] = ast.Decl(p[2], Type('var', 'single'), None, self.coord(p))
+
+    # Single value declaration
+    def p_var_decl_val(self, p):
+        'var_decl : VAL name ASS expr'
+        p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], self.coord(p))
 
     # Array declaration
     def p_var_decl_array(self, p):
         '''var_decl : VAR name LBRACKET RBRACKET
                     | VAR name LBRACKET expr RBRACKET'''
-        p[0] = ast.Decl('var', 
+        p[0] = ast.Decl(p[2], 
                 Type(p[1], 'array' if len(p)==6 else 'alias'), 
                 p[4] if len(p)==6 else None, self.coord(p))
 
@@ -143,7 +147,7 @@ class Parser(object):
 
     def p_pcall(self, p):
         'pcall : name LPAREN expr_list RPAREN'
-        p[0] = ast.Pcall(p[1], p[3], self.coord(p))
+        p[0] = ast.ElemPcall(p[1], p[3], self.coord(p))
 
     # Procedure declarations ===================================
 
@@ -196,14 +200,13 @@ class Parser(object):
     # single parameter
     def p_param_decl_var(self, p):
         'param_decl : type_specifier name'
-        p[0] = ast.Param(p[1], Type(p[1], 'single'), None,
+        p[0] = ast.Param(p[2], Type(p[1], 'single'), None,
                 self.coord(p))
 
     # Array (alias) parameter
     def p_param_decl_alias(self, p):
-        'param_decl : type_specifier name LBRACKET name RBRACKET'
-        p[0] = ast.Param(p[1], Type(p[2], 'alias'), 
-                ast.ExprSingle(ast.ElemId(p[3])),
+        'param_decl : type_specifier name LBRACKET expr RBRACKET'
+        p[0] = ast.Param(p[2], Type(p[1], 'alias'), p[4],
                 self.coord(p))
 
     # Statement blocks =========================================
@@ -257,6 +260,10 @@ class Parser(object):
         'stmt : left ASS expr'
         p[0] = ast.StmtAss(p[1], p[3], self.coord(p))
 
+    def p_stmt_aliases(self, p):
+        'stmt : name ALIASES name LBRACKET expr COLON expr RBRACKET'
+        p[0] = ast.StmtAlias(p[1], p[3], p[5], p[7], self.coord(p))
+
     #def p_stmt_in(self, p):
     #    'stmt : left IN expr'
     #    p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
@@ -277,31 +284,23 @@ class Parser(object):
     def p_stmt_for(self, p):
         'stmt : FOR left ASS expr TO expr DO stmt'
         p[0] = ast.StmtFor(p[2], p[4], p[6], 
-                ast.Expr(ast.ElemNumber(1)), p[10],
+                ast.ExprSingle(ast.ElemNumber(1)), p[8],
                 self.coord(p))
 
     # for index:=init to bound step increment do ...
-    def p_stmt_for(self, p):
+    def p_stmt_for_step(self, p):
         'stmt : FOR left ASS expr TO expr STEP expr DO stmt'
         p[0] = ast.StmtFor(p[2], p[4], p[6], p[8], p[10],
                 self.coord(p))
 
     # par index:=init for count do ...
-    def p_stmt_par(self, p):
+    def p_stmt_rep(self, p):
         'stmt : PAR left ASS expr FOR expr DO pcall'
         p[0] = ast.StmtRep(p[2], p[4], p[6], p[8], self.coord(p))
 
     def p_stmt_on(self, p):
         'stmt : ON left DO pcall'
         p[0] = ast.StmtOn(p[2], p[4], self.coord(p))
-
-    #def p_stmt_connect(self, p):
-    #    'stmt : CONNECT left TO left COLON left'
-    #    p[0] = ast.StmtConnect(p[2], p[4], p[6], self.coord(p))
-
-    #def p_stmt_aliases(self, p):
-    #    'stmt : name ALIASES name LBRACKET expr DOTS RBRACKET'
-    #    p[0] = ast.StmtAliases(p[1], p[3], p[5], self.coord(p))
 
     def p_stmt_return(self, p):
         'stmt : RETURN expr'
@@ -389,8 +388,8 @@ class Parser(object):
         p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
 
     def p_elem_slice(self, p):
-        'elem : name LBRACKET expr DOTS expr RBRACKET'
-        p[0] = ast.ElemSlice(p[1], p[3], self.coord(p))
+        'elem : name LBRACKET expr COLON expr RBRACKET'
+        p[0] = ast.ElemSlice(p[1], p[3], p[5], self.coord(p))
 
     def p_elem_fcall(self, p):
         'elem : name LPAREN expr_list RPAREN'

@@ -49,27 +49,12 @@ class TranslateMPI(NodeWalker):
         self.buf = buf
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
-        self.label_counter = 0
         self.parent = None
 
     def out(self, s):
         """ Write an indented line
         """
         self.blocker.insert(s)
-
-    def asm(self, template, outop=None, inops=None, clobber=None):
-        """ Write an inline assembly statement
-        """
-        self.out('asm("{}"{}{}{}{}{}{});'.format(
-            #template.replace('\n', ' ; '),
-            template,
-            ':' if outop or inops or clobber else '',
-            '"=r"('+outop+')' if outop else '', 
-            ':' if inops or clobber  else '', 
-            ', '.join(['"r"('+x+')' for x in inops]) if inops else '',
-            ':'   if clobber else '',
-            ', '.join(['"'+x+'"' for x in clobber]) if clobber else ''
-            ))
 
     def comment(self, s):
         """ Write a comment
@@ -98,35 +83,18 @@ class TranslateMPI(NodeWalker):
         """
         args = []
         for x in arg_list.children():
-            # For single array arguments, load the address given by this
-            # variable manually to circumvent an XC type error.
             arg = None
-            if isinstance(x, ast.ExprSingle):
-                if isinstance(x.elem, ast.ElemId):
-                    if x.elem.symbol.type.form == 'array':
-                        tmp = self.blocker.get_tmp()
-                        self.asm('mov %0, %1', outop=tmp,
-                                inops=[x.elem.name])
-                        arg = tmp
             args.append(arg if arg else self.expr(x))
         return ', '.join(args)
-
-    def get_label(self):
-        """ Get the next unique label
-        """
-        l = '_L{}'.format(self.label_counter)
-        self.label_counter += 1
-        return l
 
     def header(self):
         self.out('#include <mpi.h>')
         self.out('#include <stdlib.h>')
         self.out('#include <stdio.h>')
         self.out('#include <syscall.h>')
-        #self.out('#include "globals.h"')
-        #self.out('#include "util.h"')
-        #self.out('#include "guest.h"')
+        self.out('#include "guest.h"')
         self.out('#include "program.h"')
+        self.out('#include "mpi_definitons.h"')
         self.out('#include "device.h"')
         self.out('#include "language.h"')
         self.out('')
@@ -157,13 +125,13 @@ class TranslateMPI(NodeWalker):
     def decl(self, node):
         s = '{}'.format(node.name)
 
-        # Forms
+        # Declaration forms
         if node.type.form == 'array':
             s += '[{}]'.format(self.expr(node.expr))
         elif node.type.form == 'alias':
             return 'unsigned '+s+';'
         
-        # Specifiers
+        # Declaration secifiers
         if node.type.specifier == 'var':
             s = 'int {}'.format(s)+';'
         elif node.type.specifier == 'val':
@@ -203,18 +171,14 @@ class TranslateMPI(NodeWalker):
     def param(self, node):
         s = '{}'.format(node.name)
 
-        # Forms
-        if node.type.form == 'alias':
-            return 'unsigned '+s
-
-        # Specifiers
-        if node.type == Type('var', 'single'):
-            s = '&' + s
-        if (node.type.specifier == 'var' 
-                or node.type.specifier == 'val'):
-            s = 'int ' + s
-        if node.type.specifier == 'chanend':
-            s = 'unsigned '+s
+        if node.type == Type('val', 'single'):
+            s = 'int '+s
+        elif node.type == Type('var', 'single'):
+            s = 'int *'+s
+        elif node.type == Type('var', 'alias'):
+            s = 'int **'+s
+        elif node.type == Type('val', 'alias'):
+            s = 'const int **'+s
 
         return s
 
@@ -246,26 +210,13 @@ class TranslateMPI(NodeWalker):
             self.procedure_name(node.name), self.arguments(node.args)))
 
     def stmt_ass(self, node):
-    
-        # If the target is an alias, then generate a store after
-        if node.left.symbol.type.form == 'alias':
-            tmp = self.blocker.get_tmp()
-            self.out('{} = {};'.format(tmp, self.expr(node.expr)))
-            self.asm('stw %0, %1[%2]', 
-                    inops=[tmp, node.left.name, self.expr(node.left.expr)])
-        
-        # Otherwise, proceede normally
-        else:
-            self.out('{} = {};'.format(
-                self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_in(self, node):
-        self.out('{} ? {};'.format(
+        self.out('{} = {};'.format(
             self.elem(node.left), self.expr(node.expr)))
 
-    def stmt_out(self, node):
-        self.out('{} ! {};'.format(
-            self.elem(node.left), self.expr(node.expr)))
+    def stmt_alias(self, node):
+        self.out('{} = &{} + ({} * size(int));'.format(
+            node.dest, node.name, 
+            self.expr(node.begin)))
 
     def stmt_if(self, node):
         self.out('if ({})'.format(self.expr(node.cond)))
@@ -283,6 +234,9 @@ class TranslateMPI(NodeWalker):
             self.elem(node.var), self.expr(node.init), 
             self.expr(node.bound), self.expr(node.step)))
         self.stmt_block(node.stmt)
+
+    def stmt_rep(self, node):
+        self.comment('<replicator statement>')
 
     def stmt_on(self, node):
         """ Generate an on statement 
@@ -366,15 +320,6 @@ class TranslateMPI(NodeWalker):
 
         self.blocker.end()
 
-    def stmt_connect(self, node):
-        self.out('connect {} to {} : {};'.format(
-            self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
-
-    def stmt_aliases(self, node):
-        self.asm('add %0, %1, %2', outop=node.dest, 
-                inops=[node.name, '({})*{}'.format(
-                    self.elem(node.expr), defs.BYTES_PER_WORD)])
-
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))
 
@@ -400,6 +345,10 @@ class TranslateMPI(NodeWalker):
 
     def elem_sub(self, node):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
+
+    def elem_slice(self, node):
+        return '(&{} + (({}) * size(int)))'.format(node.name, 
+                self.expr(node.begin))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

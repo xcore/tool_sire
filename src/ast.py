@@ -1,8 +1,3 @@
-# Copyright (c) 2011, James Hanlon, All rights reserved
-# This software is freely distributable under a derivative of the
-# University of Illinois/NCSA Open Source License posted in
-# LICENSE.txt and at <http://github.xcore.com/>
-
 #-----------------------------------------------------------------
 # ** ATTENTION **
 # This code was automatically generated from the file:
@@ -41,14 +36,13 @@ class NodeVisitor(object):
     def visit_stmt_skip(self, node): pass
     def visit_stmt_pcall(self, node): pass
     def visit_stmt_ass(self, node): pass
-    def visit_stmt_in(self, node): pass
-    def visit_stmt_out(self, node): pass
+    def visit_stmt_alias(self, node): pass
     def visit_stmt_if(self, node): pass
     def visit_stmt_while(self, node): pass
     def visit_stmt_for(self, node): pass
+    def visit_stmt_rep(self, node): pass
     def visit_stmt_on(self, node): pass
     def visit_stmt_connect(self, node): pass
-    def visit_stmt_aliases(self, node): pass
     def visit_stmt_return(self, node): pass
     def visit_expr_list(self, node): pass
     def visit_expr_single(self, node): pass
@@ -56,6 +50,7 @@ class NodeVisitor(object):
     def visit_expr_binop(self, node): pass
     def visit_elem_group(self, node): pass
     def visit_elem_sub(self, node): pass
+    def visit_elem_slice(self, node): pass
     def visit_elem_fcall(self, node): pass
     def visit_elem_pcall(self, node): pass
     def visit_elem_number(self, node): pass
@@ -255,13 +250,13 @@ class StmtSeq(Node):
         return s
 
 class StmtPar(Node):
-    def __init__(self, stmt, coord=None):
-        self.stmt = stmt
+    def __init__(self, pcall, coord=None):
+        self.pcall = pcall
         self.coord = coord
 
     def children(self):
         c = []
-        if self.stmt is not None: c.extend(self.stmt)
+        if self.pcall is not None: c.extend(self.pcall)
         return tuple(c)
 
     def accept(self, visitor):
@@ -341,51 +336,30 @@ class StmtAss(Node):
         s += ')'
         return s
 
-class StmtIn(Node):
-    def __init__(self, left, expr, coord=None):
-        self.left = left
-        self.expr = expr
+class StmtAlias(Node):
+    def __init__(self, dest, name, begin, end, coord=None):
+        self.dest = dest
+        self.name = name
+        self.begin = begin
+        self.end = end
         self.coord = coord
 
     def children(self):
         c = []
-        if self.left is not None: c.append(self.left)
-        if self.expr is not None: c.append(self.expr)
+        if self.begin is not None: c.append(self.begin)
+        if self.end is not None: c.append(self.end)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_stmt_in(self)
+        tag = visitor.visit_stmt_alias(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'StmtIn('
-        s += ')'
-        return s
-
-class StmtOut(Node):
-    def __init__(self, left, expr, coord=None):
-        self.left = left
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.left is not None: c.append(self.left)
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_out(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtOut('
+        s =  'StmtAlias('
+        s += ', '.join('%s' % v for v in [self.dest, self.name])
         s += ')'
         return s
 
@@ -440,11 +414,11 @@ class StmtWhile(Node):
         return s
 
 class StmtFor(Node):
-    def __init__(self, var, init, step, bound, stmt, coord=None):
+    def __init__(self, var, init, bound, step, stmt, coord=None):
         self.var = var
         self.init = init
-        self.step = step
         self.bound = bound
+        self.step = step
         self.stmt = stmt
         self.coord = coord
 
@@ -452,8 +426,8 @@ class StmtFor(Node):
         c = []
         if self.var is not None: c.append(self.var)
         if self.init is not None: c.append(self.init)
-        if self.step is not None: c.append(self.step)
         if self.bound is not None: c.append(self.bound)
+        if self.step is not None: c.append(self.step)
         if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
@@ -466,6 +440,34 @@ class StmtFor(Node):
 
     def __repr__(self):
         s =  'StmtFor('
+        s += ')'
+        return s
+
+class StmtRep(Node):
+    def __init__(self, var, init, count, pcall, coord=None):
+        self.var = var
+        self.init = init
+        self.count = count
+        self.pcall = pcall
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.var is not None: c.append(self.var)
+        if self.init is not None: c.append(self.init)
+        if self.count is not None: c.append(self.count)
+        if self.pcall is not None: c.append(self.pcall)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_rep(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtRep('
         s += ')'
         return s
 
@@ -516,31 +518,6 @@ class StmtConnect(Node):
     def __repr__(self):
         s =  'StmtConnect('
         s += ', '.join('%s' % v for v in [self.src])
-        s += ')'
-        return s
-
-class StmtAliases(Node):
-    def __init__(self, dest, name, expr, coord=None):
-        self.dest = dest
-        self.name = name
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_aliases(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtAliases('
-        s += ', '.join('%s' % v for v in [self.dest, self.name])
         s += ')'
         return s
 
@@ -702,6 +679,32 @@ class ElemSub(Node):
 
     def __repr__(self):
         s =  'ElemSub('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class ElemSlice(Node):
+    def __init__(self, name, begin, end, coord=None):
+        self.name = name
+        self.begin = begin
+        self.end = end
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.begin is not None: c.append(self.begin)
+        if self.end is not None: c.append(self.end)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_elem_slice(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ElemSlice('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s

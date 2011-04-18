@@ -11,7 +11,7 @@ from type import Type
 scopes = ['system', 'module', 'proc', 'func']
 
 class SymbolTable(object):
-    """ Symbol table
+    """ Symbol table.
     """
     def __init__(self, semantics, debug=False):
         self.sem = semantics
@@ -20,7 +20,8 @@ class SymbolTable(object):
         self.tab = {}
 
     def begin_scope(self, tag):
-        """ Begin a new scope """
+        """ Begin a new scope.
+        """
         s = ScopeTag(tag)
         self.scope.append(s)
         self.curr_scope = tag
@@ -28,7 +29,8 @@ class SymbolTable(object):
             print("New scope '{}'".format(s.name))
 
     def end_scope(self):
-        """ End a scope """
+        """ End a scope.
+        """
         s = None
         while not (self.scope[-1].type.isTag()):
             s = self.scope.pop()
@@ -47,13 +49,15 @@ class SymbolTable(object):
                 .format(s.name, self.curr_scope))
    
     def get_curr_scope(self):
-        """ Traverse scope stack from top to bottom to find first scope tag """
+        """ Traverse scope stack from top to bottom to find first scope tag.
+        """
         for x in reversed(self.scope):
             if x.type.isTag():
                 return x.name
 
     def insert_(self, name, type, coord):
-        """ Insert a new symbol in the table """
+        """ Insert a new symbol in the table.
+        """
         self.tab[name] = Symbol(name, type, coord, self.scope[-1])
         self.scope.append(self.tab[name])
         if(self.debug):
@@ -62,7 +66,8 @@ class SymbolTable(object):
 
     def insert(self, name, type, coord=None):
         """ Insert a new symbol in the table if it doesn't already exisit in the
-            current scope """
+            current scope.
+        """
         if not self.lookup_scoped(name):
             self.insert_(name, type, coord)
             return True
@@ -71,7 +76,8 @@ class SymbolTable(object):
     # TODO: ideally, symbol lookup should be O(1) by creating new tables for
     # each new scope
     def lookup(self, key):
-        """ Lookup a symbol in scope order """
+        """ Lookup a symbol in scope order.
+        """
         symbol = None
         for x in reversed(self.scope):
             if x.name == key: 
@@ -82,43 +88,50 @@ class SymbolTable(object):
         return symbol
 
     def lookup_scoped(self, key):
-        """ Lookup a symbol in the current scope """
+        """ Lookup a symbol in the current scope.
+        """
         for x in reversed(self.scope):
             if x.type.isTag(): return None
             if x.name == key: return x
 
     def check_decl(self, key):
-        """ Check a symbol has been declared """
+        """ Check a symbol has been declared.
+        """
         s = self.lookup(key) 
         #print("check decl: "+key+" is {}".format(not s == None))
         return not s == None
 
     def check_form(self, key, forms):
-        """ Check a symbol has been declared with the correct form """
+        """ Check a symbol has been declared with the correct form.
+        """
         if key in self.tab:
             return any(x == self.tab[key].type.form for x in forms)
         return False
 
     def check_type(self, key, types):
-        """ Check a symbol has been declared with the correct form """
+        """ Check a symbol has been declared with the correct form.
+        """
         if key in self.tab:
             return any(x == self.tab[key].type for x in types)
         return False
 
     def mark_decl(self, key):
-        """ Mark the first symbol """
+        """ Mark the first symbol.
+        """
         for x in reversed(self.scope):
             if x.name == key:
                 x.mark = True
 
     def dump(self, buf=sys.stdout):
-        """ Dump the contents of the table to buf """
+        """ Dump the contents of the table to buf.
+        """
         for x in self.scope:
             buf.write(repr(x))
 
 
 class Symbol(object):
-    """ A generic symbol with a name, type and scope"""
+    """ A generic symbol with a name, type and scope.
+    """
     def __init__(self, name, type, coord, scope):
         self.name = name
         self.type = type
@@ -131,7 +144,8 @@ class Symbol(object):
 
 
 class ScopeTag(Symbol):
-    """ A scope tag symbol """
+    """ A scope tag symbol.
+    """
     def __init__(self, name):
         super(ScopeTag, self).__init__(name, Type('tag'), None, '')
 

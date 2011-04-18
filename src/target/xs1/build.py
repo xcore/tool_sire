@@ -367,7 +367,7 @@ def build_jumptab(sem, buf, v):
     vmsg(v, 'Building master jump table')
     
     # Constant section
-    buf.write('#include "definitions.h"\n')
+    buf.write('#include "xs1_definitions.h"\n')
     buf.write('\t.section .cp.rodata, "ac", @progbits\n')
     buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
     

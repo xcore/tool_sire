@@ -1,4 +1,4 @@
-BOUND := 10;
+val BOUND := 10;
 
 proc main() is
   var i;

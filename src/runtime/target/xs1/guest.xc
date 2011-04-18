@@ -4,7 +4,7 @@
 // LICENSE.txt and at <http://github.xcore.com/>
 
 #include <xs1.h>
-#include "definitions.h"
+#include "xs1_definitions.h"
 #include "language.h"
 #include "globals.h"
 #include "system.h"

@@ -44,7 +44,6 @@ proc_conversion = {
 class TranslateXS1(NodeWalker):
     """ A walker class to pretty-print the AST in the langauge syntax 
     """
-    
     def __init__(self, semantics, children, buf):
         super(TranslateXS1, self).__init__()
         self.sem = semantics
@@ -56,11 +55,13 @@ class TranslateXS1(NodeWalker):
         self.parent = None
 
     def out(self, s):
-        """ Write an indented line """
+        """ Write an indented line
+        """
         self.blocker.insert(s)
 
     def asm(self, template, outop=None, inops=None, clobber=None):
-        """ Write an inline assembly statement """
+        """ Write an inline assembly statement
+        """
         self.out('asm("{}"{}{}{}{}{}{});'.format(
             #template.replace('\n', ' ; '),
             template,
@@ -73,11 +74,13 @@ class TranslateXS1(NodeWalker):
             ))
 
     def comment(self, s):
-        """ Write a comment """
+        """ Write a comment
+        """
         self.out('// '+s)
 
     def stmt_block(self, stmt):
-        """ Decide whether the statement needs a block """
+        """ Decide whether the statement needs a block
+        """
         if not (isinstance(stmt, ast.StmtSeq) 
                 or isinstance(stmt, ast.StmtPar)):
             self.blocker.begin()
@@ -87,7 +90,8 @@ class TranslateXS1(NodeWalker):
             self.stmt(stmt)
         
     def procedure_name(self, name):
-        """ If a procedure name has a conversion, return it """
+        """ If a procedure name has a conversion, return it
+        """
         return proc_conversion[name] if name in proc_conversion else name
 
     def arguments(self, arg_list):
@@ -110,7 +114,8 @@ class TranslateXS1(NodeWalker):
         return ', '.join(args)
 
     def get_label(self):
-        """ Get the next unique label """
+        """ Get the next unique label
+        """
         l = '_L{}'.format(self.label_counter)
         self.label_counter += 1
         return l
@@ -261,7 +266,8 @@ class TranslateXS1(NodeWalker):
         self.out('_threads[_i] = _t;')
 
     def stmt_par(self, node):
-        """ Generate a parallel block """
+        """ Generate a parallel block
+        """
         self.blocker.begin()
         num_slaves = len(node.children()) - 1
         exit_label = self.get_label()

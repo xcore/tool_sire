@@ -3,7 +3,7 @@
 // University of Illinois/NCSA Open Source License posted in
 // LICENSE.txt and at <http://github.xcore.com/>
 
-#include "definitions.h"
+#include "xs1_definitions.h"
    
     .extern _migrate
     .extern _initThread

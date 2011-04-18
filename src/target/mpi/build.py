@@ -71,7 +71,8 @@ def build_mpi(sem, device, buf, outfile,
 
 def create_headers(device, v):
     vmsg(v, 'Creating device header '+DEVICE_HDR)
-    s =  '#define NUM_CORES {}\n'.format(device.num_cores())
+    s = ''
+    s += '#define NUM_CORES {}\n'.format(device.num_cores())
     util.write_file(DEVICE_HDR, s)
 
 def assemble_str(name, string, show_calls, v, cleanup=True):

@@ -4,8 +4,8 @@
 // LICENSE.txt and at <http://github.xcore.com/>
 
 #include <xs1.h>
+#include "xs1_definitions.h"
 #include "util.h"
-#include "definitions.h"
 
 // Raise an exception in the event of an error
 //static inline

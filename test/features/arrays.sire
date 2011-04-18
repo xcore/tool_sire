@@ -3,7 +3,7 @@ val N := 10;
 % Pairwise sum of elements
 proc sum(var r[N/2], val a[N/2], val b[N/2]) is
   var i;
-{ for i := 1 to N/2 do r := a[i] + b[i]
+{ for i := 1 to N/2 do r[i] := a[i] + b[i]
 }
 
 % Array slicing
@@ -12,12 +12,15 @@ proc foo() is
   var r[N/2];
   var x[];
   var y[];
-{ x := a[0..N/2]
-; y := a[N/2..N]
-; bar(r, x, y)
-; baz(r, a[0..N/2], a[N/2..N])
+  var i;
+{ for i:=0 to N-1 do a[i] := i
+; x aliases a[0:N/2]
+; y aliases a[N/2:N]
+; sum(r, x, y)
+; sum(r, a[0:N/2], a[N/2:N])
 }
 
 proc main() is
 { foo()
 }
+

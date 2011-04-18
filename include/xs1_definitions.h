@@ -3,8 +3,8 @@
 // University of Illinois/NCSA Open Source License posted in
 // LICENSE.txt and at <http://github.xcore.com/>
 
-#ifndef DEFINITIONS_H
-#define DEFINITIONS_H
+#ifndef XS1_DEFINITIONS_H
+#define XS1_DEFINITIONS_H
 
 // Labels
 #define LABEL_EXCEP_HANDLER      "excepHandler"
@@ -25,11 +25,6 @@
 #define LABEL_SIZE_TABLE         "_sizetab"
 #define LABEL_FRAME_TABLE        "_frametab"
 
-// System variables
-#define SYS_CHAN_ARRAY           "chan"
-#define SYS_CORE_ARRAY           "core"
-#define SYS_NUM_CORES            "NUM_CORES"
-
 // Jump table indicies
 #define JUMPI_MIGRATE            0
 #define JUMPI_INIT_THREAD        1
@@ -46,7 +41,6 @@
 #define MAX_CHANNELS             32
                                 
 // Runtime specs                
-#define MAX_PROC_PARAMETERS      8
 #define MAX_PROCS                10
 //#define JUMP_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET)
 //#define SIZE_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET) 

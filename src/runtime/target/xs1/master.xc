@@ -4,8 +4,8 @@
 // LICENSE.txt and at <http://github.xcore.com/>
 
 #include <syscall.h>
+#include "xs1_definitions.h"
 #include "device.h"
-#include "definitions.h"
 #include "globals.h"
 #include "system.h"
 

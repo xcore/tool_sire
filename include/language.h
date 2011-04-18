@@ -3,8 +3,8 @@
 // University of Illinois/NCSA Open Source License posted in
 // LICENSE.txt and at <http://github.xcore.com/>
 
-#define TRUE       1
-#define FALSE      0
+#define TRUE  1
+#define FALSE 0
 
 typedef enum {
     t_arg_ALIAS,

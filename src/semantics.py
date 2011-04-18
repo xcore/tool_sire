@@ -11,22 +11,21 @@ import definitions as defs
 
 import ast
 from ast import NodeVisitor
-
 import symbol
 import signature
 from builtin import functions
 from type import Type
 
 elem_types = {
-    'elem_sub'     : None,
-    'elem_id'      : None,
-    'elem_group'   : None,
-    'elem_fcall'   : Type('var', 'single'),
-    'elem_string'  : Type('var', 'array'),
-    'elem_number'  : Type('val', 'single'),
-    'elem_boolean' : Type('val', 'single'),
-    'elem_char'    : Type('val', 'single'),
-}
+  'elem_sub'     : None,
+  'elem_id'      : None,
+  'elem_group'   : None,
+  'elem_fcall'   : Type('var', 'single'),
+  'elem_string'  : Type('var', 'array'),
+  'elem_number'  : Type('val', 'single'),
+  'elem_boolean' : Type('val', 'single'),
+  'elem_char'    : Type('val', 'single'),
+  }
 
 class Semantics(NodeVisitor):
     """ An AST visitor class to check the semantics of a sire program
@@ -45,8 +44,7 @@ class Semantics(NodeVisitor):
         # Add system variables core, chan
         self.sym.begin_scope('system')
         self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
-        self.sym.insert(defs.SYS_CHAN_ARRAY, Type('chanend', 'array'))
-        self.sym.insert(defs.SYS_NUM_CORES, Type('val', 'single'))
+        self.sym.insert(defs.SYS_NUM_CORES_CONST, Type('val', 'single'))
 
         # Add builtin functions
         for x in functions:
@@ -85,7 +83,16 @@ class Semantics(NodeVisitor):
             else:
                 self.nodecl_error(elem.name, 'array', None)
                 return None
-        
+
+        # If it is an array slice
+        elif isinstance(elem, ast.ElemSlice):
+            s = self.sym.lookup(elem.name)
+            if s:
+                return s.type
+            else:
+                self.nodecl_error(elem.name, 'array', None)
+                return None
+
         # Otherwise, return the specified elem type
         else:
             return elem_types[util.camel_to_under(elem.__class__.__name__)]
@@ -108,41 +115,49 @@ class Semantics(NodeVisitor):
     # Errors and warnings =================================
 
     def nodecl_error(self, name, specifier, coord):
-        """ No declaration error """
+        """ No declaration error
+        """
         self.error.report_error("{} '{}' not declared"
                 .format(specifier, name), coord)
 
     def badargs_error(self, name, coord):
-        """ No definition error """
+        """ No definition error 
+        """
         self.error.report_error("invalid arguments for procedure '{}' "
                 .format(name), coord)
 
     def redecl_error(self, name, coord):
-        """ Re-declaration error """
+        """ Re-declaration error 
+        """
         self.error.report_error("variable '{}' already declared in scope"
                 .format(name), coord)
 
     def redef_error(self, name, coord):
-        """ Re-definition error """
+        """ Re-definition error 
+        """
         self.error.report_error("procedure '{}' already declared"
                 .format(name), coord)
 
     def procedure_def_error(self, name, coord):
-        """ Re-definition error """
+        """ Re-definition error 
+        """
         self.error.report_error("procedure '{}' definition invalid"
                 .format(name), coord)
 
     def unused_warning(self, name, coord):
-        """ Unused variable warning """
+        """ Unused variable warning
+        """
         self.error.report_warning("variable '{}' declared but not used"
                 .format(name), coord)
 
     def type_error(self, msg, name, coord):
-        """ Mismatching type error """
+        """ Mismatching type error
+        """
         self.error.report_error("type error in {} with '{}'".format(msg, name), coord)
 
     def form_error(self, msg, name, coord):
-        """ Mismatching form error """
+        """ Mismatching form error
+        """
         self.error.report_error("form error in {} with '{}'"
                 .format(msg, name), coord)
 
@@ -218,19 +233,18 @@ class Semantics(NodeVisitor):
             self.sym.mark_decl(node.name)
 
     def visit_stmt_ass(self, node):
-        if not self.check_elem_types(node.left, 
-                [Type('var', 'single'), Type('var', 'sub')]):
+        if not self.check_elem_types(node.left, [
+               Type('val', 'single'), 
+               Type('var', 'single'), 
+               Type('val', 'sub'),
+               Type('var', 'sub')]):
             self.type_error('assignment', node.left.name, node.coord)
 
-    def visit_stmt_in(self, node):
-        if not self.check_elem_types(node.left, 
-                [Type('chanend', 'single'), Type('port', 'single')]):
-            self.type_error('input', node.left.name, node.coord)
-
-    def visit_stmt_out(self, node):
-        if not self.check_elem_types(node.left, 
-                [Type('chanend', 'single'), Type('port', 'single')]):
-            self.type_error('output', node.left.name, node.coord)
+    def visit_stmt_aliases(self, node):
+        if not self.sym.check_form(node.dest, ['alias']):
+            self.type_error('alias', node.dest, node.coord)
+        if not self.sym.check_form(node.name, ['var', 'alias', 'array']):
+            self.type_error('alias', node.name, node.coord)
 
     def visit_stmt_if(self, node):
         pass
@@ -240,21 +254,15 @@ class Semantics(NodeVisitor):
 
     def visit_stmt_for(self, node):
         if not self.check_elem_types(node.var, [Type('var', 'single')]):
-            self.type_error('output', node.var.name, node.coord)
+            self.type_error('for loop index variable', node.var.name, node.coord)
+
+    def visit_stmt_par(self, node):
+        if not self.check_elem_types(node.var, [Type('var', 'single')]):
+            self.type_error('repliacator index variable', node.var.name, node.coord)
 
     def visit_stmt_on(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):
             self.type_error('on target', node.core, node.coord)
-
-    def visit_stmt_connect(self, node):
-        if not self.sym.check_type(node.core, [Type('core', 'sub')]):
-            self.type_error('connect target', node.core, node.coord)
-
-    def visit_stmt_aliases(self, node):
-        if not self.sym.check_form(node.dest, ['alias']):
-            self.type_error('alias', node.dest, node.coord)
-        if not self.sym.check_form(node.name, ['var', 'alias', 'array']):
-            self.type_error('alias', node.name, node.coord)
 
     def visit_stmt_return(self, node):
         pass
@@ -279,9 +287,12 @@ class Semantics(NodeVisitor):
             self.type_error('unary', node.elem, node.coord)
 
     def visit_expr_binop(self, node):
-        if not self.check_elem_types(node.elem, 
-                [Type('var', 'single'), Type('var', 'array'), 
-                    Type('var', 'sub'), Type('val', 'single')]):
+        if not self.check_elem_types(node.elem, [
+                Type('val', 'single'),
+                Type('var', 'single'), 
+                Type('var', 'array'), 
+                Type('val', 'sub'), 
+                Type('var', 'sub')]):
             self.type_error('binop dest', node.elem, node.coord)
     
     # Elements= ===========================================
@@ -312,6 +323,9 @@ class Semantics(NodeVisitor):
         # Check it has the right form 
         #if not self.sym.check_form(node.name, ['array','alias']):
         #    self.form_error('subscript', node.name, node.coord)
+
+    def visit_elem_slice(self, node):
+        pass
 
     def visit_elem_pcall(self, node):
         # Check the name is declared

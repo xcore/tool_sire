@@ -25,6 +25,8 @@ New
 
 - Prohibit globals?
 
+- Semantic analysis needs to check types properly by walking the AST.
+
 ------
 Driver
 ------

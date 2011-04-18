@@ -81,13 +81,9 @@ class Printer(NodeWalker):
         return ', '.join([self.param(x) for x in node.children()])
 
     def param(self, node):
-        s = '{}'.format(node.name)
+        s = '{} {}'.format(node.type.specifier, node.name)
         if node.type.form == 'alias':
             s += '[{}]'.format(self.expr(node.expr))
-        if node.type.specifier == 'var':
-            pass
-        else:
-            s = '{} {}'.format(node.type.specifier, s)
         return s
 
     # Statements ==========================================
@@ -127,6 +123,11 @@ class Printer(NodeWalker):
         self.out(d, '{} := {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
+    def stmt_alias(self, node, d):
+        self.out(d, '{} aliases {}[{} : {}]'.format(
+            node.dest, node.name, 
+            self.expr(node.begin), self.expr(node.end)))
+
     def stmt_in(self, node, d):
         self.out(d, '{} ? {}'.format(
             self.elem(node.left), self.expr(node.expr)))
@@ -151,11 +152,17 @@ class Printer(NodeWalker):
         self.indent.pop()
 
     def stmt_for(self, node, d):
-        self.out(d, 'for {} := {} to {} do\n'.format(
-            self.elem(node.var), self.expr(node.init), self.expr(node.bound)))
+        self.out(d, 'for {} := {} to {} step {} do\n'.format(
+            self.elem(node.var), self.expr(node.init), 
+            self.expr(node.step), self.expr(node.bound)))
         self.indent.append(' '*INDENT)
         self.stmt(node.stmt, d+1)
         self.indent.pop()
+
+    def stmt_rep(self, node, d):
+        self.out(d, 'par {} := {} for {} do {}'.format(
+            self.elem(node.var), self.expr(node.init), 
+            self.expr(node.count), self.elem(node.pcall)))
 
     def stmt_on(self, node, d):
         self.out(d, 'on {} do {}'.format(self.elem(node.core), 
@@ -164,10 +171,6 @@ class Printer(NodeWalker):
     def stmt_connect(self, node, d):
         self.out(d, 'connect {} to {} : {}'.format(
             self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
-
-    def stmt_aliases(self, node, d):
-        self.out(d, '{} aliases {}[{}..]'.format(
-            node.dest, node.name, self.expr(node.expr)))
 
     def stmt_return(self, node, d):
         self.out(d, 'return {}'.format(self.expr(node.expr)))
@@ -194,6 +197,10 @@ class Printer(NodeWalker):
 
     def elem_sub(self, node):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
+
+    def elem_slice(self, node):
+        return '[{} : {}]'.format(node.name, 
+                self.expr(node.begin), self.expr(node.end))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.expr_list(node.args))

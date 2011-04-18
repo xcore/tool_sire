@@ -6,7 +6,7 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
-#include "definitions.h"
+#include "xs1_definitions.h"
 
 // External globals
 extern unsigned mSpawnChan;

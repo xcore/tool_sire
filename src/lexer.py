@@ -53,8 +53,6 @@ class Lexer(object):
     # Reserved tokens
     reserved = {
         'aliases'  : 'ALIASES',
-        'connect'  : 'CONNECT',
-        'count'    : 'COUNT',
         'do'       : 'DO',
         'else'     : 'ELSE',
         'false'    : 'FALSE',
@@ -65,7 +63,6 @@ class Lexer(object):
         'on'       : 'ON',
         'par'      : 'PAR',
         'proc'     : 'PROC',
-        'port'     : 'PORT',
         'return'   : 'RETURN',
         'skip'     : 'SKIP',
         'step'     : 'STEP',
@@ -89,10 +86,10 @@ class Lexer(object):
         'NOT', 'LAND', #REM, OR, AND, LOR
         'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
         # Assignment operators
-        'ASS','IN','OUT',
+        'ASS', #'IN','OUT',
         # Delimiters
         'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
-        'COLON', 'DOTS',
+        'COLON',
         # Separators
         'SEMI','BAR',
         # Literals
@@ -132,8 +129,8 @@ class Lexer(object):
 
     # Assignment operators
     t_ASS      = r':='
-    t_IN       = r'\?'
-    t_OUT      = r'!'
+    #t_IN       = r'\?'
+    #t_OUT      = r'!'
 
     # Delimeters
     t_LPAREN   = r'\('
@@ -144,7 +141,6 @@ class Lexer(object):
     t_END      = r'\}'
     t_COMMA    = r','
     t_COLON    = r':'
-    t_DOTS     = r'\.\.'
 
     # Separators
     t_SEMI     = r';'

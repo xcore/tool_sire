@@ -6,6 +6,7 @@
 import io
 
 import util
+import config
 import definitions as defs
 from util import vmsg
 from util import vhdr
@@ -17,6 +18,8 @@ from target.xs1.translate import TranslateXS1
 from target.mpi.translate import TranslateMPI
 from target.xs1.build import build_xs1
 from target.mpi.build import build_mpi
+
+DEFS_FILE_SUFFIX = 'definitions.h'
 
 def translate(ast, sem, child, device, outfile, translate_only, v):
     """ Translate the AST to target system. 
@@ -58,6 +61,12 @@ def generate(ast, sem, child, device, outfile,
         translate_only, compile_only, show_calls, v):
     """ Generate code intermediate/machine/binary from AST.
     """
+
+    # Load appropriate definitions for the system
+    if device.system == 'xs1':
+        defs.load(config.INCLUDE_PATH+'/xs1_'+DEFS_FILE_SUFFIX)
+    elif device.system == 'mpi':
+        defs.load(config.INCLUDE_PATH+'/mpi_'+DEFS_FILE_SUFFIX)
     
     # Translate the AST
     buf = translate(ast, sem, child, device, outfile, translate_only, v)

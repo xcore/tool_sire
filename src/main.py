@@ -201,7 +201,6 @@ def main(args):
 
         # Setup the configuration variables and definitions
         config.init()
-        defs.load(config.INCLUDE_PATH)
 
         # Setup parser, parse arguments and initialise globals
         argp = setup_argparse()

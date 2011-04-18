@@ -9,19 +9,29 @@ import definitions as defs
 from type import Type
 import semantics
 
-# Valid types that can be taken by each formal type
+# Valid actual parameter types that can be taken by each formal type.
 param_conversions = {
-    Type('var',     'single') : 
-        [Type('var',  'single'), Type('var', 'sub')],
+  
+  Type('var', 'single') : [
+      Type('var', 'single'), 
+      Type('var', 'sub'),
+      Type('var', 'array'),  # Slice of length 1
+      Type('var', 'alias')], # Slice of length 1
 
-    Type('val',     'single') : 
-        [Type('var',  'single'), Type('val', 'single'), Type('var', 'sub')],
+  Type('val', 'single') : [
+      Type('var', 'single'), 
+      Type('val', 'single'), 
+      Type('var', 'sub'),
+      Type('var', 'array'),  # Slice of length 1
+      Type('var', 'alias')], # Slice of length 1
 
-    Type('var',     'alias')  :
-        [Type('var',  'array'),  Type('var',  'alias')],
-
-    Type('chanend', 'single') :
-        [Type('chan', 'single'), Type('chan', 'sub')],
+  Type('var', 'alias') : [
+      Type('var', 'array'), 
+      Type('var', 'alias')],
+  
+  Type('val', 'alias') : [
+      Type('var', 'array'),
+      Type('var', 'alias')],
 }
 
 class SignatureTable(object):
