@@ -149,7 +149,8 @@ def produce_ast(input_file, errorlog, logging=False):
     ast = parser.parse(input_file, infile, debug=log)
     
     if errorlog.any():
-        raise Error('parsing')
+        raise SystemExit()
+        #raise Error('parsing')
     
     # Perform parsing only
     if parse_only: 

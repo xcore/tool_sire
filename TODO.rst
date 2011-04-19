@@ -41,10 +41,8 @@ Driver
 Lexing/parsing
 --------------
 
-- Add more error cases to improve syntax error reporting.
-
-- Add more error synchronisation points in the parser to reduce erronous parsing
-  after a syntax error.
+- Make sure error synchronisation points work well and only cause one error to
+  be reported.
 
 -----------------
 Semantic analysis

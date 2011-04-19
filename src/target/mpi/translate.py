@@ -136,7 +136,7 @@ class TranslateMPI(NodeWalker):
         if node.type == Type('var', 'array'):
             s = 'int {}[{}];'.format(s, self.expr(node.expr))
         elif node.type == Type('var', 'alias'):
-            s = 'int **'+s+';'
+            s = 'int *'+s+';'
         elif node.type == Type('var', 'single'):
             s = 'int {}'.format(s)+';'
         elif node.type == Type('val', 'single'):
@@ -353,7 +353,7 @@ class TranslateMPI(NodeWalker):
         address = ''+node.name
         if node.symbol.type.form == 'array':
             address = '&'+address
-        return '(int **) ({} + {})'.format(address, self.expr(node.begin))
+        return '({} + {})'.format(address, self.expr(node.begin))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

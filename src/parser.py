@@ -11,7 +11,8 @@ import error
 import ast
 
 class Coord(object):
-    """ Coordinates (file, line, col) of a syntactic element. """
+    """ Coordinates (file, line, col) of a syntactic element.
+    """
     def __init__(self, file, line, column=None):
         self.file = file
         self.line = line
@@ -24,8 +25,8 @@ class Coord(object):
         return str
 
 class Parser(object):
-    """ A parser object for the sire langauge """
-
+    """ A parser object for the sire langauge
+    """
     def __init__(self, error, lex_optimise=True, lextab='lextab', 
             yacc_optimise=True, yacctab='yacctab', yacc_debug=False):
         """ Create a new parser """
@@ -41,29 +42,30 @@ class Parser(object):
                 optimize=yacc_optimise)
 
     def parse(self, text, filename='', debug=0):
-        """ Parse a file and return the AST """
+        """ Parse a file and return the AST
+        """
         self.lexer.filename = filename
         self.lexer.reset()
         return self.parser.parse(text, lexer=self.lexer, debug=debug,
-                tracking=True)
+                tracking=False)
 
     def coord(self, p, index=1):
-        """ Return a coordinate for a production """
+        """ Return a coordinate for a production
+        """
         return Coord(file=self.lexer.filename, line=p.lineno(index), 
                 column=self.lexer.findcol(self.lexer.data(), p.lexpos(index)))
     
     def tcoord(self, t):
-        """ Return a coordinate for a token """
+        """ Return a coordinate for a token
+        """
         return Coord(file=self.lexer.filename, line=t.lineno, 
                 column=self.lexer.findcol(self.lexer.data(), t.lexpos))
 
     def lex_error(self, msg, line, col):
         self.error.report_error(msg, Coord(line, col))
-        #self.lexer.skip(1)
 
     def parse_error(self, msg, coord=None, discard=True):
         self.error.report_error(msg, coord)
-        if discard: self.parser.errok()
 
     # Define operator presidence
     precedence = (
@@ -112,12 +114,19 @@ class Parser(object):
     def p_var_decl_seq(self, p):
         '''var_decl_seq : var_decl SEMI
                         | var_decl SEMI var_decl_seq'''
-        p[0] = [p[1]] if len(p)==3 else [p[1]] + p[3]
+        # Only concatenate p[3] if it's not null (to recover from errors).
+        if len(p) == 3:
+            p[0] = [p[1]]
+        if len(p) == 4 and not p[3]:
+            p[0] = [p[1]]
+        elif len(p) == 4 and p[3]:
+            p[0] = [p[1]] + p[3]
 
     # Variable declaration sequence error
     def p_var_decl_seq_err(self, p):
-        'var_decl_seq : error SEMI'
-        print('Syntax error at line {}:{}'.format(p.lineno(1), p.lexpos(1)))
+        '''var_decl_seq : error SEMI
+                        | error SEMI var_decl_seq'''
+        self.parse_error('declarations', self.coord(p))
 
     # Single variable declaration
     def p_var_decl_var(self, p):
@@ -160,7 +169,13 @@ class Parser(object):
     def p_proc_decl_seq(self, p):
         '''proc_decl_seq : proc_decl
                          | proc_decl proc_decl_seq'''
-        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[2]
+        # Only concatenate p[2] if it's not null (to recover from errors).
+        if len(p) == 2:
+            p[0] = [p[1]]
+        elif len(p) == 3 and not p[2]:
+            p[0] = [p[1]]
+        elif len(p) == 3 and p[2]:
+            p[0] = [p[1]] + p[2]
 
     # Process
     def p_proc_decl_proc(self, p):
@@ -171,18 +186,20 @@ class Parser(object):
     # Function
     def p_proc_decl_func(self, p):
         'proc_decl : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-        p[0] = ast.Def(p[2],  Type('func', 'procedure'),
+        p[0] = ast.Def(p[2], Type('func', 'procedure'),
                 p[4], p[7], p[8], self.coord(p)) 
 
-    # Procedure error
+    # Procedure errors
     def p_proc_decl_proc_err(self, p):
-        '''proc_decl : PROC error IS var_decls stmt'''
-        self.parse_error('process declaration', p, 2)
+        '''proc_decl : PROC error IS var_decls stmt
+                     | PROC name LPAREN formals RPAREN IS error stmt'''
+        self.parse_error('process declaration', self.coord(p))
 
-    # Function error
+    # Function errors
     def p_proc_decl_func_err(self, p):
-        '''proc_decl : FUNC error IS var_decls stmt'''
-        self.parse_error('function declaration', p, 2)
+        '''proc_decl : FUNC error IS var_decls stmt
+                     | FUNC name LPAREN formals RPAREN IS error stmt'''
+        self.parse_error('function declaration', self.coord(p))
 
     # Formal declarations ======================================
 
@@ -220,7 +237,13 @@ class Parser(object):
     def p_stmt_seq(self, p):
         '''stmt_seq : stmt
                     | stmt SEMI stmt_seq'''
-        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
+        # Only concatenate p[3] if it's not null (to recover from errors).
+        if len(p) == 2:
+            p[0] = [p[1]]
+        elif len(p) == 4 and not p[3]:
+            p[0] = [p[1]]
+        elif len(p) == 4 and p[3]:
+            p[0] = [p[1]] + p[3]
 
     # Par block
     def p_stmt_par_block(self, p):
@@ -238,13 +261,13 @@ class Parser(object):
 
     # Seq error
     def p_stmt_seq_err(self, p):
-        'stmt_seq : error SEMI'
-        self.parse_error('sequential block', self.coord(p))
+        'stmt_seq : error SEMI stmt_seq'
+        self.parse_error('in a sequential block', self.coord(p))
 
     # Par error
     def p_stmt_par_err(self, p):
-        'stmt_par : error BAR'
-        self.parse_error('parallel block', self.coord(p))
+        'stmt_par : error BAR stmt_par'
+        self.parse_error('in a parallel block', self.coord(p))
 
     # Statements ==========================================
 
