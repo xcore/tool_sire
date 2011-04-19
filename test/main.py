@@ -9,12 +9,10 @@ import os
 import sys
 import unittest
 
-#from tests import ExampleTests
-#from tests import FeatureTests
-
-from tests_mpi import generate_mpi_tests
-
-from tests_xs1 import generate_xs1_tests
+from tests_mpi import generate_mpi_example_tests
+from tests_mpi import generate_mpi_feature_tests
+from tests_xs1 import generate_xs1_example_tests
+from tests_xs1 import generate_xs1_feature_tests
 
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 EXAMPLES_DIR     = '/test/examples-old' 
@@ -54,13 +52,14 @@ if __name__ == '__main__':
     sys.argv.append('-v')
 
     # Generate MPI tests
-    #generate_mpi_tests('feature', TEST_FEATURES_PATH)
-    example_tests = generate_mpi_tests('example', TEST_EXAMPLES_PATH)
+    feature_tests = generate_mpi_feature_tests(TEST_FEATURES_PATH)
+    example_tests = generate_mpi_example_tests(TEST_EXAMPLES_PATH)
 
     # Generate XS1 tests
-    #generate_xs1_tests('feature', TEST_FEATURES_PATH)
-    #generate_xs1_tests('example', TEST_EXAMPLES_PATH)
+    #feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
+    #example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
 
+    [setattr(FeatureTests, x.__name__, x) for x in feature_tests]
     [setattr(ExampleTests, x.__name__, x) for x in example_tests]
     
     # Run all the tests

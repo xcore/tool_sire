@@ -4,7 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
-EXAMPLES_DIR     = '/test/examples-old' 
+EXAMPLES_DIR     = '/test/examples' 
 FEATURES_DIR     = '/test/features' 
 
 class Test(object):
@@ -25,7 +25,7 @@ class TestSet(object):
 
 # Examples =====================================================
 
-example_tests = { 
+examples = { 
   'hello'          : Test('hello',          'hello world\n'),
   'factorial-loop' : Test('factorial-loop', '6\n120\n5040\n'),
   'factorial-rec'  : Test('factorial-rec',  '6\n120\n5040\n'),
@@ -45,13 +45,12 @@ example_tests = {
 
 # Features =====================================================
 
-array_tests = {
+feature_general = {
+  'array'          : Test('array',           '12345678\n12345678\n147'),
+  'for'            : Test('for',             '12345678\n12345678\n147')
   }
 
-for_tests = {
-  }
-
-on_tests = {
+feature_on = {
   'on_basic'       : Test('on_basic',       'DEADBEEF\n'),
   'on_children'    : Test('on_children',    'DEADBEEF\n'),
   'on_arguments'   : Test('on_arguments',   '28\n21\n41\n'),
@@ -68,7 +67,7 @@ on_tests = {
   'on_collision_4' : Test('on_collision_4', ''),
   }
 
-thread_tests = {
+feature_thread = {
   'thread_basic_2'  : Test('thread_basic_2',  ''),
   'thread_basic_4'  : Test('thread_basic_4',  ''),
   'thread_basic_8'  : Test('thread_basic_8',  ''),
@@ -76,6 +75,26 @@ thread_tests = {
   'thread_repeat_8' : Test('thread_repeat_8', ''),
   }
 
-replicator_tests = {
+feature_replicator = {
   }
+
+def test_generator(name, path, output, num_cores, run_test):
+    """ Generate the test harness
+    """
+    def test(self):
+        run_test(self, name, path, output, num_cores)
+    return test
+
+def generate_test_set(target, path, test_set, run_test):
+    tests = []
+    for t in test_set:
+        for num_cores in t.cores:
+            name = 'test_{}_{}_{}c'.format(
+                    target, t.test.name, num_cores)
+            test = test_generator(t.test.name, path, t.test.output, 
+                        num_cores, run_test)
+            test.__name__ = name
+            tests.append(test)
+    return tests
+
 

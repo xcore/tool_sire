@@ -1,11 +1,11 @@
-val BOUND := 10;
+val BOUND := 8;
 
 proc main() is
   var i;
-{ for i := 1 to BOUND do
-    printvalln(i)
-; for i := 1 to BOUND step 1 do
-    printvalln(i)
-; for i := 1 to BOUND step 3 do
-    printvalln(i)
+{ for i := 1 to BOUND do printval(i)
+; println()
+; for i := 1 to BOUND step 1 do printval(i)
+; println()
+; for i := 1 to BOUND step 3 do printval(i)
+; println()
 }
