@@ -35,16 +35,16 @@ proc partition(var array[len], val len) is
 }
 
 % Quicksort
-proc qsort(var array[len], val len) is
+proc quick(var array[len], val len) is
   var a[];
   var b[]; 
   var pivot;
 { if len > 1 then 
   { pivot := partition(array, len)
-  ; a aliases array[0..]
-  ; b aliases array[pivot+1..]
-  ; qsort(a, pivot)
-  ; qsort(b, len-(pivot+1))
+  ; a aliases array[0:pivot+1]
+  ; b aliases array[pivot+1:len]
+  ; quick(a, pivot)
+  ; quick(b, len-(pivot+1))
   }
   else skip
 }
@@ -54,7 +54,7 @@ proc main() is
   var i;
 { for i:=0 to LENGTH-1 do 
     a[i] := LENGTH-(i+1)
-; qsort(a, LENGTH)
+; quick(a, LENGTH)
 ; for i:=0 to LENGTH-1 do
     printval(a[i])
 ; printstrln("")

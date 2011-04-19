@@ -19,7 +19,7 @@ int main(int argc, char* argv[])
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   
   MPI_Barrier(MPI_COMM_WORLD);
-  printf("%d of %d\n", rank, size);
+  //printf("%d of %d\n", rank, size);
 
   // Master
   if (rank == 0)

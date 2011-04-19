@@ -217,9 +217,8 @@ class TranslateMPI(NodeWalker):
             self.elem(node.left), self.expr(node.expr)))
 
     def stmt_alias(self, node):
-        # TODO: if node.name is array don't take address
-        self.out('{} = (int **) ((int) (&{}) + ({} * sizeof(int)));'.format(
-            node.dest, node.name, self.expr(node.begin)))
+        self.out('{} = {};'.format(
+            self.elem(node.left), self.expr(node.slice)))
 
     def stmt_if(self, node):
         self.out('if ({})'.format(self.expr(node.cond)))
@@ -350,8 +349,11 @@ class TranslateMPI(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        return '((int)(&{}) + (({}) * sizeof(int)))'.format(node.name, 
-                self.expr(node.begin))
+        # If source is an array take the address, if alias just the value
+        address = ''+node.name
+        if node.symbol.type.form == 'array':
+            address = '&'+address
+        return '(int **) ({} + {})'.format(address, self.expr(node.begin))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

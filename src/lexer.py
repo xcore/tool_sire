@@ -199,4 +199,4 @@ class Lexer(object):
     def t_error(self, t):
         msg = "Illegal character '%s'" % repr(t.value[0])
         self._error(msg, t)
-
+        t.lexer.skip(1)

@@ -3,34 +3,25 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-import unittest
-
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 EXAMPLES_DIR     = '/test/examples-old' 
 FEATURES_DIR     = '/test/features' 
 
 class Test(object):
-    def __init__(self, name, output, cores=[1], args=[]):
+    """ A generic test object.
+    """
+    def __init__(self, name, output, args=[]):
         self.name = name
         self.output = output
-        self.cores = cores
         self.args = args
 
-class ProgramTests(unittest.TestCase):
+class TestSet(object):
+    """ A test set (of system sizes) for a specific test.
+    """
+    def __init__(self, test, cores=[1]):
+        self.test = test
+        self.cores = cores
 
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
-
-class FeatureTests(unittest.TestCase):
-
-    def setUp(self):
-        pass
-
-    def tearDown(self):
-        pass
 
 # Examples =====================================================
 

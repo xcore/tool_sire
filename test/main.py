@@ -9,15 +9,32 @@ import os
 import sys
 import unittest
 
-from mpi_test import generate_mpi_example_tests
-from mpi_test import generate_mpi_feature_tests
+#from tests import ExampleTests
+#from tests import FeatureTests
 
-from xs1_test import generate_xs1_example_tests
-from xs1_test import generate_xs1_feature_tests
+from tests_mpi import generate_mpi_tests
+
+from tests_xs1 import generate_xs1_tests
 
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 EXAMPLES_DIR     = '/test/examples-old' 
 FEATURES_DIR     = '/test/features' 
+
+class ExampleTests(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
+
+class FeatureTests(unittest.TestCase):
+
+    def setUp(self):
+        pass
+
+    def tearDown(self):
+        pass
 
 def init():
     """ Initialise configuration
@@ -37,13 +54,15 @@ if __name__ == '__main__':
     sys.argv.append('-v')
 
     # Generate MPI tests
-    generate_mpi_feature_tests(TEST_FEATURES_PATH)
-    generate_mpi_example_tests(TEST_EXAMPLES_PATH)
+    #generate_mpi_tests('feature', TEST_FEATURES_PATH)
+    example_tests = generate_mpi_tests('example', TEST_EXAMPLES_PATH)
 
     # Generate XS1 tests
-    generate_xs1_feature_tests(TEST_FEATURES_PATH)
-    generate_xs1_example_tests(TEST_EXAMPLES_PATH)
+    #generate_xs1_tests('feature', TEST_FEATURES_PATH)
+    #generate_xs1_tests('example', TEST_EXAMPLES_PATH)
 
+    [setattr(ExampleTests, x.__name__, x) for x in example_tests]
+    
     # Run all the tests
     unittest.main()
 

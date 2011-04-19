@@ -59,7 +59,7 @@ class Parser(object):
 
     def lex_error(self, msg, line, col):
         self.error.report_error(msg, Coord(line, col))
-        self.lexer.errok()
+        #self.lexer.skip(1)
 
     def parse_error(self, msg, coord=None, discard=True):
         self.error.report_error(msg, coord)
@@ -263,7 +263,7 @@ class Parser(object):
     def p_stmt_aliases(self, p):
         'stmt : name ALIASES name LBRACKET expr COLON expr RBRACKET'
         p[0] = ast.StmtAlias(
-                ast.ElemName(p[1], self.coord(p)),  
+                ast.ElemId(p[1], self.coord(p)),  
                 ast.ElemSlice(p[3], p[5], p[7], self.coord(p)),
                 self.coord(p))
 
