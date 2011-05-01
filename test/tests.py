@@ -3,10 +3,6 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
-INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
-EXAMPLES_DIR     = '/test/examples' 
-FEATURES_DIR     = '/test/features' 
-
 class Test(object):
     """ A generic test object.
     """

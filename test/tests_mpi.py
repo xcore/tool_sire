@@ -45,8 +45,8 @@ mpi_example_tests = [
 # Features =====================================================
 
 mpi_feature_general = [
-  TestSet(feature_general['array']),
-  TestSet(feature_general['for']),
+  #TestSet(feature_general['array']),
+  #TestSet(feature_general['for']),
   ]
 
 mpi_feature_thread = [

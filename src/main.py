@@ -232,19 +232,24 @@ def main(args):
         generate(ast, sem, child, device, outfile, 
                 translate_only, compile_only, show_calls, v)
 
+    # Handle (expected) system exits
+    except SystemExit:
+        return 0
+
     # Handle any specific compilation errors
     except Error as e:
         sys.stderr.write('Error: {}\n'.format(e))
         return 1
     
-    # Handle system exits
-    except SystemExit:
-        return 0
-  
+    # Handle a keyboard interrupt (ctrl+c)
+    except KeyboardInterrupt:
+        sys.stderr.write('Interrupted')
+        return 1
+    
     # Anything else we weren't expecting
     except:
         sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
-        raise
+        return 1
     
     return 0
 

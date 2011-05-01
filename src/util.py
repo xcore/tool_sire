@@ -48,11 +48,17 @@ def call(args, verbose=False):
         if verbose:
             print(' '.join(args))
         s = subprocess.check_output(args, stderr=subprocess.STDOUT)
+    
     except subprocess.CalledProcessError as e:
         s = e.output.decode('utf-8').replace("\\n", "\n")
-        #print(e)
+        #sys.stderr.write('\nCall error: '+s)
+        #sys.stderr.write(' '.join(args)+'\n')
         raise Error('executing command:\n\n{}\n\nOuput:\n\n{}'
                 .format(' '.join(e.cmd), s))
+    
+    except:
+        #sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
+        raise Exception('Unexpected error: {}'.format(sys.exc_info()[0]))
 
 def remove_file(filename):
     """ Remove a file if it exists

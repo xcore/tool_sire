@@ -15,7 +15,7 @@ from tests_xs1 import generate_xs1_example_tests
 from tests_xs1 import generate_xs1_feature_tests
 
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
-EXAMPLES_DIR     = '/test/examples-old' 
+EXAMPLES_DIR     = '/test/examples' 
 FEATURES_DIR     = '/test/features' 
 
 class ExampleTests(unittest.TestCase):

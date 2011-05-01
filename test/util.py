@@ -1,3 +1,4 @@
+import sys
 import subprocess
 
 def call(args):
@@ -10,8 +11,9 @@ def call(args):
 
     # If return value non-zero.
     except subprocess.CalledProcessError as err:
-        #s = err.output.decode('utf-8').replace("\\n", "\n")
-        #raise Exception('Error executing command:\n{}\nOuput:\n{}'.format(err.cmd, s))
+        s = err.output.decode('utf-8').replace("\\n", "\n")
+        sys.stderr.write('\nCall error: '+s)
+        sys.stderr.write(' '.join(args)+'\n')
         return (0, None)
 
     except:
