@@ -1,12 +1,10 @@
+import print
+import fixed
+
 val FIX := 25;
 val XDIM := 80;
 val YDIM := 40;
 val COUNT := 40;
-
-func mul(val a, val b) is skip
-func div(val a, val b) is skip
-func fix(val a) is skip
-func int(val a) is skip
 
 func plot(val i) is
   if i > 32 then printchar(' ')

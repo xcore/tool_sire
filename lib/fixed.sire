@@ -1,0 +1,4 @@
+func fix(val v);
+func mul(val a, val b);
+func div(val a, val b);
+
