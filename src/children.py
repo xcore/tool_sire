@@ -6,7 +6,7 @@
 import sys
 
 from ast import NodeVisitor
-import builtin
+from builtin import builtins
 
 class Children(NodeVisitor):
     """ An AST walker class to determine the children of each procedure
@@ -30,7 +30,7 @@ class Children(NodeVisitor):
              - add only if it hasn't been already
              - don't add if it is its parent (recursive)
         """
-        if ((not name in builtin.names) 
+        if ((not name in builtins.keys()) 
                 and (not name in self.children[self.parent])
                 and (not name == self.parent)):
             self.children[self.parent].append(name)

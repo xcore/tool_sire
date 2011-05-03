@@ -85,12 +85,6 @@ class Parser(object):
         'program : var_decls proc_defs'
         p[0] = ast.Program(p[1], p[2], self.coord(p, 1))
 
-    # A program can also just be a set of procedure declarations which 
-    # define an external interface to system-specific functionality.
-    def p_program(self, p):
-        'program : proc_decls'
-        p[0] = ast.Program(p[1], None, self.coord(p, 1))
-
     # Program declaration error
     def p_program_error(self, p):
         'program : error'
@@ -108,43 +102,6 @@ class Parser(object):
     def p_type_specifier_var(self, p):
         'type_specifier : VAR'
         p[0] = 'var'
-
-    # Procedure declarations ===================================
-
-    def p_proc_decls(self, p):
-        '''proc_decls : empty
-                      | proc_decl_seq'''
-        p[0] = ast.ProcDecls(p[1] if len(p)==2 else None, self.coord(p))
-
-    # Variable declaration sequence (return a single list)
-    def p_var_decl_seq(self, p):
-        '''proc_decl_seq : proc_decl SEMI
-                         | proc_decl SEMI proc_decl_seq'''
-        # Only concatenate p[3] if it's not null (to recover from errors).
-        if len(p) == 3:
-            p[0] = [p[1]]
-        if len(p) == 4 and not p[3]:
-            p[0] = [p[1]]
-        elif len(p) == 4 and p[3]:
-            p[0] = [p[1]] + p[3]
-
-    # Variable declaration sequence error
-    def p_proc_decl_seq_err(self, p):
-        '''proc_decl_seq : error SEMI
-                         | error SEMI proc_decl_seq'''
-        self.parse_error('procedure declarations', self.coord(p))
-
-    # Process declaration
-    def p_proc_def_proc(self, p):
-        'proc_decl : PROC name LPAREN formals RPAREN'
-        p[0] = ast.Decl(p[2], Type('proc', 'procedure'),
-                p[4], self.coord(p)) 
-
-    # Function declaration
-    def p_proc_def_func(self, p):
-        'proc_decl : FUNC name LPAREN formals RPAREN'
-        p[0] = ast.Decl(p[2], Type('func', 'procedure'),
-                p[4], self.coord(p)) 
 
     # Variable declarations ====================================
 

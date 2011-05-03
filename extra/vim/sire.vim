@@ -10,14 +10,14 @@ endif
 syn case match
 
 " Keywords
-syn keyword	sType	     module var val port chanend chan
-syn keyword	sKeyword     proc func return skip aliases connect
-syn keyword	sKeyword     true false skip
-syn keyword	sKeyword     on is
+syn keyword	sType	     var val
+syn keyword	sKeyword     proc func is return skip 
+syn keyword	sKeyword     on aliases skip
+syn keyword	sKeyword     true false
 
 " Control structures
 syn keyword	sStructure   if then else
-syn keyword     sRepeat      while do for until to par
+syn keyword     sRepeat      while do for step to par
 
 " Bracketing
 syn match       sBrackets     /\[\|\]/
@@ -25,7 +25,7 @@ syn match       sParentheses  /(\|)/
 
 " Operators
 syn keyword  	sOperator    and or xor lor land
-syn match       sOperator    /:=\|!\|?\|!!\|??\|::=/
+syn match       sOperator    /:=/
 syn match       sOperator    /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
 syn match       sOperator    /<<\|>>\|^\|&\||/
 
@@ -38,14 +38,14 @@ syn match       sNumber      "0[bB][0-1]*"
 syn match       sSpecialChar  /\\'\|\\\|*#\(\[0-9A-F_\]\+\)/ contained
 
 " Identifiers
-syn match       sIdentifier  /\<[A-Z][A-Z0-9_]*\>/
-syn match       sProcedure   /\<[A-Za-z.][A-Za-z0-9.]*\>/ contained
+syn match       sIdentifier  /\<[A-Z][A-Z0-9_]*\>/ contained
+syn match       sProcedure   /\<[A-Za-z.][A-Za-z0-9_]*\>/ contained
 
 " String
-syn region      sString      start=/"/ skip=/\M*"/ end=/"/ contains=xSpecialChar
+syn region      sString      start=/"/ skip=/\M*"/ end=/"/ contains=sSpecialChar
 
 " Character literal
-syn region      sCharString  start=/'/ end=/'/ contains=xSpecialChar
+syn region      sCharString  start=/'/ end=/'/ contains=sSpecialChar
 
 " Comments
 syn match       sComment     "%.*"

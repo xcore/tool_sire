@@ -13,7 +13,7 @@ import ast
 from ast import NodeVisitor
 import symbol
 import signature
-from builtin import functions
+from builtin import builtins
 from type import Type
 
 elem_types = {
@@ -47,9 +47,9 @@ class Semantics(NodeVisitor):
         self.sym.insert(defs.SYS_NUM_CORES_CONST, Type('val', 'single'))
 
         # Add builtin functions
-        for x in functions:
-            self.sym.insert(x.name, x.type)
-            self.sig.insert(x.type, x)
+        for (k, v) in builtins:
+            self.sym.insert(v.name, v.type)
+            self.sig.insert(v.type, v)
 
     def down(self, tag):
         """ Begin a new scope """

@@ -6,90 +6,51 @@
 from ast import Def, Formals, Param
 from type import Type
 
-printchar = Def(
-        'printchar', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+PROC_TYPE = Type('proc', 'procedure')  
+FUNC_TYPE = Type('func', 'procedure')
+SVAL_PARAM = Param('v', Type('val', 'single'), None) 
+AVAL_PARAM = Param('v', Type('val', 'alias'), None) 
 
-printcharln = Def(
-        'printcharln', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+# Create a process declaration (prototype).
+def proc_decl(name, params):
+    return Def(name, PROC_TYPE, Formals(params), None, None) 
 
-printval = Def(
-        'printval', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+# Create a function declaration (prototype).
+def func_decl(name, params):
+    return Def(name, FUNC_TYPE, Formals(params), None, None) 
 
-printvalln = Def(
-        'printvalln',
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+# Printing builtins
+printchar = proc_decl('printchar', [SVAL_PARAM])
+printcharln = proc_decl('printcharln', [SVAL_PARAM])
 
-printhex = Def(
-        'printhex', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+printval = proc_decl('printval', [SVAL_PARAM])
+printvalln = proc_decl('printvalln', [SVAL_PARAM])
 
-printhexln = Def(
-        'printhexln',
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('val', 'single'), None)]),
-        None, None)
+printhex = proc_decl('printhex', [SVAL_PARAM])
+printhexln = proc_decl('printhexln', [SVAL_PARAM])
 
-printstr = Def(
-        'printstr', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('var', 'alias'), None)]),
-        None, None)
+printstr = proc_decl('printstr', [AVAL_PARAM])
+printstrln = proc_decl('printstrln', [AVAL_PARAM])
 
-printstrln = Def(
-        'printstrln', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('var', 'alias'), None)]),
-        None, None)
+println = proc_decl('printstr', [])
 
-println = Def(
-        'println', 
-        Type('proc', 'procedure'), 
-        Formals([Param('v', Type('var', 'alias'), None)]),
-        None, None)
+# Fixed point builtins
+mulf8_24 = func_decl('mulf8_24', [])
+divf8_24 = func_decl('divf8_24', [])
 
-#exit = Def(
-#        'exit', 
-#        Type('proc', 'procedure'), 
-#        Formals([Param('v', Type('val', 'single'), None)]),
-#        None, None)
-
-functions = (
-  printchar,
-  printcharln,
-  printval,
-  printvalln,
-  printhex,
-  printhexln,
-  printstr,
-  printstrln,
-  println,
-  )
-
-# Must relate to the above list
-names = (
-  'printchar',
-  'printcharln',
-  'printval',
-  'printvalln',
-  'printhex',
-  'printhexln',
-  'printstr',
-  'printstrln',
-  'println',
-  )
+builtins = {
+  'printchar',   : printchar,
+  'printcharln', : printcharln,
+  'printval',    : printval,
+  'printvalln',  : printvalln,
+  'printhex',    : printhex,
+  'printhexln',  : printhexln,
+  'printstr',    : printstr,
+  'printstrln',  : printstrln,
+  'println'      : println,
+  'mulf8_24'     : mulf8_24,
+  'divf8_24'     : divf8_24,
+  }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
 runtime_functions = [ 

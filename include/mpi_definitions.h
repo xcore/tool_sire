@@ -12,5 +12,9 @@
 #define _PRINTSTRLN(x)  printf("%s\n", x) 
 #define _PRINTLN()      printf("\n") 
 
+// Fixed point
+#define _MUL_8_24(x, y)          mul8_24(x, y)
+#define _DIV_8_24(x, y)          div8_24(x, y)
+
 #endif
 

@@ -1,10 +1,33 @@
-import print
-import fixed
-
-val FIX := 25;
+val FIX_IBITS := 8;
+val FIX_DBITS := 24;
 val XDIM := 80;
 val YDIM := 40;
 val COUNT := 40;
+
+func fix(val v) is
+  return v << FIX_DBITS
+
+func unfix(val v) is
+  return v >> FIX_DBITS
+
+func printfix(val x) is
+  val n;
+  val i;
+{ if x < 0 then
+  { printchar('-');
+  ; x = -x;
+  }
+  else skip
+; n := unfix(x)
+; printint(n)
+; printchar('.')
+; for i := 0 to FIX_IBITS do
+  { x := x - fix(n)
+  ; x := x * 10
+  ; n = unfix(x)
+  ; printchar(n+'0')
+  }
+}
 
 func plot(val i) is
   if i > 32 then printchar(' ')
@@ -25,20 +48,20 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
   var i;
   var x;
   var y;
-{ dx := div(fix(xmax-xmin), fix(XDIM))
-; dy := div(fix(ymax-ymin), fix(YDIM))
+{ dx := divf8_24(fix(xmax-xmin), fix(XDIM))
+; dy := divf8_24(fix(ymax-ymin), fix(YDIM))
 ; for y:=0 to YDIM-1 do
   { for x:=0 to XDIM-1 do
-    { p := fix(xmin) + mul(fix(x), dx)
-    ; q := fix(ymin) + mul(fix(y), dy)
+    { p := fix(xmin) + mulf8_24(fix(x), dx)
+    ; q := fix(ymin) + mulf8_24(fix(y), dy)
     ; xn := 0
     ; x0 := 0
     ; y0 := 0
     ; i := 0
-    ; while mul(px,px)+mul(py,py) > fix(4.0) and i < COUNT do
+    ; while mulf8_24(px,px)+mulf8_24(py,py) > fix(4.0) and i < COUNT do
       { i := i + 1
-      ; xn := mul((x0+y0), (x0-y0)) + p
-      ; y0 := mul(fix(2), mul(x0, y0)) + q
+      ; xn := mulf8_24((x0+y0), (x0-y0)) + p
+      ; y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q
       ; x0 := xn
       }
     ; plot(i)

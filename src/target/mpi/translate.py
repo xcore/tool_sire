@@ -36,6 +36,7 @@ op_conversion = {
   }
 
 builtin_conversion = {
+  # Printing
   'printchar'   : '_PRINTCHAR',
   'printcharln' : '_PRINTCHARLN',
   'printval'    : '_PRINTVAL',
@@ -45,6 +46,9 @@ builtin_conversion = {
   'printstr'    : '_PRINTSTR',
   'printstrln'  : '_PRINTSTRLN',
   'println'     : '_PRINTLN',
+  # Fixed point
+  'mul8_24'     : '_MUL_8_24',
+  'div8_24'     : '_DIV_8_24',
   }
 
 class TranslateMPI(NodeWalker):
@@ -96,6 +100,8 @@ class TranslateMPI(NodeWalker):
         return ', '.join(args)
 
     def header(self):
+        """ Insert inclusions.
+        """
         self.out('#include <mpi.h>')
         self.out('#include <stdlib.h>')
         self.out('#include <stdio.h>')
@@ -106,7 +112,11 @@ class TranslateMPI(NodeWalker):
         self.out('#include "device.h"')
         self.out('#include "language.h"')
         self.out('')
- 
+
+    def builtins(self):
+        """ Insert builtin code.
+        """
+    
     def create_main(self):
         self.out(MAIN_FUNCTION)
 
@@ -116,6 +126,7 @@ class TranslateMPI(NodeWalker):
 
         # Walk the entire program
         self.header()
+        self.builtins()
         self.decls(node.decls)
         self.defs(node.defs, 0)
    

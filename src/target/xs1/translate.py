@@ -35,10 +35,20 @@ op_conversion = {
     '~='  : '!=',
 }
 
-proc_conversion = {
-    'printval'   : 'printint',
-    'printvalln' : 'printintln',
-    'exit'       : '_exit',
+builtin_conversion = {
+  # Printing
+  'printchar'   : '_PRINTCHAR',
+  'printcharln' : '_PRINTCHARLN',
+  'printval'    : '_PRINTVAL',
+  'printvalln'  : '_PRINTVALLN',
+  'printhex'    : '_PRINTHEX',
+  'printhexln'  : '_PRINTHEXLN',
+  'printstr'    : '_PRINTSTR',
+  'printstrln'  : '_PRINTSTRLN',
+  'println'     : '_PRINTLN',
+  # Fixed point
+  'mul8_24'     : '_MUL_8_24',
+  'div8_24'     : '_DIV_8_24',
 }
 
 class TranslateXS1(NodeWalker):
@@ -92,7 +102,7 @@ class TranslateXS1(NodeWalker):
     def procedure_name(self, name):
         """ If a procedure name has a conversion, return it
         """
-        return proc_conversion[name] if name in proc_conversion else name
+        return builtin_conversion[name] if name in builtin_conversion else name
 
     def arguments(self, arg_list):
         """ Build the list of arguments. If there is an array reference 
