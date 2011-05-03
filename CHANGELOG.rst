@@ -2,6 +2,14 @@
 Change log
 ==========
 
+-----------
+Version 0.1
+-----------
+
+- Builtins: set of built-in procedures available in the language. Implemented in
+  target language in src/builtin/<system>/ and included in translation and build
+  process.
+
 ---------
 Version 0
 ---------
