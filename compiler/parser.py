@@ -28,18 +28,23 @@ class Parser(object):
     """ A parser object for the sire langauge
     """
     def __init__(self, error, lex_optimise=True, lextab='lextab', 
-            yacc_optimise=True, yacctab='yacctab', yacc_debug=False):
+            yacc_optimise=True, parsetab='parsetab', yacc_debug=False):
         """ Create a new parser """
         self.error = error
 
         # Instantiate and build the lexer
         self.lexer = Lexer(error_func=self.lex_error)
-        self.lexer.build(optimize=lex_optimise, lextab=lextab)
+        self.lexer.build(
+                optimize=lex_optimise, 
+                lextab=lextab)
         self.tokens = self.lexer.tokens
 
         # Create and instantiate the parser
-        self.parser = yacc.yacc(module=self, debug=yacc_debug, 
-                optimize=yacc_optimise)
+        self.parser = yacc.yacc(
+                module=self, 
+                debug=yacc_debug, 
+                optimize=yacc_optimise,
+                output_dir)
 
     def parse(self, text, filename='', debug=0):
         """ Parse a file and return the AST

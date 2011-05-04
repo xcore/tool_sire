@@ -38,8 +38,7 @@ def build_mpi(sem, device, buf, outfile,
     """
     # Add the include paths once they have been set
     include_dirs = ['-I', '.']
-    #include_dirs = ['-I', config.MPI_RUNTIME_PATH]
-    #include_dirs += ['-I', config.SYSTEM_PATH]
+    include_dirs += ['-I', config.SIRE_INSTALL_PATH]
     
     global COMPILE_FLAGS
     global ASSEMBLE_FLAGS

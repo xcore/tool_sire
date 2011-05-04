@@ -47,8 +47,7 @@ def build_xs1(sem, device, program_buf, outfile,
     """
     # Add the include paths once they have been set
     include_dirs = ['-I', '.']
-    #include_dirs = ['-I', config.XS1_RUNTIME_PATH]
-    #include_dirs += ['-I', config.SYSTEM_PATH]
+    include_dirs += ['-I', config.INSTALL_PATH]
     
     global COMPILE_FLAGS
     global ASSEMBLE_FLAGS
@@ -338,7 +337,6 @@ def insert_frame_sizes(sem, lines, v):
             new.append(y)
             if b and y.strip()[0:5] == 'retsp':
                 size = int(y.strip().split()[1][2:], 16)
-                print(x+' is of size {}'.format(size))
                 new.insert(len(new)-1, '.set {}, {}\n'.format(
                     function_label_framesize(x), size))
                 b = False

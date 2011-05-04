@@ -16,9 +16,9 @@ constructs and features for message passing concurrency, but omits features such
 as user defined data types for simplicity. This document gives an informal
 description of the syntax and semantics.
 
----------------------------
-Variables and values
----------------------------
+---------------------------------
+Values, variables and expressions
+---------------------------------
 
 Signed integers are the basic type in sire. They are represented either
 statically in *values* or dynamically in *variables*.
@@ -82,6 +82,8 @@ valid position of the source array. For example, the statement::
 causes ``b`` to reference the last half of ``a``. Aliasing simply duplicates an
 offset array reference, no copying is involved.
 
+.. TODO: slices
+
 Operators
 =========
 
@@ -113,6 +115,12 @@ Symbol   Type   Associativity Precedence Meaning
 ``>=``   binary none          6          Greater than or equal
 ======== ====== ============= ========== =====================
 
+===========
+Expressions
+===========
+
+.. TODO
+
 Numbers
 =======
 
@@ -125,32 +133,17 @@ expressions may conatain any numbers::
 The reserved symbols ``true`` and ``false`` represent the values 1 and 0
 respectively.
 
-..
-    Ports
-    =====
+Keywords
+========
 
-    Ports are a special constant-valued variable that may be used as a source or
-    destination in an input or output operation. The declaration::
+.. TODO
 
-        port p : 0x10600 
-        
-    sets the value of ``p`` to ``0x10600``.
-..
+----------------------
+Sequential structuring
+----------------------
 
-Scope
-=====
-
-There are only two levels of scoping for variables in sire: global, at the
-program level, and local, at the process/function level. Variable declarations
-may be made either globally or locally, but value declarations may *only* be
-made globally.
-
------------
-Structuring
------------
-
-Sequential and parallel composition
-===================================
+Sequential composition
+======================
 
 *Processes* and *functions* are composed of a set of block-structured
 statements. Statements can either be composed *sequentially* or in *parallel*. This
@@ -161,14 +154,6 @@ separator '``|``'. The block::
     
 is composed sequentially, so processes 1, 2 and 3 will be executed one after
 another. Execution of the block will complete when ``process3`` has completed.
-In contrast, the block::
-
-    { process1() | process2() | process3() }
-
-is composed in parallel, so on entry to the block, two new threads are created
-for processes 2 and 3 and then execution of all three processes commences in
-parallel. Execution of the block will terminate only when the last process has
-completed.
 
 The ``while`` loop
 ==================
@@ -224,6 +209,32 @@ The ``skip`` statement
 The ``skip`` statement does nothing, but can be used to fill an empty if statement's
 ``else``.
 
+--------------------
+Parallel structuring
+--------------------
+
+Parallel composition
+====================
+
+In contrast, the block::
+
+    { process1() | process2() | process3() }
+
+is composed in parallel, so on entry to the block, two new threads are created
+for processes 2 and 3 and then execution of all three processes commences in
+parallel. Execution of the block will terminate only when the last process has
+completed.
+
+Replicated parallelism
+======================
+
+.. TODO
+
+Disjointness
+============
+
+.. TODO
+
 Processes and functions
 =======================
 
@@ -276,8 +287,15 @@ Functions can be called in the same way as processes or as part of an
 expression, as it is in the above example.  The formal parameters of a function
 or process may only be of integer or integer array reference types. 
 
-Scoping
--------
+Scope
+=====
+
+.. TODO: no globals
+
+There are only two levels of scoping for variables in sire: global, at the
+program level, and local, at the process/function level. Variable declarations
+may be made either globally or locally, but value declarations may *only* be
+made globally.
 
 A process or function becomes visible only at the beginning of its definition.
 Hence, a procedure cannot be used before it is defined.
@@ -353,9 +371,9 @@ program may be defined as::
     \ttt{OUT} channel. The output operator can also be used with ports.
 ..
 
-----------------
-Process creation
-----------------
+-------------------------
+Explicit process creation
+-------------------------
 
 Process creation is the key feature of the sire language and is provided with
 the ``on`` statement. Semantically, ``on`` is exactly the same as a regular
