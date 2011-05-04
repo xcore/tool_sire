@@ -43,6 +43,11 @@ the command line you then need to run::
 from ``XMOS/DevelopmentTools/11.2.0/`` or copy the contents into your
 ``.bashrc`` and change ``installpath`` to the installation path. 
 
+MPI
+---
+
+OpenMPI
+
 Documentation
 -------------
 

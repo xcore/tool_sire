@@ -16,12 +16,28 @@ constructs and features for message passing concurrency, but omits features such
 as user defined data types for simplicity. This document gives an informal
 description of the syntax and semantics.
 
----------------------------------
-Values, variables and expressions
----------------------------------
+----------------------------
+Syntax and program structure
+----------------------------
+
+--------------------
+Variables and values
+--------------------
 
 Signed integers are the basic type in sire. They are represented either
 statically in *values* or dynamically in *variables*.
+
+Numbers
+=======
+
+Integer valued numbers can be represented in binary, decimal and hex decimal
+forms by prefixing with ``0b``, nothing and ``0x`` respectively. For example,
+expressions may conatain any numbers::
+
+    val v := 0b11001 + 3 + 0xABCD
+
+The reserved symbols ``true`` and ``false`` represent the values 1 and 0
+respectively.
 
 Values
 ======
@@ -84,6 +100,10 @@ offset array reference, no copying is involved.
 
 .. TODO: slices
 
+-----------
+Expressions
+-----------
+
 Operators
 =========
 
@@ -115,26 +135,8 @@ Symbol   Type   Associativity Precedence Meaning
 ``>=``   binary none          6          Greater than or equal
 ======== ====== ============= ========== =====================
 
-===========
-Expressions
-===========
-
-.. TODO
-
-Numbers
-=======
-
-Integer valued numbers can be represented in binary, decimal and hex decimal
-forms by prefixing with ``0b``, nothing and ``0x`` respectively. For example,
-expressions may conatain any numbers::
-
-    val v := 0b11001 + 3 + 0xABCD
-
-The reserved symbols ``true`` and ``false`` represent the values 1 and 0
-respectively.
-
-Keywords
-========
+Operations on values
+====================
 
 .. TODO
 
@@ -235,23 +237,28 @@ Disjointness
 
 .. TODO
 
-Processes and functions
-=======================
+-------------------
+Program structuring
+-------------------
+
+.. What about visibility of function definitions?
+
+A sire program consists of a set of *processes* and *functions* and possibly
+some global state.  Processes and functions, both types of *procedure*, are
+a collection of one or more statements that perform some task.  The structure of
+a sire program is as follows.  Any value, variable or port global declarations
+are made at the beginning, before any process or function definitions. Processes
+and functions may then be defined in any order. A program must contain a process
+called ``main`` as execution will start at this point. 
+
+Processes
+=========
 
 .. % formal parameters, array references
 .. % return statement
 .. % Recursion?
 
-*Processes* and *functions*, both types of *procedure*, are a collection of one
-or more statements that perform some task. Functions are a special procedure
-type that do not cause any *side effects* and only return a value. A function
-causes a side effect if it also modifies some external state. This might
-include, for instance, changing the value of a global variable, or modifying the
-contents of a referenced array. To prevent this from happening, functions cannot
-write to global variables or referenced parameters, invoke processes or use
-input or output operators. In contrast, processes do not return a value but have
-no such restrictions on side effects. 
-
+Processes do not return a value but have no such restrictions on side effects.
 A process is defined using the ``proc`` keyword, followed by the process name,
 formal parameters, local variable declarations and then the body.  For example,
 the following process definition implements the bubble sort algorithm::
@@ -274,6 +281,16 @@ A process is invoked by naming the process and specifying any input parameters::
 
     sort(a, 10)
 
+Functions
+=========
+
+Functions are a special procedure type that do not cause any *side effects* and
+only return a value. A function causes a side effect if it also modifies some
+external state. This might include, for instance, changing the value of a global
+variable, or modifying the contents of a referenced array. To prevent this from
+happening, functions cannot write to global variables or referenced parameters,
+invoke processes or use input or output operators. 
+
 A function is defined in the same way as a process except with the ``func``
 keyword, it must also complete with a ``return`` statement. The following
 function recursively calculates the ``n`` th Fibonacci number::
@@ -287,8 +304,8 @@ Functions can be called in the same way as processes or as part of an
 expression, as it is in the above example.  The formal parameters of a function
 or process may only be of integer or integer array reference types. 
 
-Scope
-=====
+Scoping
+=======
 
 .. TODO: no globals
 
@@ -301,24 +318,16 @@ A process or function becomes visible only at the beginning of its definition.
 Hence, a procedure cannot be used before it is defined.
 
 Recursion
----------
+=========
 
 Recursion is permitted, but only for self-recursive procedures. Due to simple
 scoping for procedure names which would require the need for forward references,
 mutual-recursion is not supported.
 
-Program structure
-=================
+A program
+=========
 
-.. What about visibility of function definitions?
-
-A sire program consists of a set of *processes* and *functions* and
-possibly some global state. The structure of a sire program is as follows.
-Any value, variable or port global declarations are made at the beginning,
-before any process or function definitions. Processes and functions may then be
-defined in any order. A program must contain a process called ``main`` as
-execution will start at this point. For example, a complete example sorting
-program may be defined as::
+For example, a complete example sorting program may be defined as::
 
     val LEN := 10;
     var a[LEN];
@@ -339,37 +348,6 @@ program may be defined as::
 
     proc main() is
       sort(a, LEN)
-
-..
-    -------------
-    Communication
-    -------------
-
-    Concurrently executing processes are able to communicate by means of
-    \emph{channels}. A channel is a bidirectional communication medium, established
-    through \emph{connected} channel ends. Channel ends are available in a global
-    address space, and accessed by a special system channel end array called
-    \ttt{chan}. Before a channel can be used it must first be connected to another
-    channel end, this is achieved with the connect statement. For example, execution
-    of the statement: \excode{connect} chan[0] to} core[10] : chan[0]} on
-    core 0 connects the local channel end \ttt{chan[0]} to the channel end
-    \ttt{chan[0]} on core 10. This is sufficient to make a unidirectional
-    connection, allowing messages to be received from core 0 by core 10, but when it
-    is \emph{fully} connected and messages can be exchanged in both directions. To
-    allow this, a connection must also be made at the other end:
-    \excode{connect} chan[0] to} core[0] : chan[0]}
-
-    Once a channel is connected, values can be sent and received using the
-    \emph{input} and \emph{output} operators: '\ttt{?}' and '\ttt{!}'. The following
-    code implements a buffer, illustrating the use of these operations:
-
-     proc} buffer() is}
-        var} x: int};
-        while} true do} \{ chan[IN] ? x ; chan[OUT] ! x \}
-
-    The buffer simply copies values from the \ttt{IN} channel to the
-    \ttt{OUT} channel. The output operator can also be used with ports.
-..
 
 -------------------------
 Explicit process creation
@@ -408,6 +386,18 @@ parallel with other statements.  For example, the block::
 
 allows the thread to execute another sorting process whilst the spawned one is
 performed remotely.
+
+--------
+Builtins
+--------
+
+.. TODO
+
+--------
+Keywords
+--------
+
+.. TODO
 
 ----------
 References
