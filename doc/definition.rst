@@ -16,9 +16,6 @@ constructs and features for message passing concurrency, but omits features such
 as user defined data types for simplicity. This document gives an informal
 description of the syntax and semantics.
 
-----------------------------
-Syntax and program structure
-----------------------------
 
 --------------------
 Variables and values
@@ -26,18 +23,6 @@ Variables and values
 
 Signed integers are the basic type in sire. They are represented either
 statically in *values* or dynamically in *variables*.
-
-Numbers
-=======
-
-Integer valued numbers can be represented in binary, decimal and hex decimal
-forms by prefixing with ``0b``, nothing and ``0x`` respectively. For example,
-expressions may conatain any numbers::
-
-    val v := 0b11001 + 3 + 0xABCD
-
-The reserved symbols ``true`` and ``false`` represent the values 1 and 0
-respectively.
 
 Values
 ======
@@ -48,6 +33,20 @@ Value entities represent constant integer values. The declaration::
     
 sets the value of ``c`` to 8. ``c`` cannot then be the target of any assignment
 statement. All declarations must be terminated with a semicolon.
+
+Numbers
+=======
+
+Integer valued numbers can be represented in binary, decimal and hex decimal
+forms by prefixing with ``0b``, nothing and ``0x`` respectively. For example, a
+value can initialised with the different representations::
+
+    val a := 0b101111;
+    val b := 47;
+    val c := 0x2F;
+
+The reserved symbols ``true`` and ``false`` represent the values 1 and 0
+respectively.
 
 Variables
 =========
@@ -99,6 +98,7 @@ causes ``b`` to reference the last half of ``a``. Aliasing simply duplicates an
 offset array reference, no copying is involved.
 
 .. TODO: slices
+
 
 -----------
 Expressions
@@ -187,9 +187,11 @@ algorithm, but with a for loop::
     var i;
     var factorial;
     { factorial =: 1
-    ; for i:=1 step 1 until n do
+    ; for i:=1 to n do
         factorial := factorial * i
     }
+
+.. TODO and alternative form with step
 
 The ``if`` statement
 ====================
@@ -210,6 +212,7 @@ The ``skip`` statement
 
 The ``skip`` statement does nothing, but can be used to fill an empty if statement's
 ``else``.
+
 
 --------------------
 Parallel structuring
@@ -263,11 +266,11 @@ A process is defined using the ``proc`` keyword, followed by the process name,
 formal parameters, local variable declarations and then the body.  For example,
 the following process definition implements the bubble sort algorithm::
 
-    proc sort(a[len]; len: int) is
+    proc sort(var a[len]; val len) is
      var i;
      var j;
      var tmp;
-     for i:=0 step 1 until len-1 do 
+     for i:=0 to len-1 do 
        for j:=0 to len-1 do
          if a[j] > a[j+1]
            then 
@@ -295,7 +298,7 @@ A function is defined in the same way as a process except with the ``func``
 keyword, it must also complete with a ``return`` statement. The following
 function recursively calculates the ``n`` th Fibonacci number::
 
-    func fib(n: int) is
+    func fib(val n) is
       if n > 1
       then return fib(n-1) + fib(n-2)
       else if n = 0 then return 0 else return 1
@@ -332,7 +335,7 @@ For example, a complete example sorting program may be defined as::
     val LEN := 10;
     var a[LEN];
 
-    proc sort(a[len], val len) is
+    proc sort(var a[len], val len) is
       var i;
       var j;
       var tmp;

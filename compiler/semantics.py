@@ -46,10 +46,12 @@ class Semantics(NodeVisitor):
         self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
         self.sym.insert(defs.SYS_NUM_CORES_CONST, Type('val', 'single'))
 
-        # Add builtin functions
+        # Add all mobile builtin functions
         for x in builtins.values():
-            self.sym.insert(x.name, x.type)
-            self.sig.insert(x.type, x)
+            self.sym.insert(x.definition.name, x.definition.type)
+            self.sig.insert(x.definition.type, x.definition)
+            if x.mobile:
+                self.proc_names.append(x.definition.name)
 
     def down(self, tag):
         """ Begin a new scope """

@@ -7,7 +7,6 @@
    
     .extern _migrate
     .extern _initThread
-    .extern _connect
     
     .globl _jumptab,  "a(:ui)"
     .globl _sizetab,  "a(:ui)"
@@ -22,7 +21,6 @@
 _jumptab:
     .word _migrate
     .word _initThread
-    .word _connect
     .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

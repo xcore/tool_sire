@@ -139,11 +139,6 @@ void slaveSync() {
     write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
 }
 
-// Connect a channel
-void _connect(unsigned to, int c1, int c2) {
-    SETD(progChan[c1], GEN_CHAN_RI(to, PROG_CHAN_OFF+c2));
-}
-
 // Idle (thread 0 only) for the next event to occur
 void slaveMasterIdle() {
 

@@ -48,17 +48,17 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
   var i;
   var x;
   var y;
-{ dx := divf8_24(fix(xmax-xmin), fix(XDIM))
-; dy := divf8_24(fix(ymax-ymin), fix(YDIM))
+{ dx := divf8_24(xmax-xmin, fix(XDIM))
+; dy := divf8_24(ymax-ymin, fix(YDIM))
 ; for y:=0 to YDIM-1 do
   { for x:=0 to XDIM-1 do
-    { p := fix(xmin) + mulf8_24(fix(x), dx)
-    ; q := fix(ymin) + mulf8_24(fix(y), dy)
+    { p := xmin + mulf8_24(fix(x), dx)
+    ; q := ymin + mulf8_24(fix(y), dy)
     ; xn := 0
     ; x0 := 0
     ; y0 := 0
     ; i := 0
-    ; while mulf8_24(px,px)+mulf8_24(py,py) > fix(4.0) and i < COUNT do
+    ; while mulf8_24(px,px) + mulf8_24(py,py) > fix(4.0) and i < COUNT do
       { i := i + 1
       ; xn := mulf8_24((x0+y0), (x0-y0)) + p
       ; y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q

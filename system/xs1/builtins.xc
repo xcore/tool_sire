@@ -1,6 +1,9 @@
 #define _FBITS 24
 #define ldivu(a,b,c,d,e) asm("ldivu %0,%1,%2,%3,%4" : "=r"(a), "=r"(b) : "r"(c), "r"(d), "r"(e))
 
+/*
+ * 8.24 fixed point multiply.
+ */
 int mulf8_24(int a, int b) {
     int h;
     unsigned l;
@@ -8,19 +11,22 @@ int mulf8_24(int a, int b) {
     return (h << (32-_FBITS)) | (l >> _FBITS);
 }
 
-int divf8_24(int a, int b) {
+/*
+ * 8.24 fixed point divide.
+ */
+int divf8_24(int x, int y) {
     int sgn = 1;
     unsigned int d, d2, r;
-    if (a < 0) {
+    if (x < 0) {
         sgn = -1;
-        a = -a;
+        x = -x;
     }
-    if (b < 0) {
+    if (y < 0) {
         sgn = -sgn;
-        b = -b;
+        y = -y;
     }
-    ldivu(d, r, 0, a, b);
-    ldivu(d2, r, r, 0, b);
+    ldivu(d, r, 0, x, y);
+    ldivu(d2, r, r, 0, y);
     r = d << _FBITS | (d2 + (1<<(31-_FBITS))) >> (32-_FBITS);
     return r * sgn;
 }

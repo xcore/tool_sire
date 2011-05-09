@@ -7,7 +7,6 @@
 #define SYSTEM_H
 
 extern void _initThread();
-extern void _connect(unsigned, int, int);
 
 // Initialisation
 void resetChanends();

@@ -168,10 +168,6 @@ class Printer(NodeWalker):
         self.out(d, 'on {} do {}'.format(self.elem(node.core), 
             self.elem(node.pcall)))
 
-    def stmt_connect(self, node, d):
-        self.out(d, 'connect {} to {} : {}'.format(
-            self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
-
     def stmt_return(self, node, d):
         self.out(d, 'return {}'.format(self.expr(node.expr)))
 

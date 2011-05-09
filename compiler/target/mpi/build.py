@@ -38,7 +38,7 @@ def build_mpi(sem, device, buf, outfile,
     """
     # Add the include paths once they have been set
     include_dirs = ['-I', '.']
-    include_dirs += ['-I', config.SIRE_INSTALL_PATH]
+    include_dirs += ['-I', config.INSTALL_PATH]
     
     global COMPILE_FLAGS
     global ASSEMBLE_FLAGS

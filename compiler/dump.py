@@ -89,9 +89,6 @@ class Dump(NodeVisitor):
     def visit_stmt_on(self, node):
         self.out(node)
 
-    def visit_stmt_connect(self, node):
-        self.out(node)
-
     def visit_stmt_aliases(self, node):
         self.out(node)
 

@@ -1,0 +1,48 @@
+val FIX_IBITS := 8;
+val FIX_DBITS := 24;
+
+func fix(val x) is
+  return x << FIX_DBITS
+
+func unfix(val x) is
+  return x >> FIX_DBITS
+
+func mul(val x, val y) is
+  return mulf8_24(x, y)
+
+func div(val x, val y) is
+  return divf8_24(x, y)
+
+proc printfix(val x) is
+  var n;
+  var i;
+{ if x < 0 then
+  { printchar('-')
+  ; x := -x
+  }
+  else skip
+; n := unfix(x)
+; printval(n)
+; printchar('.')
+; for i := 0 to FIX_IBITS do
+  { x := x - fix(n)
+  ; x := x * 10
+  ; n := unfix(x)
+  ; printchar(n+'0')
+  }
+}
+
+proc printfixln(val x) is
+{ printfix(x) ; println() }
+
+proc main() is
+  var x;
+  var y;
+  var z;
+{ x := fix(17)
+; y := fix(5)
+; z := div(x, y)
+; printfixln(z)
+; z := mul(z, y)
+; printfixln(z)
+}

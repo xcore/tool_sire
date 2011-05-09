@@ -492,10 +492,6 @@ class TranslateXS1(NodeWalker):
 
         self.blocker.end()
 
-    def stmt_connect(self, node):
-        self.out('connect {} to {} : {};'.format(
-            self.elem(node.left), self.elem(node.core), self.elem(node.dest)))
-
     def stmt_aliases(self, node):
         self.asm('add %0, %1, %2', outop=node.dest, 
                 inops=[node.name, '({})*{}'.format(

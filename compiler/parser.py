@@ -43,8 +43,7 @@ class Parser(object):
         self.parser = yacc.yacc(
                 module=self, 
                 debug=yacc_debug, 
-                optimize=yacc_optimise,
-                output_dir)
+                optimize=yacc_optimise)
 
     def parse(self, text, filename='', debug=0):
         """ Parse a file and return the AST

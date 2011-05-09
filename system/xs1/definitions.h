@@ -20,7 +20,6 @@
 #define LABEL_START              "_start"
 #define LABEL_MIGRATE            "_migrate"
 #define LABEL_INIT_THREAD        "_initThread"
-#define LABEL_CONNECT            "_connect"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
 #define LABEL_FRAME_TABLE        "_frametab"
@@ -28,10 +27,9 @@
 // Jump table indicies
 #define JUMPI_MIGRATE            0
 #define JUMPI_INIT_THREAD        1
-#define JUMPI_CONNECT            2
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        3 
+#define JUMP_INDEX_OFFSET        2 
 
 // Hardware specs
 #define RAM_BASE                 0x10000
@@ -41,13 +39,10 @@
 #define MAX_CHANNELS             32
                                 
 // Runtime specs                
-#define MAX_PROCS                10
-//#define JUMP_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET)
-//#define SIZE_TABLE_SIZE          (MAX_PROCS+JUMP_INDEX_OFFSET) 
-//#define FRAME_TABLE_SIZE         (MAX_PROCS+JUMP_INDEX_OFFSET) 
-#define JUMP_TABLE_SIZE          13
-#define SIZE_TABLE_SIZE          13
-#define FRAME_TABLE_SIZE         13
+#define MAX_PROCS                20
+#define JUMP_TABLE_SIZE          22
+#define SIZE_TABLE_SIZE          22 
+#define FRAME_TABLE_SIZE         22
 #define KERNEL_SPACE             0x200
 #define THREAD_STACK_SPACE       0x400
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
@@ -80,7 +75,7 @@
 #define _PRINTHEXLN(x)           printhexln(x) 
 #define _PRINTSTR(x)             printstr(x) 
 #define _PRINTSTRLN(x)           printstrln(x) 
-#define _PRINTLN()               println() 
+#define _PRINTLN()               printstrln("") 
 
 // Fixed point
 #define _MUL_8_24(x, y)          mul8_24(x, y)

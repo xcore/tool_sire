@@ -3,6 +3,10 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+# This module defines processes and functions which are built-in to the
+# language. Those marked as mobile will be added to the jump table and will be
+# executable remotely.
+
 from ast import Def, Formals, Param
 from type import Type
 
@@ -11,32 +15,33 @@ FUNC_TYPE = Type('func', 'procedure')
 SVAL_PARAM = Param('v', Type('val', 'single'), None) 
 AVAL_PARAM = Param('v', Type('val', 'alias'), None) 
 
+class Builtin(object):
+    def __init__(self, definition, mobile):
+        self.definition = definition
+        self.mobile = mobile
+
 # Create a process declaration (prototype).
-def proc_decl(name, params):
-    return Def(name, PROC_TYPE, Formals(params), None, None) 
+def proc_decl(name, params, mobile=False):
+    return Builtin(Def(name, PROC_TYPE, Formals(params), None, None), mobile)
 
 # Create a function declaration (prototype).
-def func_decl(name, params):
-    return Def(name, FUNC_TYPE, Formals(params), None, None) 
+def func_decl(name, params, mobile=False):
+    return Builtin(Def(name, FUNC_TYPE, Formals(params), None, None), mobile)
 
 # Printing builtins
-printchar = proc_decl('printchar', [SVAL_PARAM])
+printchar   = proc_decl('printchar',   [SVAL_PARAM])
 printcharln = proc_decl('printcharln', [SVAL_PARAM])
-
-printval = proc_decl('printval', [SVAL_PARAM])
-printvalln = proc_decl('printvalln', [SVAL_PARAM])
-
-printhex = proc_decl('printhex', [SVAL_PARAM])
-printhexln = proc_decl('printhexln', [SVAL_PARAM])
-
-printstr = proc_decl('printstr', [AVAL_PARAM])
-printstrln = proc_decl('printstrln', [AVAL_PARAM])
-
-println = proc_decl('printstr', [])
+printval    = proc_decl('printval',    [SVAL_PARAM])
+printvalln  = proc_decl('printvalln',  [SVAL_PARAM])
+printhex    = proc_decl('printhex',    [SVAL_PARAM])
+printhexln  = proc_decl('printhexln',  [SVAL_PARAM])
+printstr    = proc_decl('printstr',    [AVAL_PARAM])
+printstrln  = proc_decl('printstrln',  [AVAL_PARAM])
+println     = proc_decl('println',     [])
 
 # Fixed point builtins
-mulf8_24 = func_decl('mulf8_24', [])
-divf8_24 = func_decl('divf8_24', [])
+mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
+divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 builtins = {
   'printchar'   : printchar,
@@ -47,9 +52,9 @@ builtins = {
   'printhexln'  : printhexln,
   'printstr'    : printstr,
   'printstrln'  : printstrln,
-  'println'      : println,
-  'mulf8_24'     : mulf8_24,
-  'divf8_24'     : divf8_24,
+  'println'     : println,
+  'mulf8_24'    : mulf8_24,
+  'divf8_24'    : divf8_24,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.

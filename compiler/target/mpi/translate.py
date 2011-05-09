@@ -47,8 +47,8 @@ builtin_conversion = {
   'printstrln'  : '_PRINTSTRLN',
   'println'     : '_PRINTLN',
   # Fixed point
-  'mul8_24'     : '_MUL_8_24',
-  'div8_24'     : '_DIV_8_24',
+  'mulf8_24'     : '_mulf8_24',
+  'divf8_24'     : '_divf8_24',
   }
 
 class TranslateMPI(NodeWalker):
@@ -103,10 +103,9 @@ class TranslateMPI(NodeWalker):
         """ Insert inclusions.
         """
         self.out('#include <mpi.h>')
-        self.out('#include <stdlib.h>')
+        #self.out('#include <stdlib.h>')
         self.out('#include <stdio.h>')
         self.out('#include <syscall.h>')
-        #self.out('#include "program.h"')
         self.out('#include "device.h"')
         self.out('#include "runtime/mpi/guest.h"')
         self.out('#include "system/definitions.h"')
@@ -363,7 +362,8 @@ class TranslateMPI(NodeWalker):
         return '({} + {})'.format(address, self.expr(node.begin))
 
     def elem_fcall(self, node):
-        return '{}({})'.format(node.name, self.arguments(node.args))
+        return '{}({})'.format(self.procedure_name(node.name), 
+                self.arguments(node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)

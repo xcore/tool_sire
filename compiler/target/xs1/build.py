@@ -363,8 +363,10 @@ def rewrite_calls(sem, lines, v):
 
 def build_jumptab(sem, buf, v):
 
-    vmsg(v, 'Building master jump table')
-    
+    assert len(sem.proc_names) <= defs.JUMP_TABLE_SIZE
+    vmsg(v, 'Building master jump table ({}/{})'.format(
+        len(sem.proc_names), defs.JUMP_TABLE_SIZE))
+
     # Constant section
     buf.write('#include "xs1/definitions.h"\n')
     buf.write('\t.section .cp.rodata, "ac", @progbits\n')
@@ -379,7 +381,6 @@ def build_jumptab(sem, buf, v):
     # Runtime entries
     buf.write('\t.word '+defs.LABEL_MIGRATE+'\n')
     buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
-    buf.write('\t.word '+defs.LABEL_CONNECT+'\n')
 
     # Program entries
     for x in sem.proc_names:
@@ -392,7 +393,9 @@ def build_jumptab(sem, buf, v):
 
 def build_sizetab(sem, buf, v):
 
-    vmsg(v, 'Building master size table')
+    assert len(sem.proc_names) <= defs.JUMP_TABLE_SIZE
+    vmsg(v, 'Building master size table ({}/{})'.format(
+        len(sem.proc_names), defs.JUMP_TABLE_SIZE))
     
     # Data section
     buf.write('\t.section .dp.data, "awd", @progbits\n')
@@ -414,7 +417,7 @@ def build_sizetab(sem, buf, v):
             function_label_bottom(x), x, defs.BYTES_PER_WORD))
     
     # Pad any unused space
-    remaining = defs.SIZE_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+    remaining = defs.SIZE_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET +
             len(sem.proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 

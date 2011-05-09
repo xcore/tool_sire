@@ -1,10 +1,10 @@
 #ifndef BUILTINS_H
 #define BUILTINS_H
 
-#include "builtins.h"
+typedef signed long long sint64;
 
-int mulf8_24(int, int);
-int divf8_24(int, int);
+int _mulf8_24(int, int);
+int _divf8_24(int, int);
 
 #endif
 
