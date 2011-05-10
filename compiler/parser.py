@@ -256,11 +256,11 @@ class Parser(object):
 
     # Par
     def p_stmt_par(self, p):
-        '''stmt_par : pcall BAR pcall'''
+        '''stmt_par : stmt BAR stmt'''
         p[0] = [p[1]] + [p[3]]
 
     def p_stmt_par_seq(self, p):
-        '''stmt_par : pcall BAR stmt_par'''
+        '''stmt_par : stmt BAR stmt_par'''
         p[0] = [p[1]] + p[3]
 
     # Seq error
@@ -290,8 +290,7 @@ class Parser(object):
     def p_stmt_aliases(self, p):
         'stmt : name ALIASES name LBRACKET expr COLON expr RBRACKET'
         p[0] = ast.StmtAlias(
-                ast.ElemId(p[1], self.coord(p)),  
-                ast.ElemSlice(p[3], p[5], p[7], self.coord(p)),
+                p[1], ast.ElemSlice(p[3], p[5], p[7], self.coord(p)),
                 self.coord(p))
 
     #def p_stmt_in(self, p):

@@ -41,9 +41,23 @@ proc printfixln(val x) is
 
 proc main() is
   var v;
-{ v := mul(fix(5),  FIX_HALF) ; printfixln(v)
+{ 
+% Addition
+  v := fix(3) + fix (2)       ; printfixln(v)
+; v := fix(5) + FIX_HALF      ; printfixln(v)
+; v := fix(5) + FIX_QUAR      ; printfixln(v)
+
+% Subtraction
+; v := fix(3) - fix (2)       ; printfixln(v)
+; v := fix(5) - FIX_HALF      ; printfixln(v)
+; v := fix(5) - FIX_QUAR      ; printfixln(v)
+
+% Multiplication
+; v := mul(fix(5),  FIX_HALF) ; printfixln(v)
 ; v := mul(fix(17), FIX_QUAR) ; printfixln(v)
 ; v := mul(fix(9),  FIX_EIGH) ; printfixln(v)
+
+% Division
 ; v := div(fix(4),  fix(2))   ; printfixln(v)
 ; v := div(fix(60), fix(9))   ; printfixln(v)
 ; v := div(fix(15), fix(11))  ; printfixln(v)

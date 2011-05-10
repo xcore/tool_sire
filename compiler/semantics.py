@@ -242,11 +242,15 @@ class Semantics(NodeVisitor):
                Type('var', 'sub')]):
             self.type_error('assignment', node.left.name, node.coord)
 
-    def visit_stmt_aliases(self, node):
-        if not self.sym.check_form(node.dest, ['alias']):
+    def visit_stmt_alias(self, node):
+        if not self.sym.check_form(node.name, ['alias']):
             self.type_error('alias', node.dest, node.coord)
-        if not self.sym.check_form(node.name, ['var', 'alias', 'array']):
-            self.type_error('alias', node.name, node.coord)
+        else:
+            node.symbol = self.sym.lookup(node.name)
+            self.sym.mark_decl(node.name)
+        
+        if not self.sym.check_form(node.slice.name, ['var', 'alias', 'array']):
+            self.type_error('alias', node.slice.name, node.coord)
 
     def visit_stmt_if(self, node):
         pass
@@ -258,7 +262,7 @@ class Semantics(NodeVisitor):
         if not self.check_elem_types(node.var, [Type('var', 'single')]):
             self.type_error('for loop index variable', node.var.name, node.coord)
 
-    def visit_stmt_par(self, node):
+    def visit_stmt_rep(self, node):
         if not self.check_elem_types(node.var, [Type('var', 'single')]):
             self.type_error('repliacator index variable', node.var.name, node.coord)
 

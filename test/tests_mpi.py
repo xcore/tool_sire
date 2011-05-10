@@ -9,15 +9,7 @@ import unittest
 from util import call
 from util import read_file
 from tests import Test
-from tests import TestSet
 from tests import generate_test_set
-
-# Test sets
-from tests import examples
-from tests import feature_general
-from tests import feature_thread
-from tests import feature_on
-from tests import feature_replicator
 
 COMPILE  = 'sire'
 SIMULATE = 'mpirun'
@@ -85,22 +77,24 @@ mpi_feature_tests =\
   mpi_feature_on +\
   mpi_feature_replicator
 
-def run_test(self, name, path, output, num_cores, args=[]):
+def run_test(self, name, path, num_cores, args=[]):
     """ Run a single test
     """
     try:
 
         # Compile the program
-        r = call([COMPILE, path+'/'+name+'.sire'] 
+        (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
                 + ['-t', 'mpi', '-n', '{}'.format(num_cores)] + args)
-        self.assertTrue(r[0])
+        self.assertTrue(exit)
 
         # Simulate execution
-        r = call([SIMULATE, '-np', '{}'.format(num_cores), 'a.out'] + SIM_FLAGS)
-        self.assertTrue(r[0])
+        (exit, output) = call([SIMULATE, '-np', '{}'.format(num_cores), 'a.out'] 
+                + SIM_FLAGS)
+        self.assertTrue(exit)
     
         # Check the output against the .output file
-        self.assertEqual(r[1], read_file(path+'/'+name+'.output'))
+        self.assertEqual(output.strip(), 
+                read_file(path+'/'+name+'.output').strip())
     
     except Exception as e:
         sys.stderr.write('Error: {}\n'.format(e))

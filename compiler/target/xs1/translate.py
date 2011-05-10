@@ -106,22 +106,36 @@ class TranslateXS1(NodeWalker):
         return builtin_conversion[name] if name in builtin_conversion else name
 
     def arguments(self, arg_list):
-        """ Build the list of arguments. If there is an array reference 
-            proper, it must be loaded manually.
+        """ Build the list of arguments for a procedure call. If there is an
+            array reference proper, either directly or as a slice, it must be
+            loaded manually with an assembly inline which forces the compiler to
+            reveal the address.
         """
         args = []
+
         for x in arg_list.children():
-            # For single array arguments, load the address given by this
-            # variable manually to circumvent an XC type error.
             arg = None
+
             if isinstance(x, ast.ExprSingle):
+            
                 if isinstance(x.elem, ast.ElemId):
                     if x.elem.symbol.type.form == 'array':
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp,
                                 inops=[x.elem.name])
                         arg = tmp
-            args.append(arg if arg else self.expr(x))
+                
+                elif isinstance(x.elem, ast.ElemSlice):
+                    if x.elem.symbol.type.form == 'array':
+                        tmp = self.blocker.get_tmp()
+                        self.asm('add %0, %1, %2', outop=tmp,
+                                inops=[x.elem.name, '({})*{}'.format(
+                                self.expr(x.elem.begin),
+                                defs.BYTES_PER_WORD)])
+                        arg = tmp
+
+            args.append(self.expr(x) if not arg else arg)
+
         return ', '.join(args)
 
     def get_label(self):
@@ -492,10 +506,18 @@ class TranslateXS1(NodeWalker):
 
         self.blocker.end()
 
-    def stmt_aliases(self, node):
-        self.asm('add %0, %1, %2', outop=node.dest, 
-                inops=[node.name, '({})*{}'.format(
-                    self.elem(node.expr), defs.BYTES_PER_WORD)])
+    def stmt_alias(self, node):
+        """ Generate an alias statement. If the slice target is an array we must
+            use some inline assembly to get xcc to load the address for us.
+            Otherwise, we can just perform arithmetic on the pointer.
+        """
+        if node.symbol.type.form == 'array':
+            self.asm('add %0, %1, %2', outop=node.name, 
+                    inops=[node.slice.name, '({})*{}'.format(
+                        self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
+        elif node.symbol.type.form == 'alias':
+            self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
+                self.expr(node.slice.begin), defs.BYTES_PER_WORD))
 
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))
@@ -554,6 +576,14 @@ class TranslateXS1(NodeWalker):
 
     def elem_sub(self, node):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
+
+    def elem_slice(self, node):
+        # If source is an array take the address, if alias just the value
+        address = ''+node.name
+        if node.symbol.type.form == 'array':
+            address = '(unsigned, '+address+')'
+        return '({} + ({})*{})'.format(address, self.expr(node.begin),
+               defs.BYTES_PER_WORD)
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

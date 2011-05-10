@@ -3,20 +3,13 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import sys
 import unittest
 
 from util import call
 from util import read_file
 from tests import Test
-from tests import TestSet
 from tests import generate_test_set
-
-# Test sets
-from tests import examples
-from tests import feature_general
-from tests import feature_thread
-from tests import feature_on
-from tests import feature_replicator
 
 COMPILE  = 'sire'
 SIMULATE = 'xsim'
@@ -24,28 +17,28 @@ SIM_FLAGS = []
 
 # Examples =====================================================
 
-xs1_examples = [ 
-  Test('hello',         [1, 4, 16, 32, 64]),
+xs1_example_tests = [ 
+  Test('hello', [1, 4, 16, 32, 64]),
+  Test('power'),
+  Test('ackermann'),
+  Test('primetest'),
+  Test('euclid-loop'),
+  Test('euclid-rec'),
   Test('factorial-loop'),
-  Test('factorial-rec' ),
+  Test('factorial-rec'),
   Test('fibonacci-loop'),
-  Test('fibonacci-rec' ),
-  Test('power'         ),
-  Test('ackermann'     ),
-  Test('primetest'     ),
-  Test('bubblesort'    ),
-  Test('quicksort'     ),
-  Test('mergesort-seq' ),
+  Test('fibonacci-rec'),
+  Test('bubblesort'),
+  Test('quicksort'),
+  Test('mergesort-seq'),
   Test('mergesort-par', [4, 16]),
-  Test('euclid-loop'   ),
-  Test('euclid-rec'    ),
-  Test('distribute',    [4, 16, 32, 64]),
+  Test('distribute', [4, 16, 32, 64]),
   ]
     
 # Features =====================================================
 
 xs1_feature_general = [
-  Test('array'),
+  Test('arrays'),
   Test('for'),
   Test('fixedpoint'),
   ]
@@ -84,22 +77,23 @@ xs1_feature_tests =\
   xs1_feature_on +\
   xs1_feature_replicator
 
-def run_test(self, name, path, output, num_cores, args=[]):
+def run_test(self, name, path, num_cores, args=[]):
     """ Run a single test
     """
     try:
 
         # Compile the program
-        r = call([COMPILE, path+'/'+name+'.sire'] 
+        (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
                 + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + args)
-        self.assertTrue(r[0])
+        self.assertTrue(exit)
 
         # Simulate execution
-        r = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
-        self.assertTrue(r[0])
+        (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
+        self.assertTrue(exit)
 
         # Check the output against the .output file
-        self.assertEqual(r[1], read_file(path+'/'+name+'.output'))
+        self.assertEqual(output.strip(), 
+                read_file(path+'/'+name+'.output').strip())
     
     except Exception as e:
         sys.stderr.write('Error: {}\n'.format(e))
@@ -110,8 +104,8 @@ def run_test(self, name, path, output, num_cores, args=[]):
         raise
 
 def generate_xs1_example_tests(path):
-    return generate_tests('xs1', path, xs1_example_tests, run_test)
+    return generate_test_set('xs1', path, xs1_example_tests, run_test)
     
 def generate_xs1_feature_tests(path):
-    return generate_tests('xs1', path, xs1_feature_tests, run_test)
+    return generate_test_set('xs1', path, xs1_feature_tests, run_test)
     

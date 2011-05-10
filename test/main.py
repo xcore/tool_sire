@@ -51,12 +51,15 @@ if __name__ == '__main__':
     init()
     sys.argv.append('-v')
 
+    feature_tests = []
+    example_tests = []
+
     # Generate MPI tests
-    feature_tests = generate_mpi_feature_tests(TEST_FEATURES_PATH)
-    example_tests = generate_mpi_example_tests(TEST_EXAMPLES_PATH)
+    #feature_tests += generate_mpi_feature_tests(TEST_FEATURES_PATH)
+    #example_tests += generate_mpi_example_tests(TEST_EXAMPLES_PATH)
 
     # Generate XS1 tests
-    #feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
+    feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
     #example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
 
     [setattr(FeatureTests, x.__name__, x) for x in feature_tests]

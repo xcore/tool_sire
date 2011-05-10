@@ -32,13 +32,17 @@ def write_file(filename, s):
     """ Write the output to a file 
     """
     try:
+    
         file = open(filename, 'w')
         file.write(s)
         file.close()
         return True
+    
     except IOError as err:
-        raise Error('writing output {}: {}'
+        sys.stderr.write('writing output {}: {}'
                 .format(filename, err.strerror))
+        raise Error()
+
     except:
         raise Exception('Unexpected error: {}'
                 .format(sys.exc_info()[0]))
@@ -55,8 +59,9 @@ def call(args, verbose=False):
         s = e.output.decode('utf-8').replace("\\n", "\n")
         #sys.stderr.write('\nCall error: '+s)
         #sys.stderr.write(' '.join(args)+'\n')
-        raise Error('executing command:\n\n{}\n\nOuput:\n\n{}'
+        sys.stderr.write('executing command:\n\n{}\n\nOuput:\n\n{}'
                 .format(' '.join(e.cmd), s))
+        raise Error()
     
     except:
         #sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))

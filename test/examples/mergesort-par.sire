@@ -41,7 +41,7 @@ proc merge(var a[m], var b[n], var array[o], var scratch[o],
   else skip
 
   % Copy scratch back into the array
-; for i:=0 step 1 until o-1 do
+; for i:=0 to o-1 do
     array[i] := scratch[i]
 }
 
@@ -57,10 +57,10 @@ proc msort(val t, val n, var array[len], var scratch[len], val len) is
   if len > 1 then 
   { i := len / 2
   ; j := len - i
-  ; a aliases array[0..]
-  ; b aliases array[i..]
-  ; sa aliases scratch[0..]
-  ; sb aliases scratch[i..]
+  ; a aliases array[0:i]
+  ; b aliases array[i:len]
+  ; sa aliases scratch[0:i]
+  ; sb aliases scratch[i:len]
   ; if len > THRESHOLD then
     { msort(t, n/2, a, sa, i) 
     | on core[t+(n/2)] do msort(t+(n/2), n/2, b, sb, j) 
@@ -78,10 +78,10 @@ proc msort(val t, val n, var array[len], var scratch[len], val len) is
 % Ouput: 0123456789101112131415
 proc main() is
   var i;
-{ for i:=0 step 1 until LENGTH-1 do 
+{ for i:=0 to LENGTH-1 do 
     a[i] := LENGTH-(i+1)
 ; msort(0, NUM_CORES, a, scratch, LENGTH)
-; for i:=0 step 1 until LENGTH-1 do 
+; for i:=0 to LENGTH-1 do 
     printval(a[i])
 ; printstrln("")
 }

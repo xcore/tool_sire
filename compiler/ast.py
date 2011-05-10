@@ -336,14 +336,13 @@ class StmtAss(Node):
         return s
 
 class StmtAlias(Node):
-    def __init__(self, left, slice, coord=None):
-        self.left = left
+    def __init__(self, name, slice, coord=None):
+        self.name = name
         self.slice = slice
         self.coord = coord
 
     def children(self):
         c = []
-        if self.left is not None: c.append(self.left)
         if self.slice is not None: c.append(self.slice)
         return tuple(c)
 
@@ -356,6 +355,7 @@ class StmtAlias(Node):
 
     def __repr__(self):
         s =  'StmtAlias('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
