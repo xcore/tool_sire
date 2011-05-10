@@ -1,6 +1,10 @@
 val FIX_IBITS := 8;
 val FIX_DBITS := 24;
 
+val FIX_HALF := 0x00800000;
+val FIX_QUAR := 0x00400000;
+val FIX_EIGH := 0x00200000;
+
 func fix(val x) is
   return x << FIX_DBITS
 
@@ -36,13 +40,11 @@ proc printfixln(val x) is
 { printfix(x) ; println() }
 
 proc main() is
-  var x;
-  var y;
-  var z;
-{ x := fix(17)
-; y := fix(5)
-; z := div(x, y)
-; printfixln(z)
-; z := mul(z, y)
-; printfixln(z)
+  var v;
+{ v := mul(fix(5),  FIX_HALF) ; printfixln(v)
+; v := mul(fix(17), FIX_QUAR) ; printfixln(v)
+; v := mul(fix(9),  FIX_EIGH) ; printfixln(v)
+; v := div(fix(4),  fix(2))   ; printfixln(v)
+; v := div(fix(60), fix(9))   ; printfixln(v)
+; v := div(fix(15), fix(11))  ; printfixln(v)
 }
