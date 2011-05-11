@@ -38,8 +38,9 @@ xs1_example_tests = [
 # Features =====================================================
 
 xs1_feature_general = [
-  Test('arrays'),
-  Test('for'),
+  Test('forloop'),
+  Test('array_slice1'),
+  Test('array_slice2'),
   Test('fixedpoint'),
   ]
 

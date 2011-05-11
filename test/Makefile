@@ -1,3 +1,4 @@
 test:
-	./main.py
+	./main.py mpi
+	./main.py xs1
 

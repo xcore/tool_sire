@@ -6,7 +6,7 @@
 from util import indexed_dict
 from error import Error
 
-specifier_names = ['proc','func', 'var', 'val', 'chanend', 'chan', 'port', 'core', 'tag']
+specifier_names = ['proc','func', 'var', 'val', 'core', 'tag']
 specifiers = indexed_dict(specifier_names)
 
 form_names = ['undefined', 'single', 'array', 'alias', 'sub', 'procedure']

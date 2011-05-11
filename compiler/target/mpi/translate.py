@@ -224,7 +224,7 @@ class TranslateMPI(NodeWalker):
 
     def stmt_alias(self, node):
         self.out('{} = {};'.format(
-            self.elem(node.left), self.expr(node.slice)))
+            node.name, self.expr(node.slice)))
 
     def stmt_if(self, node):
         self.out('if ({})'.format(self.expr(node.cond)))

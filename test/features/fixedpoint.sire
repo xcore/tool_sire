@@ -59,6 +59,6 @@ proc main() is
 
 % Division
 ; v := div(fix(4),  fix(2))   ; printfixln(v)
-; v := div(fix(60), fix(9))   ; printfixln(v)
-; v := div(fix(15), fix(11))  ; printfixln(v)
+; v := div(fix(60), fix(8))   ; printfixln(v)
+; v := div(fix(15), fix(6))  ; printfixln(v)
 }

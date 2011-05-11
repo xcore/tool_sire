@@ -1,22 +1,24 @@
 val LENGTH := 2;
 
-proc foo(val a, val b, val c, val d, val e, val f, val g, r) is
+proc foo(val a, val b, val c, val d, val e, val f, val g, var r) is
   r := a+b+c+d+e+f+g
 
-proc bar(val a, val b, val c, val d, e[n], val n, r) is
+proc bar(val a, val b, val c, val d, var e[n], val n, var r) is
   var i;
 { r := a+b+c+d
 ; for i:=0 to n-1 do r := r + e[i]
 }
 
-proc baz(val a, val b, val c, r, e[n], val n, f[m], val m) is
+proc baz(val a, val b, val c, var r, 
+    val e[n], val n, val f[m], val m) is
   var i;
 { r := a+b+c
 ; for i:=0 to n-1 do r := r + e[i]
 ; for i:=0 to m-1 do r := r + f[i]
 }
 
-proc cat(val a, val b, val c, val d, w[a], x[b], y[c], z[d]) is
+proc cat(val a, val b, val c, val d, 
+  val w[a], val x[b], val y[c], val z[d]) is
   var i;
   var r;
 { r := 0

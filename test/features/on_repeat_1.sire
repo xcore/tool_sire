@@ -1,7 +1,7 @@
-proc foo(v) is
+proc foo(var v) is
   v := v lor 0xDEAD0000
 
-proc bar(v) is
+proc bar(var v) is
   v := v lor 0x0000BEEF
 
 % Test that we can use all the resources again

@@ -35,3 +35,4 @@ class ErrorLog(object):
     def summary(self):
         return '{} errors and {} warnings'.format(
                 self.num_errors, self.num_warnings)
+

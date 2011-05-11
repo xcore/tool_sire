@@ -1,4 +1,4 @@
-proc foo(a) is 
+proc foo(var a) is 
   a := 0xDEADBEEF
 
 proc main() is

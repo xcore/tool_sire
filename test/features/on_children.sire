@@ -1,11 +1,11 @@
-proc a(v) is v := 0xDEADBEEF
-proc b(v) is a(v)
-proc c(v) is b(v)
-proc d(v) is c(v)
-proc e(v) is d(v)
-proc f(v) is e(v)
-proc g(v) is f(v)
-proc h(v) is g(v)
+proc a(var v) is v := 0xDEADBEEF
+proc b(var v) is a(v)
+proc c(var v) is b(v)
+proc d(var v) is c(v)
+proc e(var v) is d(v)
+proc f(var v) is e(v)
+proc g(var v) is f(v)
+proc h(var v) is g(v)
 
 proc main() is
   var v;

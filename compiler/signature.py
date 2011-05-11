@@ -13,25 +13,33 @@ import semantics
 param_conversions = {
   
   Type('var', 'single') : [
-      Type('var', 'single'), 
-      Type('var', 'sub'),
-      Type('var', 'array'),  # Slice of length 1
-      Type('var', 'alias')], # Slice of length 1
+    Type('var', 'single'), 
+    Type('var', 'sub'),
+    Type('val', 'sub'),
+    Type('var', 'array'), # Slice of length 1
+    Type('var', 'alias'), # Slice of length 1
+    ],
 
   Type('val', 'single') : [
-      Type('var', 'single'), 
-      Type('val', 'single'), 
-      Type('var', 'sub'),
-      Type('var', 'array'),  # Slice of length 1
-      Type('var', 'alias')], # Slice of length 1
+    Type('var', 'single'), 
+    Type('val', 'single'), 
+    Type('val', 'sub'),
+    Type('var', 'sub'),
+    Type('var', 'array'), # Slice of length 1
+    Type('var', 'alias'), # Slice of length 1
+    ],
 
   Type('var', 'alias') : [
-      Type('var', 'array'), 
-      Type('var', 'alias')],
+    Type('var', 'array'), 
+    Type('val', 'alias'),
+    Type('var', 'alias'),
+    ],
   
   Type('val', 'alias') : [
-      Type('var', 'array'),
-      Type('var', 'alias')],
+    Type('var', 'array'),
+    Type('val', 'alias'),
+    Type('var', 'alias'),
+    ],
 }
 
 class SignatureTable(object):

@@ -3,6 +3,8 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import os
+
 import ply.yacc as yacc
 from lexer import Lexer
 from type import Type
@@ -48,21 +50,22 @@ class Parser(object):
     def parse(self, text, filename='', debug=0):
         """ Parse a file and return the AST
         """
+        self.filename = os.path.basename(filename)
         self.lexer.filename = filename
         self.lexer.reset()
         return self.parser.parse(text, lexer=self.lexer, debug=debug,
-                tracking=False)
+                tracking=True)
 
     def coord(self, p, index=1):
         """ Return a coordinate for a production
         """
-        return Coord(file=self.lexer.filename, line=p.lineno(index), 
+        return Coord(file=self.filename, line=p.lineno(index), 
                 column=self.lexer.findcol(self.lexer.data(), p.lexpos(index)))
     
     def tcoord(self, t):
         """ Return a coordinate for a token
         """
-        return Coord(file=self.lexer.filename, line=t.lineno, 
+        return Coord(file=self.filename, line=t.lineno, 
                 column=self.lexer.findcol(self.lexer.data(), t.lexpos))
 
     def lex_error(self, msg, line, col):

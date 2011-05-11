@@ -34,9 +34,16 @@ class FeatureTests(unittest.TestCase):
     def tearDown(self):
         pass
 
-def init():
-    """ Initialise configuration
-    """
+def fail(argv):
+    sys.exit('Usage: '+argv[0]+' {xs1,mpi}')
+
+if __name__ == '__main__':
+
+    # Check we have a test target
+    if len(sys.argv) < 2:
+        fail(sys.argv)
+
+    # Initialise global paths
     global INSTALL_PATH
     INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
     if not INSTALL_PATH:
@@ -45,26 +52,27 @@ def init():
     else:
         globals()['TEST_EXAMPLES_PATH'] = INSTALL_PATH+EXAMPLES_DIR
         globals()['TEST_FEATURES_PATH'] = INSTALL_PATH+FEATURES_DIR
-
-if __name__ == '__main__':
-
-    init()
-    sys.argv.append('-v')
-
+    
     feature_tests = []
     example_tests = []
 
-    # Generate MPI tests
-    #feature_tests += generate_mpi_feature_tests(TEST_FEATURES_PATH)
-    #example_tests += generate_mpi_example_tests(TEST_EXAMPLES_PATH)
+    # Generate tests for the specified target
+    if sys.argv[1] == 'mpi':
+        feature_tests += generate_mpi_feature_tests(TEST_FEATURES_PATH)
+        example_tests += generate_mpi_example_tests(TEST_EXAMPLES_PATH)
 
-    # Generate XS1 tests
-    feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
-    #example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
+    elif sys.argv[1] == 'xs1':
+        feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
+        example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
+    
+    else:
+        fail(sys.argv)
 
     [setattr(FeatureTests, x.__name__, x) for x in feature_tests]
     [setattr(ExampleTests, x.__name__, x) for x in example_tests]
     
     # Run all the tests
+    sys.argv.pop()
+    sys.argv.append('-v')
     unittest.main()
 

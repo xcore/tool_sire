@@ -39,7 +39,7 @@ proc tryall(val i, val q[N], var succ, var result[N]) is
   var results[N*N];
   var j;
   var k;
-{ par j:=1 for N do try(i, j, q, succ[j:j], results[j*N:(j+1)*N])
+{ par j:=1 for N do try(i, j, q, succ[j], results[j*N:(j+1)*N])
 ; succ := false
 ; for j:=0 to N-1 do
     if succ[j] then

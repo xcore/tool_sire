@@ -1,6 +1,6 @@
 val LENGTH := 10;
 
-proc foo(a[len], val len) is 
+proc foo(var a[len], val len) is 
   a[len-1] := 0xDEADBEEF
 
 proc main() is

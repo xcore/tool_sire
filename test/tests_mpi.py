@@ -38,9 +38,10 @@ mpi_example_tests = [
 # Features =====================================================
 
 mpi_feature_general = [
-  #Test('array'),
-  #Test('for'),
-  #Test('fixedpoint'),
+  Test('forloop'),
+  Test('array_slice1'),
+  Test('array_slice2'),
+  Test('fixedpoint'),
   ]
 
 mpi_feature_thread = [
