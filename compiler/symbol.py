@@ -121,6 +121,7 @@ class SymbolTable(object):
         for x in reversed(self.scope):
             if x.name == key:
                 x.mark = True
+                break;
 
     def dump(self, buf=sys.stdout):
         """ Dump the contents of the table to buf.

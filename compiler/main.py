@@ -21,7 +21,7 @@ import definitions as defs
 from parser import Parser
 import dump as dump
 import printer as printer
-import semantics as semantics
+from semantics import Semantics
 import children as children
 
 from codegen import generate
@@ -172,8 +172,8 @@ def semantic_analysis(ast, errorlog):
     """
     vmsg(v, "Performing semantic analysis")
     
-    sem = semantics.Semantics(errorlog)
-    ast.accept(sem)
+    sem = Semantics(errorlog)
+    sem.walk_program(ast)
     
     if errorlog.any():
         raise Error('semantic analysis')
@@ -237,7 +237,7 @@ def main(args):
 
     # Handle any specific compilation errors
     except Error as e:
-        sys.stderr.write('Error: {}\n'.format(e))
+        #sys.stderr.write('Error: {}\n'.format(e))
         return 1
     
     # Handle a keyboard interrupt (ctrl+c)

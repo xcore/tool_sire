@@ -131,8 +131,7 @@ class TranslateMPI(NodeWalker):
     # Variable declarations ===============================
 
     def decls(self, node):
-        for x in node.children():
-            self.out(self.decl(x))
+        [self.out(self.decl(x)) for x in node.children()]
         if len(node.children()) > 0:
             self.out('')
 
@@ -155,8 +154,7 @@ class TranslateMPI(NodeWalker):
     # Procedure declarations ==============================
 
     def defs(self, node, d):
-        for p in node.children():
-            self.defn(p, d)
+        [self.defn(p, d) for p in node.children()]
 
     def defn(self, node, d):
         s = ''

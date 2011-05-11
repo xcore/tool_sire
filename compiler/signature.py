@@ -65,10 +65,11 @@ class SignatureTable(object):
 
     def lookup_array_qualifier(self, name, i):
         """ Given the index of an array parameter, return the index of the
-            qualifying paramemer in the ordered set of formals.
+            qualifying paramemer in the ordered set of formal parameters.
         """
         params = self.tab[name].params
-        assert(params[i].type == Type('var', 'alias'))
+        assert(params[i].type == Type('val', 'alias') 
+                or params[i].type == Type('var', 'alias'))
         qualifier = params[i].expr.elem.name
         for (i, x) in enumerate(params):
             if x.name == qualifier: return i

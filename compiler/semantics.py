@@ -10,7 +10,7 @@ import util
 import definitions as defs
 
 import ast
-from ast import NodeVisitor
+from walker import NodeWalker
 import symbol
 import signature
 from builtin import builtins
@@ -27,20 +27,20 @@ elem_types = {
   'elem_char'    : Type('val', 'single'),
   }
 
-class Semantics(NodeVisitor):
+class Semantics(NodeWalker):
     """ An AST visitor class to check the semantics of a sire program
     """
     def __init__(self, error):
         self.depth = 0
         self.error = error
+        
+        # Data structures
         self.sym = symbol.SymbolTable(self, debug=False)
         self.sig = signature.SignatureTable(self, debug=False)
         self.proc_names = []
-        self.init_system()
 
-    def init_system(self):
-        """ Initialise variables in the 'system' scope
-        """
+        # Initialise variables in the 'system' scope
+        
         # Add system variables core, chan
         self.sym.begin_scope('system')
         self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
@@ -53,16 +53,9 @@ class Semantics(NodeVisitor):
             if x.mobile:
                 self.proc_names.append(x.definition.name)
 
-    def down(self, tag):
-        """ Begin a new scope """
-        if tag: self.sym.begin_scope(tag)
-
-    def up(self, tag):
-        """ End the current scope """
-        if tag: self.sym.end_scope()
-
     def get_elem_type(self, elem):
-        """ Given an element, return its type """
+        """ Given an element, return its type
+        """
         
         # If its an expression group, get_expr_type
         if isinstance(elem, ast.ElemGroup):
@@ -100,7 +93,8 @@ class Semantics(NodeVisitor):
             return elem_types[util.camel_to_under(elem.__class__.__name__)]
 
     def get_expr_type(self, expr):
-        """ Given an expression work out its type """
+        """ Given an expression work out its type
+        """
         
         #If it's a single value, lookup the type
         if isinstance(expr, ast.ExprSingle):
@@ -110,7 +104,8 @@ class Semantics(NodeVisitor):
         return Type('var', 'single')
 
     def check_elem_types(self, elem, types):
-        """ Given an elem and a set of types, check if one matches """
+        """ Given an elem and a set of types, check if one matches
+        """
         t = self.get_elem_type(elem)
         return True if t and any([x==t for x in types]) else False
 
@@ -165,42 +160,57 @@ class Semantics(NodeVisitor):
 
     # Program ============================================
 
-    def visit_program(self, node):
-        return 'program'
+    def walk_program(self, node):
+        self.sym.begin_scope('program')
+        self.decls(node.decls)
+        self.defs(node.defs)
+        self.sym.end_scope()
     
     # Variable declarations ===============================
 
-    def visit_decls(self, node):
-        pass
+    def decls(self, node):
+        [self.decl(x) for x in node.children()]
 
-    def visit_decl(self, node):
+    def decl(self, node):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
     # Procedure definitions ===============================
 
-    def visit_defs(self, node):
-        pass
+    def defs(self, node):
+        [self.defn(x) for x in node.children()]
 
-    def visit_def(self, node):
+    def defn(self, node):
+        
         # Rename main to avoid conflicts in linking
         if node.name == 'main':
             node.name = '_'+node.name
+
+        # Add symbol and signature
         if self.sym.insert(node.name, node.type, node.coord):
             if not self.sig.insert(node.type, node):
                 self.procedure_def_error(node.name, node.coord)
         else:
             self.redecl_error(node.name, node.coord)
+
+        # Add the procedure name to the list
         self.proc_names.append(node.name)
         self.parent = node.name
-        return 'proc'
+    
+        # Begin a new scope for decls and stmt components
+        self.sym.begin_scope('proc')
+        self.formals(node.formals)
+        self.decls(node.decls)
+        self.stmt(node.stmt)
+        self.sym.end_scope()
     
     # Formals =============================================
     
-    def visit_formals(self, node):
-        pass
+    def formals(self, node):
+        [self.param(x) for x in node.children()]
 
-    def visit_param(self, node):
+    def param(self, node):
+       
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
@@ -211,16 +221,16 @@ class Semantics(NodeVisitor):
 
     # Statements ==========================================
 
-    def visit_stmt_seq(self, node):
+    def stmt_seq(self, node):
+        [self.stmt(x) for x in node.children()]
+
+    def stmt_par(self, node):
+        [self.stmt(x) for x in node.children()]
+
+    def stmt_skip(self, node):
         pass
 
-    def visit_stmt_par(self, node):
-        pass
-
-    def visit_stmt_skip(self, node):
-        pass
-
-    def visit_stmt_pcall(self, node):
+    def stmt_pcall(self, node):
         
         # Check the name is declared
         if not self.sym.check_decl(node.name):
@@ -234,7 +244,12 @@ class Semantics(NodeVisitor):
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
 
-    def visit_stmt_ass(self, node):
+        # Children
+        [self.expr(x) for x in node.args.expr]
+
+    def stmt_ass(self, node):
+
+        # Check valid type for assignment target
         if not self.check_elem_types(node.left, [
                Type('val', 'single'), 
                Type('var', 'single'), 
@@ -242,7 +257,12 @@ class Semantics(NodeVisitor):
                Type('var', 'sub')]):
             self.type_error('assignment', node.left.name, node.coord)
 
-    def visit_stmt_alias(self, node):
+        # Children
+        self.elem(node.left)
+        self.expr(node.expr)
+
+    def stmt_alias(self, node):
+
         if not self.sym.check_form(node.name, ['alias']):
             self.type_error('alias', node.dest, node.coord)
         else:
@@ -252,47 +272,84 @@ class Semantics(NodeVisitor):
         if not self.sym.check_form(node.slice.name, ['var', 'alias', 'array']):
             self.type_error('alias', node.slice.name, node.coord)
 
-    def visit_stmt_if(self, node):
-        pass
+        # Children
+        self.expr(node.slice)
 
-    def visit_stmt_while(self, node):
-        pass
+    def stmt_if(self, node):
 
-    def visit_stmt_for(self, node):
+        # Children
+        self.expr(node.cond)
+        self.stmt(node.thenstmt)
+        self.stmt(node.elsestmt)
+
+    def stmt_while(self, node):
+
+        # Children
+        self.expr(node.cond)
+        self.stmt(node.stmt)
+
+    def stmt_for(self, node):
+        
         if not self.check_elem_types(node.var, [Type('var', 'single')]):
             self.type_error('for loop index variable', node.var.name, node.coord)
 
-    def visit_stmt_rep(self, node):
+        # Children
+        self.elem(node.var)
+        self.expr(node.init)
+        self.expr(node.bound)
+        self.expr(node.step)
+        self.stmt(node.stmt)
+
+    def stmt_rep(self, node):
+        
         if not self.check_elem_types(node.var, [Type('var', 'single')]):
             self.type_error('repliacator index variable', node.var.name, node.coord)
+        
+        # Children
+        self.elem(node.var)
+        self.expr(node.init)
+        self.expr(node.count)
+        self.elem(node.pcall)
 
-    def visit_stmt_on(self, node):
+    def stmt_on(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):
             self.type_error('on target', node.core, node.coord)
 
-    def visit_stmt_return(self, node):
-        pass
+        # Children
+        self.elem(node.pcall)
+
+    def stmt_return(self, node):
+        
+        # Children
+        self.expr(node.expr)
 
     # Expressions =========================================
 
     # TODO: check ops only act on vars
 
-    def visit_expr_list(self, node):
-        pass
+    def expr_list(self, node):
+        [self.expr(x) for x in node.children()]
 
-    def visit_expr_single(self, node):
+    def expr_single(self, node):
         #if not self.check_elem_types(node.elem, 
         #        [Type('var', 'single'), Type('var', 'sub')]):
         #    self.type_error('single', node.elem, node.coord)
-        pass
+       
+        # Children
+        self.elem(node.elem)
 
-    def visit_expr_unary(self, node):
-        if not self.check_elem_types(node.elem,
-                [Type('var', 'single'), Type('var', 'sub'), 
-                    Type('val', 'single')]):
+    def expr_unary(self, node):
+        if not self.check_elem_types(node.elem, [
+                Type('var', 'single'), 
+                Type('var', 'sub'), 
+                Type('val', 'single'),
+                ]):
             self.type_error('unary', node.elem, node.coord)
 
-    def visit_expr_binop(self, node):
+        # Children
+        self.elem(node.elem)
+
+    def expr_binop(self, node):
         if not self.check_elem_types(node.elem, [
                 Type('val', 'single'),
                 Type('var', 'single'), 
@@ -300,13 +357,19 @@ class Semantics(NodeVisitor):
                 Type('val', 'sub'), 
                 Type('var', 'sub')]):
             self.type_error('binop dest', node.elem, node.coord)
+       
+        # Children
+        self.elem(node.elem)
+        self.expr(node.right)
     
     # Elements= ===========================================
 
-    def visit_elem_group(self, node):
-        pass
+    def elem_group(self, node):
+        
+        # Children
+        self.expr(node.expr)
 
-    def visit_elem_id(self, node):
+    def elem_id(self, node):
         # Check the symbol has been declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'variable', node.coord)
@@ -318,7 +381,7 @@ class Semantics(NodeVisitor):
         #if not self.sym.check_form(node.name, ['single']):
         #    self.form_error('single', node.name, node.coord)
 
-    def visit_elem_sub(self, node):
+    def elem_sub(self, node):
         # Check the symbol has been declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'array or alias', node.coord)
@@ -329,8 +392,12 @@ class Semantics(NodeVisitor):
         # Check it has the right form 
         #if not self.sym.check_form(node.name, ['array','alias']):
         #    self.form_error('subscript', node.name, node.coord)
+        
+        # Children
+        self.expr(node.expr)
 
-    def visit_elem_slice(self, node):
+    def elem_slice(self, node):
+        
         # Check the symbol has been declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'array or alias', node.coord)
@@ -338,8 +405,13 @@ class Semantics(NodeVisitor):
         else:
             node.symbol = self.sym.lookup(node.name)
             self.sym.mark_decl(node.name)
+        
+        # Children
+        self.expr(node.begin)
+        self.expr(node.end)
 
-    def visit_elem_pcall(self, node):
+    def elem_pcall(self, node):
+        
         # Check the name is declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'process', node.coord)
@@ -349,8 +421,12 @@ class Semantics(NodeVisitor):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
+        
+        # Children
+        self.expr(node.args)
 
-    def visit_elem_fcall(self, node):
+    def elem_fcall(self, node):
+        
         # Check the name is declared
         if not self.sym.check_decl(node.name):
             self.nodecl_error(node.name, 'function', node.coord)
@@ -361,15 +437,18 @@ class Semantics(NodeVisitor):
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
 
-    def visit_elem_number(self, node):
+        # Children
+        self.expr(node.args)
+
+    def elem_number(self, node):
         pass
 
-    def visit_elem_boolean(self, node):
+    def elem_boolean(self, node):
         pass
 
-    def visit_elem_string(self, node):
+    def elem_string(self, node):
         pass
 
-    def visit_elem_char(self, node):
+    def elem_char(self, node):
         pass
 

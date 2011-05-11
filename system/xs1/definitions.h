@@ -66,19 +66,4 @@
 
 #define SWITCH_SCRATCH_REG       3
 
-// Printing
-#define _PRINTCHAR(x)            printchar(x)
-#define _PRINTCHARLN(x)          printcharln(x) 
-#define _PRINTVAL(x)             printint(x) 
-#define _PRINTVALLN(x)           printintln(x) 
-#define _PRINTHEX(x)             printhex(x) 
-#define _PRINTHEXLN(x)           printhexln(x) 
-#define _PRINTSTR(x)             printstr(x) 
-#define _PRINTSTRLN(x)           printstrln(x) 
-#define _PRINTLN()               printstrln("") 
-
-// Fixed point
-#define _MUL_8_24(x, y)          mul8_24(x, y)
-#define _DIV_8_24(x, y)          div8_24(x, y)
-
 #endif
