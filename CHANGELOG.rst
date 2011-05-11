@@ -7,8 +7,20 @@ Version 0.1
 -----------
 
 - Builtins: set of built-in procedures available in the language. Implemented in
-  target language in src/builtin/<system>/ and included in translation and build
-  process.
+  target language in system/<system>/builtin.* and included in translation and
+  build process. Also addition of:
+    - println()
+    - Fixed point 2.24 divide and muliply routines.
+
+- Unit test restructure: separation of target platforms and expected output into
+  a .output file.
+
+Minor changes:
+- Allow constant values in array length specifiers
+- 'val' array parameters
+- 'val' and 'var' specifiers on all formal parameters
+- New for loop syntax: for <index>:=<init> to <bound> (step <increment>)? do
+- In place array aliases (slicing)
 
 ---------
 Version 0

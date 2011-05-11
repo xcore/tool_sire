@@ -2,32 +2,13 @@
 Todo
 ====
 
-- name* and ElemSlice in alias, check during translate source array type.
-
 ---
 New
 ---
 
-- Add println() builtin
-
-- For loop: for <index>:=<init> to <bound> (step <increment>)? do
-
 - Par loop: par <index>:=<init> for <count> do
-
 - Parallel composition of process calls only.
-
-- Allow constant values in array length specifiers
-
-- 'val' array parameters
-- 'val' and 'var' specifiers on all formal parameters
-
-- In place array aliases (slicing)
-
-- Allow slice of a single array element to 'val' or 'var'.
-
-- Prohibit globals?
-
-- Semantic analysis needs to check types properly by walking the AST.
+- No globals
 
 ------
 Driver
@@ -67,6 +48,8 @@ Semantic analysis
 
 - No system call funcitons can be used by processes moved to another core as the
   slave binaries do not have this linked in.
+
+- Semantic analysis needs to check types properly by walking the AST.
 
 ---------------
 Code generation
