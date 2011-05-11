@@ -85,6 +85,19 @@ statically in <em>values</em> or dynamically in <em>variables</em>.</p>
 <p>sets the value of <tt class="docutils literal"><span class="pre">c</span></tt> to 8. <tt class="docutils literal"><span class="pre">c</span></tt> cannot then be the target of any assignment
 statement. All declarations must be terminated with a semicolon.</p>
 </div>
+<div class="section" id="numbers">
+<h3>Numbers<a class="headerlink" href="#numbers" title="Permalink to this headline">¶</a></h3>
+<p>Integer valued numbers can be represented in binary, decimal and hex decimal
+forms by prefixing with <tt class="docutils literal"><span class="pre">0b</span></tt>, nothing and <tt class="docutils literal"><span class="pre">0x</span></tt> respectively. For example, a
+value can initialised with the different representations:</p>
+<div class="highlight-none"><div class="highlight"><pre>val a := 0b101111;
+val b := 47;
+val c := 0x2F;
+</pre></div>
+</div>
+<p>The reserved symbols <tt class="docutils literal"><span class="pre">true</span></tt> and <tt class="docutils literal"><span class="pre">false</span></tt> represent the values 1 and 0
+respectively.</p>
+</div>
 <div class="section" id="variables">
 <h3>Variables<a class="headerlink" href="#variables" title="Permalink to this headline">¶</a></h3>
 <p>Variables hold a value state which is changed by statements operating on this
@@ -131,6 +144,9 @@ valid position of the source array. For example, the statement:</p>
 <p>causes <tt class="docutils literal"><span class="pre">b</span></tt> to reference the last half of <tt class="docutils literal"><span class="pre">a</span></tt>. Aliasing simply duplicates an
 offset array reference, no copying is involved.</p>
 </div>
+</div>
+<div class="section" id="expressions">
+<h2>Expressions<a class="headerlink" href="#expressions" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="operators">
 <h3>Operators<a class="headerlink" href="#operators" title="Permalink to this headline">¶</a></h3>
 <p>The table below gives the arithmetic operators available with their type,
@@ -275,29 +291,14 @@ associativity and precedence. Precedence 0 relates to the highest precedence.</p
 </tbody>
 </table>
 </div>
-<div class="section" id="numbers">
-<h3>Numbers<a class="headerlink" href="#numbers" title="Permalink to this headline">¶</a></h3>
-<p>Integer valued numbers can be represented in binary, decimal and hex decimal
-forms by prefixing with <tt class="docutils literal"><span class="pre">0b</span></tt>, nothing and <tt class="docutils literal"><span class="pre">0x</span></tt> respectively. For example,
-expressions may conatain any numbers:</p>
-<div class="highlight-none"><div class="highlight"><pre>val v := 0b11001 + 3 + 0xABCD
-</pre></div>
-</div>
-<p>The reserved symbols <tt class="docutils literal"><span class="pre">true</span></tt> and <tt class="docutils literal"><span class="pre">false</span></tt> represent the values 1 and 0
-respectively.</p>
-</div>
-<div class="section" id="scope">
-<h3>Scope<a class="headerlink" href="#scope" title="Permalink to this headline">¶</a></h3>
-<p>There are only two levels of scoping for variables in sire: global, at the
-program level, and local, at the process/function level. Variable declarations
-may be made either globally or locally, but value declarations may <em>only</em> be
-made globally.</p>
+<div class="section" id="operations-on-values">
+<h3>Operations on values<a class="headerlink" href="#operations-on-values" title="Permalink to this headline">¶</a></h3>
 </div>
 </div>
-<div class="section" id="structuring">
-<h2>Structuring<a class="headerlink" href="#structuring" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="sequential-and-parallel-composition">
-<h3>Sequential and parallel composition<a class="headerlink" href="#sequential-and-parallel-composition" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="sequential-structuring">
+<h2>Sequential structuring<a class="headerlink" href="#sequential-structuring" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="sequential-composition">
+<h3>Sequential composition<a class="headerlink" href="#sequential-composition" title="Permalink to this headline">¶</a></h3>
 <p><em>Processes</em> and <em>functions</em> are composed of a set of block-structured
 statements. Statements can either be composed <em>sequentially</em> or in <em>parallel</em>. This
 is denoted by the use of the sequential separator &#8216;<tt class="docutils literal"><span class="pre">;</span></tt>&#8216;, or the parallel
@@ -306,15 +307,7 @@ separator &#8216;<tt class="docutils literal"><span class="pre">|</span></tt>&#8
 </pre></div>
 </div>
 <p>is composed sequentially, so processes 1, 2 and 3 will be executed one after
-another. Execution of the block will complete when <tt class="docutils literal"><span class="pre">process3</span></tt> has completed.
-In contrast, the block:</p>
-<div class="highlight-none"><div class="highlight"><pre>{ process1() | process2() | process3() }
-</pre></div>
-</div>
-<p>is composed in parallel, so on entry to the block, two new threads are created
-for processes 2 and 3 and then execution of all three processes commences in
-parallel. Execution of the block will terminate only when the last process has
-completed.</p>
+another. Execution of the block will complete when <tt class="docutils literal"><span class="pre">process3</span></tt> has completed.</p>
 </div>
 <div class="section" id="the-while-loop">
 <h3>The <tt class="docutils literal"><span class="pre">while</span></tt> loop<a class="headerlink" href="#the-while-loop" title="Permalink to this headline">¶</a></h3>
@@ -344,7 +337,7 @@ algorithm, but with a for loop:</p>
 <div class="highlight-none"><div class="highlight"><pre>var i;
 var factorial;
 { factorial =: 1
-; for i:=1 step 1 until n do
+; for i:=1 to n do
     factorial := factorial * i
 }
 </pre></div>
@@ -369,25 +362,47 @@ recursive factorial algorithm, demonstrating the use of an if statement:</p>
 <p>The <tt class="docutils literal"><span class="pre">skip</span></tt> statement does nothing, but can be used to fill an empty if statement&#8217;s
 <tt class="docutils literal"><span class="pre">else</span></tt>.</p>
 </div>
-<div class="section" id="processes-and-functions">
-<h3>Processes and functions<a class="headerlink" href="#processes-and-functions" title="Permalink to this headline">¶</a></h3>
-<p><em>Processes</em> and <em>functions</em>, both types of <em>procedure</em>, are a collection of one
-or more statements that perform some task. Functions are a special procedure
-type that do not cause any <em>side effects</em> and only return a value. A function
-causes a side effect if it also modifies some external state. This might
-include, for instance, changing the value of a global variable, or modifying the
-contents of a referenced array. To prevent this from happening, functions cannot
-write to global variables or referenced parameters, invoke processes or use
-input or output operators. In contrast, processes do not return a value but have
-no such restrictions on side effects.</p>
-<p>A process is defined using the <tt class="docutils literal"><span class="pre">proc</span></tt> keyword, followed by the process name,
+</div>
+<div class="section" id="parallel-structuring">
+<h2>Parallel structuring<a class="headerlink" href="#parallel-structuring" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="parallel-composition">
+<h3>Parallel composition<a class="headerlink" href="#parallel-composition" title="Permalink to this headline">¶</a></h3>
+<p>In contrast, the block:</p>
+<div class="highlight-none"><div class="highlight"><pre>{ process1() | process2() | process3() }
+</pre></div>
+</div>
+<p>is composed in parallel, so on entry to the block, two new threads are created
+for processes 2 and 3 and then execution of all three processes commences in
+parallel. Execution of the block will terminate only when the last process has
+completed.</p>
+</div>
+<div class="section" id="replicated-parallelism">
+<h3>Replicated parallelism<a class="headerlink" href="#replicated-parallelism" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="disjointness">
+<h3>Disjointness<a class="headerlink" href="#disjointness" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="program-structuring">
+<h2>Program structuring<a class="headerlink" href="#program-structuring" title="Permalink to this headline">¶</a></h2>
+<p>A sire program consists of a set of <em>processes</em> and <em>functions</em> and possibly
+some global state.  Processes and functions, both types of <em>procedure</em>, are
+a collection of one or more statements that perform some task.  The structure of
+a sire program is as follows.  Any value, variable or port global declarations
+are made at the beginning, before any process or function definitions. Processes
+and functions may then be defined in any order. A program must contain a process
+called <tt class="docutils literal"><span class="pre">main</span></tt> as execution will start at this point.</p>
+<div class="section" id="processes">
+<h3>Processes<a class="headerlink" href="#processes" title="Permalink to this headline">¶</a></h3>
+<p>Processes do not return a value but have no such restrictions on side effects.
+A process is defined using the <tt class="docutils literal"><span class="pre">proc</span></tt> keyword, followed by the process name,
 formal parameters, local variable declarations and then the body.  For example,
 the following process definition implements the bubble sort algorithm:</p>
-<div class="highlight-none"><div class="highlight"><pre>proc sort(a[len]; len: int) is
+<div class="highlight-none"><div class="highlight"><pre>proc sort(var a[len]; val len) is
  var i;
  var j;
  var tmp;
- for i:=0 step 1 until len-1 do
+ for i:=0 to len-1 do
    for j:=0 to len-1 do
      if a[j] &gt; a[j+1]
        then
@@ -402,10 +417,19 @@ the following process definition implements the bubble sort algorithm:</p>
 <div class="highlight-none"><div class="highlight"><pre>sort(a, 10)
 </pre></div>
 </div>
+</div>
+<div class="section" id="functions">
+<h3>Functions<a class="headerlink" href="#functions" title="Permalink to this headline">¶</a></h3>
+<p>Functions are a special procedure type that do not cause any <em>side effects</em> and
+only return a value. A function causes a side effect if it also modifies some
+external state. This might include, for instance, changing the value of a global
+variable, or modifying the contents of a referenced array. To prevent this from
+happening, functions cannot write to global variables or referenced parameters,
+invoke processes or use input or output operators.</p>
 <p>A function is defined in the same way as a process except with the <tt class="docutils literal"><span class="pre">func</span></tt>
 keyword, it must also complete with a <tt class="docutils literal"><span class="pre">return</span></tt> statement. The following
 function recursively calculates the <tt class="docutils literal"><span class="pre">n</span></tt> th Fibonacci number:</p>
-<div class="highlight-none"><div class="highlight"><pre>func fib(n: int) is
+<div class="highlight-none"><div class="highlight"><pre>func fib(val n) is
   if n &gt; 1
   then return fib(n-1) + fib(n-2)
   else if n = 0 then return 0 else return 1
@@ -414,31 +438,29 @@ function recursively calculates the <tt class="docutils literal"><span class="pr
 <p>Functions can be called in the same way as processes or as part of an
 expression, as it is in the above example.  The formal parameters of a function
 or process may only be of integer or integer array reference types.</p>
+</div>
 <div class="section" id="scoping">
-<h4>Scoping<a class="headerlink" href="#scoping" title="Permalink to this headline">¶</a></h4>
+<h3>Scoping<a class="headerlink" href="#scoping" title="Permalink to this headline">¶</a></h3>
+<p>There are only two levels of scoping for variables in sire: global, at the
+program level, and local, at the process/function level. Variable declarations
+may be made either globally or locally, but value declarations may <em>only</em> be
+made globally.</p>
 <p>A process or function becomes visible only at the beginning of its definition.
 Hence, a procedure cannot be used before it is defined.</p>
 </div>
 <div class="section" id="recursion">
-<h4>Recursion<a class="headerlink" href="#recursion" title="Permalink to this headline">¶</a></h4>
+<h3>Recursion<a class="headerlink" href="#recursion" title="Permalink to this headline">¶</a></h3>
 <p>Recursion is permitted, but only for self-recursive procedures. Due to simple
 scoping for procedure names which would require the need for forward references,
 mutual-recursion is not supported.</p>
 </div>
-</div>
-<div class="section" id="program-structure">
-<h3>Program structure<a class="headerlink" href="#program-structure" title="Permalink to this headline">¶</a></h3>
-<p>A sire program consists of a set of <em>processes</em> and <em>functions</em> and
-possibly some global state. The structure of a sire program is as follows.
-Any value, variable or port global declarations are made at the beginning,
-before any process or function definitions. Processes and functions may then be
-defined in any order. A program must contain a process called <tt class="docutils literal"><span class="pre">main</span></tt> as
-execution will start at this point. For example, a complete example sorting
-program may be defined as:</p>
+<div class="section" id="a-program">
+<h3>A program<a class="headerlink" href="#a-program" title="Permalink to this headline">¶</a></h3>
+<p>For example, a complete example sorting program may be defined as:</p>
 <div class="highlight-none"><div class="highlight"><pre>val LEN := 10;
 var a[LEN];
 
-proc sort(a[len], val len) is
+proc sort(var a[len], val len) is
   var i;
   var j;
   var tmp;
@@ -458,8 +480,8 @@ proc main() is
 </div>
 </div>
 </div>
-<div class="section" id="process-creation">
-<h2>Process creation<a class="headerlink" href="#process-creation" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="explicit-process-creation">
+<h2>Explicit process creation<a class="headerlink" href="#explicit-process-creation" title="Permalink to this headline">¶</a></h2>
 <p>Process creation is the key feature of the sire language and is provided with
 the <tt class="docutils literal"><span class="pre">on</span></tt> statement. Semantically, <tt class="docutils literal"><span class="pre">on</span></tt> is exactly the same as a regular
 process call, except that the computation is performed remotely. It is
@@ -493,6 +515,12 @@ var b[10];
 <p>allows the thread to execute another sorting process whilst the spawned one is
 performed remotely.</p>
 </div>
+<div class="section" id="builtins">
+<h2>Builtins<a class="headerlink" href="#builtins" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="keywords">
+<h2>Keywords<a class="headerlink" href="#keywords" title="Permalink to this headline">¶</a></h2>
+</div>
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
 <table class="docutils citation" frame="void" id="hoare78" rules="none">
@@ -523,13 +551,48 @@ performed remotely.</p>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="">Language definition</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#introduction">Introduction</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#variables-and-values">Variables and values</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#structuring">Structuring</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#process-creation">Process creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#variables-and-values">Variables and values</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#values">Values</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#numbers">Numbers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#variables">Variables</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#arrays">Arrays</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#expressions">Expressions</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#operators">Operators</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#operations-on-values">Operations on values</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#sequential-structuring">Sequential structuring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#sequential-composition">Sequential composition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-while-loop">The <tt class="docutils literal"><span class="pre">while</span></tt> loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-for-loop">The <tt class="docutils literal"><span class="pre">for</span></tt> loop</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-if-statement">The <tt class="docutils literal"><span class="pre">if</span></tt> statement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#the-skip-statement">The <tt class="docutils literal"><span class="pre">skip</span></tt> statement</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#parallel-structuring">Parallel structuring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#parallel-composition">Parallel composition</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#replicated-parallelism">Replicated parallelism</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#disjointness">Disjointness</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#program-structuring">Program structuring</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#processes">Processes</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#functions">Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#scoping">Scoping</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#recursion">Recursion</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#a-program">A program</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="#explicit-process-creation">Explicit process creation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#builtins">Builtins</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#keywords">Keywords</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#references">References</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="internals.html">Internals</a></li>
+<li class="toctree-l1"><a class="reference internal" href="source.html">Source code</a></li>
 </ul>
 
 <div id="searchbox" style="display: none">

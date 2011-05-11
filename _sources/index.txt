@@ -2,8 +2,9 @@ sire documentation
 ==================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
 
    usage
    definition
    internals
+   source
