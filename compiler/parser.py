@@ -98,18 +98,6 @@ class Parser(object):
         self.parse_error('Syntax error', p, 1)
         p[0] = None
 
-    # Type specifiers ==========================================
-
-    # 'val' type specifier
-    def p_type_specifier_val(self, p):
-        'type_specifier : VAL'
-        p[0] = 'val'
-
-    # 'var' type specifier
-    def p_type_specifier_var(self, p):
-        'type_specifier : VAR'
-        p[0] = 'var'
-
     # Variable declarations ====================================
 
     def p_var_decls(self, p):
@@ -119,15 +107,13 @@ class Parser(object):
 
     # Variable declaration sequence (return a single list)
     def p_var_decl_seq(self, p):
-        '''var_decl_seq : var_decl SEMI
-                        | var_decl SEMI var_decl_seq'''
-        # Only concatenate p[3] if it's not null (to recover from errors).
-        if len(p) == 3:
-            p[0] = [p[1]]
-        if len(p) == 4 and not p[3]:
-            p[0] = [p[1]]
-        elif len(p) == 4 and p[3]:
-            p[0] = [p[1]] + p[3]
+        'var_decl_seq : var_decl SEMI'
+        p[0] = [p[1]]
+
+    # Variable declaration sequence (return a single list)
+    def p_var_decl_seq_(self, p):
+        'var_decl_seq : var_decl SEMI var_decl_seq'
+        p[0] = [p[1]] + p[3] if p[3] else [p[1]]
 
     # Variable declaration sequence error
     def p_var_decl_seq_err(self, p):
@@ -146,18 +132,14 @@ class Parser(object):
         p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], self.coord(p))
 
     # Array declaration
-    def p_var_decl_array(self, p):
-        '''var_decl : VAR name LBRACKET RBRACKET
-                    | VAR name LBRACKET expr RBRACKET'''
-        p[0] = ast.Decl(p[2], 
-                Type(p[1], 'array' if len(p)==6 else 'alias'), 
-                p[4] if len(p)==6 else None, self.coord(p))
+    def p_var_decl_array_ref(self, p):
+        'var_decl : VAR name LBRACKET RBRACKET'
+        p[0] = ast.Decl(p[2], Type('ref', 'array'), None, self.coord(p))
 
-    # Port declaration
-    #def p_var_decl_port(self, p):
-    #    'var_decl : PORT name COLON expr'
-    #    p[0] = ast.Decl(p[2], Type('port', 'single'), p[4], 
-    #            self.coord(p))
+    # Array declaration
+    def p_var_decl_array(self, p):
+        'var_decl : VAR name LBRACKET expr RBRACKET'
+        p[0] = ast.Decl(p[2], Type('var', 'array'), p[4], self.coord(p))
 
     # Process call =============================================
 
@@ -169,20 +151,18 @@ class Parser(object):
 
     def p_proc_defs(self, p):
         '''proc_defs : proc_def_seq
-                      | empty'''
+                     | empty'''
         p[0] = ast.Defs(p[1] if len(p)==2 else None, self.coord(p))
 
     # Procedure sequence (return a single list)
     def p_proc_def_seq(self, p):
-        '''proc_def_seq : proc_def
-                         | proc_def proc_def_seq'''
-        # Only concatenate p[2] if it's not null (to recover from errors).
-        if len(p) == 2:
-            p[0] = [p[1]]
-        elif len(p) == 3 and not p[2]:
-            p[0] = [p[1]]
-        elif len(p) == 3 and p[2]:
-            p[0] = [p[1]] + p[2]
+        'proc_def_seq : proc_def'
+        p[0] = [p[1]]
+
+    # Procedure sequence (return a single list)
+    def p_proc_def_seq_(self, p):
+        'proc_def_seq : proc_def proc_def_seq'
+        p[0] = [p[1]] + p[2] if p[2] else [p[1]]
 
     # Process
     def p_proc_def_proc(self, p):
@@ -217,21 +197,30 @@ class Parser(object):
 
     # Formal parameter sequence (return a single list)
     def p_formals_seq(self, p):
-        '''formals_seq : param_decl
-                       | param_decl COMMA formals_seq'''
-        p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
+        'formals_seq : param_decl'
+        p[0] = [p[1]]
 
-    # single parameter
-    def p_param_decl_var(self, p):
-        'param_decl : type_specifier name'
-        p[0] = ast.Param(p[2], Type(p[1], 'single'), None,
-                self.coord(p))
+    # Formal parameter sequence (return a single list)
+    def p_formals_seq_(self, p):
+        'formals_seq : param_decl COMMA formals_seq'
+        p[0] = [p[1]] + p[3]
 
-    # Array (alias) parameter
-    def p_param_decl_alias(self, p):
-        'param_decl : type_specifier name LBRACKET expr RBRACKET'
-        p[0] = ast.Param(p[2], Type(p[1], 'alias'), p[4],
-                self.coord(p))
+    # Single value parameter
+    def p_param_decl_val(self, p):
+        'param_decl : VAL name'
+        p[0] = ast.Param(p[2], Type('val', 'single'), None, self.coord(p))
+
+    # Single reference parameter
+    def p_param_decl_ref(self, p):
+        'param_decl : VAR name'
+        p[0] = ast.Param(p[2], Type('ref', 'single'), None, self.coord(p))
+
+    # Array reference parameter
+    # TODO: record where the reference is 'var' or 'val'.
+    def p_param_decl_array_ref(self, p):
+        '''param_decl : VAL name LBRACKET expr RBRACKET
+                      | VAR name LBRACKET expr RBRACKET'''
+        p[0] = ast.Param(p[2], Type('ref', 'array'), p[4], self.coord(p))
 
     # Statement blocks =========================================
     
@@ -242,15 +231,13 @@ class Parser(object):
 
     # Seq
     def p_stmt_seq(self, p):
-        '''stmt_seq : stmt
-                    | stmt SEMI stmt_seq'''
-        # Only concatenate p[3] if it's not null (to recover from errors).
-        if len(p) == 2:
-            p[0] = [p[1]]
-        elif len(p) == 4 and not p[3]:
-            p[0] = [p[1]]
-        elif len(p) == 4 and p[3]:
-            p[0] = [p[1]] + p[3]
+        'stmt_seq : stmt'
+        p[0] = [p[1]]
+
+    # Seq
+    def p_stmt_seq_(self, p):
+        'stmt_seq : stmt SEMI stmt_seq'
+        p[0] = [p[1]] + p[3] if p[3] else [p[1]]
 
     # Par block
     def p_stmt_par_block(self, p):
@@ -290,19 +277,11 @@ class Parser(object):
         'stmt : left ASS expr'
         p[0] = ast.StmtAss(p[1], p[3], self.coord(p))
 
-    def p_stmt_aliases(self, p):
+    def p_stmt_alias(self, p):
         'stmt : name ALIASES name LBRACKET expr COLON expr RBRACKET'
         p[0] = ast.StmtAlias(
                 p[1], ast.ElemSlice(p[3], p[5], p[7], self.coord(p)),
                 self.coord(p))
-
-    #def p_stmt_in(self, p):
-    #    'stmt : left IN expr'
-    #    p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
-
-    #def p_stmt_out(self, p):
-    #    'stmt : left OUT expr'
-    #    p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
 
     def p_stmt_if(self, p):
         'stmt : IF expr THEN stmt ELSE stmt'
@@ -465,5 +444,6 @@ class Parser(object):
         if t:
             self.parse_error('before: {}'.format(t.value), self.tcoord(t))
         else:
-            self.parse_error('at end of input', discard=False)
+            #self.parse_error('at end of input', discard=False)
+            pass
 

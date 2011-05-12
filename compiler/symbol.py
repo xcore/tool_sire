@@ -65,7 +65,7 @@ class SymbolTable(object):
                     .format(name, type, self.curr_scope))
 
     def insert(self, name, type, coord=None):
-        """ Insert a new symbol in the table if it doesn't already exisit in the
+        """ Insert a new symbol in the table if it doesn't already exist in the
             current scope.
         """
         if not self.lookup_scoped(name):

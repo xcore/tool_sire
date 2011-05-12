@@ -1,5 +1,3 @@
-val N := 8
-
 %proc try(val i) is
 %  initialise selection of positions for ith queen
 %  while successful or no more positions do
@@ -28,23 +26,33 @@ val N := 8
 %safe:
 %    a[j] and b[i+j] and c[i-j]
 
+val N := 4;
+
 % Try queen i in position j
 proc try(val i, var x[N], var a[N], var b[2*N], var c[2*N], var succ) is
-{ j := 1
-; while ~succ or j<N do
-  { succ := false
-    % safe
-  ; if a[j] and b[i+j] and c[i-j+N] then
-      % set-queen
-      x[i] := j ; a[j] := false ; b[i+j] := false ; c[i-j+N] := false
-      if i < N then
+  var j;
+{ printstr("Trying i=");printvalln(i)
+; j := 0
+; succ := false
+; while (~succ) and (j<N) do
+   { succ := false
+   % safe
+   ; printstr("Trying j=");printvalln(j);
+    if a[j] and b[i+j] and c[i-j+N] then
+    { % set-queen
+      printstr("Setting queen ");printval(i);printstr(",");printvalln(j);
+      x[i]:=j ; a[j]:=false ; b[i+j]:=false ; c[i-j+N]:=false
+    ; if i < N then
       { try(i+1, x, a, b, c, succ)
-      ; if ~succ
+      ; if ~succ then
         % remove-queen
-        then a[j] := true ; b[i+j] := true ; c[i-j+N] := true
+        { printstr("Removing queen ");printval(i);printstr(",");printvalln(j)
+        ; a[j]:=true ; b[i+j]:=true ; c[i-j+N]:=true 
+        }
         else skip
       }
-      else succ = true 
+      else succ := true
+    }
     else skip
   ; j := j + 1
   }
@@ -57,12 +65,13 @@ proc main() is
   var c[2*N];
   var succ;
   var i;
-{ for i:=0 to N-1 do a[i] := true
-; for i:=0 to 2*N-1 do b[i] := true
-; for i:=0 to 2*N-1 do c[i] := true
+{ for i:=0 to N-1     do a[i] := true
+; for i:=0 to (2*N)-1 do b[i] := true
+; for i:=0 to (2*N)-1 do c[i] := true
 ; try(0, x, a, b, c, succ)
-; if succ then 
-    for i:=0 to N-1 do printval(x[i])
-  else skip
+%; if succ then 
+;  for i:=0 to N-1 do 
+  { printval(x[i]) ; printstr(" ") }
+%  else skip
 ; println()
 }

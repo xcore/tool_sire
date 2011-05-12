@@ -237,9 +237,14 @@ def main(args):
 
     # Handle any specific compilation errors
     except Error as e:
-        #sys.stderr.write('Error: {}\n'.format(e))
+        sys.stderr.write('Error: {}\n'.format(e))
         return 1
     
+    # Parser attribute error
+    #except AttributeError:
+    #    sys.stderr.write('Attribute error')
+    #    return 1
+
     # Handle a keyboard interrupt (ctrl+c)
     except KeyboardInterrupt:
         sys.stderr.write('Interrupted')

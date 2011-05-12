@@ -3,7 +3,7 @@
 val N := 10;
 
 % Print the contents of an array on a single line.
-proc print_array(val a[n], val n) is
+proc print_array(var a[n], val n) is
   var i;
 { for i:=0 to n-1 do 
   { printval(a[i]) 
@@ -13,7 +13,7 @@ proc print_array(val a[n], val n) is
 }
 
 % Slice an array of length n into m sections of length n/m.
-proc print_slices(val a[n], val n, val m) is
+proc print_slices(var a[n], val n, val m) is
   var i;
   var l;
 { l := n / m

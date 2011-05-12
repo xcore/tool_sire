@@ -13,7 +13,7 @@ from type import Type
 PROC_TYPE = Type('proc', 'procedure')  
 FUNC_TYPE = Type('func', 'procedure')
 SVAL_PARAM = Param('v', Type('val', 'single'), None) 
-AVAL_PARAM = Param('v', Type('val', 'alias'), None) 
+AVAL_PARAM = Param('v', Type('ref', 'array'), None) 
 
 class Builtin(object):
     def __init__(self, definition, mobile):

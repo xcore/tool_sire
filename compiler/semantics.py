@@ -184,6 +184,10 @@ class Semantics(NodeWalker):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
+        # Children
+        if node.expr:
+            self.expr(node.expr)
+
     # Procedure definitions ===============================
 
     def defs(self, node):
@@ -223,10 +227,12 @@ class Semantics(NodeWalker):
         if not self.sym.insert(node.name, node.type, node.coord):
             self.redecl_error(node.name, node.coord)
 
-        # TODO: For alias parameters, check expr is composed of param values
-        if node.type.form == 'alias':
-            pass
-            #if not self.get_expr_type(node.expr).form == 'alias'
+        # TODO: For array reference parameters, check length expr is composed of
+        # param values
+
+        # Children
+        if node.expr:
+            self.expr(node.expr)
 
     # Statements ==========================================
 
@@ -251,6 +257,8 @@ class Semantics(NodeWalker):
         else:
             self.nodecl_error(node.name, 'process', node.coord)
 
+        # TODO: check actual-formal types match, e.g. with refs.
+
         # Children
         [self.expr(x) for x in node.args.expr]
 
@@ -260,8 +268,9 @@ class Semantics(NodeWalker):
         if not self.check_elem_types(node.left, [
                Type('val', 'single'), 
                Type('var', 'single'), 
-               Type('val', 'sub'),
-               Type('var', 'sub')]):
+               Type('ref', 'single'), 
+               Type('var', 'sub'),
+               Type('ref', 'sub'),]):
             self.type_error('assignment', node.left.name, node.coord)
 
         # Children
@@ -270,14 +279,14 @@ class Semantics(NodeWalker):
 
     def stmt_alias(self, node):
 
-        if self.sym.check_form(node.name, ['alias']):
+        if self.sym.check_form(node.name, ['array']):
             node.symbol = self.sym.lookup(node.name)
             self.sym.mark_decl(node.name)
         else:
-            self.type_error('alias', node.dest, node.coord)
+            self.type_error('array', node.dest, node.coord)
         
-        if not self.sym.check_form(node.slice.name, ['var', 'alias', 'array']):
-            self.type_error('alias', node.slice.name, node.coord)
+        if not self.sym.check_form(node.slice.name, ['array']):
+            self.type_error('array', node.slice.name, node.coord)
 
         # Children
         self.expr(node.slice)
@@ -345,11 +354,11 @@ class Semantics(NodeWalker):
     def expr_unary(self, node):
         """ Unary elements can only be value, variable or array subscript types.
         """
-        if not self.check_elem_types(node.elem, [
-                Type('val', 'single'),
-                Type('var', 'single'), 
-                Type('var', 'sub')]):
-            self.type_error('unary', node.elem, node.coord)
+        #if not self.check_elem_types(node.elem, [
+        #        Type('val', 'single'),
+        #        Type('var', 'single'), 
+        #        Type('var', 'sub')]):
+        #    self.type_error('unary', node.elem, node.coord)
 
         # Children
         self.elem(node.elem)
@@ -360,9 +369,10 @@ class Semantics(NodeWalker):
         if not self.check_elem_types(node.elem, [
                 Type('val', 'single'),
                 Type('var', 'single'), 
-                #Type('var', 'array'), 
+                Type('ref', 'single'), 
                 Type('val', 'sub'), 
-                Type('var', 'sub')]):
+                Type('var', 'sub'), 
+                Type('ref', 'sub')]):
             self.type_error('binop right element', node.elem, node.coord)
        
         # Children

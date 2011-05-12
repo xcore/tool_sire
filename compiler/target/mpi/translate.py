@@ -89,13 +89,26 @@ class TranslateMPI(NodeWalker):
         """
         return builtin_conversion[name] if name in builtin_conversion else name
 
-    def arguments(self, arg_list):
-        """ Build the list of arguments. If there is an array reference 
-            proper, it must be loaded manually.
+    def arguments(self, name, arg_list):
+        """ Build the list of arguments.
+             - Take the address of variables for reference parameters.
+             - Don't dereference references for reference parameters.
         """
         args = []
-        for x in arg_list.children():
+        for (i, x) in enumerate(arg_list.children()):
             arg = None
+            
+            # For single variable references, we must give the address of
+            # variable parameters.
+            t = self.sem.sig.lookup_param_type(name, i)
+            if t == Type('ref', 'single'):
+                assert isinstance(x, ast.ExprSingle)
+                assert isinstance(x.elem, ast.ElemId)
+                if x.elem.symbol.type == Type('var', 'single'):
+                    arg = '&'+x.elem.name
+                elif x.elem.symbol.type == Type('ref', 'single'):
+                    arg = x.elem.name
+            
             args.append(arg if arg else self.expr(x))
         return ', '.join(args)
 
@@ -140,7 +153,7 @@ class TranslateMPI(NodeWalker):
 
         if node.type == Type('var', 'array'):
             s = 'int {}[{}];'.format(s, self.expr(node.expr))
-        elif node.type == Type('var', 'alias'):
+        elif node.type == Type('ref', 'array'):
             s = 'int *'+s+';'
         elif node.type == Type('var', 'single'):
             s = 'int {}'.format(s)+';'
@@ -180,12 +193,12 @@ class TranslateMPI(NodeWalker):
 
         if node.type == Type('val', 'single'):
             s = 'int '+s
-        elif node.type == Type('var', 'single'):
+        elif node.type == Type('ref', 'single'):
             s = 'int *'+s
-        elif node.type == Type('var', 'alias'):
+        elif node.type == Type('ref', 'array'):
             s = 'int '+s+'[]'
-        elif node.type == Type('val', 'alias'):
-            s = 'int '+s+'[]'
+        else:
+            assert 0
 
         return s
 
@@ -214,7 +227,8 @@ class TranslateMPI(NodeWalker):
 
     def stmt_pcall(self, node):
         self.out('{}({});'.format(
-            self.procedure_name(node.name), self.arguments(node.args)))
+            self.procedure_name(node.name), 
+            self.arguments(node.name, node.args)))
 
     def stmt_ass(self, node):
         self.out('{} = {};'.format(
@@ -255,7 +269,7 @@ class TranslateMPI(NodeWalker):
         closure_size = 2 + num_procs;
         for (i, x) in enumerate(node.pcall.args.expr):
             t = self.sem.sig.lookup_param_type(proc_name, i)
-            if t.form == 'alias': closure_size = closure_size + 3
+            if t.form == 'array': closure_size = closure_size + 3
             elif t.form == 'single': closure_size = closure_size + 2 
 
         self.comment('On')
@@ -278,11 +292,11 @@ class TranslateMPI(NodeWalker):
                 t = self.sem.sig.lookup_param_type(proc_name, i)
 
                 # If the parameter type is an array reference
-                if t.form == 'alias':
+                if t == Type('ref', 'array'):
 
                     # Output the length of the array
                     q = self.sem.sig.lookup_array_qualifier(proc_name, i)
-                    self.comment('alias')
+                    self.comment('array reference')
                     self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
@@ -338,7 +352,8 @@ class TranslateMPI(NodeWalker):
         return self.elem(node.elem)
 
     def expr_unary(self, node):
-        return '({}{})'.format(node.op, self.elem(node.elem))
+        return '({}{})'.format(
+                op_conversion[node.op], self.elem(node.elem))
 
     def expr_binop(self, node):
         return '{} {} {}'.format(self.elem(node.elem), 
@@ -361,7 +376,11 @@ class TranslateMPI(NodeWalker):
 
     def elem_fcall(self, node):
         return '{}({})'.format(self.procedure_name(node.name), 
-                self.arguments(node.args))
+                self.arguments(node.name, node.args))
+
+    def elem_pcall(self, node):
+        return '{}({})'.format(self.procedure_name(node.name), 
+                self.arguments(node.name, node.args))
 
     def elem_number(self, node):
         return '{}'.format(node.value)
@@ -376,5 +395,9 @@ class TranslateMPI(NodeWalker):
         return '{}'.format(node.value)
 
     def elem_id(self, node):
-        return node.name
+        #print('{} {}'.format(node.symbol.type, node.name))
+        if node.symbol.type == Type('ref', 'single'):
+            return '*'+node.name
+        else:
+            return node.name
 

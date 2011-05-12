@@ -12,33 +12,21 @@ import semantics
 # Valid actual parameter types that can be taken by each formal type.
 param_conversions = {
   
-  Type('var', 'single') : [
-    Type('var', 'single'), 
-    Type('var', 'sub'),
-    Type('val', 'sub'),
-    Type('var', 'array'), # Slice of length 1
-    Type('var', 'alias'), # Slice of length 1
-    ],
-
   Type('val', 'single') : [
     Type('var', 'single'), 
     Type('val', 'single'), 
     Type('val', 'sub'),
     Type('var', 'sub'),
-    Type('var', 'array'), # Slice of length 1
-    Type('var', 'alias'), # Slice of length 1
     ],
 
-  Type('var', 'alias') : [
-    Type('var', 'array'), 
-    Type('val', 'alias'),
-    Type('var', 'alias'),
+  Type('ref', 'single') : [
+    Type('var', 'single'), 
+    Type('ref', 'single'), 
     ],
-  
-  Type('val', 'alias') : [
-    Type('var', 'array'),
-    Type('val', 'alias'),
-    Type('var', 'alias'),
+
+  Type('ref', 'array') : [
+    Type('var', 'array'), 
+    Type('ref', 'array'), 
     ],
 }
 
@@ -68,8 +56,7 @@ class SignatureTable(object):
             qualifying paramemer in the ordered set of formal parameters.
         """
         params = self.tab[name].params
-        assert(params[i].type == Type('val', 'alias') 
-                or params[i].type == Type('var', 'alias'))
+        assert(params[i].type == Type('ref', 'array')) 
         qualifier = params[i].expr.elem.name
         for (i, x) in enumerate(params):
             if x.name == qualifier: return i

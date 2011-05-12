@@ -89,7 +89,7 @@ class Dump(NodeVisitor):
     def visit_stmt_on(self, node):
         self.out(node)
 
-    def visit_stmt_aliases(self, node):
+    def visit_stmt_alias(self, node):
         self.out(node)
 
     def visit_stmt_return(self, node):
