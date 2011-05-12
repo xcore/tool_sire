@@ -38,19 +38,18 @@ proc body(val x, val y, val dx, val dy) is
 ; plot(i)
 }
 
-proc inner(val y, val dx, val dy) is
-  var x;
-{ par x:=0 for XDIM do body(y, dx, dy)
-; println()
-}
-
 proc compute() is
   var dx;
   var dy;
   var y;
+  var x;
 { dx := div(fix(xmax-xmin), fix(XDIM))
 ; dy := div(fix(ymax-ymin), fix(YDIM))
-; par y:=0 for YDIM do inner(y, dx, dy)
+; par y:=0 for YDIM do
+  { par x:=0 for XDIM do 
+      body(y, dx, dy)
+  ; println()
+  }
 }
 
 proc main() is
