@@ -9,7 +9,8 @@ import os
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 
 def init():
-    """ Initialise configuration variables.
+    """
+    Initialise configuration variables.
     """
     global INSTALL_PATH
     INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
@@ -20,7 +21,8 @@ def init():
         raise Exception("no '"+INSTALL_PATH_env+"' enviromnent variable")
 
 def init_paths():
-    """ Initialise various paths.
+    """
+    Initialise various paths.
     """
     globals()['SYSTEM_PATH'] = INSTALL_PATH+'/system'
     

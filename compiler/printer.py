@@ -14,7 +14,8 @@ SEQ_INDENT = ';' + ' '*(INDENT-1)
 PAR_INDENT = '|' + ' '*(INDENT-1) 
 
 class Printer(NodeWalker):
-    """ A walker class to pretty-print the AST in the langauge syntax 
+    """ 
+    A walker class to pretty-print the AST in the langauge syntax.
     """
     def __init__(self, buf=sys.stdout):
         super(Printer, self).__init__()
@@ -22,12 +23,15 @@ class Printer(NodeWalker):
         self.indent = [' '*INDENT]
 
     def out(self, d, s):
-        """ Write an indented line """
+        """ 
+        Write an indented line.
+        """
         self.buf.write(self.indt(d)+s)
 
     def indt(self, d):
-        """ Produce an indent. If its the first statement of a seq or par block
-            we only produce a single space. 
+        """ 
+        Produce an indent. If its the first statement of a seq or par block we
+        only produce a single space.
         """
         return (' ' if self.indent[-1]==FIRST_INDENT else 
             (' '*INDENT)*(d-1) + (self.indent[-1] if d>0 else ''))
@@ -49,14 +53,12 @@ class Printer(NodeWalker):
 
     def decl(self, node):
         s = '{}'.format(node.name)
-        if node.type.form == 'array':
+        if node.type == Type('var', 'array'):
             s += '[{}]'.format(self.expr(node.expr))
-        elif node.type.form == 'alias':
+        elif node.type == Type('ref', 'array'):
             s += '[]'
         if node.type.specifier == 'val':
             s = 'val {} := {}'.format(s, self.expr(node.expr))
-        elif node.type.specifier == 'port':
-            s = 'port {} : {}'.format(s, self.expr(node.expr))
         else:
             s = '{} {}'.format(node.type.specifier, s)
         return s
@@ -82,7 +84,7 @@ class Printer(NodeWalker):
 
     def param(self, node):
         s = '{} {}'.format(node.type.specifier, node.name)
-        if node.type.form == 'alias':
+        if node.type.form == 'array':
             s += '[{}]'.format(self.expr(node.expr))
         return s
 

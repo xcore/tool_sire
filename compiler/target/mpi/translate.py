@@ -52,7 +52,8 @@ builtin_conversion = {
   }
 
 class TranslateMPI(NodeWalker):
-    """ A walker class to pretty-print the AST in the langauge syntax 
+    """ 
+    A walker class to pretty-print the AST in the langauge syntax.
     """
     def __init__(self, semantics, children, buf):
         super(TranslateMPI, self).__init__()
@@ -64,17 +65,20 @@ class TranslateMPI(NodeWalker):
         self.parent = None
 
     def out(self, s):
-        """ Write an indented line
+        """ 
+        Write an indented line.
         """
         self.blocker.insert(s)
 
     def comment(self, s):
-        """ Write a comment
+        """ 
+        Write a comment.
         """
         self.out('// '+s)
 
     def stmt_block(self, stmt):
-        """ Decide whether the statement needs a block
+        """ 
+        Decide whether the statement needs a block.
         """
         if not (isinstance(stmt, ast.StmtSeq) 
                 or isinstance(stmt, ast.StmtPar)):
@@ -85,14 +89,16 @@ class TranslateMPI(NodeWalker):
             self.stmt(stmt)
         
     def procedure_name(self, name):
-        """ If a procedure name has a conversion, return it
+        """ 
+        If a procedure name has a conversion, return it.
         """
         return builtin_conversion[name] if name in builtin_conversion else name
 
     def arguments(self, name, arg_list):
-        """ Build the list of arguments.
-             - Take the address of variables for reference parameters.
-             - Don't dereference references for reference parameters.
+        """ 
+        Build the list of arguments.
+         - Take the address of variables for reference parameters.
+         - Don't dereference references for reference parameters.
         """
         args = []
         for (i, x) in enumerate(arg_list.children()):
@@ -113,7 +119,8 @@ class TranslateMPI(NodeWalker):
         return ', '.join(args)
 
     def header(self):
-        """ Insert inclusions.
+        """ 
+        Insert inclusions.
         """
         self.out('#include <mpi.h>')
         #self.out('#include <stdlib.h>')
@@ -211,7 +218,8 @@ class TranslateMPI(NodeWalker):
         self.blocker.end()
 
     def stmt_par(self, node):
-        """ Generate a parallel block
+        """ 
+        Generate a parallel block.
         """
         self.blocker.begin()
         self.comment('Parallel block')
@@ -259,7 +267,8 @@ class TranslateMPI(NodeWalker):
         self.comment('<replicator statement>')
 
     def stmt_on(self, node):
-        """ Generate an on statement 
+        """ 
+        Generate an on statement.
         """
         proc_name = node.pcall.name
         num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
@@ -302,12 +311,12 @@ class TranslateMPI(NodeWalker):
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
                    
                     # If the elem is a proper array, load the address
-                    if x.elem.symbol.type.form == 'array':
+                    if x.elem.symbol.type == Type('var', 'array'):
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
                     # Otherwise, just assign
-                    if x.elem.symbol.type.form == 'alias':
+                    if x.elem.symbol.type == Type('ref', 'array'):
                         self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
                 
                 # Otherwise, a var or val single
@@ -368,9 +377,9 @@ class TranslateMPI(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        # If source is an array take the address, if alias just the value
+        # If source is an array take the address, if a reference then just the value
         address = ''+node.name
-        if node.symbol.type.form == 'array':
+        if node.symbol.type == Type('var', 'array'):
             address = '&'+address
         return '({} + {})'.format(address, self.expr(node.begin))
 

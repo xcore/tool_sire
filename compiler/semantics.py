@@ -28,7 +28,8 @@ elem_types = {
   }
 
 class Semantics(NodeWalker):
-    """ An AST visitor class to check the semantics of a sire program
+    """ 
+    An AST visitor class to check the semantics of a sire program
     """
     def __init__(self, error):
         self.depth = 0
@@ -54,7 +55,8 @@ class Semantics(NodeWalker):
                 self.proc_names.append(x.definition.name)
 
     def get_elem_type(self, elem):
-        """ Given an element, return its type
+        """ 
+        Given an element, return its type
         """
         
         # If its an expression group, get_expr_type
@@ -93,7 +95,8 @@ class Semantics(NodeWalker):
             return elem_types[util.camel_to_under(elem.__class__.__name__)]
 
     def get_expr_type(self, expr):
-        """ Given an expression work out its type
+        """ 
+        Given an expression work out its type
         """
         
         #If it's a single value, lookup the type
@@ -104,7 +107,8 @@ class Semantics(NodeWalker):
         return Type('var', 'single')
 
     def check_elem_types(self, elem, types):
-        """ Given an elem and a set of types, check if one matches
+        """ 
+        Given an elem and a set of types, check if one matches
         """
         t = self.get_elem_type(elem)
         return True if t and any([x==t for x in types]) else False
@@ -112,56 +116,64 @@ class Semantics(NodeWalker):
     # Errors and warnings =================================
 
     def nodecl_error(self, name, specifier, coord):
-        """ No declaration error
+        """ 
+        No declaration error
         """
         self.error.report_error(
                 "{} '{}' not declared"
                 .format(specifier, name), coord)
 
     def badargs_error(self, name, coord):
-        """ No definition error 
+        """ 
+        No definition error 
         """
         self.error.report_error(
                 "invalid arguments for procedure '{}' "
                 .format(name), coord)
 
     def redecl_error(self, name, coord):
-        """ Re-declaration error 
+        """
+        Re-declaration error 
         """
         self.error.report_error(
                 "variable '{}' already declared in scope"
                 .format(name), coord)
 
     def redef_error(self, name, coord):
-        """ Re-definition error 
+        """ 
+        Re-definition error 
         """
         self.error.report_error(
                 "procedure '{}' already declared"
                 .format(name), coord)
 
     def procedure_def_error(self, name, coord):
-        """ Re-definition error 
+        """ 
+        Re-definition error 
         """
         self.error.report_error(
                 "procedure '{}' definition invalid"
                 .format(name), coord)
 
     def unused_warning(self, name, coord):
-        """ Unused variable warning
+        """ 
+        Unused variable warning
         """
         self.error.report_warning(
                 "variable '{}' declared but not used"
                 .format(name), coord)
 
     def type_error(self, msg, name, coord):
-        """ Mismatching type error
+        """ 
+        Mismatching type error
         """
         self.error.report_error(
                 "type error in {} with '{}'"
                 .format(msg, name), coord)
 
     def form_error(self, msg, name, coord):
-        """ Mismatching form error
+        """ 
+        Mismatching form error
         """
         self.error.report_error(
                 "form error in {} with '{}'"
@@ -220,7 +232,11 @@ class Semantics(NodeWalker):
     # Formals =============================================
     
     def formals(self, node):
-        [self.param(x) for x in node.children()]
+        """ 
+        Iterate over in parameters in reverse so length specifiers have been
+        declared, which should appear after the array reference they relate to.
+        """
+        [self.param(x) for x in reversed(node.children())]
 
     def param(self, node):
        
@@ -231,7 +247,7 @@ class Semantics(NodeWalker):
         # param values
 
         # Children
-        if node.expr:
+        if node.type == Type('ref', 'array'):
             self.expr(node.expr)
 
     # Statements ==========================================
@@ -352,7 +368,8 @@ class Semantics(NodeWalker):
         self.elem(node.elem)
 
     def expr_unary(self, node):
-        """ Unary elements can only be value, variable or array subscript types.
+        """
+        Unary elements can only be value, variable or array subscript types.
         """
         #if not self.check_elem_types(node.elem, [
         #        Type('val', 'single'),
@@ -364,7 +381,8 @@ class Semantics(NodeWalker):
         self.elem(node.elem)
 
     def expr_binop(self, node):
-        """ Binop (right) elements can only be singles or subscripts.
+        """
+        Binop (right) elements can only be singles or subscripts.
         """
         if not self.check_elem_types(node.elem, [
                 Type('val', 'single'),

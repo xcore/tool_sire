@@ -1,11 +1,8 @@
-%port led : 0x00010600;
-val LENGTH:=16;
+val N:=16;
 val THRESHOLD:=4;
-var a[LENGTH];
-var scratch[LENGTH];
 
 % Merge
-proc merge(var a[m], var b[n], var array[o], var scratch[o], 
+proc merge(var a[m], var b[n], var A[o], var S[o], 
     val m, val n, val o) is
   var i;
   var j;
@@ -16,73 +13,63 @@ proc merge(var a[m], var b[n], var array[o], var scratch[o],
 ; while (i < m) and (j < n) do 
   { if(a[i] <= b[j])
     then 
-    { scratch[k] := a[i]
+    { S[k] := a[i]
     ; i := i+1
     } 
     else 
-    { scratch[k] := b[j]
+    { S[k] := b[j]
     ; j := j+1 
     }
     ; k := k+1
   }
 ; if i<m then
     while i<m do
-    {  scratch[k] := a[i] 
+    { S[k] := a[i] 
     ; k := k+1
     ; i := i+1
     }
   else skip
 ; if j<n then 
     while j<n do
-    { scratch[k] := b[j] 
+    { S[k] := b[j] 
     ; k := k+1
     ; j := j+1
     }
   else skip
 
-  % Copy scratch back into the array
+ % Copy scratch back into the array
 ; for i:=0 to o-1 do
-    array[i] := scratch[i]
+    A[i] := S[i]
 }
 
 % Merge sort
-proc msort(val t, val n, var array[len], var scratch[len], val len) is
-  var a[];
-  var b[];
-  var sa[];
-  var sb[];
+proc msort(val t, val n, var A[len], var S[len], val len) is
   var i;
   var j;
-{ %led ! 1
-  if len > 1 then 
+{ if len > 1 then 
   { i := len / 2
   ; j := len - i
-  ; a aliases array[0:i]
-  ; b aliases array[i:len]
-  ; sa aliases scratch[0:i]
-  ; sb aliases scratch[i:len]
   ; if len > THRESHOLD then
-    { msort(t, n/2, a, sa, i) 
-    | on core[t+(n/2)] do msort(t+(n/2), n/2, b, sb, j) 
+    { msort(t, n/2, A[0:i], S[0:i], i) 
+    | on core[t+(n/2)] do msort(t+(n/2), n/2, A[i:len], S[i:len], j) 
     }
     else
-    { msort(t, n/2, a, sa, i) 
-    ; msort(t+(n/2), n/2, b, sb, j) 
+    { msort(t, n/2, A[0:i], S[0:i], i) 
+    ; msort(t+(n/2), n/2, A[i:len], S[i:len], j) 
     }
-  ; merge(a, b, array, scratch, i, j, len)
+  ; merge(A[0:i], A[i:len], A, S, i, j, len)
   }
   else skip
-%; led ! 0
 }
 
 % Ouput: 0123456789101112131415
 proc main() is
+  var A[N];
+  var S[N];
   var i;
-{ for i:=0 to LENGTH-1 do 
-    a[i] := LENGTH-(i+1)
-; msort(0, NUM_CORES, a, scratch, LENGTH)
-; for i:=0 to LENGTH-1 do 
-    printval(a[i])
+{ for i:=0 to N-1 do A[i] := N-(i+1)
+; msort(0, NUM_CORES, A, S, N)
+; for i:=0 to N-1 do printval(A[i])
 ; printstrln("")
 }
 

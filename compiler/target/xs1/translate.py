@@ -53,7 +53,8 @@ builtin_conversion = {
 }
 
 class TranslateXS1(NodeWalker):
-    """ A walker class to pretty-print the AST in the langauge syntax 
+    """ 
+    A walker class to pretty-print the AST in the langauge syntax.
     """
     def __init__(self, semantics, children, buf):
         super(TranslateXS1, self).__init__()
@@ -66,12 +67,14 @@ class TranslateXS1(NodeWalker):
         self.parent = None
 
     def out(self, s):
-        """ Write an indented line
+        """ 
+        Write an indented line.
         """
         self.blocker.insert(s)
 
     def asm(self, template, outop=None, inops=None, clobber=None):
-        """ Write an inline assembly statement
+        """ 
+        Write an inline assembly statement.
         """
         self.out('asm("{}"{}{}{}{}{}{});'.format(
             #template.replace('\n', ' ; '),
@@ -85,12 +88,14 @@ class TranslateXS1(NodeWalker):
             ))
 
     def comment(self, s):
-        """ Write a comment
+        """ 
+        Write a comment.
         """
         self.out('// '+s)
 
     def stmt_block(self, stmt):
-        """ Decide whether the statement needs a block
+        """ 
+        Decide whether the statement needs a block.
         """
         if not (isinstance(stmt, ast.StmtSeq) 
                 or isinstance(stmt, ast.StmtPar)):
@@ -101,45 +106,55 @@ class TranslateXS1(NodeWalker):
             self.stmt(stmt)
         
     def procedure_name(self, name):
-        """ If a procedure name has a conversion, return it
+        """ 
+        If a procedure name has a conversion, return it.
         """
         return builtin_conversion[name] if name in builtin_conversion else name
 
     def arguments(self, arg_list):
-        """ Build the list of arguments for a procedure call. If there is an
-            array reference proper, either directly or as a slice, it must be
-            loaded manually with an assembly inline which forces the compiler to
-            reveal the address.
+        """ 
+        Build the list of arguments for a procedure call. If there is an array
+        reference proper, either directly or as a slice, it must be loaded
+        manually with an assembly inline which forces the compiler to reveal the
+        address.
         """
         args = []
 
         for x in arg_list.children():
             arg = None
 
+            # Single-element expressions
             if isinstance(x, ast.ExprSingle):
-            
+           
+                # Whole arrays
                 if isinstance(x.elem, ast.ElemId):
-                    if x.elem.symbol.type.form == 'array':
+                    if x.elem.symbol.type == Type('var', 'array'):
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp,
                                 inops=[x.elem.name])
                         arg = tmp
                 
+                # Array slices: either create or use a reference
                 elif isinstance(x.elem, ast.ElemSlice):
-                    if x.elem.symbol.type.form == 'array':
+                    if x.elem.symbol.type == Type('var', 'array'):
                         tmp = self.blocker.get_tmp()
                         self.asm('add %0, %1, %2', outop=tmp,
                                 inops=[x.elem.name, '({})*{}'.format(
                                 self.expr(x.elem.begin),
                                 defs.BYTES_PER_WORD)])
                         arg = tmp
+                    elif x.elem.symbol.type == Type('ref', 'array'):
+                        arg = '{}+(({})*{})'.format(
+                                x.elem.name, self.expr(x.elem.begin),
+                                defs.BYTES_PER_WORD)
 
             args.append(self.expr(x) if not arg else arg)
 
         return ', '.join(args)
 
     def get_label(self):
-        """ Get the next unique label
+        """
+        Get the next unique label.
         """
         l = '_L{}'.format(self.label_counter)
         self.label_counter += 1
@@ -158,10 +173,11 @@ class TranslateXS1(NodeWalker):
         self.out('')
   
     def builtins(self):
-        """ Insert builtin code. We include builtin code directly here so that
-            it can be transformed in the build process to be made 'mobile'. This
-            is in contrast with the MPI implementation where there is only a
-            single binary.
+        """ 
+        Insert builtin code. We include builtin code directly here so that it
+        can be transformed in the build process to be made 'mobile'. This is in
+        contrast with the MPI implementation where there is only a single
+        binary.
         """
         s = read_file(config.XS1_SYSTEM_PATH+'/builtins.xc')
         self.out(s)
@@ -191,9 +207,9 @@ class TranslateXS1(NodeWalker):
         s = '{}'.format(node.name)
 
         # Forms
-        if node.type.form == 'array':
+        if node.type == Type('var', 'array'):
             s += '[{}]'.format(self.expr(node.expr))
-        elif node.type.form == 'alias':
+        elif node.type == Type('ref', 'array'):
             return 'unsigned '+s+';'
         
         # Specifiers
@@ -201,8 +217,6 @@ class TranslateXS1(NodeWalker):
             s = 'int {}'.format(s)+';'
         elif node.type.specifier == 'val':
             s = '#define {} {}'.format(s, self.expr(node.expr))
-        elif node.type.specifier == 'port':
-            s = 'const unsigned {} = {};'.format(s, self.expr(node.expr))
         else:
             s = '{} {}'.format(node.type.specifier, s)
         
@@ -237,20 +251,14 @@ class TranslateXS1(NodeWalker):
     def param(self, node):
         s = '{}'.format(node.name)
 
-        # Forms
-        if node.type.form == 'alias':
+        if node.type == Type('ref', 'array'):
             return 'unsigned '+s
-
-        # Specifiers
-        if node.type == Type('var', 'single'):
-            s = '&' + s
-        if (node.type.specifier == 'var' 
-                or node.type.specifier == 'val'):
-            s = 'int ' + s
-        if node.type.specifier == 'chanend':
-            s = 'unsigned '+s
-
-        return s
+        elif node.type == Type('ref', 'single'):
+            return 'int &'+s
+        elif node.type == Type('val', 'single'):
+            return 'int '+s
+        else:
+            assert 0
 
     # Statements ==========================================
 
@@ -261,8 +269,9 @@ class TranslateXS1(NodeWalker):
         self.blocker.end()
 
     def thread_set(self):
-        """ Generate the initialisation for a slave thread, in the body of a for
-            loop with _i indexing the thread number
+        """ 
+        Generate the initialisation for a slave thread, in the body of a for
+        loop with _i indexing the thread number.
         """
 
         # Get a synchronised thread
@@ -302,7 +311,8 @@ class TranslateXS1(NodeWalker):
         self.out('_threads[_i] = _t;')
 
     def stmt_par(self, node):
-        """ Generate a parallel block
+        """
+        Generate a parallel block.
         """
         self.blocker.begin()
         num_slaves = len(node.children()) - 1
@@ -387,8 +397,8 @@ class TranslateXS1(NodeWalker):
 
     def stmt_ass(self, node):
     
-        # If the target is an alias, then generate a store after
-        if node.left.symbol.type.form == 'alias':
+        # If the target is an array reference, then generate a store after
+        if node.left.symbol.type == Type('ref', 'array'):
             tmp = self.blocker.get_tmp()
             self.out('{} = {};'.format(tmp, self.expr(node.expr)))
             self.asm('stw %0, %1[%2]', 
@@ -425,7 +435,8 @@ class TranslateXS1(NodeWalker):
         self.stmt_block(node.stmt)
 
     def stmt_on(self, node):
-        """ Generate an on statement 
+        """
+        Generate an on statement.
         """
         proc_name = node.pcall.name
         num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
@@ -435,7 +446,7 @@ class TranslateXS1(NodeWalker):
         closure_size = 2 + num_procs;
         for (i, x) in enumerate(node.pcall.args.expr):
             t = self.sem.sig.lookup_param_type(proc_name, i)
-            if t.form == 'alias': closure_size = closure_size + 3
+            if t.form == 'array': closure_size = closure_size + 3
             elif t.form == 'single': closure_size = closure_size + 2 
 
         self.comment('On')
@@ -458,36 +469,40 @@ class TranslateXS1(NodeWalker):
                 t = self.sem.sig.lookup_param_type(proc_name, i)
 
                 # If the parameter type is an array reference
-                if t.form == 'alias':
+                if t == Type('ref', 'array'):
 
                     # Output the length of the array
                     q = self.sem.sig.lookup_array_qualifier(proc_name, i)
-                    self.comment('alias')
                     self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
                    
                     # If the elem is a proper array, load the address
-                    if x.elem.symbol.type.form == 'array':
+                    if x.elem.symbol.type == Type('var', 'array'):
+                        self.comment('Array')
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
                     # Otherwise, just assign
-                    if x.elem.symbol.type.form == 'alias':
+                    if x.elem.symbol.type == Type('ref', 'array'):
+                        self.comment('Array reference')
                         self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
                 
-                # Otherwise, a var or val single
+                # Otherwise, a single
                 elif t.form == 'single':
 
-                    if t.specifier == 'var':
-                        self.comment('var')
+                    # Variable reference
+                    if t.specifier == 'ref':
+                        self.comment('Variable reference')
                         self.out('_closure[{}] = t_arg_VAR;'.format(n)) ; n+=1
                         tmp = self.blocker.get_tmp()
                         self.asm('mov %0, %1', outop=tmp,
                                 inops=['('+x.elem.name+', unsigned[])'])
                         self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
+
+                    # Value
                     elif t.specifier == 'val':
-                        self.comment('val')
+                        self.comment('Value')
                         self.out('_closure[{}] = t_arg_VAL;'.format(n)) ; n+=1
                         self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
 
@@ -507,15 +522,16 @@ class TranslateXS1(NodeWalker):
         self.blocker.end()
 
     def stmt_alias(self, node):
-        """ Generate an alias statement. If the slice target is an array we must
-            use some inline assembly to get xcc to load the address for us.
-            Otherwise, we can just perform arithmetic on the pointer.
+        """ 
+        Generate an alias statement. If the slice target is an array we must use
+        some inline assembly to get xcc to load the address for us. Otherwise,
+        we can just perform arithmetic on the pointer.
         """
-        if node.symbol.type.form == 'array':
+        if node.symbol.type == Type('var', 'array'):
             self.asm('add %0, %1, %2', outop=node.name, 
                     inops=[node.slice.name, '({})*{}'.format(
                         self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
-        elif node.symbol.type.form == 'alias':
+        elif node.symbol.type == Type('ref', 'array'):
             self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
                 self.expr(node.slice.begin), defs.BYTES_PER_WORD))
 
@@ -529,9 +545,9 @@ class TranslateXS1(NodeWalker):
     
     def expr_single(self, node):
 
-        # If the elem is an alias subscript, generate a load
+        # If the elem is an array reference subscript, generate a load
         if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
+            if node.elem.symbol.type == Type('ref', 'array'):
                 tmp = self.blocker.get_tmp()
                 self.asm('ldw %0, %1[%2]', outop=tmp,
                         inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -542,9 +558,9 @@ class TranslateXS1(NodeWalker):
 
     def expr_unary(self, node):
         
-        # If the elem is an alias subscript, generate a load
+        # If the elem is an array reference subscript, generate a load
         if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
+            if node.elem.symbol.type == Type('ref', 'array'):
                 tmp = self.blocker.get_tmp()
                 self.asm('ldw %0, %1[%2]', outop=tmp,
                         inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -556,9 +572,9 @@ class TranslateXS1(NodeWalker):
 
     def expr_binop(self, node):
         
-        # If the elem is an alias subscript, generate a load
+        # If the elem is an array reference subscript, generate a load
         if isinstance(node.elem, ast.ElemSub):
-            if node.elem.symbol.type.form == 'alias':
+            if node.elem.symbol.type == Type('ref', 'array'):
                 tmp = self.blocker.get_tmp()
                 self.asm('ldw %0, %1[%2]', outop=tmp,
                         inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -578,9 +594,9 @@ class TranslateXS1(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        # If source is an array take the address, if alias just the value
+        # If source is an array take the address, if reference then just the value
         address = ''+node.name
-        if node.symbol.type.form == 'array':
+        if node.symbol.type == Type('var', 'array'):
             address = '(unsigned, '+address+')'
         return '({} + ({})*{})'.format(address, self.expr(node.begin),
                defs.BYTES_PER_WORD)

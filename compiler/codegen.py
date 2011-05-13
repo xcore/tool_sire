@@ -22,7 +22,8 @@ from target.mpi.build import build_mpi
 DEFS_FILE = 'definitions.h'
 
 def translate(ast, sem, child, device, outfile, translate_only, v):
-    """ Translate the AST to target system. 
+    """ 
+    Translate the AST to target system.
     """
     vmsg(v, 'Translating AST...')
 
@@ -47,7 +48,8 @@ def translate(ast, sem, child, device, outfile, translate_only, v):
     return buf
 
 def build(sem, buf, device, outfile, compile_only, show_calls, v):
-    """ Compile the translated AST for the target system.
+    """ 
+    Compile the translated AST for the target system.
     """
     vmsg(v, 'Creating executable...')
 
@@ -59,7 +61,8 @@ def build(sem, buf, device, outfile, compile_only, show_calls, v):
 
 def generate(ast, sem, child, device, outfile, 
         translate_only, compile_only, show_calls, v):
-    """ Generate code intermediate/machine/binary from AST.
+    """ 
+    Generate code intermediate/machine/binary from AST.
     """
 
     # Load appropriate definitions for the system

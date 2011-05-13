@@ -6,7 +6,8 @@
 from util import read_file
 
 class Test(object):
-    """ A generic test object with a list (of system sizes) for specific tests.
+    """ 
+    A generic test object with a list (of system sizes) for specific tests.
     """
     def __init__(self, name, cores=[1]):
         self.name = name
@@ -14,7 +15,8 @@ class Test(object):
 
 
 def test_generator(name, path, num_cores, run_test):
-    """ Generate the test harness
+    """ 
+    Generate the test harness.
     """
     def test(self):
         run_test(self, name, path, num_cores)

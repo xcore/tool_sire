@@ -42,8 +42,9 @@ RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc',
     
 def build_xs1(sem, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):
-    """ Run the build process to create either the assembly output or the
-        complete binary.
+    """ 
+    Run the build process to create either the assembly output or the complete
+    binary.
     """
     # Add the include paths once they have been set
     include_dirs = ['-I', '.']
@@ -127,8 +128,9 @@ def create_headers(device, v):
     util.write_file(DEVICE_HDR, s)
 
 def generate_assembly(sem, buf, show_calls, v):
-    """ Given the program buffer containing the XC translation, generate the
-        program and constant pool assembly.
+    """ 
+    Given the program buffer containing the XC translation, generate the program
+    and constant pool assembly.
     """
 
     # Compile the program into an assembly file
@@ -144,7 +146,8 @@ def generate_assembly(sem, buf, show_calls, v):
     return (lines, cp)
 
 def compile_str(name, string, show_calls, v, cleanup=True):
-    """ Compile a buffer containing an XC program
+    """ 
+    Compile a buffer containing an XC program.
     """
     srcfile = name + '.xc'
     outfile = name + '.S'
@@ -155,7 +158,8 @@ def compile_str(name, string, show_calls, v, cleanup=True):
         os.remove(srcfile)
 
 def assemble_str(name, ext, string, show_calls, v, cleanup=True):
-    """ Assemble a buffer containing an XC or assembly program
+    """ 
+    Assemble a buffer containing an XC or assembly program.
     """
     srcfile = name + '.' + ext
     outfile = name + '.o'
@@ -177,9 +181,10 @@ def assemble_runtime(device, show_calls, v):
             '-o', objfile] + ASSEMBLE_FLAGS, show_calls)
 
 def link_master(device, show_calls, v):
-    """ The jump table must be located at _cp and the common elements of the
-        constant and data pools must be in the same positions relative to _cp
-        and _dp in the master and slave images.
+    """ 
+    The jump table must be located at _cp and the common elements of the
+    constant and data pools must be in the same positions relative to _cp and
+    _dp in the master and slave images.
     """
     vmsg(v, 'Linking master -> '+MASTER_XE)
     util.call([XCC, target(device), 
@@ -195,7 +200,8 @@ def link_master(device, show_calls, v):
         show_calls)
 
 def link_slave(device, show_calls, v):
-    """ As above
+    """
+    As above.
     """
     vmsg(v, 'Linking slave -> '+SLAVE_XE)
     util.call([XCC, target(device), 
@@ -215,7 +221,8 @@ def replace_slaves(show_calls, v):
     util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], show_calls)
 
 def modify_assembly(sem, lines, v):
-    """ Perform modifications on assembly output
+    """ 
+    Perform modifications on assembly output.
     """
     vmsg(v, 'Modifying assembly output')
     
@@ -230,13 +237,14 @@ def modify_assembly(sem, lines, v):
     return (lines, cp)
 
 def extract_constants(lines, v):
-    """ Extract constant sections only within the elimination block of a
-        function. This covers all constants local to a function. This is to
-        differentiate constants associated with and declared global.
-         - Don't include elimination blocks for strings.
-         - Make extracted labels global.
-        NOTE: this assumes a constant section will be terminated with a
-        .text, (which may not always be true?).
+    """ 
+    Extract constant sections only within the elimination block of a function.
+    This covers all constants local to a function. This is to differentiate
+    constants associated with and declared global.
+     - Don't include elimination blocks for strings.
+     - Make extracted labels global.
+    NOTE: this assumes a constant section will be terminated with a .text,
+    (which may not always be true?).
     """
     vmsg(v, '  Extracting constants')
     cp = []
@@ -293,7 +301,8 @@ def extract_constants(lines, v):
     return (new, cp)
 
 def insert_bottom_labels(sem, lines, v):
-    """ Insert bottom labels for each function 
+    """
+    Insert bottom labels for each function.
     """
     # Look for the structure and insert:
     # > .globl <bottom-label>
@@ -325,8 +334,9 @@ def insert_bottom_labels(sem, lines, v):
     return lines
 
 def insert_frame_sizes(sem, lines, v):
-    """ Insert labels with the value of the size of funciton frames. These are
-        extracted from 'retsp n' instruction which are always present.
+    """ 
+    Insert labels with the value of the size of funciton frames. These are
+    extracted from 'retsp n' instruction which are always present.
     """
     vmsg(v, '  Inserting frame sizes')
         
@@ -349,7 +359,8 @@ def insert_frame_sizes(sem, lines, v):
     return lines
 
 def rewrite_calls(sem, lines, v):
-    """ Rewrite calls to program functions to branch through the jump table
+    """ 
+    Rewrite calls to program functions to branch through the jump table.
     """
     vmsg(v, '  Rewriting calls')
 
@@ -449,7 +460,8 @@ def build_frametab(sem, buf, v):
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
 def cleanup(v):
-    """ Renanme the output file and delete any temporary files
+    """ 
+    Renanme the output file and delete any temporary files.
     """
     vmsg(v, 'Cleaning up')
     

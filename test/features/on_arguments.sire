@@ -1,4 +1,4 @@
-val LENGTH := 2;
+val N := 2;
 
 proc foo(val a, val b, val c, val d, val e, val f, val g, var r) is
   r := a+b+c+d+e+f+g
@@ -17,8 +17,8 @@ proc baz(val a, val b, val c, var r,
 ; for i:=0 to m-1 do r := r + f[i]
 }
 
-proc cat(val a, val b, val c, val d, 
-  val w[a], val x[b], val y[c], val z[d]) is
+proc cat(val w[a], val x[b], val y[c], val z[d],
+    val a, val b, val c, val d) is
   var i;
   var r;
 { r := 0
@@ -31,34 +31,33 @@ proc cat(val a, val b, val c, val d,
 proc main() is
   var i;
   var r;
-  var a[LENGTH];
-  var b[2*LENGTH];
-  var c[3*LENGTH];
-  var d[4*LENGTH];
+  var a[N];
+  var b[2*N];
+  var c[3*N];
+  var d[4*N];
 { 
   % All 8 arguments with a referenced var
   on core[NUM_CORES-1] do foo(1, 2, 3, 4, 5, 6, 7, r)
 ; printvalln(r)
 
   % An array onto the stack with a referenced var
-; for i:=0 to LENGTH-1 do 
-    a[i] := 5+i
-; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, LENGTH, r)
+; for i:=0 to N-1 do a[i] := 5+i
+; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, N, r)
 ; printvalln(r)
 
-  % Two arrays onto the stack
-; for i:=0 to LENGTH-1 do 
+ % Two arrays onto the stack
+; for i:=0 to N-1 do 
     a[i] := 4+i
-; for i:=0 to (2*LENGTH)-1 do 
-    b[i] := a[LENGTH-1]+i
-; on core[NUM_CORES-1] do baz(1, 2, 3, r, a, LENGTH, b, 2*LENGTH)
+; for i:=0 to (2*N)-1 do 
+    b[i] := a[N-1]+i
+; on core[NUM_CORES-1] do baz(1, 2, 3, r, a, N, b, 2*N)
 ; printvalln(r)
 
-  % Four arrays onto the stack
-; for i:=0 to (3*LENGTH)-1 do 
+ % Four arrays onto the stack
+; for i:=0 to (3*N)-1 do 
     c[i] := i 
-; for i:=0 to (4*LENGTH)-1 do 
+; for i:=0 to (4*N)-1 do 
     d[i] := i 
-; on core[NUM_CORES-1] do cat(LENGTH, LENGTH*2, LENGTH*3, LENGTH*4, a, b, c, d)
+; on core[NUM_CORES-1] do cat(a, b, c, d, N, N*2, N*3, N*4)
 }
 

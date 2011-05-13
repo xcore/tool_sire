@@ -6,10 +6,12 @@
 import ply.lex as lex
 
 class Lexer(object):
-    """ A lexer object for the sire langauge
+    """
+    A lexer object for the sire langauge.
     """
     def __init__(self, error_func):
-        """ Create a new lexer
+        """ 
+        Create a new lexer.
         """
         self.error_func = error_func
         self.filename = ''
@@ -17,8 +19,9 @@ class Lexer(object):
         self.lexpos=0
 
     def build(self, **kwargs):
-        """ Build a lexer from the specification after it has been instantiated
-            because PLY warns against calling lex.lex inside __init__
+        """ 
+        Build a lexer from the specification after it has been instantiated
+        because PLY warns against calling lex.lex inside __init__.
         """
         self.lexer = lex.lex(object=self, **kwargs)
 
@@ -35,7 +38,8 @@ class Lexer(object):
         return self.lexer.lexdata
 
     def findcol(self, input, lexpos):
-        """ Compute the column given the input and lexpos
+        """ 
+        Compute the column given the input and lexpos.
         """
         last_cr = input.rfind('\n', 0, lexpos)
         if last_cr < 0:
@@ -44,7 +48,8 @@ class Lexer(object):
         return column
 
     def _error(self, msg, token):
-        """ Generic lexer error
+        """ 
+        Generic lexer error.
         """
         self.error_func(msg, token.lineno, 
                 self.findcol(self.lexer.lexdata, token.lexpos))

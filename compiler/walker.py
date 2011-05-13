@@ -6,7 +6,9 @@
 import util
 
 class NodeWalker(object):
-    """ A base class for walking an AST """  
+    """
+    A base class for walking an AST.
+    """  
 
     def decl(self, node, d=None):
         f = getattr(self, '{}'.format(util.camel_to_under(node.__class__.__name__)))

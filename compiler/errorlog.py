@@ -6,7 +6,8 @@
 import sys
 
 class ErrorLog(object):
-    """ A class for reporting errors and warnings during compilation 
+    """
+    A class for reporting errors and warnings during compilation.
     """
     def __init__(self):
         self.num_errors = 0

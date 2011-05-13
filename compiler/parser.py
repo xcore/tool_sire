@@ -13,7 +13,8 @@ import error
 import ast
 
 class Coord(object):
-    """ Coordinates (file, line, col) of a syntactic element.
+    """ 
+    Coordinates (file, line, col) of a syntactic element.
     """
     def __init__(self, file, line, column=None):
         self.file = file
@@ -27,11 +28,14 @@ class Coord(object):
         return str
 
 class Parser(object):
-    """ A parser object for the sire langauge
+    """ 
+    A parser object for the sire langauge.
     """
     def __init__(self, error, lex_optimise=True, lextab='lextab', 
             yacc_optimise=True, parsetab='parsetab', yacc_debug=False):
-        """ Create a new parser """
+        """ 
+        Create a new parser.
+        """
         self.error = error
 
         # Instantiate and build the lexer
@@ -48,7 +52,8 @@ class Parser(object):
                 optimize=yacc_optimise)
 
     def parse(self, text, filename='', debug=0):
-        """ Parse a file and return the AST
+        """ 
+        Parse a file and return the AST.
         """
         self.filename = os.path.basename(filename)
         self.lexer.filename = filename
@@ -57,13 +62,15 @@ class Parser(object):
                 tracking=True)
 
     def coord(self, p, index=1):
-        """ Return a coordinate for a production
+        """ 
+        Return a coordinate for a production.
         """
         return Coord(file=self.filename, line=p.lineno(index), 
                 column=self.lexer.findcol(self.lexer.data(), p.lexpos(index)))
     
     def tcoord(self, t):
-        """ Return a coordinate for a token
+        """ 
+        Return a coordinate for a token.
         """
         return Coord(file=self.filename, line=t.lineno, 
                 column=self.lexer.findcol(self.lexer.data(), t.lexpos))

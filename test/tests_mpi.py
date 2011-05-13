@@ -80,7 +80,8 @@ mpi_feature_tests =\
   mpi_feature_replicator
 
 def run_test(self, name, path, num_cores, args=[]):
-    """ Run a single test
+    """ 
+    Run a single test.
     """
     try:
 

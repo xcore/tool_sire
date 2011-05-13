@@ -9,10 +9,10 @@ BEGIN_BLOCK = '^'
 END_BLOCK   = '*'
 
 class Blocker(object):
-    """ A class to buffer c-style blocks containing sequences of statements.
-        Also allows temporary variables to be allocated in blocks.
+    """ 
+    A class to buffer c-style blocks containing sequences of statements. Also
+    allows temporary variables to be allocated in blocks.
     """
-
     class BlockBegin(object):
         def __init__(self):
             self.temps = []
@@ -43,7 +43,8 @@ class Blocker(object):
         self.temps.pop()
 
     def get_tmp(self):
-        """ Get the next unused temporary variable
+        """
+        Get the next unused temporary variable.
         """
         t = self.unused_temps[0]
         del self.unused_temps[0]
@@ -64,7 +65,8 @@ class Blocker(object):
         return '_t{}'.format(t)
 
     def insert(self, s):
-        """ Insert a statement
+        """
+        Insert a statement.
         """
         self.stack.append(s)
    
@@ -85,7 +87,8 @@ class Blocker(object):
                 self.out(depth, x+'\n')
 
     def out(self, d, s):
-        """ Write an indented line
+        """
+        Write an indented line.
         """
         self.buf.write((INDENT*d)+s)
    

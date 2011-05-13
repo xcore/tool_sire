@@ -1,5 +1,4 @@
-val LENGTH:=10;
-var a[LENGTH];
+val N:=10;
 
 proc bsort(var a[len], val len) is
   var i;
@@ -17,11 +16,10 @@ proc bsort(var a[len], val len) is
 
 % Ouput: 0123456789
 proc main() is
+  var a[N];
   var i;
-{ for i:=0 to LENGTH-1 do 
-    a[i] := LENGTH-(i+1)
-; bsort(a, LENGTH)
-; for i:=0 to LENGTH-1 do
-    printval(a[i])
+{ for i:=0 to N-1 do a[i] := N-(i+1)
+; bsort(a, N)
+; for i:=0 to N-1 do printval(a[i])
 ; printstrln("")
 }

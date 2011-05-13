@@ -31,14 +31,18 @@ param_conversions = {
 }
 
 class SignatureTable(object):
-    """ A procedure signature table """
+    """
+    A procedure signature table.
+    """
     def __init__(self, semantics, debug=False):
         self.sem = semantics
         self.debug = debug
         self.tab = {}
 
     def insert(self, type, node):
-        """ Insert a procedure signature """
+        """
+        Insert a procedure signature.
+        """
         if (node.formals.params 
                 and len(node.formals.params) > defs.MAX_PROC_PARAMETERS):
             return False
@@ -52,8 +56,9 @@ class SignatureTable(object):
         return self.tab[name].params[i].type
 
     def lookup_array_qualifier(self, name, i):
-        """ Given the index of an array parameter, return the index of the
-            qualifying paramemer in the ordered set of formal parameters.
+        """ 
+        Given the index of an array parameter, return the index of the
+        qualifying paramemer in the ordered set of formal parameters.
         """
         params = self.tab[name].params
         assert(params[i].type == Type('ref', 'array')) 
@@ -63,7 +68,9 @@ class SignatureTable(object):
         return None
 
     def check_args(self, type, node):
-        """ Check if a procedure signature is defined """
+        """ 
+        Check if a procedure signature is defined.
+        """
         if not node.name in self.tab:
             return False
 
@@ -93,13 +100,17 @@ class SignatureTable(object):
         return True
     
     def dump(self, buf=sys.stdout):
-        """ Dump the contents of the table to buf """
+        """
+        Dump the contents of the table to buf.
+        """
         for x in self.scope:
             buf.write(repr(x))
 
 
 class Signature(object):
-    """ A procedure signature """
+    """
+    A procedure signature.
+    """
     def __init__(self, name, type, params):
         self.name = name
         self.type = type

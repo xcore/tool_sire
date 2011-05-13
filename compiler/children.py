@@ -9,7 +9,8 @@ from ast import NodeVisitor
 from builtin import builtins
 
 class Children(NodeVisitor):
-    """ An AST walker class to determine the children of each procedure
+    """
+    An AST walker class to determine the children of each procedure.
     """
     
     def __init__(self, proc_names):
@@ -25,10 +26,11 @@ class Children(NodeVisitor):
         pass
 
     def add_child(self, name):
-        """ Add a child procedure call of the program:
-             - omit builtins
-             - add only if it hasn't been already
-             - don't add if it is its parent (recursive)
+        """ 
+        Add a child procedure call of the program:
+         - omit builtins
+         - add only if it hasn't been already
+         - don't add if it is its parent (recursive)
         """
         if ((not name in builtins.keys()) 
                 and (not name in self.children[self.parent])
@@ -37,8 +39,8 @@ class Children(NodeVisitor):
             #print('added child '+name+' to '+self.parent)
 
     def build(self):
-        """ Given immediate child relationships, calculate all nested
-            relationships
+        """ 
+        Given immediate child relationships, calculate all nested relationships.
         """
         change = True
         # While there are still changes
@@ -56,7 +58,9 @@ class Children(NodeVisitor):
                             change = True
 
     def display(self, buf=sys.stdout):
-        """ Display children """
+        """
+        Display children.
+        """
         for x in self.children.keys():
             buf.write(x+':\n')
             if x in self.children:

@@ -33,8 +33,9 @@ BUILTIN_FILES = ['builtins.c']
 
 def build_mpi(sem, device, buf, outfile, 
         compile_only, show_calls=False, v=False):
-    """ Run the build process to create either the assembly output or the
-        complete binary.
+    """
+    Run the build process to create either the assembly output or the complete
+    binary.
     """
     # Add the include paths once they have been set
     include_dirs = ['-I', '.']
@@ -77,7 +78,8 @@ def create_headers(device, v):
     util.write_file(DEVICE_HDR, s)
 
 def assemble_str(name, string, show_calls, v, cleanup=True):
-    """ Assemble a buffer containing a c program
+    """ 
+    Assemble a buffer containing a c program.
     """
     srcfile = name + '.c'
     outfile = name + '.o'
@@ -104,7 +106,8 @@ def assemble_builtins(show_calls, v):
             '-o', objfile] + ASSEMBLE_FLAGS, show_calls)
 
 def link(show_calls, v):
-    """ Link the complete executable. 
+    """ 
+    Link the complete executable.
     """
     vmsg(v, 'Linking executable -> '+BINARY)
     util.call([MPICC, 'program.c.o'] 
@@ -115,7 +118,8 @@ def link(show_calls, v):
         show_calls)
 
 def cleanup(v):
-    """ Renanme the output file and delete any temporary files
+    """ 
+    Renanme the output file and delete any temporary files.
     """
     vmsg(v, 'Cleaning up')
     

@@ -18,7 +18,8 @@ MAX_PROC_PARAMETERS = 8
 LABEL_MAIN = '_main'
 
 def convert_value(s):
-    """ Convert a string value from a #define
+    """
+    Convert a string value from a c '#define'.
     """
 
     # If its a string
@@ -34,7 +35,8 @@ def convert_value(s):
         return s
 
 def load(path):
-    """ Load definitions from a c header file.
+    """ 
+    Load definitions from a c header file.
     """
     lines = util.read_file(path, read_lines=True)
     if lines:

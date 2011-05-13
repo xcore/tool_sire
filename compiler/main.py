@@ -34,7 +34,8 @@ from target.config import DEFAULT_TARGET_SYSTEM
 v = False
 
 def setup_argparse():
-    """ Configure an argument parser object 
+    """ 
+    Configure an argument parser object.
     """
     p = argparse.ArgumentParser(description=
             'sire compiler v'+defs.VERSION, prog='sire')
@@ -91,7 +92,8 @@ def setup_argparse():
     return p
 
 def setup_globals(a):
-    """ Setup global variables representing compilation parameters
+    """ 
+    Setup global variables representing compilation parameters.
     """
    
     # Verbosity
@@ -128,7 +130,8 @@ def setup_globals(a):
     outfile = a.outfile[0] if a.outfile else defs.DEFAULT_OUT_FILE
 
 def produce_ast(input_file, errorlog, logging=False):
-    """ Parse an input string to produce an AST 
+    """ 
+    Parse an input string to produce an AST.
     """
     vmsg(v, "Parsing file '{}'".format(infile if infile else 'stdin'))
    
@@ -168,7 +171,8 @@ def produce_ast(input_file, errorlog, logging=False):
     return ast
 
 def semantic_analysis(ast, errorlog):
-    """ Perform semantic analysis on an AST 
+    """ 
+    Perform semantic analysis on an AST.
     """
     vmsg(v, "Performing semantic analysis")
     
@@ -184,7 +188,8 @@ def semantic_analysis(ast, errorlog):
     return sem
 
 def child_analysis(ast, sem):
-    """ Determine children
+    """ 
+    Determine children.
     """
     vmsg(v, "Performing child analysis")
     

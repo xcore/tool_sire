@@ -9,7 +9,8 @@ import collections
 from ast import NodeVisitor
 
 class Dump(NodeVisitor):
-    """ An AST visitor class to display the tree
+    """ 
+    An AST visitor class to display the tree.
     """
     def __init__(self, buf=sys.stdout):
         self.buf = buf

@@ -10,7 +10,8 @@ import subprocess
 from error import Error
 
 def read_file(filename, read_lines=False):
-    """ Read a file and return its contents as a string 
+    """ 
+    Read a file and return its contents as a string. 
     """
     try:
         contents=None
@@ -29,7 +30,8 @@ def read_file(filename, read_lines=False):
                 .format(sys.exc_info()[0]))
 
 def write_file(filename, s):
-    """ Write the output to a file 
+    """ 
+    Write the output to a file.
     """
     try:
     
@@ -48,7 +50,8 @@ def write_file(filename, s):
                 .format(sys.exc_info()[0]))
 
 def call(args, verbose=False):
-    """ Try to execute a shell command
+    """ 
+    Try to execute a shell command.
     """
     try:
         if verbose:
@@ -68,30 +71,35 @@ def call(args, verbose=False):
         raise Exception('Unexpected error: {}'.format(sys.exc_info()[0]))
 
 def remove_file(filename):
-    """ Remove a file if it exists
+    """ 
+    Remove a file if it exists.
     """
     if os.path.isfile(filename):
         os.remove(filename)
 
 def rename_file(filename, newname):
-    """ Rename a file if it exists
+    """ 
+    Rename a file if it exists.
     """
     if os.path.isfile(filename):
         os.rename(filename, newname)
 
 def camel_to_under(s):
-    """ Covert a camel-case string to use underscores 
+    """ 
+    Covert a camel-case string to use underscores.
     """
     return re.sub("([A-Z])([A-Z][a-z])|([a-z0-9])([A-Z])", 
             lambda m: '{}_{}'.format(m.group(3), m.group(4)), s).lower()
 
 def indexed_dict(elements):
-    """ Return a dictionary of indexes for item keys 
+    """ 
+    Return a dictionary of indexes for item keys.
     """
     return dict([(e,i) for i, e in list(enumerate(elements))])
     
 def vhdr(verbose, msg, end='\n'):
-    """ Verbose header: output a message that is displayed in verbose mode.
+    """
+    Verbose header: output a message that is displayed in verbose mode.
     """
     if verbose: 
         sys.stdout.write('-'*len(str(msg))+'\n')
@@ -100,7 +108,8 @@ def vhdr(verbose, msg, end='\n'):
         sys.stdout.flush()
 
 def vmsg(verbose, msg, end='\n'):
-    """ Verbose message: output a message that is displayed in verbose mode.
+    """ 
+    Verbose message: output a message that is displayed in verbose mode.
     """
     if verbose: 
         sys.stdout.write(msg+end)
