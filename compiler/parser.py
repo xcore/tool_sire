@@ -85,8 +85,8 @@ class Parser(object):
     precedence = (
         ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
         ('left', 'LSHIFT', 'RSHIFT'),
-        ('left', 'AND', 'OR', 'XOR', 'REM', 'LOR', 'LAND'),
-        ('left', 'PLUS', 'MINUS'),
+        ('left', 'AND', 'OR', 'XOR'),
+        ('left', 'PLUS', 'MINUS', 'REM'),
         ('left', 'MULT', 'DIV'),
         ('right', 'UMINUS', 'UNOT')
     )
@@ -354,8 +354,6 @@ class Parser(object):
                 | elem OR right
                 | elem AND right
                 | elem XOR right
-                | elem LOR right
-                | elem LAND right
                 | elem LSHIFT right
                 | elem RSHIFT right'''
         p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))

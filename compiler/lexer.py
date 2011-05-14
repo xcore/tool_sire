@@ -81,17 +81,16 @@ class Lexer(object):
         'or'       : 'OR',
         'and'      : 'AND',
         'xor'      : 'XOR',
-        'lor'      : 'LOR',
     }
 
     # All tokens
     tokens = (
         # Operators
-        'PLUS','MINUS','MULT','DIV',
-        'NOT', 'LAND', #REM, OR, AND, LOR
+        'PLUS','MINUS','MULT','DIV', #REM
+        'NOT', #OR, AND, XOR
         'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
         # Assignment operators
-        'ASS', #'IN','OUT',
+        'ASS',
         # Delimiters
         'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
         'COLON',
@@ -110,16 +109,12 @@ class Lexer(object):
     t_MINUS    = r'-'
     t_MULT     = r'\*'
     t_DIV      = r'/'
-    
-    # Logical ops
-    #t_REM      = r'rem'
-    #t_OR       = r'or'
-    #t_AND      = r'and'
+    #t_REM 
     
     # Bitwise ops
-    #t_XOR      = r'xor'
-    #t_LOR       = r'lor'
-    t_LAND      = r'&'
+    #t_OR 
+    #t_AND
+    #t_XOR
     t_NOT      = r'~'
     t_LSHIFT   = r'<<'
     t_RSHIFT   = r'>>'
@@ -134,8 +129,6 @@ class Lexer(object):
 
     # Assignment operators
     t_ASS      = r':='
-    #t_IN       = r'\?'
-    #t_OUT      = r'!'
 
     # Delimeters
     t_LPAREN   = r'\('

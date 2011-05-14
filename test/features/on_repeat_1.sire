@@ -1,8 +1,8 @@
 proc foo(var v) is
-  v := v lor 0xDEAD0000
+  v := v or 0xDEAD0000
 
 proc bar(var v) is
-  v := v lor 0x0000BEEF
+  v := v or 0x0000BEEF
 
 % Test that we can use all the resources again
 proc main() is

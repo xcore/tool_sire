@@ -4,7 +4,7 @@
 // LICENSE.txt and at <http://github.xcore.com/>
 
 #define TRUE  1
-#define FALSE 0
+#define FALSE 0 
 
 #define MAX_PROC_PARAMETERS 8
 

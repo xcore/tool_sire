@@ -20,11 +20,9 @@ op_conversion = {
     '*'   : '*',
     '/'   : '/',
     'rem' : '%',
-    'or'  : '||',
-    'and' : '&&',
+    'or'  : '|',
+    'and' : '&',
     'xor' : '^',
-    '&'   : '&',
-    'lor' : '|',
     '~'   : '!',
     '<<'  : '<<',
     '>>'  : '>>',
@@ -564,11 +562,11 @@ class TranslateXS1(NodeWalker):
                 tmp = self.blocker.get_tmp()
                 self.asm('ldw %0, %1[%2]', outop=tmp,
                         inops=[node.elem.name, self.expr(node.elem.expr)])
-                return '({}{})'.format(node.op, tmp)
+                return '({}{})'.format(op_conversion[node.op], tmp)
         
         # Otherwise, just return the regular syntax
         else:
-            return '({}{})'.format(node.op, self.elem(node.elem))
+            return '({}{})'.format(op_conversion[node.op], self.elem(node.elem))
 
     def expr_binop(self, node):
         

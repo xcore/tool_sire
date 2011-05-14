@@ -22,7 +22,7 @@ func plot(val i) is
   if i > 32      then printchar(' ')
   else if i > 16 then printchar('.')
   else if i > 8  then printchar(':')
-  else if i > 3  then printchar('&')
+  else if i > 3  then printchar('+')
   else if i > 1  then printchar('%')
   else                printchar('#')
 

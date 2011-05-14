@@ -30,6 +30,8 @@ xs1_example_tests = [
   Test('fibonacci-rec'),
   Test('bubblesort'),
   Test('quicksort'),
+  Test('mandlebrot-seq'),
+  Test('nqueens-seq'),
   Test('mergesort-seq'),
   Test('mergesort-par', [4, 16]),
   Test('distribute', [4, 16, 32, 64]),

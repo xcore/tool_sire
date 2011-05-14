@@ -13,10 +13,10 @@ import semantics
 param_conversions = {
   
   Type('val', 'single') : [
-    Type('var', 'single'), 
     Type('val', 'single'), 
-    Type('val', 'sub'),
+    Type('var', 'single'), 
     Type('var', 'sub'),
+    Type('ref', 'sub'),
     ],
 
   Type('ref', 'single') : [

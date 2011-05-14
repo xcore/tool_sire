@@ -32,6 +32,7 @@ mpi_example_tests = [
   Test('euclid-rec'),
   Test('mergesort-seq'),
   Test('mandlebrot-seq'),
+  Test('nqueens-seq'),
   #Test('mergesort-par', [4, 16]),
   #Test('distribute',    [4, 16, 32, 64]),
   ]

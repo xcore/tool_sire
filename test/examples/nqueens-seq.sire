@@ -34,7 +34,7 @@ proc try(val i, var x[N], var a[N], var b[2*N], var c[2*N], var succ) is
 { %printstr("Trying i=");printvalln(i);
   j := 0
 ; succ := false
-; while (~succ) and (j<N) do
+; while (succ=false) and (j<N) do
    { succ := false
    % safe
    %; printstr("Trying j=");printvalln(j)
@@ -42,7 +42,7 @@ proc try(val i, var x[N], var a[N], var b[2*N], var c[2*N], var succ) is
     { % set-queen
       %printstr("Setting queen ");printval(i);printstr(",");printvalln(j);
       x[i]:=j ; a[j]:=false ; b[i+j]:=false ; c[i-j+N]:=false
-    ; if i < N-1 then
+    ; if i < (N-1) then
       { try(i+1, x, a, b, c, succ)
       ; if ~succ then
         % remove-queen
