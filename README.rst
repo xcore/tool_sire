@@ -7,21 +7,19 @@ sire
 :Maintainer: http://github.com/jameshanlon
 :Description: A language and runtime system for dynamic process creation on the XMOS XS1 architecture
 
-sire is a small block-structured, imperative language with features to
+`sire` is a small block-structured, imperative language with features to
 demonstate a mechanism for distributed and dynamic creation of processes in and
-over a parallel system. It targets the XMOS XS1 architecture, which is
-general-purpose and has low-level support for concurrency and parallelism.
+over a parallel system. It can be compiled for the XMOS XS1 architecture
+or a cluster system with support for MPI.
 
 For more information, check out the on-line documentation at
 http://xcore.github.com/tool_sire
 
-------------
-Key features
-------------
-
-- Complete compiler
-- Translation of sire program code to XC/assembly source.
-- Construction of special multi-core binary replicating only the runtime kernel.
+..
+  ------------
+  Key features
+  ------------
+..
 
 -----
 To do
@@ -45,9 +43,11 @@ Required repositories
 Dependencies
 ------------
 
-- Python 3.2 or 3.1 with the argparse module avilable as 'python3' on the command line.
-- PLY (Python Lex-Yacc) 3.3+, http://www.dabeaz.com/ply/.
-- XMOS tools (4.4.2+): xcc, xas, xsim, xobjdump and xrun.
+- Python 3.2 (or 3.1 with the argparse module) avilable as ``python3`` on the command line.
+- PLY (Python Lex-Yacc, 3.4+), http://www.dabeaz.com/ply/.
+- XMOS development tools (11.2.0+): ``xcc``, ``xas``, ``xsim``, ``xobjdump`` and
+  ``xrun``.
+- OpenMPI (v1.4.*): ``mpicc`` and ``mpirun``.
 
 ------
 Issues

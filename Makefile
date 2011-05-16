@@ -61,6 +61,7 @@ TEST_SUBDIRS = test
 
 %.clean:
 	cd $* && xmake clean
+	rm a.c a.xc a.xe
 	find . -name lextab.py -o -name parsetab.py -exec rm {} \;
 	find . -name \*.xe -o -name \*.pyc -o -name \*.out -exec rm {} \;
 
