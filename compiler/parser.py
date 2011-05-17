@@ -107,10 +107,13 @@ class Parser(object):
 
     # Variable declarations ====================================
 
+    def p_var_decls_empty(self, p):
+        'var_decls : empty'
+        p[0] = []
+
     def p_var_decls(self, p):
-        '''var_decls : empty
-                     | var_decl_seq'''
-        p[0] = ast.Decls(p[1] if len(p)==2 else None, self.coord(p))
+        'var_decls : var_decl_seq'
+        p[0] = p[1]
 
     # Variable declaration sequence (return a single list)
     def p_var_decl_seq(self, p):
@@ -156,10 +159,13 @@ class Parser(object):
 
     # Procedure declarations ===================================
 
+    def p_proc_defs_empty(self, p):
+        'proc_defs : empty'
+        p[0] = []
+
     def p_proc_defs(self, p):
-        '''proc_defs : proc_def_seq
-                     | empty'''
-        p[0] = ast.Defs(p[1] if len(p)==2 else None, self.coord(p))
+        'proc_defs : proc_def_seq'
+        p[0] = p[1]
 
     # Procedure sequence (return a single list)
     def p_proc_def_seq(self, p):
@@ -197,10 +203,13 @@ class Parser(object):
 
     # Formal declarations ======================================
 
+    def p_formals_empty(self, p):
+        'formals : empty'
+        p[0] = []
+
     def p_formals(self, p):
-        '''formals : empty
-                   | formals_seq'''
-        p[0] = ast.Formals(p[1] if len(p)==2 else None, self.coord(p))
+        'formals : formals_seq'
+        p[0] = p[1]
 
     # Formal parameter sequence (return a single list)
     def p_formals_seq(self, p):

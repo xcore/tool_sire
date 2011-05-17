@@ -29,17 +29,14 @@ elem_types = {
 
 class Semantics(NodeWalker):
     """ 
-    An AST visitor class to check the semantics of a sire program
+    An AST walker class to check the semantics of a sire program.
     """
-    def __init__(self, error):
+    def __init__(self, sym, sig, error):
+        self.sym = sym
+        self.sig = sig
         self.depth = 0
         self.error = error
         
-        # Data structures
-        self.sym = symbol.SymbolTable(self, debug=False)
-        self.sig = signature.SignatureTable(self, debug=False)
-        self.proc_names = []
-
         # Initialise variables in the 'system' scope
         
         # Add system variables core, chan
@@ -52,7 +49,7 @@ class Semantics(NodeWalker):
             self.sym.insert(x.definition.name, x.definition.type)
             self.sig.insert(x.definition.type, x.definition)
             if x.mobile:
-                self.proc_names.append(x.definition.name)
+                self.sig.add_mobile_proc(x.definition.name)
 
     def get_elem_type(self, elem):
         """ 
@@ -183,14 +180,11 @@ class Semantics(NodeWalker):
 
     def walk_program(self, node):
         self.sym.begin_scope('program')
-        self.decls(node.decls)
-        self.defs(node.defs)
+        [self.decl(x) for x in node.decls]
+        [self.defn(x) for x in node.defs]
         self.sym.end_scope()
     
     # Variable declarations ===============================
-
-    def decls(self, node):
-        [self.decl(x) for x in node.children()]
 
     def decl(self, node):
         if not self.sym.insert(node.name, node.type, node.coord):
@@ -201,9 +195,6 @@ class Semantics(NodeWalker):
             self.expr(node.expr)
 
     # Procedure definitions ===============================
-
-    def defs(self, node):
-        [self.defn(x) for x in node.children()]
 
     def defn(self, node):
         
@@ -219,25 +210,25 @@ class Semantics(NodeWalker):
             self.redecl_error(node.name, node.coord)
 
         # Add the procedure name to the list
-        self.proc_names.append(node.name)
+        self.sig.add_mobile_proc(node.name)
         self.parent = node.name
     
         # Begin a new scope for decls and stmt components
         self.sym.begin_scope('proc')
-        self.formals(node.formals)
-        self.decls(node.decls)
+        
+        # Iterate over in parameters in reverse so length specifiers have been
+        # declared, which should appear after the array reference they relate to.
+        [self.param(x) for x in reversed(node.formals)]
+       
+        # Declarations
+        [self.decl(x) for x in node.decls]
+
+        # Body statement
         self.stmt(node.stmt)
         self.sym.end_scope()
     
     # Formals =============================================
     
-    def formals(self, node):
-        """ 
-        Iterate over in parameters in reverse so length specifiers have been
-        declared, which should appear after the array reference they relate to.
-        """
-        [self.param(x) for x in reversed(node.children())]
-
     def param(self, node):
        
         if not self.sym.insert(node.name, node.type, node.coord):
@@ -276,7 +267,7 @@ class Semantics(NodeWalker):
         # TODO: check actual-formal types match, e.g. with refs.
 
         # Children
-        [self.expr(x) for x in node.args.expr]
+        [self.expr(x) for x in node.args]
 
     def stmt_ass(self, node):
 
@@ -451,7 +442,7 @@ class Semantics(NodeWalker):
             self.nodecl_error(node.name, 'process', node.coord)
         
         # Children
-        self.expr(node.args)
+        [self.expr(x) for x in node.args]
 
     def elem_fcall(self, node):
         
@@ -466,7 +457,7 @@ class Semantics(NodeWalker):
             self.nodecl_error(node.name, 'function', node.coord)
 
         # Children
-        self.expr(node.args)
+        [self.expr(x) for x in node.args]
 
     def elem_number(self, node):
         pass

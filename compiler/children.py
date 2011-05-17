@@ -10,13 +10,13 @@ from builtin import builtins
 
 class Children(NodeVisitor):
     """
-    An AST walker class to determine the children of each procedure.
+    An AST visitor to determine the children of each procedure.
     """
     
-    def __init__(self, proc_names):
+    def __init__(self, sig):
         self.parent = None
         self.children = {}
-        for x in proc_names:
+        for x in sig.mobile_proc_names:
             self.children[x] = []
 
     def up(self, tag):
@@ -75,5 +75,8 @@ class Children(NodeVisitor):
         self.add_child(node.name)
 
     def visit_elem_fcall(self, node):
+        self.add_child(node.name)
+
+    def visit_elem_pcall(self, node):
         self.add_child(node.name)
 

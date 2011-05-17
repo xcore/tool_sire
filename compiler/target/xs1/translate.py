@@ -54,10 +54,10 @@ class TranslateXS1(NodeWalker):
     """ 
     A walker class to pretty-print the AST in the langauge syntax.
     """
-    def __init__(self, semantics, children, buf):
+    def __init__(self, sig, child, buf):
         super(TranslateXS1, self).__init__()
-        self.sem = semantics
-        self.child = children
+        self.sig = sig
+        self.child = child
         self.buf = buf
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
@@ -109,16 +109,16 @@ class TranslateXS1(NodeWalker):
         """
         return builtin_conversion[name] if name in builtin_conversion else name
 
-    def arguments(self, arg_list):
+    def arguments(self, args):
         """ 
         Build the list of arguments for a procedure call. If there is an array
         reference proper, either directly or as a slice, it must be loaded
         manually with an assembly inline which forces the compiler to reveal the
         address.
         """
-        args = []
+        new = []
 
-        for x in arg_list.children():
+        for x in args:
             arg = None
 
             # Single-element expressions
@@ -146,9 +146,9 @@ class TranslateXS1(NodeWalker):
                                 x.elem.name, self.expr(x.elem.begin),
                                 defs.BYTES_PER_WORD)
 
-            args.append(self.expr(x) if not arg else arg)
+            new.append(self.expr(x) if not arg else arg)
 
-        return ', '.join(args)
+        return ', '.join(new)
 
     def get_label(self):
         """
@@ -187,19 +187,21 @@ class TranslateXS1(NodeWalker):
         # Walk the entire program
         self.header()
         self.builtins()
-        self.decls(node.decls)
-        self.defs(node.defs, 0)
+        
+        # Declarations
+        for x in node.decls:
+            self.out(self.decl(x))
+        if len(node.decls) > 0:
+            self.out('')
+       
+        # Definitions
+        for p in node.defs:
+            self.defn(p, 0)
 
         # Output the buffered blocks
         self.blocker.output()
     
     # Variable declarations ===============================
-
-    def decls(self, node):
-        for x in node.children():
-            self.out(self.decl(x))
-        if len(node.children()) > 0:
-            self.out('')
 
     def decl(self, node):
         s = '{}'.format(node.name)
@@ -220,11 +222,7 @@ class TranslateXS1(NodeWalker):
         
         return s
 
-    # Procedure declarations ==============================
-
-    def defs(self, node, d):
-        for p in node.children():
-            self.defn(p, d)
+    # Procedure definitions ===============================
 
     def defn(self, node, d):
         self.out('#pragma unsafe arrays')
@@ -232,20 +230,24 @@ class TranslateXS1(NodeWalker):
         s += 'void' if node.name == '_main' else 'int'
         s += ' {}({})'.format(
                 self.procedure_name(node.name),
-                self.formals(node.formals))
+                ', '.join([self.param(x) for x in node.formals]))
         self.parent = node.name
         self.out(s)
         self.blocker.begin()
-        self.decls(node.decls)
+        
+        # Declarations
+        for x in node.decls:
+            self.out(self.decl(x))
+        if len(node.decls) > 0:
+            self.out('')
+      
+        # Statement block
         self.stmt_block(node.stmt)
         self.blocker.end()
         self.out('')
     
     # Formals =============================================
     
-    def formals(self, node):
-        return ', '.join([self.param(x) for x in node.children()])
-
     def param(self, node):
         s = '{}'.format(node.name)
 
@@ -299,7 +301,7 @@ class TranslateXS1(NodeWalker):
         
         self.comment('Copy thread stack')
         self.out('for(int _j=0; _j<_frametab[{}]; _j++)'.format(
-            defs.JUMP_INDEX_OFFSET + self.sem.proc_names.index(self.parent)))
+            defs.JUMP_INDEX_OFFSET + self.sig.mobile_proc_names.index(self.parent)))
         self.blocker.begin()
         self.asm('ldw r11, %0[%1] ; stw r11, %2[%1]',
                 inops=['_spbase', '_j', '_spnew'], clobber=['r11']) 
@@ -443,7 +445,7 @@ class TranslateXS1(NodeWalker):
         # Calculate closure size 
         closure_size = 2 + num_procs;
         for (i, x) in enumerate(node.pcall.args.expr):
-            t = self.sem.sig.lookup_param_type(proc_name, i)
+            t = self.sig.lookup_param_type(proc_name, i)
             if t.form == 'array': closure_size = closure_size + 3
             elif t.form == 'single': closure_size = closure_size + 2 
 
@@ -464,13 +466,13 @@ class TranslateXS1(NodeWalker):
         #   Val:   (2, value)
         if node.pcall.args.expr:
             for (i, x) in enumerate(node.pcall.args.expr):
-                t = self.sem.sig.lookup_param_type(proc_name, i)
+                t = self.sig.lookup_param_type(proc_name, i)
 
                 # If the parameter type is an array reference
                 if t == Type('ref', 'array'):
 
                     # Output the length of the array
-                    q = self.sem.sig.lookup_array_qualifier(proc_name, i)
+                    q = self.sig.lookup_array_qualifier(proc_name, i)
                     self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
                         self.expr(node.pcall.args.expr[q]))) ; n+=1
@@ -507,11 +509,11 @@ class TranslateXS1(NodeWalker):
         # Procedures: (jumpindex)*
         self.comment('Proc: parent '+proc_name)
         self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-                +self.sem.proc_names.index(proc_name))) ; n+=1
+                +self.sig.mobile_proc_names.index(proc_name))) ; n+=1
         for x in self.child.children[proc_name]:
             self.comment('Proc: child '+x)
             self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-                    +self.sem.proc_names.index(x))) ; n+=1
+                    +self.sig.mobile_proc_names.index(x))) ; n+=1
 
         # Call runtime TODO: length argument?
         self.out('{}({}, _closure);'.format(defs.LABEL_MIGRATE, 
@@ -538,9 +540,6 @@ class TranslateXS1(NodeWalker):
 
     # Expressions =========================================
 
-    def expr_list(self, node):
-        return ', '.join([self.expr(x) for x in node.children()])
-    
     def expr_single(self, node):
 
         # If the elem is an array reference subscript, generate a load
@@ -598,6 +597,9 @@ class TranslateXS1(NodeWalker):
             address = '(unsigned, '+address+')'
         return '({} + ({})*{})'.format(address, self.expr(node.begin),
                defs.BYTES_PER_WORD)
+
+    def elem_pcall(self, node):
+        return '{}({})'.format(node.name, self.arguments(node.args))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arguments(node.args))

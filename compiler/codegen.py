@@ -21,7 +21,7 @@ from target.mpi.build import build_mpi
 
 DEFS_FILE = 'definitions.h'
 
-def translate(ast, sem, child, device, outfile, translate_only, v):
+def translate(ast, sig, child, device, outfile, translate_only, v):
     """ 
     Translate the AST to target system.
     """
@@ -32,9 +32,9 @@ def translate(ast, sem, child, device, outfile, translate_only, v):
 
     # Create a tranlator AST walker
     if device.system == 'xs1':
-        walker = TranslateXS1(sem, child, buf)
+        walker = TranslateXS1(sig, child, buf)
     elif device.system == 'mpi':
-        walker = TranslateMPI(sem, child, buf)
+        walker = TranslateMPI(sig, child, buf)
 
     walker.walk_program(ast)
     
@@ -47,7 +47,7 @@ def translate(ast, sem, child, device, outfile, translate_only, v):
 
     return buf
 
-def build(sem, buf, device, outfile, compile_only, show_calls, v):
+def build(sig, buf, device, outfile, compile_only, show_calls, v):
     """ 
     Compile the translated AST for the target system.
     """
@@ -55,11 +55,11 @@ def build(sem, buf, device, outfile, compile_only, show_calls, v):
 
     # Create a Build object
     if device.system == 'xs1':
-        build_xs1(sem, device, buf, outfile, compile_only, show_calls, v)
+        build_xs1(sig, device, buf, outfile, compile_only, show_calls, v)
     elif device.system == 'mpi':
-        build_mpi(sem, device, buf, outfile, compile_only, show_calls, v)
+        build_mpi(device, buf, outfile, compile_only, show_calls, v)
 
-def generate(ast, sem, child, device, outfile, 
+def generate(ast, sig, child, device, outfile, 
         translate_only, compile_only, show_calls, v):
     """ 
     Generate code intermediate/machine/binary from AST.
@@ -72,8 +72,8 @@ def generate(ast, sem, child, device, outfile,
         defs.load(config.MPI_SYSTEM_PATH+'/'+DEFS_FILE)
     
     # Translate the AST
-    buf = translate(ast, sem, child, device, outfile, translate_only, v)
+    buf = translate(ast, sig, child, device, outfile, translate_only, v)
     
     # Compile, assemble and link with the runtime
-    build(sem, buf, device, outfile, compile_only, show_calls, v)
+    build(sig, buf, device, outfile, compile_only, show_calls, v)
 

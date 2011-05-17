@@ -1,4 +1,4 @@
-# Copyright (c) 2011, James Hanlon, All rights reserved
+ig# Copyright (c) 2011, James Hanlon, All rights reserved
 # This software is freely distributable under a derivative of the
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
@@ -53,10 +53,10 @@ class TranslateMPI(NodeWalker):
     """ 
     A walker class to pretty-print the AST in the langauge syntax.
     """
-    def __init__(self, semantics, children, buf):
+    def __init__(self, sig, child, buf):
         super(TranslateMPI, self).__init__()
-        self.sem = semantics
-        self.child = children
+        self.sig = sig
+        self.child = child
         self.buf = buf
         self.indent = [INDENT]
         self.blocker = Blocker(self, buf)
@@ -92,19 +92,19 @@ class TranslateMPI(NodeWalker):
         """
         return builtin_conversion[name] if name in builtin_conversion else name
 
-    def arguments(self, name, arg_list):
+    def arguments(self, name, args):
         """ 
         Build the list of arguments.
          - Take the address of variables for reference parameters.
          - Don't dereference references for reference parameters.
         """
-        args = []
-        for (i, x) in enumerate(arg_list.children()):
+        new = []
+        for (i, x) in enumerate(args):
             arg = None
             
             # For single variable references, we must give the address of
             # variable parameters.
-            t = self.sem.sig.lookup_param_type(name, i)
+            t = self.sig.lookup_param_type(name, i)
             if t == Type('ref', 'single'):
                 assert isinstance(x, ast.ExprSingle)
                 assert isinstance(x.elem, ast.ElemId)
@@ -113,8 +113,8 @@ class TranslateMPI(NodeWalker):
                 elif x.elem.symbol.type == Type('ref', 'single'):
                     arg = x.elem.name
             
-            args.append(arg if arg else self.expr(x))
-        return ', '.join(args)
+            new.append(arg if arg else self.expr(x))
+        return ', '.join(new)
 
     def header(self):
         """ 
@@ -140,18 +140,19 @@ class TranslateMPI(NodeWalker):
 
         # Walk the entire program
         self.header()
-        self.decls(node.decls)
-        self.defs(node.defs, 0)
+        
+        # Declarations
+        [self.out(self.decl(x)) for x in node.decls]
+        if len(node.decls) > 0:
+            self.out('')
+        
+        # Definitions
+        [self.defn(p, d) for p in node.defs]
    
         # Output the buffered blocks
         self.blocker.output()
     
     # Variable declarations ===============================
-
-    def decls(self, node):
-        [self.out(self.decl(x)) for x in node.children()]
-        if len(node.children()) > 0:
-            self.out('')
 
     def decl(self, node):
         s = '{}'.format(node.name)
@@ -171,28 +172,27 @@ class TranslateMPI(NodeWalker):
 
     # Procedure declarations ==============================
 
-    def defs(self, node, d):
-        [self.defn(p, d) for p in node.children()]
-
     def defn(self, node, d):
         s = ''
         s += 'void' if node.name == '_main' else 'int'
-        s += ' {}({})'.format(
-                self.procedure_name(node.name),
-                self.formals(node.formals))
+        s += ' {}({})'.format(self.procedure_name(node.name),
+                ', '.join([self.param(x) for x in node.formals]))
         self.parent = node.name
         self.out(s)
         self.blocker.begin()
-        self.decls(node.decls)
+        
+        # Declarations
+        [self.out(self.decl(x)) for x in node.decls]
+        if len(node.decls) > 0:
+            self.out('')
+       
+        # Statement block
         self.stmt_block(node.stmt)
         self.blocker.end()
         self.out('')
     
     # Formals =============================================
     
-    def formals(self, node):
-        return ', '.join([self.param(x) for x in node.children()])
-
     def param(self, node):
         s = '{}'.format(node.name)
 
@@ -275,7 +275,7 @@ class TranslateMPI(NodeWalker):
         # Calculate closure size 
         closure_size = 2 + num_procs;
         for (i, x) in enumerate(node.pcall.args.expr):
-            t = self.sem.sig.lookup_param_type(proc_name, i)
+            t = self.sig.lookup_param_type(proc_name, i)
             if t.form == 'array': closure_size = closure_size + 3
             elif t.form == 'single': closure_size = closure_size + 2 
 
@@ -296,13 +296,13 @@ class TranslateMPI(NodeWalker):
         #   Val:   (2, value)
         if node.pcall.args.expr:
             for (i, x) in enumerate(node.pcall.args.expr):
-                t = self.sem.sig.lookup_param_type(proc_name, i)
+                t = self.sig.lookup_param_type(proc_name, i)
 
                 # If the parameter type is an array reference
                 if t == Type('ref', 'array'):
 
                     # Output the length of the array
-                    q = self.sem.sig.lookup_array_qualifier(proc_name, i)
+                    q = self.sig.lookup_array_qualifier(proc_name, i)
                     self.comment('array reference')
                     self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
@@ -335,11 +335,11 @@ class TranslateMPI(NodeWalker):
         # Procedures: (jumpindex)*
         self.comment('Proc: parent '+proc_name)
         self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-                +self.sem.proc_names.index(proc_name))) ; n+=1
+                +self.sig.mobile_proc_names.index(proc_name))) ; n+=1
         for x in self.child.children[proc_name]:
             self.comment('Proc: child '+x)
             self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-                    +self.sem.proc_names.index(x))) ; n+=1
+                    +self.sig.mobile_proc_names.index(x))) ; n+=1
 
         # Call runtime TODO: length argument?
         self.out('{}({}, _closure);'.format(defs.LABEL_MIGRATE, 
@@ -352,9 +352,6 @@ class TranslateMPI(NodeWalker):
 
     # Expressions =========================================
 
-    def expr_list(self, node):
-        return ', '.join([self.expr(x) for x in node.children()])
-    
     def expr_single(self, node):
         return self.elem(node.elem)
 

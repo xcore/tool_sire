@@ -31,7 +31,7 @@ LINK_FLAGS       = []
 RUNTIME_FILES = ['main.c', 'slave.c', 'guest.c', 'host.c']
 BUILTIN_FILES = ['builtins.c']
 
-def build_mpi(sem, device, buf, outfile, 
+def build_mpi(device, buf, outfile, 
         compile_only, show_calls=False, v=False):
     """
     Run the build process to create either the assembly output or the complete

@@ -13,16 +13,17 @@ import logging
 
 from error import Error
 from errorlog import ErrorLog
-from util import vmsg
-from util import vhdr
+from util import vmsg, vhdr
 import util
 import config
 import definitions as defs
 from parser import Parser
-import dump as dump
-import printer as printer
+from dump import Dump
+from printer import Printer
 from semantics import Semantics
-import children as children
+from transformpar import TransformPar
+from transformrep import TransformRep
+from children import Children
 
 from codegen import generate
 from target.config import set_device
@@ -160,12 +161,12 @@ def produce_ast(input_file, errorlog, logging=False):
     
     # Display (dump) the AST
     if print_ast:
-        ast.accept(dump.Dump())
+        ast.accept(Dump())
         raise SystemExit()
 
     # Display (pretty-print) the AST
     if pprint_ast: 
-        printer.Printer().walk_program(ast)
+        Printer().walk_program(ast)
         raise SystemExit()
 
     return ast
@@ -176,24 +177,21 @@ def semantic_analysis(ast, errorlog):
     """
     vmsg(v, "Performing semantic analysis")
     
-    sem = Semantics(errorlog)
-    sem.walk_program(ast)
+    Semantics(errorlog).walk_program(ast)
     
     if errorlog.any():
         raise Error('semantic analysis')
     
     if sem_only: 
         raise SystemExit()
-    
-    return sem
 
-def child_analysis(ast, sem):
+def child_analysis(sig, ast):
     """ 
     Determine children.
     """
     vmsg(v, "Performing child analysis")
     
-    child = children.Children(sem.proc_names)
+    child = Children(sig)
     ast.accept(child)
     child.build()
     #child.display()
@@ -226,14 +224,26 @@ def main(args):
         ast = produce_ast(input_file, errorlog)
 
         # Perform semantic analysis on the AST
-        sem = semantic_analysis(ast, errorlog)
+        sym = SymbolTable(self, debug=False)
+        sig = SignatureTable(self, debug=False)
+        semantic_analysis(sym, sig, ast, errorlog)
+
+        # Transform parallel composition
+        vmsg(v, "Transforming parallel composition")
+        TransformPar().walk_program(sig, ast)
+
+        # Transform parallel replication
+        vmsg(v, "Transforming parallel replication")
+        TransformRep().walk_program(ast)
+        
+        Printer().walk_program(ast)
 
         # Perform child analysis
-        child = child_analysis(ast, sem)
+        child = child_analysis(sig, ast)
 
         # Generate code
         vhdr(v, 'Generating code for {}'.format(device))
-        generate(ast, sem, child, device, outfile, 
+        generate(ast, sig, child, device, outfile, 
                 translate_only, compile_only, show_calls, v)
 
     # Handle (expected) system exits

@@ -25,25 +25,21 @@ class Node(object):
 
 class NodeVisitor(object):
     def visit_program(self, node): pass
-    def visit_decls(self, node): pass
     def visit_decl(self, node): pass
-    def visit_defs(self, node): pass
     def visit_def(self, node): pass
-    def visit_formals(self, node): pass
     def visit_param(self, node): pass
     def visit_stmt_seq(self, node): pass
     def visit_stmt_par(self, node): pass
-    def visit_stmt_skip(self, node): pass
-    def visit_stmt_pcall(self, node): pass
-    def visit_stmt_ass(self, node): pass
     def visit_stmt_alias(self, node): pass
-    def visit_stmt_if(self, node): pass
-    def visit_stmt_while(self, node): pass
+    def visit_stmt_ass(self, node): pass
     def visit_stmt_for(self, node): pass
-    def visit_stmt_rep(self, node): pass
+    def visit_stmt_if(self, node): pass
     def visit_stmt_on(self, node): pass
+    def visit_stmt_while(self, node): pass
+    def visit_stmt_pcall(self, node): pass
+    def visit_stmt_rep(self, node): pass
     def visit_stmt_return(self, node): pass
-    def visit_expr_list(self, node): pass
+    def visit_stmt_skip(self, node): pass
     def visit_expr_single(self, node): pass
     def visit_expr_unary(self, node): pass
     def visit_expr_binop(self, node): pass
@@ -67,8 +63,8 @@ class Program(Node):
 
     def children(self):
         c = []
-        if self.decls is not None: c.append(self.decls)
-        if self.defs is not None: c.append(self.defs)
+        if self.decls is not None: c.extend(self.decls)
+        if self.defs is not None: c.extend(self.defs)
         return tuple(c)
 
     def accept(self, visitor):
@@ -80,28 +76,6 @@ class Program(Node):
 
     def __repr__(self):
         s =  'Program('
-        s += ')'
-        return s
-
-class Decls(Node):
-    def __init__(self, decl, coord=None):
-        self.decl = decl
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.decl is not None: c.extend(self.decl)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_decls(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'Decls('
         s += ')'
         return s
 
@@ -129,28 +103,6 @@ class Decl(Node):
         s += ')'
         return s
 
-class Defs(Node):
-    def __init__(self, decl, coord=None):
-        self.decl = decl
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.decl is not None: c.extend(self.decl)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_defs(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'Defs('
-        s += ')'
-        return s
-
 class Def(Node):
     def __init__(self, name, type, formals, decls, stmt, coord=None):
         self.name = name
@@ -162,9 +114,9 @@ class Def(Node):
 
     def children(self):
         c = []
-        if self.formals is not None: c.append(self.formals)
-        if self.decls is not None: c.append(self.decls)
         if self.stmt is not None: c.append(self.stmt)
+        if self.formals is not None: c.extend(self.formals)
+        if self.decls is not None: c.extend(self.decls)
         return tuple(c)
 
     def accept(self, visitor):
@@ -177,28 +129,6 @@ class Def(Node):
     def __repr__(self):
         s =  'Def('
         s += ', '.join('%s' % v for v in [self.name, self.type])
-        s += ')'
-        return s
-
-class Formals(Node):
-    def __init__(self, params, coord=None):
-        self.params = params
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.params is not None: c.extend(self.params)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_formals(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'Formals('
         s += ')'
         return s
 
@@ -249,13 +179,13 @@ class StmtSeq(Node):
         return s
 
 class StmtPar(Node):
-    def __init__(self, pcall, coord=None):
-        self.pcall = pcall
+    def __init__(self, stmt, coord=None):
+        self.stmt = stmt
         self.coord = coord
 
     def children(self):
         c = []
-        if self.pcall is not None: c.extend(self.pcall)
+        if self.stmt is not None: c.extend(self.stmt)
         return tuple(c)
 
     def accept(self, visitor):
@@ -267,71 +197,6 @@ class StmtPar(Node):
 
     def __repr__(self):
         s =  'StmtPar('
-        s += ')'
-        return s
-
-class StmtSkip(Node):
-    def __init__(self, coord=None):
-        self.coord = coord
-
-    def children(self):
-        return ()
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_skip(self)
-        visitor.down(tag)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtSkip('
-        s += ')'
-        return s
-
-class StmtPcall(Node):
-    def __init__(self, name, args, coord=None):
-        self.name = name
-        self.args = args
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.args is not None: c.append(self.args)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_pcall(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtPcall('
-        s += ', '.join('%s' % v for v in [self.name])
-        s += ')'
-        return s
-
-class StmtAss(Node):
-    def __init__(self, left, expr, coord=None):
-        self.left = left
-        self.expr = expr
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.left is not None: c.append(self.left)
-        if self.expr is not None: c.append(self.expr)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_ass(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtAss('
         s += ')'
         return s
 
@@ -359,53 +224,27 @@ class StmtAlias(Node):
         s += ')'
         return s
 
-class StmtIf(Node):
-    def __init__(self, cond, thenstmt, elsestmt, coord=None):
-        self.cond = cond
-        self.thenstmt = thenstmt
-        self.elsestmt = elsestmt
+class StmtAss(Node):
+    def __init__(self, left, expr, coord=None):
+        self.left = left
+        self.expr = expr
         self.coord = coord
 
     def children(self):
         c = []
-        if self.cond is not None: c.append(self.cond)
-        if self.thenstmt is not None: c.append(self.thenstmt)
-        if self.elsestmt is not None: c.append(self.elsestmt)
+        if self.left is not None: c.append(self.left)
+        if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_stmt_if(self)
+        tag = visitor.visit_stmt_ass(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'StmtIf('
-        s += ')'
-        return s
-
-class StmtWhile(Node):
-    def __init__(self, cond, stmt, coord=None):
-        self.cond = cond
-        self.stmt = stmt
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.cond is not None: c.append(self.cond)
-        if self.stmt is not None: c.append(self.stmt)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_while(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtWhile('
+        s =  'StmtAss('
         s += ')'
         return s
 
@@ -439,6 +278,104 @@ class StmtFor(Node):
         s += ')'
         return s
 
+class StmtIf(Node):
+    def __init__(self, cond, thenstmt, elsestmt, coord=None):
+        self.cond = cond
+        self.thenstmt = thenstmt
+        self.elsestmt = elsestmt
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.cond is not None: c.append(self.cond)
+        if self.thenstmt is not None: c.append(self.thenstmt)
+        if self.elsestmt is not None: c.append(self.elsestmt)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_if(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtIf('
+        s += ')'
+        return s
+
+class StmtOn(Node):
+    def __init__(self, core, pcall, coord=None):
+        self.core = core
+        self.pcall = pcall
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.core is not None: c.append(self.core)
+        if self.pcall is not None: c.append(self.pcall)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_on(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtOn('
+        s += ')'
+        return s
+
+class StmtWhile(Node):
+    def __init__(self, cond, stmt, coord=None):
+        self.cond = cond
+        self.stmt = stmt
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.cond is not None: c.append(self.cond)
+        if self.stmt is not None: c.append(self.stmt)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_while(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtWhile('
+        s += ')'
+        return s
+
+class StmtPcall(Node):
+    def __init__(self, name, args, coord=None):
+        self.name = name
+        self.args = args
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.args is not None: c.extend(self.args)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_pcall(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtPcall('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
 class StmtRep(Node):
     def __init__(self, var, init, count, pcall, coord=None):
         self.var = var
@@ -467,30 +404,6 @@ class StmtRep(Node):
         s += ')'
         return s
 
-class StmtOn(Node):
-    def __init__(self, core, pcall, coord=None):
-        self.core = core
-        self.pcall = pcall
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.core is not None: c.append(self.core)
-        if self.pcall is not None: c.append(self.pcall)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_on(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtOn('
-        s += ')'
-        return s
-
 class StmtReturn(Node):
     def __init__(self, expr, coord=None):
         self.expr = expr
@@ -513,25 +426,20 @@ class StmtReturn(Node):
         s += ')'
         return s
 
-class ExprList(Node):
-    def __init__(self, expr, coord=None):
-        self.expr = expr
+class StmtSkip(Node):
+    def __init__(self, coord=None):
         self.coord = coord
 
     def children(self):
-        c = []
-        if self.expr is not None: c.extend(self.expr)
-        return tuple(c)
+        return ()
 
     def accept(self, visitor):
-        tag = visitor.visit_expr_list(self)
+        tag = visitor.visit_stmt_skip(self)
         visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'ExprList('
+        s =  'StmtSkip('
         s += ')'
         return s
 
@@ -687,7 +595,7 @@ class ElemFcall(Node):
 
     def children(self):
         c = []
-        if self.args is not None: c.append(self.args)
+        if self.args is not None: c.extend(self.args)
         return tuple(c)
 
     def accept(self, visitor):
@@ -711,7 +619,7 @@ class ElemPcall(Node):
 
     def children(self):
         c = []
-        if self.args is not None: c.append(self.args)
+        if self.args is not None: c.extend(self.args)
         return tuple(c)
 
     def accept(self, visitor):

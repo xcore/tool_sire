@@ -40,7 +40,7 @@ RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc',
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
         'util.xc', 'memory.c']
     
-def build_xs1(sem, device, program_buf, outfile, 
+def build_xs1(sig, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):
     """ 
     Run the build process to create either the assembly output or the complete
@@ -316,7 +316,7 @@ def insert_bottom_labels(sem, lines, v):
     # For each function, for each line...
     # (Create a new list and modify it each time...)
     b = False
-    for x in sem.proc_names:
+    for x in sig.mobile_proc_names:
         new = []
         for (i, y) in enumerate(lines):
             new.append(y)
@@ -341,7 +341,7 @@ def insert_frame_sizes(sem, lines, v):
     vmsg(v, '  Inserting frame sizes')
         
     b = False
-    for x in sem.proc_names:
+    for x in sig.mobile_proc_names:
         new = []
         for (i, y) in enumerate(lines):
             new.append(y)
@@ -366,7 +366,7 @@ def rewrite_calls(sem, lines, v):
 
     for (i, x) in enumerate(lines):
         frags = x.strip().split()
-        names = builtin.runtime_functions + sem.proc_names 
+        names = builtin.runtime_functions + sig.mobile_proc_names 
         if frags and frags[0] == 'bl' and frags[1] in names:
             lines[i] = '\tbla cp[{}]\n'.format(names.index(frags[1]))
 
@@ -374,9 +374,9 @@ def rewrite_calls(sem, lines, v):
 
 def build_jumptab(sem, buf, v):
 
-    assert len(sem.proc_names) <= defs.JUMP_TABLE_SIZE
+    assert len(sig.mobile_proc_names) <= defs.JUMP_TABLE_SIZE
     vmsg(v, 'Building master jump table ({}/{})'.format(
-        len(sem.proc_names), defs.JUMP_TABLE_SIZE))
+        len(sig.mobile_proc_names), defs.JUMP_TABLE_SIZE))
 
     # Constant section
     buf.write('#include "xs1/definitions.h"\n')
@@ -394,19 +394,19 @@ def build_jumptab(sem, buf, v):
     buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
 
     # Program entries
-    for x in sem.proc_names:
+    for x in sig.mobile_proc_names:
         buf.write('\t.word '+x+'\n')
 
     # Pad any unused space
     remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(sem.proc_names))
+            len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
 def build_sizetab(sem, buf, v):
 
-    assert len(sem.proc_names) <= defs.JUMP_TABLE_SIZE
+    assert len(sig.mobile_proc_names) <= defs.JUMP_TABLE_SIZE
     vmsg(v, 'Building master size table ({}/{})'.format(
-        len(sem.proc_names), defs.JUMP_TABLE_SIZE))
+        len(sig.mobile_proc_names), defs.JUMP_TABLE_SIZE))
     
     # Data section
     buf.write('\t.section .dp.data, "awd", @progbits\n')
@@ -423,13 +423,13 @@ def build_sizetab(sem, buf, v):
         buf.write('\t.word 0\n')
 
     # Program procedure entries
-    for x in sem.proc_names:
+    for x in sig.mobile_proc_names:
         buf.write('\t.word {}-{}+{}\n'.format(
             function_label_bottom(x), x, defs.BYTES_PER_WORD))
     
     # Pad any unused space
     remaining = defs.SIZE_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET +
-            len(sem.proc_names))
+            len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
 def build_frametab(sem, buf, v):
@@ -451,12 +451,12 @@ def build_frametab(sem, buf, v):
         buf.write('\t.word 0\n')
 
     # Program procedure entries
-    for x in sem.proc_names:
+    for x in sig.mobile_proc_names:
         buf.write('\t.word {}\n'.format(function_label_framesize(x)))
     
     # Pad any unused space
     remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(sem.proc_names))
+            len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
 def cleanup(v):
