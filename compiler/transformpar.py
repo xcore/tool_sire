@@ -5,21 +5,50 @@
 
 import ast
 from walker import NodeWalker
+from context import Context
 from type import Type
+from semantics import var_to_param
 
 class TransformPar(NodeWalker):
     """
     An AST walker to transform parallel blocks. 
     """
-    def __init__(self):
-        pass
+    def __init__(self, sig, debug=False):
+        self.sig = sig
+        self.debug = debug
 
     def stmt_to_process(self, stmt):
         """
         Convert a statement into a process definition.
+         - Create the definition node.
+         - Create the corresponding Pcall node.
+         - Insert the definition into the signature table.
         """
-        return (ast.Def('a', Type('proc', 'procedure'), [], [], ast.StmtSkip()), 
-            ast.StmtPcall('a', []))
+        context = Context().walk_stmt(stmt)
+        #print(', '.join([x[0] for x in context]))
+        #print(', '.join(['{}'.format(x[1]) for x in context]))
+        
+        # Create the formal and actual paramerer lists
+        formals = []
+        actuals = []
+        for x in context:
+            formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
+                x.symbol.expr))
+            
+            # If the actual is a slice, we only want to pass the array id.
+            if isinstance(x, ast.ElemSlice):
+                elem = ast.ElemId(x.name)
+                elem.symbol = x.symbol
+                actuals.append(ast.ExprSingle(elem))
+            else:
+                actuals.append(x)
+        
+        # Create a unique name
+        name = '_a'
+        d = ast.Def(name, Type('proc', 'procedure'), formals, [], stmt)
+        c = ast.StmtPcall(name, actuals)
+        self.sig.insert(d.type, d)
+        return (d, c)
 
     # Program ============================================
 
@@ -37,17 +66,18 @@ class TransformPar(NodeWalker):
 
     def stmt_seq(self, node):
         p = []
-        [p.extend(self.stmt(x)) for x in node.children()]
+        [p.extend(self.stmt(x)) for x in node.stmt]
         return p
 
     def stmt_par(self, node):
         p = []
         for (i, x) in enumerate(node.stmt):
             if not isinstance(x, ast.StmtPcall):
-                print('Transforming stmt {}'.format(i))
+                if(self.debug):
+                    print('Transforming stmt {}'.format(i))
                 (proc, pcall) = self.stmt_to_process(x)
                 node.stmt[i] = pcall
-                #p.append(node.stmt[i])
+                p.append(proc)
         return p
 
     def stmt_skip(self, node):

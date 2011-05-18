@@ -7,52 +7,38 @@ import sys
 
 import definitions as defs
 from type import Type
-import semantics
-
-# Valid actual parameter types that can be taken by each formal type.
-param_conversions = {
-  
-  Type('val', 'single') : [
-    Type('val', 'single'), 
-    Type('var', 'single'), 
-    Type('var', 'sub'),
-    Type('ref', 'sub'),
-    ],
-
-  Type('ref', 'single') : [
-    Type('var', 'single'), 
-    Type('ref', 'single'), 
-    ],
-
-  Type('ref', 'array') : [
-    Type('var', 'array'), 
-    Type('ref', 'array'), 
-    ],
-}
 
 class SignatureTable(object):
     """
     A procedure signature table.
     """
-    def __init__(self, semantics, debug=False):
-        self.sem = semantics
+    def __init__(self, debug=False):
         self.debug = debug
         self.tab = {}
         self.mobile_proc_names = []
 
-    def insert(self, type, node):
+    def insert(self, type, node, mobile=True):
         """
-        Insert a procedure signature.
+        Insert a procedure signature, mobile denotes if it will be added to the
+        jump table and be mobile between cores.
         """
         if (node.formals and len(node.formals) > defs.MAX_PROC_PARAMETERS):
             return False
-
+        
         self.tab[node.name] = Signature(node.name, type, node.formals)
+        
+        if mobile:
+            self.mobile_proc_names.append(node.name)
+        
         if(self.debug):
             print("Inserted sig for '{}' ({})".format(node.name, type))
+        
         return True
 
     def lookup_param_type(self, name, i):
+        """
+        Given a procedure name and an index, return the formal type.
+        """
         return self.tab[name].params[i].type
 
     def lookup_array_qualifier(self, name, i):
@@ -62,44 +48,26 @@ class SignatureTable(object):
         """
         params = self.tab[name].params
         assert(params[i].type == Type('ref', 'array')) 
+        
         qualifier = params[i].expr.elem.name
         for (i, x) in enumerate(params):
             if x.name == qualifier: return i
+        
         return None
 
-    def check_args(self, type, node):
-        """ 
-        Check if a procedure signature is defined.
+    def get_params(self, name):
         """
-        if not node.name in self.tab:
-            return False
+        Return the list of formal parameter declarations for a named procedure.
+        """
+        if node.name in self.tab:
+            return self.tab[node.name].params
+        else:
+            return None
 
-        # Compare each param type to the type of each expr argument
-        if self.debug:
-            print('Checking args for {}'.format(node.name))
-
-        # If there are no parameters, we don't need to check
-        if not self.tab[node.name].params:
-            return True
-
-        # Otherwise check them
-        for (x, y) in zip(self.tab[node.name].params, node.args.expr):
-            t = self.sem.get_expr_type(y)
-            if(self.debug):
-                print('Arg type: {}'.format(t))
-                print('Param type: {}'.format(x.type))
-
-            # If argument y has no type, i.e. not defined
-            if not t:
-                return False
-
-            # Check it against each valid conversion
-            if not any(t==z for z in param_conversions[x.type]):
-                return False
-        
-        return True
-   
     def add_mobile_proc(self, name):
+        """
+        Add a process to the list of mobiles.
+        """
         self.mobile_proc_names.append(name)
 
     def dump(self, buf=sys.stdout):

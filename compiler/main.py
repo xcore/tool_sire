@@ -20,6 +20,8 @@ import definitions as defs
 from parser import Parser
 from dump import Dump
 from printer import Printer
+from symbol import SymbolTable
+from signature import SignatureTable
 from semantics import Semantics
 from transformpar import TransformPar
 from transformrep import TransformRep
@@ -171,13 +173,13 @@ def produce_ast(input_file, errorlog, logging=False):
 
     return ast
 
-def semantic_analysis(ast, errorlog):
+def semantic_analysis(sym, sig, ast, errorlog):
     """ 
     Perform semantic analysis on an AST.
     """
     vmsg(v, "Performing semantic analysis")
     
-    Semantics(errorlog).walk_program(ast)
+    Semantics(sym, sig, errorlog).walk_program(ast)
     
     if errorlog.any():
         raise Error('semantic analysis')
@@ -224,17 +226,17 @@ def main(args):
         ast = produce_ast(input_file, errorlog)
 
         # Perform semantic analysis on the AST
-        sym = SymbolTable(self, debug=False)
-        sig = SignatureTable(self, debug=False)
+        sym = SymbolTable(errorlog, debug=False)
+        sig = SignatureTable(debug=False)
         semantic_analysis(sym, sig, ast, errorlog)
 
         # Transform parallel composition
         vmsg(v, "Transforming parallel composition")
-        TransformPar().walk_program(sig, ast)
+        TransformPar(sig).walk_program(ast)
 
         # Transform parallel replication
-        vmsg(v, "Transforming parallel replication")
-        TransformRep().walk_program(ast)
+        #vmsg(v, "Transforming parallel replication")
+        #TransformRep().walk_program(ast)
         
         Printer().walk_program(ast)
 

@@ -93,10 +93,16 @@ class Printer(NodeWalker):
     # Formals =============================================
     
     def param(self, node):
-        s = '{} {}'.format(node.type.specifier, node.name)
-        if node.type.form == 'array':
-            s += '[{}]'.format(self.expr(node.expr))
-        return s
+        if node.type == Type('val', 'single'):
+            return 'val '+node.name
+        elif node.type == Type('ref', 'single'):
+            return 'var '+node.name
+        elif node.type == Type('val', 'array'):
+            return 'var {}[{}]'.format(node.name, self.expr(node.expr))
+        elif node.type == Type('ref', 'array'):
+            return 'var {}[{}]'.format(node.name, self.expr(node.expr))
+        else:
+            assert 0
 
     # Statements ==========================================
 
@@ -136,9 +142,8 @@ class Printer(NodeWalker):
             self.elem(node.left), self.expr(node.expr)))
 
     def stmt_alias(self, node, d):
-        self.out(d, '{} aliases {}[{} : {}]'.format(
-            node.dest, node.name, 
-            self.expr(node.begin), self.expr(node.end)))
+        self.out(d, '{} aliases {}'.format(
+            node.name, self.expr(node.slice)))
 
     def stmt_in(self, node, d):
         self.out(d, '{} ? {}'.format(
@@ -207,7 +212,7 @@ class Printer(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        return '[{} : {}]'.format(node.name, 
+        return '{}[{} : {}]'.format(node.name, 
                 self.expr(node.begin), self.expr(node.end))
 
     def elem_fcall(self, node):

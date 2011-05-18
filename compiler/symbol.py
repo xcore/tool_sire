@@ -13,8 +13,8 @@ scopes = ['system', 'module', 'proc', 'func']
 class SymbolTable(object):
     """ Symbol table.
     """
-    def __init__(self, semantics, debug=False):
-        self.sem = semantics
+    def __init__(self, error, debug=False):
+        self.error = error
         self.debug = debug
         self.scope = []
         self.tab = {}
@@ -28,6 +28,14 @@ class SymbolTable(object):
         if(self.debug): 
             print("New scope '{}'".format(s.name))
 
+    def unused_warning(self, name, coord):
+        """ 
+        Unused variable warning
+        """
+        self.error.report_warning(
+                "variable '{}' declared but not used"
+                .format(name), coord)
+
     def end_scope(self):
         """ End a scope.
         """
@@ -40,7 +48,7 @@ class SymbolTable(object):
 
             # If symbol hasn't been used, give a warning
             if not s.mark and not s.name == defs.LABEL_MAIN:
-                self.sem.unused_warning(s.name, s.coord)
+                unused_warning(s.name, s.coord)
         
         s = self.scope.pop()
         self.curr_scope = self.get_curr_scope()
@@ -55,21 +63,21 @@ class SymbolTable(object):
             if x.type.isTag():
                 return x.name
 
-    def insert_(self, name, type, coord):
+    def insert_(self, name, type, expr, coord):
         """ Insert a new symbol in the table.
         """
-        self.tab[name] = Symbol(name, type, coord, self.scope[-1])
+        self.tab[name] = Symbol(name, type, expr, coord, self.scope[-1])
         self.scope.append(self.tab[name])
         if(self.debug):
             print("Inserted sym '{}' {} in scope '{}'"
                     .format(name, type, self.curr_scope))
 
-    def insert(self, name, type, coord=None):
+    def insert(self, name, type, expr=None, coord=None):
         """ Insert a new symbol in the table if it doesn't already exist in the
             current scope.
         """
         if not self.lookup_scoped(name):
-            self.insert_(name, type, coord)
+            self.insert_(name, type, expr, coord)
             return True
         return False
 
@@ -133,9 +141,10 @@ class SymbolTable(object):
 class Symbol(object):
     """ A generic symbol with a name, type and scope.
     """
-    def __init__(self, name, type, coord, scope):
+    def __init__(self, name, type, expr, coord, scope):
         self.name = name
         self.type = type
+        self.expr = expr
         self.coord = coord
         self.scope = scope
         self.mark = False
@@ -148,5 +157,5 @@ class ScopeTag(Symbol):
     """ A scope tag symbol.
     """
     def __init__(self, name):
-        super(ScopeTag, self).__init__(name, Type('tag'), None, '')
+        super(ScopeTag, self).__init__(name, Type('tag'), None, None, '')
 

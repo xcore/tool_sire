@@ -11,8 +11,6 @@ import definitions as defs
 
 import ast
 from walker import NodeWalker
-import symbol
-import signature
 from builtin import builtins
 from type import Type
 
@@ -27,15 +25,51 @@ elem_types = {
   'elem_char'    : Type('val', 'single'),
   }
 
+# Valid actual parameter types that can be taken by each formal type.
+param_conversions = {
+  
+  Type('val', 'single') : [
+    Type('val', 'single'), 
+    Type('var', 'single'), 
+    Type('var', 'sub'),
+    Type('ref', 'sub'),
+    ],
+
+  Type('ref', 'single') : [
+    Type('var', 'single'), 
+    Type('ref', 'single'), 
+    ],
+
+  Type('ref', 'array') : [
+    Type('var', 'array'), 
+    Type('ref', 'array'), 
+    ],
+}
+
+# Relation of variable types to formal parameter types.
+var_to_param = {
+  
+    Type('val', 'single') : Type('val', 'single'),
+    Type('var', 'single') : Type('val', 'single'), 
+    Type('var', 'sub')    : Type('val', 'single'),
+    Type('ref', 'sub')    : Type('val', 'single'),
+
+    Type('var', 'single') : Type('ref', 'single'), 
+    Type('ref', 'single') : Type('ref', 'single'),
+
+    Type('var', 'array')  : Type('ref', 'array'), 
+    Type('ref', 'array')  : Type('ref', 'array'),
+}
+
 class Semantics(NodeWalker):
     """ 
     An AST walker class to check the semantics of a sire program.
     """
-    def __init__(self, sym, sig, error):
+    def __init__(self, sym, sig, errorlog):
         self.sym = sym
         self.sig = sig
         self.depth = 0
-        self.error = error
+        self.errorlog = errorlog
         
         # Initialise variables in the 'system' scope
         
@@ -47,9 +81,7 @@ class Semantics(NodeWalker):
         # Add all mobile builtin functions
         for x in builtins.values():
             self.sym.insert(x.definition.name, x.definition.type)
-            self.sig.insert(x.definition.type, x.definition)
-            if x.mobile:
-                self.sig.add_mobile_proc(x.definition.name)
+            self.sig.insert(x.definition.type, x.definition, x.mobile)
 
     def get_elem_type(self, elem):
         """ 
@@ -110,13 +142,43 @@ class Semantics(NodeWalker):
         t = self.get_elem_type(elem)
         return True if t and any([x==t for x in types]) else False
 
+    def check_args(self, type, node):
+        """ 
+        Check if a procedure signature is defined for a [pf]call AST node.
+        """
+      
+        # Check the signature exists.
+        if not sig.get_params(node.name):
+            return False
+
+        # Compare each param type to the type of each expr argument
+        if self.debug:
+            print('Checking args for {}'.format(node.name))
+
+        # Otherwise check them
+        for (x, y) in zip(sig.get_params(node.name), node.args.expr):
+            t = self.get_expr_type(y)
+            if(self.debug):
+                print('Arg type: {}'.format(t))
+                print('Param type: {}'.format(x.type))
+
+            # If argument y has no type, i.e. not defined
+            if not t:
+                return False
+
+            # Check it against each valid conversion
+            if not any(t==z for z in param_conversions[x.type]):
+                return False
+        
+        return True
+   
     # Errors and warnings =================================
 
     def nodecl_error(self, name, specifier, coord):
         """ 
         No declaration error
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "{} '{}' not declared"
                 .format(specifier, name), coord)
 
@@ -124,7 +186,7 @@ class Semantics(NodeWalker):
         """ 
         No definition error 
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "invalid arguments for procedure '{}' "
                 .format(name), coord)
 
@@ -132,7 +194,7 @@ class Semantics(NodeWalker):
         """
         Re-declaration error 
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "variable '{}' already declared in scope"
                 .format(name), coord)
 
@@ -140,7 +202,7 @@ class Semantics(NodeWalker):
         """ 
         Re-definition error 
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "procedure '{}' already declared"
                 .format(name), coord)
 
@@ -148,23 +210,15 @@ class Semantics(NodeWalker):
         """ 
         Re-definition error 
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "procedure '{}' definition invalid"
-                .format(name), coord)
-
-    def unused_warning(self, name, coord):
-        """ 
-        Unused variable warning
-        """
-        self.error.report_warning(
-                "variable '{}' declared but not used"
                 .format(name), coord)
 
     def type_error(self, msg, name, coord):
         """ 
         Mismatching type error
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "type error in {} with '{}'"
                 .format(msg, name), coord)
 
@@ -172,7 +226,7 @@ class Semantics(NodeWalker):
         """ 
         Mismatching form error
         """
-        self.error.report_error(
+        self.errorlog.report_error(
                 "form error in {} with '{}'"
                 .format(msg, name), coord)
 
@@ -187,7 +241,7 @@ class Semantics(NodeWalker):
     # Variable declarations ===============================
 
     def decl(self, node):
-        if not self.sym.insert(node.name, node.type, node.coord):
+        if not self.sym.insert(node.name, node.type, node.expr, node.coord):
             self.redecl_error(node.name, node.coord)
 
         # Children
@@ -210,7 +264,6 @@ class Semantics(NodeWalker):
             self.redecl_error(node.name, node.coord)
 
         # Add the procedure name to the list
-        self.sig.add_mobile_proc(node.name)
         self.parent = node.name
     
         # Begin a new scope for decls and stmt components
