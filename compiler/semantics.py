@@ -385,7 +385,7 @@ class Semantics(NodeWalker):
         self.elem(node.var)
         self.expr(node.init)
         self.expr(node.count)
-        self.elem(node.pcall)
+        self.elem(node.stmt)
 
     def stmt_on(self, node):
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):

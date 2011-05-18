@@ -322,7 +322,7 @@ class Parser(object):
 
     # par index:=init for count do ...
     def p_stmt_rep(self, p):
-        'stmt : PAR left ASS expr FOR expr DO pcall'
+        'stmt : PAR left ASS expr FOR expr DO stmt'
         p[0] = ast.StmtRep(p[2], p[4], p[6], p[8], self.coord(p))
 
     def p_stmt_on(self, p):

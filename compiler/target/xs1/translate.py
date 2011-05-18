@@ -434,6 +434,12 @@ class TranslateXS1(NodeWalker):
             self.expr(node.bound), self.expr(node.step)))
         self.stmt_block(node.stmt)
 
+    def stmt_rep(self, node):
+        self.out('for ({0} = {1}; {0} <= {2}; {0} ++)'.format(
+            self.elem(node.var), self.expr(node.init), 
+            self.expr(node.count)))
+        self.stmt_block(node.stmt)
+
     def stmt_on(self, node):
         """
         Generate an on statement.

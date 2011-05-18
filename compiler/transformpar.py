@@ -74,7 +74,7 @@ class TransformPar(NodeWalker):
         for (i, x) in enumerate(node.stmt):
             if not isinstance(x, ast.StmtPcall):
                 if(self.debug):
-                    print('Transforming stmt {}'.format(i))
+                    print('Transforming par {}'.format(i))
                 (proc, pcall) = self.stmt_to_process(x)
                 node.stmt[i] = pcall
                 p.append(proc)
@@ -104,7 +104,13 @@ class TransformPar(NodeWalker):
         return self.stmt(node.stmt)
 
     def stmt_rep(self, node):
-        return self.elem(node.stmt)
+        if not isinstance(node.stmt, ast.StmtPcall):
+            if(self.debug):
+                print('Transforming rep')
+            (proc, pcall) = self.stmt_to_process(node.stmt)
+            node.stmt = pcall
+            return [proc]
+        return []
 
     def stmt_on(self, node):
         return []

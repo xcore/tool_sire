@@ -43,16 +43,16 @@ class NodeVisitor(object):
     def visit_expr_single(self, node): pass
     def visit_expr_unary(self, node): pass
     def visit_expr_binop(self, node): pass
-    def visit_elem_group(self, node): pass
+    def visit_elem_id(self, node): pass
     def visit_elem_sub(self, node): pass
     def visit_elem_slice(self, node): pass
+    def visit_elem_group(self, node): pass
     def visit_elem_fcall(self, node): pass
     def visit_elem_pcall(self, node): pass
     def visit_elem_number(self, node): pass
     def visit_elem_boolean(self, node): pass
     def visit_elem_string(self, node): pass
     def visit_elem_char(self, node): pass
-    def visit_elem_id(self, node): pass
 
 
 class Program(Node):
@@ -377,11 +377,11 @@ class StmtPcall(Node):
         return s
 
 class StmtRep(Node):
-    def __init__(self, var, init, count, pcall, coord=None):
+    def __init__(self, var, init, count, stmt, coord=None):
         self.var = var
         self.init = init
         self.count = count
-        self.pcall = pcall
+        self.stmt = stmt
         self.coord = coord
 
     def children(self):
@@ -389,7 +389,7 @@ class StmtRep(Node):
         if self.var is not None: c.append(self.var)
         if self.init is not None: c.append(self.init)
         if self.count is not None: c.append(self.count)
-        if self.pcall is not None: c.append(self.pcall)
+        if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
     def accept(self, visitor):
@@ -515,25 +515,25 @@ class ExprBinop(Node):
         s += ')'
         return s
 
-class ElemGroup(Node):
-    def __init__(self, expr, coord=None):
-        self.expr = expr
+class ElemId(Node):
+    def __init__(self, name, coord=None):
+        self.name = name
         self.coord = coord
 
     def children(self):
         c = []
-        if self.expr is not None: c.append(self.expr)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_elem_group(self)
+        tag = visitor.visit_elem_id(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'ElemGroup('
+        s =  'ElemId('
+        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
@@ -584,6 +584,28 @@ class ElemSlice(Node):
     def __repr__(self):
         s =  'ElemSlice('
         s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+class ElemGroup(Node):
+    def __init__(self, expr, coord=None):
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_elem_group(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'ElemGroup('
         s += ')'
         return s
 
@@ -720,28 +742,6 @@ class ElemChar(Node):
     def __repr__(self):
         s =  'ElemChar('
         s += ', '.join('%s' % v for v in [self.value])
-        s += ')'
-        return s
-
-class ElemId(Node):
-    def __init__(self, name, coord=None):
-        self.name = name
-        self.coord = coord
-
-    def children(self):
-        c = []
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_elem_id(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'ElemId('
-        s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 

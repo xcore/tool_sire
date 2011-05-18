@@ -110,7 +110,7 @@ class Printer(NodeWalker):
         self.buf.write(self.indt(d-1)+'{')
         self.indent.append(FIRST_INDENT)
         for (i, x) in enumerate(node.children()): 
-            self.stmt(x, d)
+            self.stmt(x, d+1)
             self.buf.write('\n')
             if i==0:
                 self.indent.pop()
@@ -122,7 +122,7 @@ class Printer(NodeWalker):
         self.buf.write(self.indt(d-1)+'{')
         self.indent.append(FIRST_INDENT)
         for (i, x) in enumerate(node.children()):
-            self.stmt(x, d)
+            self.stmt(x, d+1)
             self.buf.write('\n')
             if i==0:
                 self.indent.pop()
@@ -177,7 +177,7 @@ class Printer(NodeWalker):
         self.indent.pop()
 
     def stmt_rep(self, node, d):
-        self.out(d, 'par {} := {} for {} do '.format(
+        self.out(d, 'par {} := {} for {} do\n'.format(
             self.elem(node.var), self.expr(node.init), 
             self.expr(node.count)))
         self.indent.append(' '*INDENT)
