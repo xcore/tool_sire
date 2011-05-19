@@ -9,10 +9,10 @@ import ast
 from walker import NodeWalker
 from type import Type
 
-INDENT = 2
-FIRST_INDENT = '^'
-SEQ_INDENT = ';' + ' '*(INDENT-1)
-PAR_INDENT = '|' + ' '*(INDENT-1) 
+INDENT       = '  '
+BLOCK_INDENT = '{ '
+SEQ_INDENT   = '; '
+PAR_INDENT   = '| ' 
 
 class Printer(NodeWalker):
     """ 
@@ -21,29 +21,31 @@ class Printer(NodeWalker):
     def __init__(self, buf=sys.stdout):
         super(Printer, self).__init__()
         self.buf = buf
-        self.indent = [' '*INDENT]
+        self.indent = []
 
-    def out(self, d, s):
-        """ 
-        Write an indented line.
-        """
-        self.buf.write(self.indt(d)+s)
-
-    def indt(self, d):
+    def indt(self):
         """ 
         Produce an indent. If its the first statement of a seq or par block we
         only produce a single space.
         """
-        return (' ' if self.indent[-1]==FIRST_INDENT else 
-            (' '*INDENT)*(d-1) + (self.indent[-1] if d>0 else ''))
+        if len(self.indent) == 0:
+            return '  '
+        else:
+            return '  '*(len(self.indent)-1)+self.indent[-1]
     
+    def out(self, s):
+        """ 
+        Write an indented line.
+        """
+        self.buf.write(self.indt()+s)
+
     def arg_list(self, args):
         return ', '.join([self.expr(x) for x in args])
 
-    def var_decls(self, decls, d):
+    def var_decls(self, decls):
         # Procedure declarations
-        self.buf.write((self.indt(d) if len(decls)>0 else '')
-                +(';\n'+self.indt(d)).join(
+        self.buf.write((self.indt() if len(decls)>0 else '')
+                +(';\n'+self.indt()).join(
                 [self.decl(x) for x in decls]))
         if len(decls)>0: self.buf.write(';\n')
 
@@ -53,9 +55,10 @@ class Printer(NodeWalker):
     def walk_program(self, node):
         
         # Program declarations
-        self.var_decls(node.decls, 0)
-
+        self.indent.append(INDENT)
+        self.var_decls(node.decls)
         self.buf.write('\n')
+        self.indent.pop()
        
         # Program definitions (procedures)
         [self.defn(x, 0) for x in node.defs]
@@ -84,10 +87,12 @@ class Printer(NodeWalker):
                 ', '.join([self.param(x) for x in node.formals])))
         
         # Procedure declarations
-        self.var_decls(node.decls, d+1)
+        self.indent.append(INDENT)
+        self.var_decls(node.decls)
 
         # Statement block
-        self.stmt(node.stmt, d+1)
+        self.indent.pop()
+        self.stmt(node.stmt)
         self.buf.write('\n\n')
     
     # Formals =============================================
@@ -106,90 +111,86 @@ class Printer(NodeWalker):
 
     # Statements ==========================================
 
-    def stmt_seq(self, node, d):
-        self.buf.write(self.indt(d-1)+'{')
-        self.indent.append(FIRST_INDENT)
-        for (i, x) in enumerate(node.children()): 
-            self.stmt(x, d+1)
-            self.buf.write('\n')
+    def stmt_block(self, node, indent):
+        """
+        Output a block of statements. E.g.:
+          { stmt1
+          ; stmt2
+          ; { stmt3
+            | stmt4
+            }
+          ; stmt5
+          }
+        """
+        if len(self.indent)>0:
+            self.indent.pop()
+        self.indent.append(BLOCK_INDENT)
+        for (i, x) in enumerate(node.stmt): 
+            self.stmt(x) ; self.buf.write('\n')
             if i==0:
                 self.indent.pop()
-                self.indent.append(SEQ_INDENT)
+                self.indent.append(indent)
         self.indent.pop()
-        self.buf.write(self.indt(d-1)+'}')
+        self.out('}')
 
-    def stmt_par(self, node, d):
-        self.buf.write(self.indt(d-1)+'{')
-        self.indent.append(FIRST_INDENT)
-        for (i, x) in enumerate(node.children()):
-            self.stmt(x, d+1)
-            self.buf.write('\n')
-            if i==0:
-                self.indent.pop()
-                self.indent.append(PAR_INDENT)
-        self.indent.pop()
-        self.buf.write(self.indt(d-1)+'}')
+    def stmt_seq(self, node):
+        self.stmt_block(node, SEQ_INDENT)
 
-    def stmt_skip(self, node, d):
-        self.out(d, 'skip')
+    def stmt_par(self, node):
+        self.stmt_block(node, PAR_INDENT)
 
-    def stmt_pcall(self, node, d):
-        self.out(d, '{}({})'.format(
+    def stmt_skip(self, node):
+        self.out('skip')
+
+    def stmt_pcall(self, node):
+        self.out('{}({})'.format(
             node.name, self.arg_list(node.args)))
 
-    def stmt_ass(self, node, d):
-        self.out(d, '{} := {}'.format(
+    def stmt_ass(self, node):
+        self.out('{} := {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
-    def stmt_alias(self, node, d):
-        self.out(d, '{} aliases {}'.format(
+    def stmt_alias(self, node):
+        self.out('{} aliases {}'.format(
             node.name, self.expr(node.slice)))
 
-    def stmt_in(self, node, d):
-        self.out(d, '{} ? {}'.format(
-            self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_out(self, node, d):
-        self.out(d, '{} ! {}'.format(
-            self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_if(self, node, d):
-        self.out(d, 'if {}\n'.format(self.expr(node.cond)))
-        self.out(d, 'then\n')
-        self.indent.append(' '*INDENT)
-        self.stmt(node.thenstmt, d+1)
-        self.buf.write('\n'+(self.indt(d))+'else\n')
-        self.stmt(node.elsestmt, d+1)
+    def stmt_if(self, node):
+        self.out('if {}\n'.format(self.expr(node.cond)))
+        self.out('then\n')
+        self.indent.append(INDENT)
+        self.stmt(node.thenstmt)
+        self.buf.write('\n'+(self.indt())+'else\n')
+        self.stmt(node.elsestmt)
         self.indent.pop()
 
-    def stmt_while(self, node, d):
-        self.out(d, 'while {} do\n'.format(self.expr(node.cond)))
-        self.indent.append(' '*INDENT)
-        self.stmt(node.stmt, d+1)
+    def stmt_while(self, node):
+        self.out('while {} do\n'.format(self.expr(node.cond)))
+        self.indent.append(INDENT)
+        self.stmt(node.stmt)
         self.indent.pop()
 
-    def stmt_for(self, node, d):
-        self.out(d, 'for {} := {} to {} step {} do\n'.format(
+    def stmt_for(self, node):
+        self.out('for {} := {} to {} step {} do\n'.format(
             self.elem(node.var), self.expr(node.init), 
             self.expr(node.step), self.expr(node.bound)))
-        self.indent.append(' '*INDENT)
-        self.stmt(node.stmt, d+1)
+        self.indent.append(INDENT)
+        self.stmt(node.stmt)
         self.indent.pop()
 
-    def stmt_rep(self, node, d):
-        self.out(d, 'par {} := {} for {} do\n'.format(
+    def stmt_rep(self, node):
+        self.out('par {} := {} for {} do\n'.format(
             self.elem(node.var), self.expr(node.init), 
             self.expr(node.count)))
-        self.indent.append(' '*INDENT)
-        self.stmt(node.stmt, d+1)
+        self.indent.append(INDENT)
+        self.stmt(node.stmt)
         self.indent.pop()
 
-    def stmt_on(self, node, d):
-        self.out(d, 'on {} do {}'.format(self.elem(node.core), 
+    def stmt_on(self, node):
+        self.out('on {} do {}'.format(self.elem(node.core), 
             self.elem(node.pcall)))
 
-    def stmt_return(self, node, d):
-        self.out(d, 'return {}'.format(self.expr(node.expr)))
+    def stmt_return(self, node):
+        self.out('return {}'.format(self.expr(node.expr)))
 
     # Expressions =========================================
 
