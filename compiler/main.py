@@ -235,8 +235,8 @@ def main(args):
         TransformPar(sig).walk_program(ast)
 
         # Transform parallel replication
-        #vmsg(v, "Transforming parallel replication")
-        #TransformRep().walk_program(ast)
+        vmsg(v, "Transforming parallel replication")
+        TransformRep(sig).walk_program(ast)
         
         Printer().walk_program(ast)
 

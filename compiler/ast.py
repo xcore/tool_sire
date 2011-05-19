@@ -24,6 +24,8 @@ class Node(object):
 
 
 class NodeVisitor(object):
+    def up(self, tag): pass
+    def down(self, tag): pass
     def visit_program(self, node): pass
     def visit_decl(self, node): pass
     def visit_def(self, node): pass

@@ -73,7 +73,7 @@ class Context(NodeWalker):
         c = self.elem(node.var)
         c += self.expr(node.init)
         c += self.expr(node.count)
-        c += self.elem(node.pcall)
+        c += self.elem(node.stmt)
         return c
 
     def stmt_on(self, node):

@@ -48,7 +48,7 @@ class SymbolTable(object):
 
             # If symbol hasn't been used, give a warning
             if not s.mark and not s.name == defs.LABEL_MAIN:
-                unused_warning(s.name, s.coord)
+                self.unused_warning(s.name, s.coord)
         
         s = self.scope.pop()
         self.curr_scope = self.get_curr_scope()
@@ -141,7 +141,7 @@ class SymbolTable(object):
 class Symbol(object):
     """ A generic symbol with a name, type and scope.
     """
-    def __init__(self, name, type, expr, coord, scope):
+    def __init__(self, name, type, expr=None, coord=None, scope=None):
         self.name = name
         self.type = type
         self.expr = expr

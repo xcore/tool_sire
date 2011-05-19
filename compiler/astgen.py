@@ -61,6 +61,8 @@ class ASTGenerator(object):
         """ Generate a base visitor class that does nothing
         """
         src = 'class NodeVisitor(object):\n'
+        src += '    def up(self, tag): pass\n'
+        src += '    def down(self, tag): pass\n'
         for x in self.node_cfg:
             src += '    def visit_'+util.camel_to_under(x.name)+'(self, node): pass\n'
 

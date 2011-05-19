@@ -23,6 +23,7 @@ class TransformPar(NodeWalker):
          - Create the definition node.
          - Create the corresponding Pcall node.
          - Insert the definition into the signature table.
+         - Return the tuple (process-def, process-call)
         """
         context = Context().walk_stmt(stmt)
         #print(', '.join([x[0] for x in context]))
@@ -41,7 +42,7 @@ class TransformPar(NodeWalker):
                 elem.symbol = x.symbol
                 actuals.append(ast.ExprSingle(elem))
             else:
-                actuals.append(x)
+                actuals.append(ast.ExprSingle(x))
         
         # Create a unique name
         name = '_a'
@@ -75,8 +76,7 @@ class TransformPar(NodeWalker):
             if not isinstance(x, ast.StmtPcall):
                 if(self.debug):
                     print('Transforming par {}'.format(i))
-                (proc, pcall) = self.stmt_to_process(x)
-                node.stmt[i] = pcall
+                (proc, node.stmt[i]) = self.stmt_to_process(x)
                 p.append(proc)
         return p
 
@@ -107,8 +107,7 @@ class TransformPar(NodeWalker):
         if not isinstance(node.stmt, ast.StmtPcall):
             if(self.debug):
                 print('Transforming rep')
-            (proc, pcall) = self.stmt_to_process(node.stmt)
-            node.stmt = pcall
+            (proc, node.stmt) = self.stmt_to_process(node.stmt)
             return [proc]
         return []
 

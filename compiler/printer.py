@@ -9,10 +9,8 @@ import ast
 from walker import NodeWalker
 from type import Type
 
-INDENT       = '  '
-BLOCK_INDENT = '{ '
-SEQ_INDENT   = '; '
-PAR_INDENT   = '| ' 
+INDENT = '  '
+NO_INDENT = ''
 
 class Printer(NodeWalker):
     """ 
@@ -28,10 +26,13 @@ class Printer(NodeWalker):
         Produce an indent. If its the first statement of a seq or par block we
         only produce a single space.
         """
-        if len(self.indent) == 0:
-            return '  '
-        else:
-            return '  '*(len(self.indent)-1)+self.indent[-1]
+        if len(self.indent) > 0:
+            if self.indent[-1] == NO_INDENT:
+                return ''
+            else:
+                return INDENT*(len(self.indent))
+                #return ''.join([x for x in self.indent])
+        return ''
     
     def out(self, s):
         """ 
@@ -55,10 +56,8 @@ class Printer(NodeWalker):
     def walk_program(self, node):
         
         # Program declarations
-        self.indent.append(INDENT)
         self.var_decls(node.decls)
         self.buf.write('\n')
-        self.indent.pop()
        
         # Program definitions (procedures)
         [self.defn(x, 0) for x in node.defs]
@@ -91,9 +90,15 @@ class Printer(NodeWalker):
         self.var_decls(node.decls)
 
         # Statement block
-        self.indent.pop()
-        self.stmt(node.stmt)
-        self.buf.write('\n\n')
+        if (isinstance(node.stmt, ast.StmtPar) 
+                or isinstance(node.stmt, ast.StmtSeq)):
+            self.indent.pop()
+            self.stmt(node.stmt)
+            self.buf.write('\n\n')
+        else:
+            self.stmt(node.stmt)
+            self.buf.write('\n\n')
+            self.indent.pop()
     
     # Formals =============================================
     
@@ -111,33 +116,32 @@ class Printer(NodeWalker):
 
     # Statements ==========================================
 
-    def stmt_block(self, node, indent):
+    def stmt_block(self, node, sep):
         """
-        Output a block of statements. E.g.:
-          { stmt1
-          ; stmt2
-          ; { stmt3
-            | stmt4
-            }
-          ; stmt5
+        Output a block of statements. E.g.::
+          { 
+            stmt1;
+            stmt2;
+            { stmt3|
+              stmt4
+            };
+            stmt5
           }
         """
-        if len(self.indent)>0:
-            self.indent.pop()
-        self.indent.append(BLOCK_INDENT)
+        self.out('{\n')
+        self.indent.append(INDENT)
         for (i, x) in enumerate(node.stmt): 
-            self.stmt(x) ; self.buf.write('\n')
-            if i==0:
-                self.indent.pop()
-                self.indent.append(indent)
+            self.stmt(x)
+            self.buf.write(sep if i<(len(node.stmt)-1) else '')
+            self.buf.write('\n')
         self.indent.pop()
         self.out('}')
 
     def stmt_seq(self, node):
-        self.stmt_block(node, SEQ_INDENT)
+        self.stmt_block(node, ';')
 
     def stmt_par(self, node):
-        self.stmt_block(node, PAR_INDENT)
+        self.stmt_block(node, '|')
 
     def stmt_skip(self, node):
         self.out('skip')
@@ -158,8 +162,10 @@ class Printer(NodeWalker):
         self.out('if {}\n'.format(self.expr(node.cond)))
         self.out('then\n')
         self.indent.append(INDENT)
-        self.stmt(node.thenstmt)
-        self.buf.write('\n'+(self.indt())+'else\n')
+        self.stmt(node.thenstmt) ; self.buf.write('\n')
+        self.indent.pop()
+        self.out('else\n')
+        self.indent.append(INDENT)
         self.stmt(node.elsestmt)
         self.indent.pop()
 
