@@ -48,15 +48,11 @@ param_conversions = {
 
 # Relation of variable types to formal parameter types.
 var_to_param = {
-  
     Type('val', 'single') : Type('val', 'single'),
-    Type('var', 'single') : Type('val', 'single'), 
-    Type('var', 'sub')    : Type('val', 'single'),
-    Type('ref', 'sub')    : Type('val', 'single'),
-
     Type('var', 'single') : Type('ref', 'single'), 
     Type('ref', 'single') : Type('ref', 'single'),
-
+    Type('var', 'sub')    : Type('val', 'single'),
+    Type('ref', 'sub')    : Type('val', 'single'),
     Type('var', 'array')  : Type('ref', 'array'), 
     Type('ref', 'array')  : Type('ref', 'array'),
 }

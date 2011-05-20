@@ -147,7 +147,7 @@ class TranslateMPI(NodeWalker):
             self.out('')
         
         # Definitions
-        [self.defn(p, d) for p in node.defs]
+        [self.defn(p) for p in node.defs]
    
         # Output the buffered blocks
         self.blocker.output()
@@ -172,7 +172,7 @@ class TranslateMPI(NodeWalker):
 
     # Procedure declarations ==============================
 
-    def defn(self, node, d):
+    def defn(self, node):
         s = ''
         s += 'void' if node.name == '_main' else 'int'
         s += ' {}({})'.format(self.procedure_name(node.name),

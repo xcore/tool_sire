@@ -1,24 +1,25 @@
 #-----------------------------------------------------------------
 # ** ATTENTION **
-# This code was automatically generated from the file:
-# ast.cfg 
-#
-# Do not modify it directly. Modify the configuration file and
-# run the generator again.
+# This code was automatically generated from the file: ast.cfg 
+# Do not modify it directly. Modify ast.cfg and run the generator 
+# again.
 #-----------------------------------------------------------------
 
 import sys
 
 class Node(object):
-    """ Abstract base class for AST nodes.
+    """ 
+    Abstract base class for AST nodes.
     """
     def children(self):
-        """ A sequence of all children that are Nodes
+        """ 
+        A sequence of all children that are Nodes.
         """
         pass
 
     def accept(self, visitor):
-        """ Accept a visitor
+        """ 
+        Accept a visitor.
         """
         pass
 
@@ -30,6 +31,7 @@ class NodeVisitor(object):
     def visit_decl(self, node): pass
     def visit_def(self, node): pass
     def visit_param(self, node): pass
+    def visit_stmt(self, node): pass
     def visit_stmt_seq(self, node): pass
     def visit_stmt_par(self, node): pass
     def visit_stmt_alias(self, node): pass
@@ -42,9 +44,11 @@ class NodeVisitor(object):
     def visit_stmt_rep(self, node): pass
     def visit_stmt_return(self, node): pass
     def visit_stmt_skip(self, node): pass
+    def visit_expr(self, node): pass
     def visit_expr_single(self, node): pass
     def visit_expr_unary(self, node): pass
     def visit_expr_binop(self, node): pass
+    def visit_elem(self, node): pass
     def visit_elem_id(self, node): pass
     def visit_elem_sub(self, node): pass
     def visit_elem_slice(self, node): pass
@@ -76,10 +80,20 @@ class Program(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.decls == other.decls and
+            self.defs == other.defs
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'Program('
         s += ')'
         return s
+
 
 class Decl(Node):
     def __init__(self, name, type, expr, coord=None):
@@ -87,6 +101,7 @@ class Decl(Node):
         self.type = type
         self.expr = expr
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -99,11 +114,25 @@ class Decl(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.type == other.type and
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'Decl('
         s += ', '.join('%s' % v for v in [self.name, self.type, self.expr])
         s += ')'
         return s
+
 
 class Def(Node):
     def __init__(self, name, type, formals, decls, stmt, coord=None):
@@ -113,6 +142,7 @@ class Def(Node):
         self.decls = decls
         self.stmt = stmt
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -128,11 +158,27 @@ class Def(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.type == other.type and
+            self.formals == other.formals and
+            self.decls == other.decls and
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'Def('
         s += ', '.join('%s' % v for v in [self.name, self.type])
         s += ')'
         return s
+
 
 class Param(Node):
     def __init__(self, name, type, expr, coord=None):
@@ -140,6 +186,7 @@ class Param(Node):
         self.type = type
         self.expr = expr
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -152,13 +199,52 @@ class Param(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.type == other.type and
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'Param('
         s += ', '.join('%s' % v for v in [self.name, self.type, self.expr])
         s += ')'
         return s
 
-class StmtSeq(Node):
+
+class Stmt(Node):
+    def __init__(self, coord=None):
+        self.coord = coord
+
+    def children(self):
+        return ()
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt(self)
+        visitor.down(tag)
+        visitor.up(tag)
+
+    def __eq__(self, other):
+        return (
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        s =  'Stmt('
+        s += ')'
+        return s
+
+
+class StmtSeq(Stmt):
     def __init__(self, stmt, coord=None):
         self.stmt = stmt
         self.coord = coord
@@ -175,12 +261,21 @@ class StmtSeq(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtSeq('
         s += ')'
         return s
 
-class StmtPar(Node):
+
+class StmtPar(Stmt):
     def __init__(self, stmt, coord=None):
         self.stmt = stmt
         self.coord = coord
@@ -197,16 +292,26 @@ class StmtPar(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtPar('
         s += ')'
         return s
 
-class StmtAlias(Node):
+
+class StmtAlias(Stmt):
     def __init__(self, name, slice, coord=None):
         self.name = name
         self.slice = slice
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -220,13 +325,26 @@ class StmtAlias(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.slice == other.slice
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'StmtAlias('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class StmtAss(Node):
+
+class StmtAss(Stmt):
     def __init__(self, left, expr, coord=None):
         self.left = left
         self.expr = expr
@@ -245,12 +363,22 @@ class StmtAss(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.left == other.left and
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtAss('
         s += ')'
         return s
 
-class StmtFor(Node):
+
+class StmtFor(Stmt):
     def __init__(self, var, init, bound, step, stmt, coord=None):
         self.var = var
         self.init = init
@@ -275,12 +403,25 @@ class StmtFor(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.var == other.var and
+            self.init == other.init and
+            self.bound == other.bound and
+            self.step == other.step and
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtFor('
         s += ')'
         return s
 
-class StmtIf(Node):
+
+class StmtIf(Stmt):
     def __init__(self, cond, thenstmt, elsestmt, coord=None):
         self.cond = cond
         self.thenstmt = thenstmt
@@ -301,12 +442,23 @@ class StmtIf(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.cond == other.cond and
+            self.thenstmt == other.thenstmt and
+            self.elsestmt == other.elsestmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtIf('
         s += ')'
         return s
 
-class StmtOn(Node):
+
+class StmtOn(Stmt):
     def __init__(self, core, pcall, coord=None):
         self.core = core
         self.pcall = pcall
@@ -325,12 +477,22 @@ class StmtOn(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.core == other.core and
+            self.pcall == other.pcall
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtOn('
         s += ')'
         return s
 
-class StmtWhile(Node):
+
+class StmtWhile(Stmt):
     def __init__(self, cond, stmt, coord=None):
         self.cond = cond
         self.stmt = stmt
@@ -349,16 +511,27 @@ class StmtWhile(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.cond == other.cond and
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtWhile('
         s += ')'
         return s
 
-class StmtPcall(Node):
+
+class StmtPcall(Stmt):
     def __init__(self, name, args, coord=None):
         self.name = name
         self.args = args
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -372,13 +545,26 @@ class StmtPcall(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.args == other.args
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'StmtPcall('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class StmtRep(Node):
+
+class StmtRep(Stmt):
     def __init__(self, var, init, count, stmt, coord=None):
         self.var = var
         self.init = init
@@ -401,12 +587,24 @@ class StmtRep(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.var == other.var and
+            self.init == other.init and
+            self.count == other.count and
+            self.stmt == other.stmt
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtRep('
         s += ')'
         return s
 
-class StmtReturn(Node):
+
+class StmtReturn(Stmt):
     def __init__(self, expr, coord=None):
         self.expr = expr
         self.coord = coord
@@ -423,12 +621,21 @@ class StmtReturn(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtReturn('
         s += ')'
         return s
 
-class StmtSkip(Node):
+
+class StmtSkip(Stmt):
     def __init__(self, coord=None):
         self.coord = coord
 
@@ -440,12 +647,45 @@ class StmtSkip(Node):
         visitor.down(tag)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'StmtSkip('
         s += ')'
         return s
 
-class ExprSingle(Node):
+
+class Expr(Node):
+    def __init__(self, coord=None):
+        self.coord = coord
+
+    def children(self):
+        return ()
+
+    def accept(self, visitor):
+        tag = visitor.visit_expr(self)
+        visitor.down(tag)
+        visitor.up(tag)
+
+    def __eq__(self, other):
+        return (
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        s =  'Expr('
+        s += ')'
+        return s
+
+
+class ExprSingle(Expr):
     def __init__(self, elem, coord=None):
         self.elem = elem
         self.coord = coord
@@ -462,12 +702,21 @@ class ExprSingle(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.elem == other.elem
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ExprSingle('
         s += ')'
         return s
 
-class ExprUnary(Node):
+
+class ExprUnary(Expr):
     def __init__(self, op, elem, coord=None):
         self.op = op
         self.elem = elem
@@ -485,13 +734,23 @@ class ExprUnary(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.op == other.op and
+            self.elem == other.elem
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ExprUnary('
         s += ', '.join('%s' % v for v in [self.op])
         s += ')'
         return s
 
-class ExprBinop(Node):
+
+class ExprBinop(Expr):
     def __init__(self, op, elem, right, coord=None):
         self.op = op
         self.elem = elem
@@ -511,16 +770,53 @@ class ExprBinop(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.op == other.op and
+            self.elem == other.elem and
+            self.right == other.right
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ExprBinop('
         s += ', '.join('%s' % v for v in [self.op])
         s += ')'
         return s
 
-class ElemId(Node):
+
+class Elem(Node):
+    def __init__(self, coord=None):
+        self.coord = coord
+
+    def children(self):
+        return ()
+
+    def accept(self, visitor):
+        tag = visitor.visit_elem(self)
+        visitor.down(tag)
+        visitor.up(tag)
+
+    def __eq__(self, other):
+        return (
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __repr__(self):
+        s =  'Elem('
+        s += ')'
+        return s
+
+
+class ElemId(Elem):
     def __init__(self, name, coord=None):
         self.name = name
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -533,17 +829,30 @@ class ElemId(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'ElemId('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class ElemSub(Node):
+
+class ElemSub(Elem):
     def __init__(self, name, expr, coord=None):
         self.name = name
         self.expr = expr
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -557,18 +866,32 @@ class ElemSub(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'ElemSub('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class ElemSlice(Node):
+
+class ElemSlice(Elem):
     def __init__(self, name, begin, end, coord=None):
         self.name = name
         self.begin = begin
         self.end = end
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -583,13 +906,27 @@ class ElemSlice(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.begin == other.begin and
+            self.end == other.end
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'ElemSlice('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class ElemGroup(Node):
+
+class ElemGroup(Elem):
     def __init__(self, expr, coord=None):
         self.expr = expr
         self.coord = coord
@@ -606,16 +943,26 @@ class ElemGroup(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.expr == other.expr
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ElemGroup('
         s += ')'
         return s
 
-class ElemFcall(Node):
+
+class ElemFcall(Elem):
     def __init__(self, name, args, coord=None):
         self.name = name
         self.args = args
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -629,17 +976,31 @@ class ElemFcall(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.args == other.args
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'ElemFcall('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class ElemPcall(Node):
+
+class ElemPcall(Elem):
     def __init__(self, name, args, coord=None):
         self.name = name
         self.args = args
         self.coord = coord
+        self.symbol = None
 
     def children(self):
         c = []
@@ -653,13 +1014,26 @@ class ElemPcall(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.name == other.name and
+            self.args == other.args
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
+    def __hash__(self):
+        return self.name.__hash__()
+
     def __repr__(self):
         s =  'ElemPcall('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
 
-class ElemNumber(Node):
+
+class ElemNumber(Elem):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -675,13 +1049,22 @@ class ElemNumber(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.value == other.value
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ElemNumber('
         s += ', '.join('%s' % v for v in [self.value])
         s += ')'
         return s
 
-class ElemBoolean(Node):
+
+class ElemBoolean(Elem):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -697,13 +1080,22 @@ class ElemBoolean(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.value == other.value
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ElemBoolean('
         s += ', '.join('%s' % v for v in [self.value])
         s += ')'
         return s
 
-class ElemString(Node):
+
+class ElemString(Elem):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -719,13 +1111,22 @@ class ElemString(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.value == other.value
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ElemString('
         s += ', '.join('%s' % v for v in [self.value])
         s += ')'
         return s
 
-class ElemChar(Node):
+
+class ElemChar(Elem):
     def __init__(self, value, coord=None):
         self.value = value
         self.coord = coord
@@ -741,9 +1142,18 @@ class ElemChar(Node):
             c.accept(visitor)
         visitor.up(tag)
 
+    def __eq__(self, other):
+        return (
+            self.value == other.value
+        )
+
+    def __ne__(self, other):
+        return not self == other
+
     def __repr__(self):
         s =  'ElemChar('
         s += ', '.join('%s' % v for v in [self.value])
         s += ')'
         return s
+
 

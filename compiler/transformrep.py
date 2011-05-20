@@ -3,12 +3,16 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import copy
 import ast
 from ast import NodeVisitor
 from walker import NodeWalker
+from semantics import var_to_param
 from context import Context
 from type import Type
 from symbol import Symbol
+
+from printer import Printer
 
 class ReplaceElemInExpr(NodeVisitor):
     """
@@ -16,15 +20,11 @@ class ReplaceElemInExpr(NodeVisitor):
     'old' element with 'new' element in the list of arguments.
     """
     def __init__(self, old, new):
+        """
+        Elements old and new.
+        """
         self.old = old
         self.new = new
-
-    def run(self, expr):
-        assert (
-            isinstance(expr, ast.ExprSingle) or
-            isinstance(expr, ast.ExprUnary) or
-            isinstance(expr, ast.ExprBinop))
-        expr.accept(self)
 
     def visit_expr_single(self, node):
         if isinstance(node.elem, type(self.old)):
@@ -55,8 +55,11 @@ class TransformRep(NodeWalker):
         Convert a replicated parallel statement into a divide-and-conquer form.
          - Return the tuple (process-def, process-call)
         """
+        assert isinstance(stmt, ast.StmtRep)
         assert isinstance(stmt.stmt, ast.StmtPcall)
-        context = Context().walk_stmt(stmt)
+        context = Context().walk_stmt(stmt.stmt)
+        #Printer().stmt(stmt)
+        #print(context)
         
         # Create new variables _t and _n.
         elem_t = ast.ElemId('_t')
@@ -66,9 +69,9 @@ class TransformRep(NodeWalker):
 
         # Replace ocurrances of index variable in Pcall with _t
         for x in stmt.stmt.args:
-            ReplaceElemInExpr(stmt.var, elem_t).run(x)
+            x.accept(ReplaceElemInExpr(stmt.var, elem_t))
 
-        # Create the formal and actual paramerer lists
+        # Create the formal and actual paramerer lists for distribution
         formals = []
         actuals = []
         formals.append(ast.Param('_t', Type('val', 'single'), None))
@@ -76,19 +79,36 @@ class TransformRep(NodeWalker):
         actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
         actuals.append(stmt.count)
         
-        for x in context:
-            pass
-        
-        name = '_a'
+        # List of actual parameters (not including the index) for the pcall
+        proc_actuals = []
+       
+        # Add each unique variable ocurrance from context as a formal param
+        for x in context - set([stmt.var]):
+            formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
+                x.symbol.expr))
+            
+            # If the actual is an array subscript or slice, we only pass the id.
+            if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
+                elem = ast.ElemId(x.name)
+                elem.symbol = x.symbol
+                proc_actuals.append(ast.ExprSingle(elem))
+            else:
+                proc_actuals.append(ast.ExprSingle(copy.copy(x)))
+
+        # Add the extra actual params to the distribution actuals
+        actuals.extend(proc_actuals)
+       
+        # Create the distribution process body statement 
+        name = self.sig.unique_process_name()
         n_div_2 = ast.ExprBinop('/', elem_n, ast.ExprSingle(ast.ElemNumber(2)))
         s = ast.StmtIf(
-                ast.ExprBinop('=', ast.ElemId('_n'), 
-                    ast.ExprSingle(ast.ElemNumber(0))),
+                ast.ExprBinop('=', elem_n, ast.ExprSingle(ast.ElemNumber(0))),
                 stmt.stmt,
                 ast.StmtPar([
-                    ast.StmtPcall(name, [ast.ExprSingle(elem_t), n_div_2]),
+                    ast.StmtPcall(name, [ast.ExprSingle(elem_t), n_div_2] +
+                        proc_actuals),
                     ast.StmtPcall(name, [ast.ExprBinop('+', elem_t,
-                        ast.ElemGroup(n_div_2)), n_div_2])
+                        ast.ElemGroup(n_div_2)), n_div_2] + proc_actuals)
                     ]))
         d = ast.Def(name, Type('proc', 'procedure'), formals, [], s)
         c = ast.StmtPcall(name, actuals)
@@ -131,18 +151,6 @@ class TransformRep(NodeWalker):
                 p.append(d)
         return p
 
-    def stmt_skip(self, node):
-        return []
-
-    def stmt_pcall(self, node):
-        return []
-
-    def stmt_ass(self, node):
-        return []
-
-    def stmt_alias(self, node):
-        return []
-
     def stmt_if(self, node):
         p = self.stmt(node.thenstmt)
         p += self.stmt(node.elsestmt)
@@ -174,6 +182,18 @@ class TransformRep(NodeWalker):
             (d, node.stmt) = self.transform_rep(node.stmt)
             p.append(d)
         return p
+
+    def stmt_skip(self, node):
+        return []
+
+    def stmt_pcall(self, node):
+        return []
+
+    def stmt_ass(self, node):
+        return []
+
+    def stmt_alias(self, node):
+        return []
 
     def stmt_on(self, node):
         return []

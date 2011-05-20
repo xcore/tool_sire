@@ -16,6 +16,7 @@ class SignatureTable(object):
         self.debug = debug
         self.tab = {}
         self.mobile_proc_names = []
+        self.id_count = 0
 
     def insert(self, type, node, mobile=True):
         """
@@ -69,6 +70,11 @@ class SignatureTable(object):
         Add a process to the list of mobiles.
         """
         self.mobile_proc_names.append(name)
+
+    def unique_process_name(self):
+        name = '_p{}'.format(self.id_count)
+        self.id_count = self.id_count + 1
+        return name
 
     def dump(self, buf=sys.stdout):
         """

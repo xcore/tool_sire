@@ -18,62 +18,67 @@ class Context(NodeWalker):
 
     def walk_stmt(self, node):
         """
-        Return a list of tuples: (name, type).
+        Return a set of AST nodes.
         """
-        return self.stmt(node)
+        c = self.stmt(node)
+        #print(c)
+        return c
 
     # Statements ==========================================
 
     def stmt_seq(self, node):
-        c = []
-        [c.extend(self.stmt(x)) for x in node.stmt]
+        c = set()
+        for x in node.stmt:
+            c |= self.stmt(x)
         return c
 
     def stmt_par(self, node):
-        c = []
-        [c.extend(self.stmt(x)) for x in node.stmt]
+        c = set()
+        for x in node.stmt:
+            c |= self.stmt(x)
         return c
 
     def stmt_skip(self, node):
-        return []
+        return set()
 
     def stmt_pcall(self, node):
-        c = []
-        [c.extend(self.expr(x)) for x in node.args]
+        c = set()
+        for x in node.args:
+            c |= self.expr(x)
         return c
 
     def stmt_ass(self, node):
         c = self.elem(node.left)
-        c += self.expr(node.expr)
+        c |= self.expr(node.expr)
         return c
 
     def stmt_alias(self, node):
-        return self.expr(node.slice)
+        return self.elem(node.slice)
 
     def stmt_if(self, node):
         c = self.expr(node.cond)
-        c += self.stmt(node.thenstmt)
-        c += self.stmt(node.elsestmt)
+        c |= self.stmt(node.thenstmt)
+        c |= self.stmt(node.elsestmt)
         return c
 
     def stmt_while(self, node):
         c = self.expr(node.cond)
-        c += self.stmt(node.stmt)
+        c |= self.stmt(node.stmt)
         return c
 
     def stmt_for(self, node):
         c = self.elem(node.var)
-        c += self.expr(node.init)
-        c += self.expr(node.bound)
-        c += self.expr(node.step)
-        c += self.stmt(node.stmt)
+        c |= self.expr(node.init)
+        c |= self.expr(node.bound)
+        c |= self.expr(node.step)
+        c |= self.stmt(node.stmt)
         return c
 
     def stmt_rep(self, node):
         c = self.elem(node.var)
-        c += self.expr(node.init)
-        c += self.expr(node.count)
-        c += self.elem(node.stmt)
+        c |= self.expr(node.init)
+        c |= self.expr(node.count)
+        c |= self.stmt(node.stmt)
         return c
 
     def stmt_on(self, node):
@@ -92,48 +97,50 @@ class Context(NodeWalker):
 
     def expr_binop(self, node):
         c = self.elem(node.elem)
-        c += self.expr(node.right)
+        c |= self.expr(node.right)
         return c
     
     # Elements= ===========================================
 
-    def elem_group(self, node):
-        return self.expr(node.expr)
-
     # Identifier
     def elem_id(self, node):
-        return [node]
+        return set([node])
 
     # Array subscript
     def elem_sub(self, node):
         c = self.expr(node.expr)
-        return c + [node]
+        return c | set([node])
 
     # Array slice
     def elem_slice(self, node):
         c = self.expr(node.begin)
-        c += self.expr(node.end)
-        return c + [node]
+        c |= self.expr(node.end)
+        return c | set([node])
+
+    def elem_group(self, node):
+        return self.expr(node.expr)
 
     def elem_pcall(self, node):
-        c = []
-        [c.extend(self.expr(x)) for x in node.args]
+        c = set()
+        for x in node.args:
+            c |= self.expr(x)
         return c
 
     def elem_fcall(self, node):
-        c = []
-        [c.extend(self.expr(x)) for x in node.args]
+        c = set()
+        for x in node.args:
+            c |= self.expr(x)
         return c
 
     def elem_number(self, node):
-        return []
+        return set()
 
     def elem_boolean(self, node):
-        return []
+        return set()
 
     def elem_string(self, node):
-        return []
+        return set()
 
     def elem_char(self, node):
-        return []
+        return set()
 

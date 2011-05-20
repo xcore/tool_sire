@@ -229,15 +229,18 @@ def main(args):
         sym = SymbolTable(errorlog, debug=False)
         sig = SignatureTable(debug=False)
         semantic_analysis(sym, sig, ast, errorlog)
+        
+        Printer().walk_program(ast)
 
         # Transform parallel composition
         vmsg(v, "Transforming parallel composition")
         TransformPar(sig).walk_program(ast)
-
+        
         # Transform parallel replication
         vmsg(v, "Transforming parallel replication")
         TransformRep(sig).walk_program(ast)
         
+        print('===========================================')
         Printer().walk_program(ast)
 
         # Perform child analysis

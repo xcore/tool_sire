@@ -3,11 +3,14 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import copy
 import ast
 from walker import NodeWalker
 from context import Context
 from type import Type
 from semantics import var_to_param
+
+from printer import Printer
 
 class TransformPar(NodeWalker):
     """
@@ -17,35 +20,53 @@ class TransformPar(NodeWalker):
         self.sig = sig
         self.debug = debug
 
-    def stmt_to_process(self, stmt):
+    def stmt_to_process(self, stmt, rep_var=None):
         """
         Convert a statement into a process definition.
          - Create the definition node.
          - Create the corresponding Pcall node.
          - Insert the definition into the signature table.
          - Return the tuple (process-def, process-call)
+        
+        Also, the index varible (rep_var) of replicator statements must be
+        treated as a value and not a variable in its use as a parameter
+        (transform replicator stage) and passed-by-reference.
         """
+        assert isinstance(stmt, ast.Stmt)
         context = Context().walk_stmt(stmt)
-        #print(', '.join([x[0] for x in context]))
-        #print(', '.join(['{}'.format(x[1]) for x in context]))
+        #Printer().stmt(stmt)
+        #print(context)
         
         # Create the formal and actual paramerer lists
         formals = []
         actuals = []
+
+        # Deal with the index variable of a replicator statement: add it as a
+        # single value to the formals and as-is to the actuals, then remove it
+        # from the variable context.
+        if rep_var:
+            formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
+                None))
+            actuals.append(ast.ExprSingle(copy.copy(rep_var)))
+            context = context - set([rep_var])
+
+        # For each variable in the context add accordingly to formals and actuals.
         for x in context:
             formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
                 x.symbol.expr))
             
-            # If the actual is a slice, we only want to pass the array id.
-            if isinstance(x, ast.ElemSlice):
+            # If the actual is an array subscript or slice, we only pass the id.
+            if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
                 elem = ast.ElemId(x.name)
                 elem.symbol = x.symbol
                 actuals.append(ast.ExprSingle(elem))
             else:
-                actuals.append(ast.ExprSingle(x))
+                actuals.append(ast.ExprSingle(copy.copy(x)))
         
         # Create a unique name
-        name = '_a'
+        name = self.sig.unique_process_name()
+
+        # Create the definition and corresponding call.
         d = ast.Def(name, Type('proc', 'procedure'), formals, [], stmt)
         c = ast.StmtPcall(name, actuals)
         self.sig.insert(d.type, d)
@@ -107,7 +128,7 @@ class TransformPar(NodeWalker):
         if not isinstance(node.stmt, ast.StmtPcall):
             if(self.debug):
                 print('Transforming rep')
-            (proc, node.stmt) = self.stmt_to_process(node.stmt)
+            (proc, node.stmt) = self.stmt_to_process(node.stmt, node.var)
             return [proc]
         return []
 
