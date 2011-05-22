@@ -61,11 +61,12 @@ class Semantics(NodeWalker):
     """ 
     An AST walker class to check the semantics of a sire program.
     """
-    def __init__(self, sym, sig, errorlog):
+    def __init__(self, sym, sig, errorlog, debug=False):
         self.sym = sym
         self.sig = sig
         self.depth = 0
         self.errorlog = errorlog
+        self.debug = debug
         
         # Initialise variables in the 'system' scope
         
@@ -143,18 +144,22 @@ class Semantics(NodeWalker):
         Check if a procedure signature is defined for a [pf]call AST node.
         """
       
-        # Check the signature exists.
-        if not sig.get_params(node.name):
-            return False
-
         # Compare each param type to the type of each expr argument
         if self.debug:
-            print('Checking args for {}'.format(node.name))
+           print('Checking args for {}'.format(node.name))
+        
+        # Check the signature exists.
+        if not self.sig.sig_exists(node.name):
+            return False
 
-        # Otherwise check them
-        for (x, y) in zip(sig.get_params(node.name), node.args.expr):
+        # Check there is the right number
+        if len(self.sig.get_params(node.name)) != len(node.args):
+            return False
+        
+        # Check the type of each actual matches the formal
+        for (x, y) in zip(self.sig.get_params(node.name), node.args):
             t = self.get_expr_type(y)
-            if(self.debug):
+            if self.debug:
                 print('Arg type: {}'.format(t))
                 print('Param type: {}'.format(x.type))
 
@@ -306,7 +311,7 @@ class Semantics(NodeWalker):
         # Check the name is declared
         if self.sym.check_decl(node.name):
             # Check the arguments are correct
-            if not self.sig.check_args('proc', node):
+            if not self.check_args('proc', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
@@ -483,7 +488,7 @@ class Semantics(NodeWalker):
         # Check the name is declared
         if self.sym.check_decl(node.name):
             # Check the arguments are correct
-            if not self.sig.check_args('proc', node):
+            if not self.check_args('proc', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
             self.sym.mark_decl(node.name)
@@ -498,7 +503,7 @@ class Semantics(NodeWalker):
         # Check the name is declared
         if self.sym.check_decl(node.name):
             # Check the arguments are correct
-            if not self.sig.check_args('func', node):
+            if not self.check_args('func', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
             self.sym.mark_decl(node.name)

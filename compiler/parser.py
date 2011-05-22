@@ -335,10 +335,13 @@ class Parser(object):
 
     # Expressions ==============================================
 
+    def p_expr_list_empty(self, p):
+        'expr_list : empty'
+        p[0] = []
+
     def p_expr_list(self, p):
-        '''expr_list : empty
-                     | expr_seq'''
-        p[0] = ast.ExprList(p[1] if p[1] else [], self.coord(p))
+        'expr_list : expr_seq'
+        p[0] = p[1]
 
     def p_expr_seq(self, p):
         '''expr_seq : expr

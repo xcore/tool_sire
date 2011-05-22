@@ -18,7 +18,7 @@ class TransformPar(NodeWalker):
     """
     def __init__(self, sig, debug=False):
         self.sig = sig
-        self.debug = debug
+        self.debug = False
 
     def stmt_to_process(self, stmt, rep_var=None):
         """
@@ -99,6 +99,7 @@ class TransformPar(NodeWalker):
                     print('Transforming par {}'.format(i))
                 (proc, node.stmt[i]) = self.stmt_to_process(x)
                 p.append(proc)
+                p.extend(self.defn(node.proc))
         return p
 
     def stmt_skip(self, node):
@@ -125,12 +126,14 @@ class TransformPar(NodeWalker):
         return self.stmt(node.stmt)
 
     def stmt_rep(self, node):
+        p = []
         if not isinstance(node.stmt, ast.StmtPcall):
             if(self.debug):
                 print('Transforming rep')
             (proc, node.stmt) = self.stmt_to_process(node.stmt, node.var)
-            return [proc]
-        return []
+            p.append(proc)
+            p.extend(self.defn(proc))
+        return p
 
     def stmt_on(self, node):
         return []

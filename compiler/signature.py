@@ -56,12 +56,18 @@ class SignatureTable(object):
         
         return None
 
+    def sig_exists(self, name):
+        """
+        Return the list of formal parameter declarations for a named procedure.
+        """
+        return name in self.tab
+
     def get_params(self, name):
         """
         Return the list of formal parameter declarations for a named procedure.
         """
-        if node.name in self.tab:
-            return self.tab[node.name].params
+        if name in self.tab:
+            return self.tab[name].params
         else:
             return None
 

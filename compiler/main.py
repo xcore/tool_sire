@@ -78,11 +78,14 @@ def setup_argparse():
     p.add_argument('-s', '--sem', action='store_true', dest='sem_only', 
             help='perform semantic analysis and quit')
     
-    p.add_argument('-p', '--print-ast', action='store_true', dest='print_ast',
+    p.add_argument('-p', '--p-ast', action='store_true', dest='print_ast',
             help='display the AST and quit')
         
-    p.add_argument('-P', '--pprint-ast', action='store_true', dest='pprint_ast',
-            help='pretty-print the AST and quit')
+    p.add_argument('-P', '--ppr-ast', action='store_true', dest='pprint_raw_ast',
+            help='pretty-print the raw AST and quit')
+    
+    p.add_argument('-Q', '--ppt-ast', action='store_true', dest='pprint_trans_ast',
+            help='pretty-print the transformed AST and quit')
     
     p.add_argument('-T', '--translate', action='store_true',
             dest='translate_only',
@@ -113,7 +116,8 @@ def setup_globals(a):
 
     # Stages
     global print_ast
-    global pprint_ast
+    global pprint_raw_ast
+    global pprint_trans_ast
     global parse_only
     global sem_only
     global translate_only
@@ -122,7 +126,8 @@ def setup_globals(a):
     sem_only = a.sem_only
     compile_only = a.compile_only
     print_ast = a.print_ast
-    pprint_ast = a.pprint_ast
+    pprint_raw_ast = a.pprint_raw_ast
+    pprint_trans_ast = a.pprint_trans_ast
     translate_only = a.translate_only
     compile_only = a.compile_only
 
@@ -167,7 +172,7 @@ def produce_ast(input_file, errorlog, logging=False):
         raise SystemExit()
 
     # Display (pretty-print) the AST
-    if pprint_ast: 
+    if pprint_raw_ast: 
         Printer().walk_program(ast)
         raise SystemExit()
 
@@ -185,6 +190,24 @@ def semantic_analysis(sym, sig, ast, errorlog):
         raise Error('semantic analysis')
     
     if sem_only: 
+        raise SystemExit()
+
+def transform_ast(ast, sig):
+    """
+    Perform transformations on AST.
+    """
+
+    # Transform parallel composition
+    vmsg(v, "Transforming parallel composition")
+    TransformPar(sig).walk_program(ast)
+    
+    # Transform parallel replication
+    vmsg(v, "Transforming parallel replication")
+    TransformRep(sig).walk_program(ast)
+    
+    # Display (pretty-print) the transformed AST
+    if pprint_trans_ast: 
+        Printer().walk_program(ast)
         raise SystemExit()
 
 def child_analysis(sig, ast):
@@ -230,18 +253,8 @@ def main(args):
         sig = SignatureTable(debug=False)
         semantic_analysis(sym, sig, ast, errorlog)
         
-        Printer().walk_program(ast)
-
-        # Transform parallel composition
-        vmsg(v, "Transforming parallel composition")
-        TransformPar(sig).walk_program(ast)
-        
-        # Transform parallel replication
-        vmsg(v, "Transforming parallel replication")
-        TransformRep(sig).walk_program(ast)
-        
-        print('===========================================')
-        Printer().walk_program(ast)
+        # Perform AST transformations
+        transform_ast(ast, sig)
 
         # Perform child analysis
         child = child_analysis(sig, ast)
