@@ -6,7 +6,6 @@
 import copy
 import ast
 from walker import NodeWalker
-from context import Context
 from type import Type
 from semantics import var_to_param
 
@@ -33,7 +32,11 @@ class TransformPar(NodeWalker):
         (transform replicator stage) and passed-by-reference.
         """
         assert isinstance(stmt, ast.Stmt)
-        context = Context().walk_stmt(stmt)
+        # The context of parallel statement is the union of the set of incoming
+        # live variables and each occuance of an array identifier in the
+        # statement block.
+        #context = Context().run(stmt) | stmt.inp
+        context = stmt.inp
         #Printer().stmt(stmt)
         #print(context)
         
@@ -44,11 +47,11 @@ class TransformPar(NodeWalker):
         # Deal with the index variable of a replicator statement: add it as a
         # single value to the formals and as-is to the actuals, then remove it
         # from the variable context.
-        if rep_var:
-            formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
-                None))
-            actuals.append(ast.ExprSingle(copy.copy(rep_var)))
-            context = context - set([rep_var])
+        #if rep_var:
+        #    formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
+        #        None))
+        #    actuals.append(ast.ExprSingle(copy.copy(rep_var)))
+        #    context = context - set([rep_var])
 
         # For each variable in the context add accordingly to formals and actuals.
         for x in context:

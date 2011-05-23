@@ -23,6 +23,9 @@ from printer import Printer
 from symbol import SymbolTable
 from signature import SignatureTable
 from semantics import Semantics
+from buildcfg import BuildCFG
+from liveness import Liveness
+from display import Display
 from transformpar import TransformPar
 from transformrep import TransformRep
 from children import Children
@@ -197,13 +200,28 @@ def transform_ast(ast, sig):
     Perform transformations on AST.
     """
 
+    def print_livesets(stmt):
+        print(stmt)
+        print('Use: {}'.format(stmt.use))
+        print('Def: {}'.format(stmt.defs))
+        print('In:  {}'.format(stmt.inp))
+        print('Out: {}'.format(stmt.out))
+        #print('Live:  {}'.format(node.inp))
+        print('')
+
+    # Perform liveness analysis
+    vmsg(v, "Performing liveness analysis")
+    BuildCFG().run(ast)
+    Liveness().run(ast)
+    ast.accept(Display(print_livesets))
+
     # Transform parallel composition
     vmsg(v, "Transforming parallel composition")
     TransformPar(sig).walk_program(ast)
     
     # Transform parallel replication
-    vmsg(v, "Transforming parallel replication")
-    TransformRep(sig).walk_program(ast)
+    #vmsg(v, "Transforming parallel replication")
+    #TransformRep(sig).walk_program(ast)
     
     # Display (pretty-print) the transformed AST
     if pprint_trans_ast: 

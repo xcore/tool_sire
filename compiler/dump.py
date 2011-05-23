@@ -72,12 +72,6 @@ class Dump(NodeVisitor):
     def visit_stmt_ass(self, node):
         self.out(node)
 
-    def visit_stmt_in(self, node):
-        self.out(node)
-
-    def visit_stmt_out(self, node):
-        self.out(node)
-
     def visit_stmt_if(self, node):
         self.out(node)
 
@@ -85,6 +79,9 @@ class Dump(NodeVisitor):
         self.out(node)
 
     def visit_stmt_for(self, node):
+        self.out(node)
+
+    def visit_stmt_rep(self, node):
         self.out(node)
 
     def visit_stmt_on(self, node):

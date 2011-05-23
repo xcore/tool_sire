@@ -57,7 +57,10 @@ class TransformRep(NodeWalker):
         """
         assert isinstance(stmt, ast.StmtRep)
         assert isinstance(stmt.stmt, ast.StmtPcall)
-        context = Context().walk_stmt(stmt.stmt)
+
+        # The context of the procedure call is each variable occurance in the
+        # set of arguments.
+        context = Context(include_singles=True).run(stmt.stmt)
         #Printer().stmt(stmt)
         #print(context)
         

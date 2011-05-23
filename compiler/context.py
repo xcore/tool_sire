@@ -7,35 +7,29 @@ from walker import NodeWalker
 
 class Context(NodeWalker):
     """
-    An AST walker to determine the variable context of a statement. This
-    recursively propagates identifiers for singles, array subscripts and array
-    slices up the AST.
+    Determine occurances of array identifers within a block.
     """
-    def __init__(self):
-        pass
+    def __init__(self, include_singles=False):
+        self.include_singles = include_singles
 
     # Program ============================================
 
-    def walk_stmt(self, node):
+    def run(self, node):
         """
         Return a set of AST nodes.
         """
-        c = self.stmt(node)
-        #print(c)
-        return c
+        return self.stmt(node)
 
     # Statements ==========================================
 
     def stmt_seq(self, node):
         c = set()
-        for x in node.stmt:
-            c |= self.stmt(x)
+        [c.update(self.stmt(x)) for x in node.stmt]
         return c
 
     def stmt_par(self, node):
         c = set()
-        for x in node.stmt:
-            c |= self.stmt(x)
+        [c.update(self.stmt(x)) for x in node.stmt]
         return c
 
     def stmt_skip(self, node):
@@ -43,8 +37,7 @@ class Context(NodeWalker):
 
     def stmt_pcall(self, node):
         c = set()
-        for x in node.args:
-            c |= self.expr(x)
+        [c.update(self.expr(x)) for x in node.args]
         return c
 
     def stmt_ass(self, node):
@@ -86,7 +79,7 @@ class Context(NodeWalker):
 
     def stmt_return(self, node):
         return self.expr(node.expr)
-
+    
     # Expressions =========================================
 
     def expr_single(self, node):
@@ -104,7 +97,7 @@ class Context(NodeWalker):
 
     # Identifier
     def elem_id(self, node):
-        return set([node])
+        return set([node]) if self.include_singles else set()
 
     # Array subscript
     def elem_sub(self, node):
@@ -122,14 +115,12 @@ class Context(NodeWalker):
 
     def elem_pcall(self, node):
         c = set()
-        for x in node.args:
-            c |= self.expr(x)
+        [c.update(self.expr(x)) for x in node.args]
         return c
 
     def elem_fcall(self, node):
         c = set()
-        for x in node.args:
-            c |= self.expr(x)
+        [c.update(self.expr(x)) for x in node.args]
         return c
 
     def elem_number(self, node):
@@ -143,4 +134,5 @@ class Context(NodeWalker):
 
     def elem_char(self, node):
         return set()
+
 

@@ -77,7 +77,7 @@ class TemplateWalker(NodeWalker):
         self.elem(node.var)
         self.expr(node.init)
         self.expr(node.count)
-        self.elem(node.pcall)
+        self.stmt(node.stmt)
 
     def stmt_on(self, node):
         self.elem(node.pcall)

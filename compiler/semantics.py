@@ -242,7 +242,9 @@ class Semantics(NodeWalker):
     # Variable declarations ===============================
 
     def decl(self, node):
-        if not self.sym.insert(node.name, node.type, node.expr, node.coord):
+        if self.sym.insert(node.name, node.type, node.expr, node.coord):
+            node.symbol = self.sym.lookup(node.name)
+        else:
             self.redecl_error(node.name, node.coord)
 
         # Children
@@ -285,7 +287,9 @@ class Semantics(NodeWalker):
     
     def param(self, node):
        
-        if not self.sym.insert(node.name, node.type, node.coord):
+        if self.sym.insert(node.name, node.type, node.coord):
+            node.symbol = self.sym.lookup(node.name)
+        else:
             self.redecl_error(node.name, node.coord)
 
         # TODO: For array reference parameters, check length expr is composed of
