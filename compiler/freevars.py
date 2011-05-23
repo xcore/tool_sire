@@ -5,19 +5,28 @@
 
 from walker import NodeWalker
 
-class Context(NodeWalker):
-    """
-    Determine occurances of array identifers within a block.
-    """
-    def __init__(self, include_singles=False):
-        self.include_singles = include_singles
+# TODO: return set based on preference.
 
-    # Program ============================================
+class FreeVars(NodeWalker):
+    """
+    Calculate the set of free variables within a statement. This can be:
+     - All definitions and uses.
+     - All definitions.
+     - All uses and definitions of array types only.
+    """
+    def __init__(self):
+        pass
 
-    def run(self, node):
-        """
-        Return a set of AST nodes.
-        """
+    def allvars(self, node):
+        self.collect = 'all'
+        return self.stmt(node)
+
+    def defs(self, node):
+        self.collect = 'defs'
+        return self.stmt(node)
+
+    def arrays(self, node):
+        self.collect = 'array'
         return self.stmt(node)
 
     # Statements ==========================================

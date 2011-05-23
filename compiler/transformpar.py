@@ -6,6 +6,7 @@
 import copy
 import ast
 from walker import NodeWalker
+from freevars import FreeVars
 from type import Type
 from semantics import var_to_param
 
@@ -32,29 +33,29 @@ class TransformPar(NodeWalker):
         (transform replicator stage) and passed-by-reference.
         """
         assert isinstance(stmt, ast.Stmt)
-        # The context of parallel statement is the union of the set of incoming
-        # live variables and each occuance of an array identifier in the
-        # statement block.
-        #context = Context().run(stmt) | stmt.inp
-        context = stmt.inp
+        # Live-in variable set.
+        live_in = stmt.inp.copy()
+        # Local declarations for non-live (non-array) targets.
+        local_decls = (FreeVars().allvars() - live_in) & FreeVars().defs(stmt)
         #Printer().stmt(stmt)
-        #print(context)
+        print(live_in)
+        print(local_decls)
         
         # Create the formal and actual paramerer lists
         formals = []
         actuals = []
 
         # Deal with the index variable of a replicator statement: add it as a
-        # single value to the formals and as-is to the actuals, then remove it
-        # from the variable context.
-        #if rep_var:
-        #    formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
-        #        None))
-        #    actuals.append(ast.ExprSingle(copy.copy(rep_var)))
-        #    context = context - set([rep_var])
+        # single value (not a variable) to the formals and as-is to the actuals, 
+        # then remove it from the variable live-in set.
+        if rep_var:
+            formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
+                None))
+            actuals.append(ast.ExprSingle(copy.copy(rep_var)))
+            live_in -= set([rep_var])
 
-        # For each variable in the context add accordingly to formals and actuals.
-        for x in context:
+        # For each variable in the live-in set add accordingly to formals and actuals.
+        for x in live_in:
             formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
                 x.symbol.expr))
             

@@ -7,8 +7,8 @@ import copy
 import ast
 from ast import NodeVisitor
 from walker import NodeWalker
+from freevars import FreeVars
 from semantics import var_to_param
-from context import Context
 from type import Type
 from symbol import Symbol
 
@@ -60,7 +60,7 @@ class TransformRep(NodeWalker):
 
         # The context of the procedure call is each variable occurance in the
         # set of arguments.
-        context = Context(include_singles=True).run(stmt.stmt)
+        context = FreeVars().allvars(stmt.stmt)
         #Printer().stmt(stmt)
         #print(context)
         
