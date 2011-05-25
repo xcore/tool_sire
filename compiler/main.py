@@ -213,15 +213,15 @@ def transform_ast(ast, sig):
     vmsg(v, "Performing liveness analysis")
     BuildCFG().run(ast)
     Liveness().run(ast)
-    ast.accept(Display(print_livesets))
+    #ast.accept(Display(print_livesets))
 
     # Transform parallel composition
     vmsg(v, "Transforming parallel composition")
     TransformPar(sig).walk_program(ast)
     
     # Transform parallel replication
-    #vmsg(v, "Transforming parallel replication")
-    #TransformRep(sig).walk_program(ast)
+    vmsg(v, "Transforming parallel replication")
+    TransformRep(sig).walk_program(ast)
     
     # Display (pretty-print) the transformed AST
     if pprint_trans_ast: 

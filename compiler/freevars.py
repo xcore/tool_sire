@@ -5,8 +5,6 @@
 
 from walker import NodeWalker
 
-# TODO: return set based on preference.
-
 class FreeVars(NodeWalker):
     """
     Calculate the set of free variables within a statement. This can be:
@@ -23,10 +21,6 @@ class FreeVars(NodeWalker):
 
     def defs(self, node):
         self.collect = 'defs'
-        return self.stmt(node)
-
-    def arrays(self, node):
-        self.collect = 'array'
         return self.stmt(node)
 
     # Statements ==========================================
@@ -106,7 +100,7 @@ class FreeVars(NodeWalker):
 
     # Identifier
     def elem_id(self, node):
-        return set([node]) if self.include_singles else set()
+        return set([node])
 
     # Array subscript
     def elem_sub(self, node):

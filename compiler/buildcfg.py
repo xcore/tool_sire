@@ -37,16 +37,16 @@ class BuildCFG(NodeWalker):
         is the entire procedure.
         """
         self.implicit_use = set()
-        for x in node.formals:
-            if x.type == Type('ref', 'array'):
-                e = ast.ElemId(x.name)
-                e.symbol = x.symbol
-                self.implicit_use |= set([e])
-        for x in node.decls:
-            if x.type.form == 'array':
-                e = ast.ElemId(x.name)
-                e.symbol = x.symbol
-                self.implicit_use |= set([e])
+        #for x in node.formals:
+        #    if x.type == Type('ref', 'array'):
+        #        e = ast.ElemId(x.name)
+        #        e.symbol = x.symbol
+        #        self.implicit_use |= set([e])
+        #for x in node.decls:
+        #    if x.type.form == 'array':
+        #        e = ast.ElemId(x.name)
+        #        e.symbol = x.symbol
+        #        self.implicit_use |= set([e])
         #print(self.implicit_use)
         self.stmt(node.stmt, [], [])
 
@@ -75,10 +75,18 @@ class BuildCFG(NodeWalker):
         node.use |= self.expr(node.expr)
         node.defs |= set([node.left])
 
+        # Writes to arrays, include them as a use so they are live until this
+        # point.
+        if isinstance(node.left, ast.ElemSub):
+            node.use |= node.defs
+
     def stmt_alias(self, node, pred, succ):
         self.init_sets(node, pred, succ)
         node.use |= self.expr(node.expr)
         node.defs |= set([node.left])
+
+        # Add alias targets to use set to they are live until this point.
+        node.use |= node.defs 
 
     def stmt_if(self, node, pred, succ):
         self.init_sets(node, pred, [node.thenstmt, node.elsestmt])

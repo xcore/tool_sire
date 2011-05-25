@@ -36,10 +36,13 @@ class TransformPar(NodeWalker):
         # Live-in variable set.
         live_in = stmt.inp.copy()
         # Local declarations for non-live (non-array) targets.
-        local_decls = (FreeVars().allvars() - live_in) & FreeVars().defs(stmt)
+        local_decls = FreeVars().allvars(stmt) - live_in
         #Printer().stmt(stmt)
-        print(live_in)
-        print(local_decls)
+
+        #print('Livein: ')
+        #print(live_in)
+        #print('Locals: ')
+        #print(local_decls)
         
         # Create the formal and actual paramerer lists
         formals = []
@@ -70,8 +73,13 @@ class TransformPar(NodeWalker):
         # Create a unique name
         name = self.sig.unique_process_name()
 
+        # Create the local declarations
+        decls = []
+        for x in local_decls:
+            decls.append(ast.Decl(x.name, Type('var', 'single'), None))
+        
         # Create the definition and corresponding call.
-        d = ast.Def(name, Type('proc', 'procedure'), formals, [], stmt)
+        d = ast.Def(name, Type('proc', 'procedure'), formals, decls, stmt)
         c = ast.StmtPcall(name, actuals)
         self.sig.insert(d.type, d)
         return (d, c)

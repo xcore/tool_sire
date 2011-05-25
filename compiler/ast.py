@@ -80,15 +80,6 @@ class Program(Node):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.decls == other.decls and
-            self.defs == other.defs
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'Program('
         s += ')'
@@ -115,14 +106,7 @@ class Decl(Node):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.type == other.type and
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -159,16 +143,7 @@ class Def(Node):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.type == other.type and
-            self.formals == other.formals and
-            self.decls == other.decls and
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -200,14 +175,7 @@ class Param(Node):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.type == other.type and
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -230,13 +198,6 @@ class Stmt(Node):
         tag = visitor.visit_stmt(self)
         visitor.down(tag)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'Stmt('
@@ -261,14 +222,6 @@ class StmtSeq(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtSeq('
         s += ')'
@@ -291,14 +244,6 @@ class StmtPar(Stmt):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'StmtPar('
@@ -326,13 +271,7 @@ class StmtAlias(Stmt):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.slice == other.slice
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -362,15 +301,6 @@ class StmtAss(Stmt):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.left == other.left and
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'StmtAss('
@@ -403,18 +333,6 @@ class StmtFor(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.var == other.var and
-            self.init == other.init and
-            self.bound == other.bound and
-            self.step == other.step and
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtFor('
         s += ')'
@@ -442,16 +360,6 @@ class StmtIf(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.cond == other.cond and
-            self.thenstmt == other.thenstmt and
-            self.elsestmt == other.elsestmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtIf('
         s += ')'
@@ -477,15 +385,6 @@ class StmtOn(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.core == other.core and
-            self.pcall == other.pcall
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtOn('
         s += ')'
@@ -510,15 +409,6 @@ class StmtWhile(Stmt):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.cond == other.cond and
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'StmtWhile('
@@ -546,13 +436,7 @@ class StmtPcall(Stmt):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.args == other.args
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -587,17 +471,6 @@ class StmtRep(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.var == other.var and
-            self.init == other.init and
-            self.count == other.count and
-            self.stmt == other.stmt
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtRep('
         s += ')'
@@ -621,14 +494,6 @@ class StmtReturn(Stmt):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtReturn('
         s += ')'
@@ -647,13 +512,6 @@ class StmtSkip(Stmt):
         visitor.down(tag)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'StmtSkip('
         s += ')'
@@ -671,13 +529,6 @@ class Expr(Node):
         tag = visitor.visit_expr(self)
         visitor.down(tag)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'Expr('
@@ -702,14 +553,6 @@ class ExprSingle(Expr):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.elem == other.elem
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'ExprSingle('
         s += ')'
@@ -733,15 +576,6 @@ class ExprUnary(Expr):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.op == other.op and
-            self.elem == other.elem
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'ExprUnary('
@@ -770,16 +604,6 @@ class ExprBinop(Expr):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.op == other.op and
-            self.elem == other.elem and
-            self.right == other.right
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'ExprBinop('
         s += ', '.join('%s' % v for v in [self.op])
@@ -798,13 +622,6 @@ class Elem(Node):
         tag = visitor.visit_elem(self)
         visitor.down(tag)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'Elem('
@@ -830,12 +647,7 @@ class ElemId(Elem):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -867,13 +679,7 @@ class ElemSub(Elem):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -907,14 +713,7 @@ class ElemSlice(Elem):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.begin == other.begin and
-            self.end == other.end
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -943,14 +742,6 @@ class ElemGroup(Elem):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.expr == other.expr
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'ElemGroup('
         s += ')'
@@ -977,13 +768,7 @@ class ElemFcall(Elem):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.args == other.args
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -1015,13 +800,7 @@ class ElemPcall(Elem):
         visitor.up(tag)
 
     def __eq__(self, other):
-        return (
-            self.name == other.name and
-            self.args == other.args
-        )
-
-    def __ne__(self, other):
-        return not self == other
+        return self.name == other.name
 
     def __hash__(self):
         return self.name.__hash__()
@@ -1049,14 +828,6 @@ class ElemNumber(Elem):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.value == other.value
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'ElemNumber('
         s += ', '.join('%s' % v for v in [self.value])
@@ -1079,14 +850,6 @@ class ElemBoolean(Elem):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.value == other.value
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'ElemBoolean('
@@ -1111,14 +874,6 @@ class ElemString(Elem):
             c.accept(visitor)
         visitor.up(tag)
 
-    def __eq__(self, other):
-        return (
-            self.value == other.value
-        )
-
-    def __ne__(self, other):
-        return not self == other
-
     def __repr__(self):
         s =  'ElemString('
         s += ', '.join('%s' % v for v in [self.value])
@@ -1141,14 +896,6 @@ class ElemChar(Elem):
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
-
-    def __eq__(self, other):
-        return (
-            self.value == other.value
-        )
-
-    def __ne__(self, other):
-        return not self == other
 
     def __repr__(self):
         s =  'ElemChar('

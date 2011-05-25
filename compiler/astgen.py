@@ -180,18 +180,19 @@ class NodeCfg(object):
 
     def gen_eq(self):
         """
-        For equality we define an equals method that tests each attribute in
-        turn. This will recursively trigger nested node equality methods. (So
-        could be quite expensive). 
+        We base equality on identifiers.
         """
-        src =  '    def __eq__(self, other):\n'
-        src += '        return (\n' 
-        for (i, name) in enumerate(self.all_entries):
-            src += '            self.{0} == other.{0}'.format(name)
-            src += ' and\n' if i<len(self.all_entries)-1 else '\n'
-        src += '        )\n\n'
-        src += '    def __ne__(self, other):\n'
-        src += '        return not self == other\n\n'
+        src = ''
+        if 'name' in self.all_entries:
+            src =  '    def __eq__(self, other):\n'
+            src += '        return self.name == other.name\n\n'
+            #src += '        return (\n' 
+            #for (i, name) in enumerate(self.all_entries):
+            #    src += '            self.{0} == other.{0}'.format(name)
+            #    src += ' and\n' if i<len(self.all_entries)-1 else '\n'
+            #src += '        )\n\n'
+            #src += '    def __ne__(self, other):\n'
+            #src += '        return not self.name == other.name\n\n'
         return src
 
     def gen_hash(self):
