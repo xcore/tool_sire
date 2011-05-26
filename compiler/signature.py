@@ -36,6 +36,16 @@ class SignatureTable(object):
         
         return True
 
+    def remove(self, name):
+        """
+        Delete an entry with key name.
+        """
+        if name in self.tab:
+            del self.tab[name]
+            return True
+        else:
+            return False
+
     def lookup_param_type(self, name, i):
         """
         Given a procedure name and an index, return the formal type.

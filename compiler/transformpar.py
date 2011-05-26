@@ -15,6 +15,39 @@ from printer import Printer
 class TransformPar(NodeWalker):
     """
     An AST walker to transform parallel blocks. 
+    
+    From:
+        proc p(...) is
+          ...
+          { stmt1 | stmt2 }
+          ...
+
+    To:
+        proc _p1(live-in(stmt1)) is
+          decls = {x|free-var(stmt1)-live-in(stmt1)}
+          stmt1
+
+        proc _p2(live-in(stmt2)) is
+          decls = {x|free-var(stmt2)-live-in(stmt2)}
+          stmt2
+
+        proc p(...) is
+          ...
+          { _p1(live-in-actuals(stmt1)) | _p2(live-in-actuals(stmt2)) }
+          ...
+
+    Or from:
+        par ... do stmt
+
+    To:
+        proc _p(live-in(stmt)) is
+          decls = {x|free-var(stmt)-live-in(stmt)}
+          stmt
+
+        proc p(...) is
+          ..
+          par ... do _p(live-in-actuals(stmt))
+          ..
     """
     def __init__(self, sig, debug=False):
         self.sig = sig
@@ -87,9 +120,17 @@ class TransformPar(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        p = []
-        [p.extend(self.defn(x)) for x in node.defs]
-        [node.defs.insert(0, x) for x in reversed(p)]
+        """
+        Build a new list of definitions with new process definitons occuring
+        before their use. 
+        """
+        defs = []
+        for x in node.defs:
+            d = self.defn(x)
+            if len(d)>0:
+                defs.extend(reversed(d))
+            defs.append(x)
+        node.defs = defs
     
     # Procedure definitions ===============================
 

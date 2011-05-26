@@ -28,6 +28,7 @@ from liveness import Liveness
 from display import Display
 from transformpar import TransformPar
 from transformrep import TransformRep
+from flattencalls import FlattenCalls
 from children import Children
 
 from codegen import generate
@@ -222,6 +223,10 @@ def transform_ast(ast, sig):
     # Transform parallel replication
     vmsg(v, "Transforming parallel replication")
     TransformRep(sig).walk_program(ast)
+    
+    # Flatten nested calls
+    vmsg(v, "Flattening nested calls")
+    FlattenCalls(sig).walk_program(ast)
     
     # Display (pretty-print) the transformed AST
     if pprint_trans_ast: 

@@ -45,6 +45,28 @@ class TransformRep(NodeWalker):
     """
     An AST walker to transform replicated parallel statements. We must check for
     existance of StmtRep nodes from parents so that they can be replaced.
+
+    From:
+        proc p(...) is
+          ...
+          rep <index> := <init> for <n> do _p0(..., <index>, ...)
+          ...
+
+    To:
+        proc _dist(_t, _n, params(_p)) is
+          if _n = 0 then 
+              if _n<=<init>+<n> then
+                _p1(..., _t+<init>, ...)
+              else skip
+          else 
+          { _dist(_t, _n/2, params(_p))
+          | _dist(_t+_n/2, _n/2, params(_p)) 
+          }
+        
+        proc p(...) is
+          ...
+          _dist(0, next-pow-2(<n>-<init>), actuals(_p1)) 
+          ...
     """
     def __init__(self, sig, debug=False):
         self.sig = sig
@@ -121,9 +143,17 @@ class TransformRep(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        p = []
-        [p.extend(self.defn(x)) for x in node.defs]
-        [node.defs.insert(0, x) for x in reversed(p)]
+        """
+        Build a new list of definitions with new process definitons occuring
+        before their use. 
+        """
+        defs = []
+        for x in node.defs:
+            d = self.defn(x)
+            if len(d)>0: 
+                defs.extend(d)
+            defs.append(x)
+        node.defs = defs
     
     # Procedure definitions ===============================
 
