@@ -44,12 +44,10 @@ class Printer(NodeWalker):
         return ', '.join([self.expr(x) for x in args])
 
     def var_decls(self, decls):
-        # Procedure declarations
         self.buf.write((self.indt() if len(decls)>0 else '')
                 +(';\n'+self.indt()).join(
                 [self.decl(x) for x in decls]))
         if len(decls)>0: self.buf.write(';\n')
-
     
     # Program ============================================
 
@@ -58,7 +56,7 @@ class Printer(NodeWalker):
         # Program declarations
         self.var_decls(node.decls)
         self.buf.write('\n')
-       
+
         # Program definitions (procedures)
         [self.defn(x, 0) for x in node.defs]
     
@@ -82,23 +80,29 @@ class Printer(NodeWalker):
         
         # Procedure definition
         name = node.name if node.name != '_main' else 'main'
-        self.buf.write('{} {}({}) is\n'.format(node.type.specifier, name, 
+        self.buf.write('{} {}({})'.format(node.type.specifier, name, 
                 ', '.join([self.param(x) for x in node.formals])))
-        
-        # Procedure declarations
-        self.indent.append(INDENT)
-        self.var_decls(node.decls)
-
-        # Statement block
-        if (isinstance(node.stmt, ast.StmtPar) 
-                or isinstance(node.stmt, ast.StmtSeq)):
-            self.indent.pop()
-            self.stmt(node.stmt)
-            self.buf.write('\n\n')
+      
+        # If it is a prototype
+        if not node.stmt:
+            self.buf.write(';\n\n')
         else:
-            self.stmt(node.stmt)
-            self.buf.write('\n\n')
-            self.indent.pop()
+            self.buf.write(' is\n')
+            
+            # Procedure declarations
+            self.indent.append(INDENT)
+            self.var_decls(node.decls)
+
+            # Statement block
+            if (isinstance(node.stmt, ast.StmtPar) 
+                    or isinstance(node.stmt, ast.StmtSeq)):
+                self.indent.pop()
+                self.stmt(node.stmt)
+                self.buf.write('\n\n')
+            else:
+                self.stmt(node.stmt)
+                self.buf.write('\n\n')
+                self.indent.pop()
     
     # Formals =============================================
     
@@ -107,9 +111,8 @@ class Printer(NodeWalker):
             return 'val '+node.name
         elif node.type == Type('ref', 'single'):
             return 'var '+node.name
-        elif node.type == Type('val', 'array'):
-            return 'var {}[{}]'.format(node.name, self.expr(node.expr))
-        elif node.type == Type('ref', 'array'):
+        elif (node.type == Type('ref', 'array')
+                or node.type == Type('val', 'array')):
             return 'var {}[{}]'.format(node.name, self.expr(node.expr))
         else:
             assert 0

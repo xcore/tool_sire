@@ -19,7 +19,7 @@ class BuildCFG(NodeWalker):
     def init_sets(self, node, pred, succ):
         node.pred = pred
         node.succ = succ
-        node.use = self.implicit_use.copy()
+        node.use = set()
         node.defs = set()
         node.inp = set()
         node.out = set()
@@ -36,19 +36,8 @@ class BuildCFG(NodeWalker):
         set. Arrays are used implicitly by every statement as their live range
         is the entire procedure.
         """
-        self.implicit_use = set()
-        #for x in node.formals:
-        #    if x.type == Type('ref', 'array'):
-        #        e = ast.ElemId(x.name)
-        #        e.symbol = x.symbol
-        #        self.implicit_use |= set([e])
-        #for x in node.decls:
-        #    if x.type.form == 'array':
-        #        e = ast.ElemId(x.name)
-        #        e.symbol = x.symbol
-        #        self.implicit_use |= set([e])
-        #print(self.implicit_use)
-        self.stmt(node.stmt, [], [])
+        if node.stmt:
+            self.stmt(node.stmt, [], [])
 
     # Statements ==========================================
 

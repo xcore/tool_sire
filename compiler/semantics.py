@@ -31,6 +31,7 @@ param_conversions = {
   Type('val', 'single') : [
     Type('val', 'single'), 
     Type('var', 'single'), 
+    Type('ref', 'single'), 
     Type('var', 'sub'),
     Type('ref', 'sub'),
     ],
@@ -38,6 +39,8 @@ param_conversions = {
   Type('ref', 'single') : [
     Type('var', 'single'), 
     Type('ref', 'single'), 
+    Type('var', 'sub'),
+    Type('ref', 'sub'),
     ],
 
   Type('ref', 'array') : [
@@ -46,11 +49,24 @@ param_conversions = {
     ],
 }
 
-# Relation of variable types to formal parameter types.
-var_to_param = {
+# Relation of variable types to formal parameter types for parallel composition.
+par_var_to_param = {
     Type('val', 'single') : Type('val', 'single'),
     Type('var', 'single') : Type('ref', 'single'), 
     Type('ref', 'single') : Type('ref', 'single'),
+    Type('var', 'sub')    : Type('val', 'single'),
+    Type('ref', 'sub')    : Type('val', 'single'),
+    Type('var', 'array')  : Type('ref', 'array'), 
+    Type('ref', 'array')  : Type('ref', 'array'),
+}
+
+# Relation of variable types to formal parameter types for parallel replication.
+# All singles map to values as there can be no single assignment in a
+# replicator.
+rep_var_to_param = {
+    Type('val', 'single') : Type('val', 'single'),
+    Type('var', 'single') : Type('val', 'single'), 
+    Type('ref', 'single') : Type('val', 'single'),
     Type('var', 'sub')    : Type('val', 'single'),
     Type('ref', 'sub')    : Type('val', 'single'),
     Type('var', 'array')  : Type('ref', 'array'), 
@@ -64,7 +80,6 @@ class Semantics(NodeWalker):
     def __init__(self, sym, sig, errorlog, debug=False):
         self.sym = sym
         self.sig = sig
-        self.depth = 0
         self.errorlog = errorlog
         self.debug = debug
         
@@ -237,12 +252,13 @@ class Semantics(NodeWalker):
         self.sym.begin_scope('program')
         [self.decl(x) for x in node.decls]
         [self.defn(x) for x in node.defs]
-        self.sym.end_scope()
+        #self.sym.end_scope()
     
     # Variable declarations ===============================
 
     def decl(self, node):
-        if self.sym.insert(node.name, node.type, node.expr, node.coord):
+        if not self.sym.lookup_scoped(node.name):
+            self.sym.insert(node.name, node.type, node.expr, node.coord)
             node.symbol = self.sym.lookup(node.name)
         else:
             self.redecl_error(node.name, node.coord)
@@ -259,16 +275,17 @@ class Semantics(NodeWalker):
         if node.name == 'main':
             node.name = '_'+node.name
 
-        # Add symbol and signature
-        if self.sym.insert(node.name, node.type, node.coord):
+        # Add symbol and signature if it hasn't been declared
+        s = self.sym.lookup_scoped(node.name)
+        if not s:
+            s = self.sym.insert(node.name, node.type, coord=node.coord)
             if not self.sig.insert(node.type, node):
                 self.procedure_def_error(node.name, node.coord)
+        # If it has been declared.
         else:
-            self.redecl_error(node.name, node.coord)
+            if not s.prototype:
+                self.redecl_error(node.name, node.coord)
 
-        # Add the procedure name to the list
-        self.parent = node.name
-    
         # Begin a new scope for decls and stmt components
         self.sym.begin_scope('proc')
         
@@ -276,18 +293,31 @@ class Semantics(NodeWalker):
         # declared, which should appear after the array reference they relate to.
         [self.param(x) for x in reversed(node.formals)]
        
-        # Declarations
-        [self.decl(x) for x in node.decls]
+        # Check if this is a prototype or the actual definition
+        if node.stmt:
+            
+            # If there was a prototype, unmark it
+            s.unmark_prototype()
 
-        # Body statement
-        self.stmt(node.stmt)
-        self.sym.end_scope()
+            # Add the procedure name to the list
+            self.parent = node.name
+        
+            # Declarations
+            [self.decl(x) for x in node.decls]
+
+            # Body statement
+            self.stmt(node.stmt)
+        
+        # End the scope
+        self.sym.end_scope(warn_unused=True if node.stmt else False)
+            
     
     # Formals =============================================
     
     def param(self, node):
        
-        if self.sym.insert(node.name, node.type, node.coord):
+        if not self.sym.lookup_scoped(node.name):
+            self.sym.insert(node.name, node.type, node.expr, node.coord)
             node.symbol = self.sym.lookup(node.name)
         else:
             self.redecl_error(node.name, node.coord)
@@ -318,7 +348,8 @@ class Semantics(NodeWalker):
             if not self.check_args('proc', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
-            self.sym.mark_decl(node.name)
+            s = self.sym.lookup(node.name)
+            s.mark_used()
         else:
             self.nodecl_error(node.name, 'process', node.coord)
 
@@ -346,7 +377,7 @@ class Semantics(NodeWalker):
 
         if self.sym.check_form(node.name, ['array']):
             node.symbol = self.sym.lookup(node.name)
-            self.sym.mark_decl(node.name)
+            self.sym.mark_used(node.name)
         else:
             self.type_error('array', node.dest, node.coord)
         
@@ -458,7 +489,7 @@ class Semantics(NodeWalker):
         # Check the symbol has been declared
         if self.sym.check_decl(node.name):
             node.symbol = self.sym.lookup(node.name)
-            self.sym.mark_decl(node.name)
+            node.symbol.mark_used()
         else:
             self.nodecl_error(node.name, 'variable', node.coord)
 
@@ -467,7 +498,7 @@ class Semantics(NodeWalker):
         # Check the symbol has been declared
         if self.sym.check_decl(node.name):
             node.symbol = self.sym.lookup(node.name)
-            self.sym.mark_decl(node.name)
+            node.symbol.mark_used()
         else:
             self.nodecl_error(node.name, 'array subscript', node.coord)
         
@@ -479,7 +510,7 @@ class Semantics(NodeWalker):
         # Check the symbol has been declared
         if self.sym.check_decl(node.name):
             node.symbol = self.sym.lookup(node.name)
-            self.sym.mark_decl(node.name)
+            node.symbol.mark_used()
         else:
             self.nodecl_error(node.name, 'array slice', node.coord)
         
@@ -490,12 +521,13 @@ class Semantics(NodeWalker):
     def elem_pcall(self, node):
         
         # Check the name is declared
-        if self.sym.check_decl(node.name):
+        s = self.sym.check_decl(node.name)
+        if s:
             # Check the arguments are correct
             if not self.check_args('proc', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
-            self.sym.mark_decl(node.name)
+            s.mark_used()
         else:
             self.nodecl_error(node.name, 'process', node.coord)
         
@@ -510,7 +542,8 @@ class Semantics(NodeWalker):
             if not self.check_args('func', node):
                 self.badargs_error(node.name, node.coord)
             # And mark the symbol as used
-            self.sym.mark_decl(node.name)
+            s = self.sym.lookup(node.name)
+            s.mark_used()
         else:
             self.nodecl_error(node.name, 'function', node.coord)
 

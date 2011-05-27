@@ -41,6 +41,7 @@ mpi_example_tests = [
 
 mpi_feature_general = [
   Test('forloop'),
+  Test('array_elemref'),
   Test('array_slice1'),
   Test('array_slice2'),
   Test('fixedpoint'),

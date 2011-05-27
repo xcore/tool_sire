@@ -17,7 +17,7 @@ func plot(val i) is
   else if i > 1  then printchar('%')
   else                printchar('#')
 
-proc compute(val xmin, val ymin, val xmax, val ymax) is
+proc compute(val xmin, val ymin, val xmax, val ymax, var a[XDIM*YDIM]) is
   var dx;
   var dy;
   var xn;
@@ -66,11 +66,12 @@ proc main() is
   var ymin;
   var xmax;
   var ymax;
+  var a[XDIM*YDIM];
 { xmin := fix(-2)
 ; ymin := (fix(1) + FIX_QUAR)*(-1)
 ; xmax := FIX_HALF + FIX_QUAR
 ; ymax := fix(1) + FIX_QUAR
-; compute(xmin, ymin, xmax, ymax)
+; compute(xmin, ymin, xmax, ymax, a)
 }
 
 

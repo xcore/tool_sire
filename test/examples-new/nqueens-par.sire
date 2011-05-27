@@ -1,13 +1,14 @@
 val N := 8;
 
 % Check no queens in same row or column, runs in O(N)
-func valid(val i, val j, val q[N]) is
+func valid(val i, val q[N]) is
   var valid;
   var k;
 { valid := true
 ; k := 0
 ; while k < i and valid do
-    if q[i] = q[k] or (q[i]-q[k]) = (i-k) then
+    if (q[i] = q[k]) or ((q[i]-q[k]) = (i-k)) 
+    then
     { valid := false
     ; k := k + 1
     }
@@ -15,49 +16,52 @@ func valid(val i, val j, val q[N]) is
 ; return valid
 }
 
+proc tryall(val i, val q[N], var succ, var result[N]);
+
 % Try queen i in position j
-proc try(val i, val j, val _q[N], var succ, var result[N]) is
-  var q[N];
+proc try(val i, val j, val q[N], var s, var R[N]) is
+  var q1[N];
   var k;
-{ succ := true
-; if valid(i, j, _q) then
-  { for k:=0 to N-1 do q[k] = _q[k]
-  ; q[i] := j
+{ s := true
+; if valid(i, q) then
+  { for k:=0 to N-1 do q1[k] := q[k]
+  ; q1[i] := j
   ; if i < N
-    then tryall(i+1, q)
+    then tryall(i+1, q1, s, R)
     else
-    { for k:=0 to N-1 do result[k] := q[k]
-    ; succ := true
+    { for k:=0 to N-1 do R[k] := q1[k]
+    ; s := true
     }
   }
   else skip
 }
 
 % Try all positons of queen i in parallel
-proc tryall(val i, val q[N], var succ, var result[N]) is
-  var succ[N];
-  var results[N*N];
+proc tryall(val i, val q[N], var s, var R[N]) is
+  var S[N];   % par success array
+  var T[N*N]; % par results array
   var j;
   var k;
-{ par j:=1 for N do try(i, j, q, succ[j], results[j*N:(j+1)*N])
-; succ := false
+{ par j:=1 for N do 
+    try(i, j, q, S[j], T[j*N:(j+1)*N])
+; s := false
 ; for j:=0 to N-1 do
-    if succ[j] then
-    { for k:=0 to N-1 do result[k] := results[j*N+k]
-    ; succ := true
+    if S[j] then
+    { for k:=0 to N-1 do R[k] := T[j*N+k]
+    ; s := true
     }
     else skip
 }
 
 proc main() is
   var q[N];
-  var result[N];
-  var succ;
+  var R[N];
+  var s;
   var i;
-{ for i:=0 step 1 to N-1 do a[i] := N+1
-; tryall(0, q, succ, result)
-; if succ then 
-    for i:=0 to N-1 do printval(x[i])
+{ for i:=0 to N-1 do q[i] := N+1
+; tryall(0, q, s, R)
+; if s 
+  then for i:=0 to N-1 do printval(q[i])
   else skip
 ; println()
 }

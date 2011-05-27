@@ -12,7 +12,8 @@ class SignatureTable(object):
     """
     A procedure signature table.
     """
-    def __init__(self, debug=False):
+    def __init__(self, errorlog, debug=False):
+        self.errorlog = errorlog
         self.debug = debug
         self.tab = {}
         self.mobile_proc_names = []
@@ -23,17 +24,26 @@ class SignatureTable(object):
         Insert a procedure signature, mobile denotes if it will be added to the
         jump table and be mobile between cores.
         """
-        if (node.formals and len(node.formals) > defs.MAX_PROC_PARAMETERS):
-            return False
-        
-        self.tab[node.name] = Signature(node.name, type, node.formals)
-        
-        if mobile:
-            self.mobile_proc_names.append(node.name)
-        
-        if(self.debug):
-            print("Inserted sig for '{}' ({})".format(node.name, type))
-        
+        if not node.name in self.tab:
+       
+            # Check the number of formal parameters
+            if (node.formals and len(node.formals) > defs.MAX_PROC_PARAMETERS):
+                self.errorlog.report_error(
+                        "procedure '{}' exceeds maximum ({}) number of formals: {}"
+                        .format(node.name, defs.MAX_PROC_PARAMETERS,
+                            len(node.formals)))
+                return False
+           
+            # Create and insert the signature
+            self.tab[node.name] = Signature(node.name, type, node.formals)
+           
+            # Add it to the list of mobiles if it is mobile
+            if mobile:
+                self.mobile_proc_names.append(node.name)
+            
+            if(self.debug):
+                print("Inserted sig for '{}' ({})".format(node.name, type))
+            
         return True
 
     def remove(self, name):
@@ -41,7 +51,10 @@ class SignatureTable(object):
         Delete an entry with key name.
         """
         if name in self.tab:
+            s = self.tab[name] 
             del self.tab[name]
+            if(self.debug):
+                print("Deleted sig for '{}' ({})".format(s.name, s.type))
             return True
         else:
             return False

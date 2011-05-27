@@ -55,8 +55,11 @@ class Parser(object):
         """ 
         Parse a file and return the AST.
         """
-        self.filename = os.path.basename(filename)
-        self.lexer.filename = filename
+        if filename:
+            self.filename = os.path.basename(filename)
+        else:
+            self.filename = 'stdin'
+        self.lexer.filename = self.filename
         self.lexer.reset()
         return self.parser.parse(text, lexer=self.lexer, debug=debug,
                 tracking=True)
@@ -189,6 +192,18 @@ class Parser(object):
         p[0] = ast.Def(p[2], Type('func', 'procedure'),
                 p[4], p[7], p[8], self.coord(p)) 
 
+    # Process prototype
+    def p_proc_prototype_proc(self, p):
+        'proc_def : PROC name LPAREN formals RPAREN SEMI'
+        p[0] = ast.Def(p[2], Type('proc', 'procedure'), 
+                p[4], None, None, self.coord(p)) 
+
+    # Function prototype
+    def p_proc_prototype_func(self, p):
+        'proc_def : FUNC name LPAREN formals RPAREN SEMI'
+        p[0] = ast.Def(p[2], Type('func', 'procedure'),
+                p[4], None, None, self.coord(p)) 
+
     # Procedure errors
     def p_proc_def_proc_err(self, p):
         '''proc_def : PROC error IS var_decls stmt
@@ -262,11 +277,11 @@ class Parser(object):
 
     # Par
     def p_stmt_par(self, p):
-        '''stmt_par : stmt BAR stmt'''
+        'stmt_par : stmt BAR stmt'
         p[0] = [p[1]] + [p[3]]
 
     def p_stmt_par_seq(self, p):
-        '''stmt_par : stmt BAR stmt_par'''
+        'stmt_par : stmt BAR stmt_par'
         p[0] = [p[1]] + p[3]
 
     # Seq error

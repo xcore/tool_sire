@@ -63,7 +63,7 @@ def build_xs1(sig, device, program_buf, outfile,
         create_headers(device, v)
 
         # Generate the assembly
-        (lines, cp) = generate_assembly(sem, program_buf, show_calls, v)
+        (lines, cp) = generate_assembly(sig, program_buf, show_calls, v)
 
         if compile_only:
             
@@ -85,13 +85,13 @@ def build_xs1(sig, device, program_buf, outfile,
 
         # Output and assemble the master jump table
         buf = io.StringIO()
-        build_jumptab(sem, buf, v)
+        build_jumptab(sig, buf, v)
         assemble_str(MASTER_JUMPTAB, 'S', buf.getvalue(), show_calls, v)
 
         # Output and assemble the master size table
         buf = io.StringIO()
-        build_sizetab(sem, buf, v)
-        build_frametab(sem, buf, v)
+        build_sizetab(sig, buf, v)
+        build_frametab(sig, buf, v)
         #print(buf.getvalue())
         assemble_str(MASTER_TABLES, 'S', buf.getvalue(), show_calls, v)
         
@@ -127,7 +127,7 @@ def create_headers(device, v):
     s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
     util.write_file(DEVICE_HDR, s)
 
-def generate_assembly(sem, buf, show_calls, v):
+def generate_assembly(sig, buf, show_calls, v):
     """ 
     Given the program buffer containing the XC translation, generate the program
     and constant pool assembly.
@@ -141,7 +141,7 @@ def generate_assembly(sem, buf, show_calls, v):
     lines = util.read_file(PROGRAM_ASM, read_lines=True)
 
     # Make modifications
-    (lines, cp) = modify_assembly(sem, lines, v)
+    (lines, cp) = modify_assembly(sig, lines, v)
     
     return (lines, cp)
 
@@ -220,7 +220,7 @@ def replace_slaves(show_calls, v):
     util.call([XOBJDUMP, '--split', MASTER_XE], show_calls)
     util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], show_calls)
 
-def modify_assembly(sem, lines, v):
+def modify_assembly(sig, lines, v):
     """ 
     Perform modifications on assembly output.
     """
@@ -228,9 +228,9 @@ def modify_assembly(sem, lines, v):
     
     #print(''.join(lines))
     (lines, cp) = extract_constants(lines, v)
-    lines = insert_bottom_labels(sem, lines, v)
-    lines = insert_frame_sizes(sem, lines, v)
-    lines = rewrite_calls(sem, lines, v)
+    lines = insert_bottom_labels(sig, lines, v)
+    lines = insert_frame_sizes(sig, lines, v)
+    lines = rewrite_calls(sig, lines, v)
     lines.insert(0, '###### MODIFIED ######\n')
     #print(''.join(lines))
 
@@ -300,7 +300,7 @@ def extract_constants(lines, v):
 
     return (new, cp)
 
-def insert_bottom_labels(sem, lines, v):
+def insert_bottom_labels(sig, lines, v):
     """
     Insert bottom labels for each function.
     """
@@ -333,7 +333,7 @@ def insert_bottom_labels(sem, lines, v):
 
     return lines
 
-def insert_frame_sizes(sem, lines, v):
+def insert_frame_sizes(sig, lines, v):
     """ 
     Insert labels with the value of the size of funciton frames. These are
     extracted from 'retsp n' instruction which are always present.
@@ -358,7 +358,7 @@ def insert_frame_sizes(sem, lines, v):
 
     return lines
 
-def rewrite_calls(sem, lines, v):
+def rewrite_calls(sig, lines, v):
     """ 
     Rewrite calls to program functions to branch through the jump table.
     """
@@ -372,7 +372,7 @@ def rewrite_calls(sem, lines, v):
 
     return lines
 
-def build_jumptab(sem, buf, v):
+def build_jumptab(sig, buf, v):
 
     assert len(sig.mobile_proc_names) <= defs.JUMP_TABLE_SIZE
     vmsg(v, 'Building master jump table ({}/{})'.format(
@@ -402,7 +402,7 @@ def build_jumptab(sem, buf, v):
             len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_sizetab(sem, buf, v):
+def build_sizetab(sig, buf, v):
 
     assert len(sig.mobile_proc_names) <= defs.JUMP_TABLE_SIZE
     vmsg(v, 'Building master size table ({}/{})'.format(
@@ -432,7 +432,7 @@ def build_sizetab(sem, buf, v):
             len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_frametab(sem, buf, v):
+def build_frametab(sig, buf, v):
 
     vmsg(v, 'Building master frame table')
     

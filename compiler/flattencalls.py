@@ -6,9 +6,7 @@
 import copy
 import ast
 from walker import NodeWalker
-from freevars import FreeVars
 from type import Type
-from semantics import var_to_param
 
 from printer import Printer
 
@@ -71,19 +69,24 @@ class FlattenCalls(NodeWalker):
             proc ... is
               { p(...) }
         """
+        if(self.debug):
+            print('Def: '+node.name)
         if isinstance(node.stmt, ast.StmtPcall): 
             if(self.debug):
                 print('Found nested call in '+node.name)
             replace.append((node.name, node.stmt))
             return True
-        elif (isinstance(node.stmt, ast.StmtSeq) and 
-                isinstance(node.stmt.stmt[0], ast.StmtPcall)):
+        elif (isinstance(node.stmt, ast.StmtSeq) 
+                and len(node.stmt.stmt) == 0
+                and isinstance(node.stmt.stmt[0], ast.StmtPcall)):
             if(self.debug):
                 print('Found nested (seq) call in '+node.name)
             replace.append((node.name, node.stmt.stmt[0]))
             return True
-        else:
+        elif isinstance(node.stmt, ast.Stmt):
             self.stmt(node.stmt, replace)
+            return False
+        else:
             return False
     
     # Statements ==========================================
@@ -116,7 +119,7 @@ class FlattenCalls(NodeWalker):
         self.stmt(node.stmt, replace)
 
     def stmt_rep(self, node, replace):
-        self.stmt(x, replace)
+        self.stmt(node.stmt, replace)
 
     def stmt_skip(self, node, replace):
         pass

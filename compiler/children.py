@@ -13,11 +13,14 @@ class Children(NodeVisitor):
     An AST visitor to determine the children of each procedure.
     """
     
-    def __init__(self, sig):
+    def __init__(self, sig, debug=False):
+        self.debug = debug
         self.parent = None
         self.children = {}
         for x in sig.mobile_proc_names:
             self.children[x] = []
+        if(self.debug):
+            self.display()
 
     def up(self, tag):
         pass
@@ -36,7 +39,8 @@ class Children(NodeVisitor):
                 and (not name in self.children[self.parent])
                 and (not name == self.parent)):
             self.children[self.parent].append(name)
-            #print('added child '+name+' to '+self.parent)
+            if(self.debug):
+                print('added child '+name+' to '+self.parent)
 
     def build(self):
         """ 

@@ -31,7 +31,7 @@ class Liveness(NodeWalker):
         Iteratively perform liveness analysis until there is no change in the in
         and out sets.
         """
-        while any([self.stmt(x.stmt) for x in node.defs]):
+        while any([self.stmt(x.stmt) if x.stmt else False for x in node.defs]):
             pass
     
     # Statements ==========================================

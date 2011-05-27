@@ -164,7 +164,7 @@ def produce_ast(input_file, errorlog, logging=False):
     ast = parser.parse(input_file, infile, debug=log)
     
     if errorlog.any():
-        raise Error('parsing')
+        raise Error()
     
     # Perform parsing only
     if parse_only: 
@@ -188,15 +188,20 @@ def semantic_analysis(sym, sig, ast, errorlog):
     """
     vmsg(v, "Performing semantic analysis")
     
-    Semantics(sym, sig, errorlog).walk_program(ast)
+    sem = Semantics(sym, sig, errorlog)
+    sem.walk_program(ast)
     
+    # Check for any errors
     if errorlog.any():
-        raise Error('semantic analysis')
-    
+        raise Error()
+   
+    # Quit if we're only performing semantic analysis
     if sem_only: 
         raise SystemExit()
 
-def transform_ast(ast, sig):
+    return sem
+
+def transform_ast(sem, sig, ast, errorlog):
     """
     Perform transformations on AST.
     """
@@ -218,15 +223,19 @@ def transform_ast(ast, sig):
 
     # Transform parallel composition
     vmsg(v, "Transforming parallel composition")
-    TransformPar(sig).walk_program(ast)
+    TransformPar(sem, sig).walk_program(ast)
     
     # Transform parallel replication
     vmsg(v, "Transforming parallel replication")
-    TransformRep(sig).walk_program(ast)
+    TransformRep(sem, sig).walk_program(ast)
     
     # Flatten nested calls
     vmsg(v, "Flattening nested calls")
     FlattenCalls(sig).walk_program(ast)
+   
+    # Check for any errors
+    if errorlog.any():
+        raise Error()
     
     # Display (pretty-print) the transformed AST
     if pprint_trans_ast: 
@@ -242,8 +251,6 @@ def child_analysis(sig, ast):
     child = Children(sig)
     ast.accept(child)
     child.build()
-    #child.display()
-    
     return child
 
 def main(args):
@@ -272,12 +279,12 @@ def main(args):
         ast = produce_ast(input_file, errorlog)
 
         # Perform semantic analysis on the AST
-        sym = SymbolTable(errorlog, debug=False)
-        sig = SignatureTable(debug=False)
-        semantic_analysis(sym, sig, ast, errorlog)
+        sym = SymbolTable(errorlog)
+        sig = SignatureTable(errorlog)
+        sem = semantic_analysis(sym, sig, ast, errorlog)
         
         # Perform AST transformations
-        transform_ast(ast, sig)
+        transform_ast(sem, sig, ast, errorlog)
 
         # Perform child analysis
         child = child_analysis(sig, ast)
@@ -293,7 +300,7 @@ def main(args):
 
     # Handle any specific compilation errors
     except Error as e:
-        sys.stderr.write('Error: {}\n'.format(e))
+        #sys.stderr.write('Error: {}\n'.format(e))
         return 1
     
     # Parser attribute error

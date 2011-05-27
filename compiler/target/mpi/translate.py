@@ -97,21 +97,31 @@ class TranslateMPI(NodeWalker):
         Build the list of arguments.
          - Take the address of variables for reference parameters.
          - Don't dereference references for reference parameters.
+         - Take the address of array elements whether var or ref.
         """
         new = []
         for (i, x) in enumerate(args):
             arg = None
             
-            # For single variable references, we must give the address of
-            # variable parameters.
             t = self.sig.lookup_param_type(name, i)
             if t == Type('ref', 'single'):
                 assert isinstance(x, ast.ExprSingle)
-                assert isinstance(x.elem, ast.ElemId)
-                if x.elem.symbol.type == Type('var', 'single'):
-                    arg = '&'+x.elem.name
-                elif x.elem.symbol.type == Type('ref', 'single'):
-                    arg = x.elem.name
+
+                # For single variables, take the address if they are not ref
+                if isinstance(x.elem, ast.ElemId):
+                    if x.elem.symbol.type == Type('var', 'single'):
+                        arg = '&'+x.elem.name
+                    elif x.elem.symbol.type == Type('ref', 'single'):
+                        arg = x.elem.name
+
+                # For subscripts, take their address
+                elif isinstance(x.elem, ast.ElemSub):
+                    if x.elem.symbol.type == Type('var', 'array'):
+                        arg = '&{}'.format(self.elem(x))
+                    elif x.elem.symbol.type == Type('ref', 'array'):
+                        arg = '&{}'.format(self.elem(x))
+                else:
+                    assert 0
             
             new.append(arg if arg else self.expr(x))
         return ', '.join(new)
@@ -175,20 +185,23 @@ class TranslateMPI(NodeWalker):
     def defn(self, node):
         s = ''
         s += 'void' if node.name == '_main' else 'int'
-        s += ' {}({})'.format(self.procedure_name(node.name),
-                ', '.join([self.param(x) for x in node.formals]))
+        s += ' {}({}){}'.format(self.procedure_name(node.name),
+                ', '.join([self.param(x) for x in node.formals]),
+                ';' if not node.stmt else '')
         self.parent = node.name
         self.out(s)
-        self.blocker.begin()
-        
-        # Declarations
-        [self.out(self.decl(x)) for x in node.decls]
-        if len(node.decls) > 0:
-            self.out('')
+
+        if node.stmt:
+            self.blocker.begin()
+            
+            # Declarations
+            [self.out(self.decl(x)) for x in node.decls]
+           
+            # Statement block
+            self.stmt_block(node.stmt)
        
-        # Statement block
-        self.stmt_block(node.stmt)
-        self.blocker.end()
+            self.blocker.end()
+        
         self.out('')
     
     # Formals =============================================

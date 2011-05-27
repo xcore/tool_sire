@@ -8,7 +8,8 @@ import ast
 from walker import NodeWalker
 from freevars import FreeVars
 from type import Type
-from semantics import var_to_param
+from semantics import par_var_to_param
+from semantics import rep_var_to_param
 
 from printer import Printer
 
@@ -49,7 +50,8 @@ class TransformPar(NodeWalker):
           par ... do _p(live-in-actuals(stmt))
           ..
     """
-    def __init__(self, sig, debug=False):
+    def __init__(self, sem, sig, debug=False):
+        self.sem = sem
         self.sig = sig
         self.debug = False
 
@@ -91,6 +93,7 @@ class TransformPar(NodeWalker):
             live_in -= set([rep_var])
 
         # For each variable in the live-in set add accordingly to formals and actuals.
+        var_to_param = rep_var_to_param if rep_var else par_var_to_param
         for x in live_in:
             formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
                 x.symbol.expr))
@@ -111,10 +114,14 @@ class TransformPar(NodeWalker):
         for x in local_decls:
             decls.append(ast.Decl(x.name, Type('var', 'single'), None))
         
-        # Create the definition and corresponding call.
+        # Create the definition and perform semantic analysis to update symbol
+        # bindings. 
         d = ast.Def(name, Type('proc', 'procedure'), formals, decls, stmt)
+        self.sem.defn(d)
+        #self.sig.insert(d.type, d)
+        
+        # Create the corresponding call.
         c = ast.StmtPcall(name, actuals)
-        self.sig.insert(d.type, d)
         return (d, c)
 
     # Program ============================================
@@ -135,7 +142,7 @@ class TransformPar(NodeWalker):
     # Procedure definitions ===============================
 
     def defn(self, node):
-        return self.stmt(node.stmt)
+        return self.stmt(node.stmt) if node.stmt else []
     
     # Statements ==========================================
 

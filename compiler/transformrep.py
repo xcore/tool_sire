@@ -8,7 +8,7 @@ import ast
 from ast import NodeVisitor
 from walker import NodeWalker
 from freevars import FreeVars
-from semantics import var_to_param
+from semantics import rep_var_to_param
 from type import Type
 from symbol import Symbol
 
@@ -68,7 +68,8 @@ class TransformRep(NodeWalker):
           _dist(0, next-pow-2(<n>-<init>), actuals(_p1)) 
           ...
     """
-    def __init__(self, sig, debug=False):
+    def __init__(self, sem, sig, debug=False):
+        self.sem = sem
         self.sig = sig
         self.debug = debug
 
@@ -79,7 +80,7 @@ class TransformRep(NodeWalker):
         """
         assert isinstance(stmt, ast.StmtRep)
         assert isinstance(stmt.stmt, ast.StmtPcall)
-
+        
         # The context of the procedure call is each variable occurance in the
         # set of arguments.
         context = FreeVars().allvars(stmt.stmt)
@@ -109,8 +110,8 @@ class TransformRep(NodeWalker):
        
         # Add each unique variable ocurrance from context as a formal param
         for x in context - set([stmt.var]):
-            formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
-                x.symbol.expr))
+            formals.append(ast.Param(x.name, rep_var_to_param[x.symbol.type], 
+                     x.symbol.expr))
             
             # If the actual is an array subscript or slice, we only pass the id.
             if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
@@ -135,7 +136,13 @@ class TransformRep(NodeWalker):
                     ast.StmtPcall(name, [ast.ExprBinop('+', elem_t,
                         ast.ElemGroup(n_div_2)), n_div_2] + proc_actuals)
                     ]))
+        
+        # Create the definition and perform semantic analysis to update symbol
+        # bindings. 
         d = ast.Def(name, Type('proc', 'procedure'), formals, [], s)
+        self.sem.defn(d)
+        
+        # Create the corresponding call.
         c = ast.StmtPcall(name, actuals)
         self.sig.insert(d.type, d)
         return (d, c)
@@ -150,14 +157,15 @@ class TransformRep(NodeWalker):
         defs = []
         for x in node.defs:
             d = self.defn(x)
-            if len(d)>0: 
-                defs.extend(d)
+            defs.extend(d)
             defs.append(x)
         node.defs = defs
     
     # Procedure definitions ===============================
 
     def defn(self, node):
+        if not node.stmt:
+            return []
         p = self.stmt(node.stmt)
         if isinstance(node.stmt, ast.StmtRep):
             (d, node.stmt) = self.transform_rep(node.stmt)

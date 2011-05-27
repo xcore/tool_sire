@@ -6,7 +6,7 @@
 #define TRUE  1
 #define FALSE 0 
 
-#define MAX_PROC_PARAMETERS 8
+#define MAX_PROC_PARAMETERS 10
 
 typedef enum {
     t_arg_ALIAS,
