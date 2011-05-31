@@ -1,0 +1,26 @@
+val N := 64;
+
+func f(val a) is
+  return a * 2
+
+func combine(val a, val b) is
+  return a + b
+
+proc mapreduce(val id, var A[n], val n, var r) is
+  var p;
+  var q;
+{ if n = 1 then 
+      A[0] := f(A[0])
+  else
+  { { mapreduce(id,     A[0:n/2], n/2, p)
+    | mapreduce(id+n/2, A[n/2:n], n/2, q)
+    }
+  ; r := combine(p, q)
+  }
+}
+
+proc main() is
+  var A[N];
+  var r;
+  mapreduce(0, N, A, N, r);
+
