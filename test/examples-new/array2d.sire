@@ -1,0 +1,16 @@
+val N := 10;
+
+proc main() is
+  var i;
+  var j;
+  var v;
+  var w;
+  chan x[N];
+  chan y[N];
+  par i := 1 for N, j:=1 for N do
+  { x[i-1] ? v
+  ; x[i]   ! v + 1
+  ; y[j-1] ? w
+  ; y[j]   ! w + v
+  }
+  
