@@ -91,21 +91,20 @@ class BuildCFG(NodeWalker):
     def stmt_for(self, node, pred, succ):
         self.init_sets(node, pred, [node.stmt])
         self.stmt(node.stmt, [node], [node]+succ)
-        node.defs |= set([node.var])
-        node.use |= self.expr(node.init)
-        node.use |= self.expr(node.bound)
-        node.use |= self.expr(node.step)
+        node.defs |= set([node.index])
+        node.use |= self.expr(node.index.base)
+        node.use |= self.expr(node.index.count)
 
     def stmt_rep(self, node, pred, succ):
         self.init_sets(node, pred, [node.stmt])
-        self.stmt(node.stmt, pred, succ)
-        node.defs |= set([x.name for x in node.indicies])
-        [node.use.append(self.expr(x.init)) for x in node.indicies]
-        [node.use.append(self.expr(x.count)) for x in node.indicies]
+        self.stmt(node.stmt, [node], succ)
+        node.defs |= set([x for x in node.indicies])
+        [node.use.update(self.expr(x.base)) for x in node.indicies]
+        [node.use.update(self.expr(x.count)) for x in node.indicies]
 
     def stmt_on(self, node, pred, succ):
-        self.init_sets(node, pred, succ)
-        self.stmt(node.stmt, [node], [node])
+        self.init_sets(node, pred, [node.stmt])
+        self.stmt(node.stmt, [node], succ)
 
     def stmt_return(self, node, pred, succ):
         self.init_sets(node, pred, succ)
@@ -141,8 +140,8 @@ class BuildCFG(NodeWalker):
         c |= self.expr(node.end)
         return c | set([node])
 
-    # Index
-    def elem_index(self, node):
+    # Index range
+    def elem_index_range(self, node):
         node.defs |= set([node.name])
         node.use |= self.expr(node.init)
         node.use |= self.expr(node.count)
@@ -150,14 +149,9 @@ class BuildCFG(NodeWalker):
     def elem_group(self, node):
         return self.expr(node.expr)
 
-    def elem_pcall(self, node):
-        c = set()
-        [c.append(self.expr(x)) for x in node.args]
-        return c
-
     def elem_fcall(self, node):
         c = set()
-        [c.append(self.expr(x)) for x in node.args]
+        [c.update(self.expr(x)) for x in node.args]
         return c
 
     def elem_number(self, node):

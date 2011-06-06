@@ -92,6 +92,7 @@ class SymbolTable(object):
                 return x
         #if self.debug:
         #    print('Lookup: '+key+' found {}'.format(symbol))
+        print('didnt find symbol: '+key)
         return None
 
     def lookup_scoped(self, key):
@@ -144,8 +145,9 @@ class Symbol(object):
         self.expr = expr
         self.coord = coord
         self.scope = scope
-        self.mark = False
-        self.prototype = True
+        self.value = None      # If it is a 'val', its actual value.
+        self.mark = False      # Whether it has been used
+        self.prototype = True  # If it's a prototype and not a definition
 
     def mark_used(self):
         self.mark = True

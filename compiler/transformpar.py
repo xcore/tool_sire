@@ -55,7 +55,7 @@ class TransformPar(NodeWalker):
         self.sig = sig
         self.debug = False
 
-    def stmt_to_process(self, stmt, rep_var=None):
+    def stmt_to_process(self, stmt, indicies=[]):
         """
         Convert a statement into a process definition.
          - Create the definition node.
@@ -68,41 +68,37 @@ class TransformPar(NodeWalker):
         (transform replicator stage) and passed-by-reference.
         """
         assert isinstance(stmt, ast.Stmt)
-        # Live-in variable set.
+        # Sets for live-in and local decls (for non-live, non-array targets).
         live_in = stmt.inp.copy()
-        # Local declarations for non-live (non-array) targets.
         local_decls = FreeVars().allvars(stmt) - live_in
         #Printer().stmt(stmt)
 
-        #print('Livein: ')
-        #print(live_in)
-        #print('Locals: ')
-        #print(local_decls)
-        
-        # Create the formal and actual paramerer lists
+        # Create the formal and actual paramerer and local declaration lists
         formals = []
         actuals = []
+        decls = []
 
         # Deal with the index variable of a replicator statement: add it as a
         # single value (not a variable) to the formals and as-is to the actuals, 
         # then remove it from the variable live-in set.
-        if rep_var:
-            formals.append(ast.Param(rep_var.name, Type('val', 'single'), 
-                None))
-            actuals.append(ast.ExprSingle(copy.copy(rep_var)))
-            live_in -= set([rep_var])
+        for x in indicies:
+            formals.append(ast.Param(x.name, Type('val', 'single'), None))
+            actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
+            live_in -= set([x])
 
+        # Replicated parallel statements are more restrivtive
+        var_to_param = rep_var_to_param if len(indicies)>0 else par_var_to_param
+        
         # For each variable in the live-in set add accordingly to formals and actuals.
-        var_to_param = rep_var_to_param if rep_var else par_var_to_param
         for x in live_in:
-            formals.append(ast.Param(x.name, var_to_param[x.symbol.type], 
-                x.symbol.expr))
+            p = ast.Param(x.name, var_to_param[x.symbol.type], x.symbol.expr)
+            formals.append(p)
             
             # If the actual is an array subscript or slice, we only pass the id.
             if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
-                elem = ast.ElemId(x.name)
-                elem.symbol = x.symbol
-                actuals.append(ast.ExprSingle(elem))
+                e = ast.ElemId(x.name)
+                e.symbol = x.symbol
+                actuals.append(ast.ExprSingle(e))
             else:
                 actuals.append(ast.ExprSingle(copy.copy(x)))
         
@@ -110,15 +106,15 @@ class TransformPar(NodeWalker):
         name = self.sig.unique_process_name()
 
         # Create the local declarations
-        decls = []
         for x in local_decls:
+            assert x.symbol.type == Type('var', 'single')
             decls.append(ast.Decl(x.name, Type('var', 'single'), None))
         
-        # Create the definition and perform semantic analysis to update symbol
-        # bindings. 
+        # Create the new process definition
         d = ast.Def(name, Type('proc', 'procedure'), formals, decls, stmt)
+
+        # perform semantic analysis to update symbol bindings. 
         self.sem.defn(d)
-        #self.sig.insert(d.type, d)
         
         # Create the corresponding call.
         c = ast.StmtPcall(name, actuals)
@@ -151,23 +147,37 @@ class TransformPar(NodeWalker):
         [p.extend(self.stmt(x)) for x in node.stmt]
         return p
 
+    # Parallel composition
     def stmt_par(self, node):
         p = []
+        [p.extend(self.stmt(x)) for x in node.stmt]
         for (i, x) in enumerate(node.stmt):
             if not isinstance(x, ast.StmtPcall):
                 if(self.debug):
                     print('Transforming par {}'.format(i))
                 (proc, node.stmt[i]) = self.stmt_to_process(x)
                 p.append(proc)
-                p.extend(self.defn(node.proc))
+                p.extend(self.defn(proc))
         return p
 
+    # Parallel replication
     def stmt_rep(self, node):
-        p = []
+        p = self.stmt(node.stmt)
         if not isinstance(node.stmt, ast.StmtPcall):
             if(self.debug):
                 print('Transforming rep')
-            (proc, node.stmt) = self.stmt_to_process(node.stmt, node.var)
+            (proc, node.stmt) = self.stmt_to_process(node.stmt, node.indicies)
+            p.append(proc)
+            p.extend(self.defn(proc))
+        return p
+
+    # On
+    def stmt_on(self, node):
+        p = self.stmt(node.stmt)
+        if not isinstance(node.stmt, ast.StmtPcall):
+            if(self.debug):
+                print('Transforming on {}'.format(i))
+            (proc, node.stmt) = self.stmt_to_process(node.stmt)
             p.append(proc)
             p.extend(self.defn(proc))
         return p
@@ -181,9 +191,6 @@ class TransformPar(NodeWalker):
         return self.stmt(node.stmt)
 
     def stmt_for(self, node):
-        return self.stmt(node.stmt)
-
-    def stmt_on(self, node):
         return self.stmt(node.stmt)
 
     def stmt_skip(self, node):

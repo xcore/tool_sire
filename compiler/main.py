@@ -216,18 +216,18 @@ def transform_ast(sem, sig, ast, errorlog):
         print('')
 
     # Perform liveness analysis
-    #vmsg(v, "Performing liveness analysis")
-    #BuildCFG().run(ast)
-    #Liveness().run(ast)
-    ##ast.accept(Display(print_livesets))
+    vmsg(v, "Performing liveness analysis")
+    BuildCFG().run(ast)
+    Liveness().run(ast)
+    #ast.accept(Display(print_livesets))
 
     # Transform parallel composition
-    #vmsg(v, "Transforming parallel composition")
-    #TransformPar(sem, sig).walk_program(ast)
+    vmsg(v, "Transforming parallel composition")
+    TransformPar(sem, sig).walk_program(ast)
     
     # Transform parallel replication
-    #vmsg(v, "Transforming parallel replication")
-    #TransformRep(sem, sig).walk_program(ast)
+    vmsg(v, "Transforming parallel replication")
+    TransformRep(sem, sig).walk_program(ast)
     
     # Flatten nested calls
     #vmsg(v, "Flattening nested calls")

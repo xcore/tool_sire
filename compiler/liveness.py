@@ -67,6 +67,11 @@ class Liveness(NodeWalker):
         a = self.compute(node)
         return a or b
 
+    def stmt_on(self, node):
+        b = self.stmt(node.stmt)
+        a = self.compute(node)
+        return a or b
+
     def stmt_skip(self, node):
         return self.compute(node)
 
@@ -83,9 +88,6 @@ class Liveness(NodeWalker):
         return self.compute(node)
 
     def stmt_alias(self, node):
-        return self.compute(node)
-
-    def stmt_on(self, node):
         return self.compute(node)
 
     def stmt_return(self, node):

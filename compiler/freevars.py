@@ -38,11 +38,6 @@ class FreeVars(NodeWalker):
     def stmt_skip(self, node):
         return set()
 
-    def stmt_pcall(self, node):
-        c = set()
-        [c.update(self.expr(x)) for x in node.args]
-        return c
-
     def stmt_ass(self, node):
         c = self.elem(node.left)
         c |= self.expr(node.expr)
@@ -61,6 +56,11 @@ class FreeVars(NodeWalker):
     def stmt_alias(self, node):
         return self.elem(node.slice)
 
+    def stmt_pcall(self, node):
+        c = set()
+        [c.update(self.expr(x)) for x in node.args]
+        return c
+
     def stmt_if(self, node):
         c = self.expr(node.cond)
         c |= self.stmt(node.thenstmt)
@@ -73,10 +73,7 @@ class FreeVars(NodeWalker):
         return c
 
     def stmt_for(self, node):
-        c = self.elem(node.var)
-        c |= self.expr(node.init)
-        c |= self.expr(node.bound)
-        c |= self.expr(node.step)
+        c = self.elem(node.index)
         c |= self.stmt(node.stmt)
         return c
 
@@ -118,23 +115,18 @@ class FreeVars(NodeWalker):
 
     # Array slice
     def elem_slice(self, node):
-        c = self.expr(node.begin)
-        c |= self.expr(node.end)
+        c = self.expr(node.base)
+        c |= self.expr(node.count)
         return c | set([node])
 
     # Index
-    def elem_index(self, node):
-        c = self.expr(node.init)
+    def elem_index_range(self, node):
+        c = self.expr(node.base)
         c |= self.expr(node.count)
-        return c
+        return c | set([node])
 
     def elem_group(self, node):
         return self.expr(node.expr)
-
-    def elem_pcall(self, node):
-        c = set()
-        [c.update(self.expr(x)) for x in node.args]
-        return c
 
     def elem_fcall(self, node):
         c = set()

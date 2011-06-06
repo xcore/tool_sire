@@ -13,6 +13,7 @@ import ast
 from walker import NodeWalker
 from builtin import builtins
 from type import Type
+from evalexpr import EvaluateExpr
 
 elem_types = {
   'elem_sub'     : None,
@@ -204,15 +205,18 @@ class Semantics(NodeWalker):
             self.nodecl_error(name, coord)
             return None
 
+    def eval_expr(self, expr):
+        return EvaluateExpr(self.sym, self.errorlog).expr(expr)
+
     # Errors and warnings =================================
 
-    def nodecl_error(self, name, coord):
+    def nodecl_error(self, name, coord=None):
         """ 
         No declaration.
         """
         self.errorlog.report_error(
                 "'{}' not declared"
-                .format(specifier, name), coord)
+                .format(name), coord)
 
     def nodef_error(self, name, coord):
         """ 
@@ -273,11 +277,17 @@ class Semantics(NodeWalker):
     # Variable declarations ===============================
 
     def decl(self, node):
+        
+        # Check the symbol doesn't already exist in scope
         if not self.sym.lookup_scoped(node.name):
             self.sym.insert(node.name, node.type, node.expr, node.coord)
             node.symbol = self.sym.lookup(node.name)
         else:
             self.redecl_error(node.name, node.coord)
+
+        # If it's a value, then determine this now.
+        if node.type == Type('val', 'single'):
+            node.symbol.value = self.eval_expr(node.expr) 
 
         # Children
         if node.expr:
@@ -548,6 +558,10 @@ class Semantics(NodeWalker):
         # Check the symbol type
         if not self.sym.check_type(node.name, [Type('var', 'single')]):
             self.type_error('index range variable', node.name, node.coord)
+            
+        # Determine the values of the base and count expressions    
+        node.base_value = self.eval_expr(node.base)
+        node.count_value = self.eval_expr(node.count)
 
         # Children
         self.expr(node.base)

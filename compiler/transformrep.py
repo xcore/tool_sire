@@ -11,6 +11,7 @@ from freevars import FreeVars
 from semantics import rep_var_to_param
 from type import Type
 from symbol import Symbol
+from evalexpr import EvaluateExpr
 
 from printer import Printer
 
@@ -73,6 +74,28 @@ class TransformRep(NodeWalker):
         self.sig = sig
         self.debug = debug
 
+    def distribute_stmt(self, name, elem_t, elem_n, elem_m, index_actuals, proc_actuals, pcall):
+        """
+        Create the distribution process body statement.
+        """
+        expr_zero = ast.ExprSingle(ast.ElemNumber(0))
+        expr_two  = ast.ExprSingle(ast.ElemNumber(2))
+        n_div_2   = ast.ExprBinop('/', elem_n, expr_two)
+
+        s1 = ast.StmtSkip()
+            #ast.StmtIf()
+            #    ast.StmtPar([
+            #        ast.StmtPcall(name, [ast.ExprSingle(elem_t), n_div_2] 
+            #            + index_actuals + proc_actuals),
+            #        ast.StmtPcall(name, [ast.ExprBinop('+', elem_t,
+            #            ast.ElemGroup(n_div_2)), n_div_2] 
+            #            + index_actuals + proc_actuals)
+            #        ]))
+
+        #s1 = ast.StmtIf(ast.ExprBinop('=', elem_n, expr_zero), pcall, s2)
+        
+        return s1
+
     def transform_rep(self, stmt):
         """
         Convert a replicated parallel statement into a divide-and-conquer form.
@@ -80,66 +103,64 @@ class TransformRep(NodeWalker):
         """
         assert isinstance(stmt, ast.StmtRep)
         assert isinstance(stmt.stmt, ast.StmtPcall)
-        
+        pcall = stmt.stmt
+
         # The context of the procedure call is each variable occurance in the
         # set of arguments.
-        context = FreeVars().allvars(stmt.stmt)
-        #Printer().stmt(stmt)
-        #print(context)
+        context = FreeVars().allvars(pcall)
+        #Printer().stmt(pcall)
         
         # Create new variables _t and _n.
         elem_t = ast.ElemId('_t')
         elem_n = ast.ElemId('_n')
+        elem_m = ast.ElemId('_m')
         elem_t.symbol = Symbol('_t', Type('val', 'single'))
         elem_n.symbol = Symbol('_n', Type('val', 'single'))
+        elem_m.symbol = Symbol('_m', Type('val', 'single'))
 
-        # Replace ocurrances of index variable in Pcall with _t
-        for x in stmt.stmt.args:
-            x.accept(ReplaceElemInExpr(stmt.var, elem_t))
+        # TODO Replace ocurrances of index variable in Pcall with _t
+        #for x in pcall.args:
+        #    x.accept(ReplaceElemInExpr(pcall, elem_t))
 
-        # Create the formal and actual paramerer lists for distribution
-        formals = []
-        actuals = []
+        formals = []       # Formals for the new distribution process
+        actuals = []       # Actuals for the new distribution process
+        index_actuals = [] # Index variables from the replicator
+        proc_actuals = []  # All other live-in variables
+
+        # Populate the distribution and replicator indicies
         formals.append(ast.Param('_t', Type('val', 'single'), None))
+        actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
         formals.append(ast.Param('_n', Type('val', 'single'), None))
         actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
-        actuals.append(stmt.count)
-        
-        # List of actual parameters (not including the index) for the pcall
-        proc_actuals = []
+        formals.append(ast.Param('_m', Type('val', 'single'), None))
+        actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
+        for x in stmt.indicies:
+            index_actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
+            print(x.count_value)
        
         # Add each unique variable ocurrance from context as a formal param
-        for x in context - set([stmt.var]):
+        for x in context - set([x for x in stmt.indicies]):
             formals.append(ast.Param(x.name, rep_var_to_param[x.symbol.type], 
                      x.symbol.expr))
             
             # If the actual is an array subscript or slice, we only pass the id.
             if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
-                elem = ast.ElemId(x.name)
-                elem.symbol = x.symbol
-                proc_actuals.append(ast.ExprSingle(elem))
+                e = ast.ElemId(x.name)
+                e.symbol = x.symbol
+                proc_actuals.append(ast.ExprSingle(e))
             else:
                 proc_actuals.append(ast.ExprSingle(copy.copy(x)))
 
         # Add the extra actual params to the distribution actuals
         actuals.extend(proc_actuals)
-       
-        # Create the distribution process body statement 
+
+        # Create the process definition 
         name = self.sig.unique_process_name()
-        n_div_2 = ast.ExprBinop('/', elem_n, ast.ExprSingle(ast.ElemNumber(2)))
-        s = ast.StmtIf(
-                ast.ExprBinop('=', elem_n, ast.ExprSingle(ast.ElemNumber(0))),
-                stmt.stmt,
-                ast.StmtPar([
-                    ast.StmtPcall(name, [ast.ExprSingle(elem_t), n_div_2] +
-                        proc_actuals),
-                    ast.StmtPcall(name, [ast.ExprBinop('+', elem_t,
-                        ast.ElemGroup(n_div_2)), n_div_2] + proc_actuals)
-                    ]))
-        
-        # Create the definition and perform semantic analysis to update symbol
-        # bindings. 
-        d = ast.Def(name, Type('proc', 'procedure'), formals, [], s)
+        d = ast.Def(name, Type('proc', 'procedure'), 
+                formals, [], self.distribute_stmt(name, elem_t, elem_n, elem_m,
+                    index_actuals, proc_actuals, pcall))
+
+        # Perform semantic analysis to update symbol bindings. 
         self.sem.defn(d)
         
         # Create the corresponding call.

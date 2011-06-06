@@ -43,10 +43,10 @@ Transforming::
 
 To::
 
-  proc d(val t, val n, val x, val y) is
+  proc d(val t, val n, val m) is
     if n = 0
-    then p(t/y, t/x)
-    else if x*y > n/2
+    then p(t/Y, t/X)
+    else if X*Y > n/2
     then 
     { d(t, n/2, n/2)
     | on ((id()+t+n/2) mod N) / f do d(t+n/2, n/2, (x*y)-n/2)
