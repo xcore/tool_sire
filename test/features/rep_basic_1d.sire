@@ -1,0 +1,9 @@
+val X := 4;
+
+proc main() is
+  var i;
+  var v;
+{ par i in [1 for X] do
+    v := i
+}
+

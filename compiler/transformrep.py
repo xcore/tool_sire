@@ -136,7 +136,7 @@ class TransformRep(NodeWalker):
         actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
         for x in stmt.indicies:
             index_actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
-            print(x.count_value)
+            #print(x.count_value)
        
         # Add each unique variable ocurrance from context as a formal param
         for x in context - set([x for x in stmt.indicies]):

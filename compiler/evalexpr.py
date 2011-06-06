@@ -71,7 +71,7 @@ class EvaluateExpr(NodeWalker):
     # Elements= ===========================================
 
     def elem_id(self, node):
-        s = sym.lookup(node.name)
+        s = self.sym.lookup(node.name)
         if s and s.value:
             return s.value
         else:

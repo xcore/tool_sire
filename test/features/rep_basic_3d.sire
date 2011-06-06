@@ -1,0 +1,13 @@
+val X := 8;
+val Y := 4;
+val Z := 2;
+
+proc main() is
+  var i;
+  var j;
+  var k;
+  var v;
+{ par i in [1 for X], j in [1 for Y], k in [1 for Z] do 
+    v := i + j + k
+}
+
