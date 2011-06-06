@@ -28,7 +28,7 @@ proc printfix(val x) is
 ; n := unfix(x)
 ; printval(n)
 ; printchar('.')
-; for i := 0 to FIX_IBITS do
+; for i in [0 for FIX_IBITS] do
   { x := x - fix(n)
   ; x := x * 10
   ; n := unfix(x)
@@ -60,5 +60,5 @@ proc main() is
 % Division
 ; v := div(fix(4),  fix(2))   ; printfixln(v)
 ; v := div(fix(60), fix(8))   ; printfixln(v)
-; v := div(fix(15), fix(6))  ; printfixln(v)
+; v := div(fix(15), fix(6))   ; printfixln(v)
 }

@@ -7,7 +7,7 @@ from walker import NodeWalker
 
 class TemplateWalker(NodeWalker):
     """
-    A template NodeWalker.
+    A template recursive descent AST NodeWalker.
     """
     def __init__(self):
         pass
@@ -15,14 +15,13 @@ class TemplateWalker(NodeWalker):
     # Program ============================================
 
     def walk_program(self, node):
-        [self.decl(x) for x in node.children()]
-        [self.defn(x) for x in node.children()]
+        [self.decl(x) for x in node.decls]
+        [self.defn(x) for x in node.defs]
     
     # Variable declarations ===============================
 
     def decl(self, node):
-        if node.expr:
-            self.expr(node.expr)
+        self.expr(node.expr)
 
     # Procedure definitions ===============================
 
@@ -39,18 +38,26 @@ class TemplateWalker(NodeWalker):
     # Statements ==========================================
 
     def stmt_seq(self, node):
-        [self.stmt(x) for x in node.children()]
+        [self.stmt(x) for x in node.stmt]
 
     def stmt_par(self, node):
-        [self.stmt(x) for x in node.children()]
+        [self.stmt(x) for x in node.stmt]
 
     def stmt_skip(self, node):
         pass
 
     def stmt_pcall(self, node):
-        [self.expr(x) for x in node.args.expr]
+        [self.expr(x) for x in node.args]
 
     def stmt_ass(self, node):
+        self.elem(node.left)
+        self.expr(node.expr)
+
+    def stmt_in(self, node):
+        self.elem(node.left)
+        self.expr(node.expr)
+
+    def stmt_out(self, node):
         self.elem(node.left)
         self.expr(node.expr)
 
@@ -74,21 +81,16 @@ class TemplateWalker(NodeWalker):
         self.stmt(node.stmt)
 
     def stmt_rep(self, node):
-        self.elem(node.var)
-        self.expr(node.init)
-        self.expr(node.count)
+        [self.elem(x) for x in node.indicies]
         self.stmt(node.stmt)
-
+        
     def stmt_on(self, node):
-        self.elem(node.pcall)
+        self.elem(node.stmt)
 
     def stmt_return(self, node):
         self.expr(node.expr)
 
     # Expressions =========================================
-
-    def expr_list(self, node):
-        [self.expr(x) for x in node.children()]
 
     def expr_single(self, node):
         self.elem(node.elem)
@@ -115,11 +117,16 @@ class TemplateWalker(NodeWalker):
         self.expr(node.begin)
         self.expr(node.end)
 
+    def elem_index(self, node):
+        self.elem(node.var)
+        self.expr(node.init)
+        self.expr(node.count)
+
     def elem_pcall(self, node):
-        self.expr(node.args)
+        [self.expr(x) for x in node.args]
 
     def elem_fcall(self, node):
-        self.expr(node.args)
+        [self.expr(x) for x in node.args]
 
     def elem_number(self, node):
         pass
@@ -132,4 +139,5 @@ class TemplateWalker(NodeWalker):
 
     def elem_char(self, node):
         pass
+    
 

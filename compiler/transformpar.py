@@ -162,17 +162,15 @@ class TransformPar(NodeWalker):
                 p.extend(self.defn(node.proc))
         return p
 
-    def stmt_skip(self, node):
-        return []
-
-    def stmt_pcall(self, node):
-        return []
-
-    def stmt_ass(self, node):
-        return []
-
-    def stmt_alias(self, node):
-        return []
+    def stmt_rep(self, node):
+        p = []
+        if not isinstance(node.stmt, ast.StmtPcall):
+            if(self.debug):
+                print('Transforming rep')
+            (proc, node.stmt) = self.stmt_to_process(node.stmt, node.var)
+            p.append(proc)
+            p.extend(self.defn(proc))
+        return p
 
     def stmt_if(self, node):
         p = self.stmt(node.thenstmt)
@@ -185,17 +183,25 @@ class TransformPar(NodeWalker):
     def stmt_for(self, node):
         return self.stmt(node.stmt)
 
-    def stmt_rep(self, node):
-        p = []
-        if not isinstance(node.stmt, ast.StmtPcall):
-            if(self.debug):
-                print('Transforming rep')
-            (proc, node.stmt) = self.stmt_to_process(node.stmt, node.var)
-            p.append(proc)
-            p.extend(self.defn(proc))
-        return p
-
     def stmt_on(self, node):
+        return self.stmt(node.stmt)
+
+    def stmt_skip(self, node):
+        return []
+
+    def stmt_pcall(self, node):
+        return []
+
+    def stmt_ass(self, node):
+        return []
+
+    def stmt_in(self, node):
+        return []
+
+    def stmt_out(self, node):
+        return []
+
+    def stmt_alias(self, node):
         return []
 
     def stmt_return(self, node):

@@ -143,7 +143,7 @@ class TranslateXS1(NodeWalker):
                         arg = tmp
                     elif x.elem.symbol.type == Type('ref', 'array'):
                         arg = '{}+(({})*{})'.format(
-                                x.elem.name, self.expr(x.elem.begin),
+                                x.elem.name, self.expr(x.elem.base),
                                 defs.BYTES_PER_WORD)
 
             new.append(self.expr(x) if not arg else arg)
@@ -189,14 +189,12 @@ class TranslateXS1(NodeWalker):
         self.builtins()
         
         # Declarations
-        for x in node.decls:
-            self.out(self.decl(x))
+        [self.out(self.decl(x)) for x in node.decls]
         if len(node.decls) > 0:
             self.out('')
        
         # Definitions
-        for p in node.defs:
-            self.defn(p, 0)
+        [self.defn(p, 0) for p in node.defs]
 
         # Output the buffered blocks
         self.blocker.output()
@@ -204,23 +202,22 @@ class TranslateXS1(NodeWalker):
     # Variable declarations ===============================
 
     def decl(self, node):
-        s = '{}'.format(node.name)
-
-        # Forms
         if node.type == Type('var', 'array'):
-            s += '[{}]'.format(self.expr(node.expr))
+            return 'int {}[{}];'.format(node.name, self.expr(node.expr))
         elif node.type == Type('ref', 'array'):
-            return 'unsigned '+s+';'
-        
-        # Specifiers
-        if node.type.specifier == 'var':
-            s = 'int {}'.format(s)+';'
-        elif node.type.specifier == 'val':
-            s = '#define {} {}'.format(s, self.expr(node.expr))
+            return 'unsigned '+node.name+';'
+        elif node.type == Type('var', 'single'):
+            return 'int '+node.name+';'
+        elif node.type == Type('val', 'single'):
+            return '#define {} {}'.format(node.name, self.expr(node.expr))
+        elif node.type == Type('chanend', 'single'):
+            return 'chanend'
+        elif node.type == Type('chan', 'single'):
+            return 'chan'
+        elif node.type == Type('chan', 'array'):
+            return 'chanarray'
         else:
-            s = '{} {}'.format(node.type.specifier, s)
-        
-        return s
+            assert 0
 
     # Procedure definitions ===============================
 
@@ -236,8 +233,7 @@ class TranslateXS1(NodeWalker):
         self.blocker.begin()
         
         # Declarations
-        for x in node.decls:
-            self.out(self.decl(x))
+        [self.out(self.decl(x)) for x in node.decls]
         if len(node.decls) > 0:
             self.out('')
       
@@ -249,14 +245,14 @@ class TranslateXS1(NodeWalker):
     # Formals =============================================
     
     def param(self, node):
-        s = '{}'.format(node.name)
-
-        if node.type == Type('ref', 'array'):
-            return 'unsigned '+s
+        if node.type == Type('val', 'single'):
+            return 'int '+node.name
         elif node.type == Type('ref', 'single'):
-            return 'int &'+s
-        elif node.type == Type('val', 'single'):
-            return 'int '+s
+            return 'int &'+node.name
+        elif node.type == Type('ref', 'array'):
+            return 'unsigned '+node.name
+        elif node.type == Type('chanend', 'single'):
+            return 'unsigned '+node.name
         else:
             assert 0
 
@@ -429,28 +425,29 @@ class TranslateXS1(NodeWalker):
         self.stmt_block(node.stmt)
     
     def stmt_for(self, node):
-        self.out('for ({0} = {1}; {0} <= {2}; {0} += {3})'.format(
-            self.elem(node.var), self.expr(node.init), 
-            self.expr(node.bound), self.expr(node.step)))
+        self.out('for ({0} = {1}; {0} < ({1}+{2}); {0}++)'.format(
+            node.index.name, self.expr(node.index.base), 
+            self.expr(node.index.count)))
         self.stmt_block(node.stmt)
 
     def stmt_rep(self, node):
-        self.out('for ({0} = {1}; {0} <= {2}; {0} ++)'.format(
-            self.elem(node.var), self.expr(node.init), 
-            self.expr(node.count)))
-        self.stmt_block(node.stmt)
+        self.comment('<replicator statement>')
 
     def stmt_on(self, node):
         """
-        Generate an on statement.
+        Generate an on statement. We expect the form::
+
+            on <core> do <stmt-pcall>
         """
-        proc_name = node.pcall.name
-        num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
+        assert isinstance(node.stmt, ast.StmtPcall)
+        pcall = node.stmt
+        proc_name = node.stmt.name
+        num_args = len(pcall.args) 
         num_procs = len(self.child.children[proc_name]) + 1
         
         # Calculate closure size 
         closure_size = 2 + num_procs;
-        for (i, x) in enumerate(node.pcall.args.expr):
+        for (i, x) in enumerate(pcall.args):
             t = self.sig.lookup_param_type(proc_name, i)
             if t.form == 'array': closure_size = closure_size + 3
             elif t.form == 'single': closure_size = closure_size + 2 
@@ -470,8 +467,8 @@ class TranslateXS1(NodeWalker):
         #   Array: (0, length, address)
         #   Var:   (1, address)
         #   Val:   (2, value)
-        if node.pcall.args.expr:
-            for (i, x) in enumerate(node.pcall.args.expr):
+        if pcall.args:
+            for (i, x) in enumerate(pcall.args):
                 t = self.sig.lookup_param_type(proc_name, i)
 
                 # If the parameter type is an array reference
@@ -481,7 +478,7 @@ class TranslateXS1(NodeWalker):
                     q = self.sig.lookup_array_qualifier(proc_name, i)
                     self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
                     self.out('_closure[{}] = {};'.format(n,
-                        self.expr(node.pcall.args.expr[q]))) ; n+=1
+                        self.expr(pcall.args[q]))) ; n+=1
                    
                     # If the elem is a proper array, load the address
                     if x.elem.symbol.type == Type('var', 'array'):
@@ -539,7 +536,7 @@ class TranslateXS1(NodeWalker):
                         self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
         elif node.symbol.type == Type('ref', 'array'):
             self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
-                self.expr(node.slice.begin), defs.BYTES_PER_WORD))
+                self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
     def stmt_return(self, node):
         self.out('return {};'.format(self.expr(node.expr)))

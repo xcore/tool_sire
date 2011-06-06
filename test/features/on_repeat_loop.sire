@@ -10,7 +10,7 @@ proc main() is
   var i;
   var b;
 { b := true
-; for i := 1 to 10 do
+; for i in [1 for 10] do
   { v := 0
   ; { on core[NUM_CORES-1] do foo(v)
     ; on core[NUM_CORES-1] do bar(v)

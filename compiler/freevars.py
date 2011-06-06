@@ -48,6 +48,16 @@ class FreeVars(NodeWalker):
         c |= self.expr(node.expr)
         return c
 
+    def stmt_in(self, node):
+        c = self.elem(node.left)
+        c |= self.expr(node.expr)
+        return c
+
+    def stmt_out(self, node):
+        c = self.elem(node.left)
+        c |= self.expr(node.expr)
+        return c
+
     def stmt_alias(self, node):
         return self.elem(node.slice)
 
@@ -71,14 +81,13 @@ class FreeVars(NodeWalker):
         return c
 
     def stmt_rep(self, node):
-        c = self.elem(node.var)
-        c |= self.expr(node.init)
-        c |= self.expr(node.count)
+        c = set()
+        [c.update(self.elem(x)) for x in node.indicies]
         c |= self.stmt(node.stmt)
         return c
 
     def stmt_on(self, node):
-        return self.elem(node.pcall)
+        return self.stmt(node.stmt)
 
     def stmt_return(self, node):
         return self.expr(node.expr)
@@ -112,6 +121,12 @@ class FreeVars(NodeWalker):
         c = self.expr(node.begin)
         c |= self.expr(node.end)
         return c | set([node])
+
+    # Index
+    def elem_index(self, node):
+        c = self.expr(node.init)
+        c |= self.expr(node.count)
+        return c
 
     def elem_group(self, node):
         return self.expr(node.expr)

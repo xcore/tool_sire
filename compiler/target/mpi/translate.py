@@ -165,20 +165,22 @@ class TranslateMPI(NodeWalker):
     # Variable declarations ===============================
 
     def decl(self, node):
-        s = '{}'.format(node.name)
-
         if node.type == Type('var', 'array'):
-            s = 'int {}[{}];'.format(s, self.expr(node.expr))
+            return 'int {}[{}];'.format(node.name, self.expr(node.expr))
         elif node.type == Type('ref', 'array'):
-            s = 'int *'+s+';'
+            return 'int *'+node.name+';'
         elif node.type == Type('var', 'single'):
-            s = 'int {}'.format(s)+';'
+            return 'int '+node.name+';'
         elif node.type == Type('val', 'single'):
-            s = '#define {} {}'.format(s, self.expr(node.expr))
+            return '#define '+node.name+' {}'.format(self.expr(node.expr))
+        elif node.type == Type('chanend', 'single'):
+            return 'chanend'
+        elif node.type == Type('chan', 'single'):
+            return 'chan'
+        elif node.type == Type('chan', 'array'):
+            return 'chanarray'
         else:
-            s = '{} {}'.format(node.type.specifier, s)
-        
-        return s
+            assert 0
 
     # Procedure declarations ==============================
 
@@ -207,19 +209,17 @@ class TranslateMPI(NodeWalker):
     # Formals =============================================
     
     def param(self, node):
-        s = '{}'.format(node.name)
-
         if node.type == Type('val', 'single'):
-            s = 'int '+s
+            return 'int '+node.name
         elif node.type == Type('ref', 'single'):
-            s = 'int *'+s
+            return 'int *'+node.name
         elif node.type == Type('ref', 'array'):
-            s = 'int '+s+'[]'
+            return 'int '+node.name+'[]'
+        elif node.type == Type('chanend', 'single'):
+            return 'unsigned '+node.name
         else:
             assert 0
-
-        return s
-
+    
     # Statements ==========================================
 
     def stmt_seq(self, node):
@@ -253,6 +253,14 @@ class TranslateMPI(NodeWalker):
         self.out('{} = {};'.format(
             self.elem(node.left), self.expr(node.expr)))
 
+    def stmt_in(self, node):
+        self.out('{} ? {};'.format(
+            self.elem(node.left), self.expr(node.expr)))
+
+    def stmt_out(self, node):
+        self.out('{} ! {};'.format(
+            self.elem(node.left), self.expr(node.expr)))
+
     def stmt_alias(self, node):
         self.out('{} = {};'.format(
             node.name, self.expr(node.slice)))
@@ -269,9 +277,9 @@ class TranslateMPI(NodeWalker):
         self.stmt_block(node.stmt)
     
     def stmt_for(self, node):
-        self.out('for ({0} = {1}; {0} <= {2}; {0} += {3})'.format(
-            self.elem(node.var), self.expr(node.init), 
-            self.expr(node.bound), self.expr(node.step)))
+        self.out('for ({0} = {1}; {0} < ({1}+{2}); {0}++)'.format(
+            node.index.name, self.expr(node.index.base), 
+            self.expr(node.index.count)))
         self.stmt_block(node.stmt)
 
     def stmt_rep(self, node):
@@ -389,13 +397,9 @@ class TranslateMPI(NodeWalker):
         address = ''+node.name
         if node.symbol.type == Type('var', 'array'):
             address = '&'+address
-        return '({} + {})'.format(address, self.expr(node.begin))
+        return '({} + {})'.format(address, self.expr(node.base))
 
     def elem_fcall(self, node):
-        return '{}({})'.format(self.procedure_name(node.name), 
-                self.arguments(node.name, node.args))
-
-    def elem_pcall(self, node):
         return '{}({})'.format(self.procedure_name(node.name), 
                 self.arguments(node.name, node.args))
 

@@ -121,18 +121,6 @@ class FlattenCalls(NodeWalker):
     def stmt_rep(self, node, replace):
         self.stmt(node.stmt, replace)
 
-    def stmt_skip(self, node, replace):
-        pass
-
-    def stmt_ass(self, node, replace):
-        pass
-
-    def stmt_alias(self, node, replace):
-        pass
-
     def stmt_on(self, node, replace):
-        pass
-
-    def stmt_return(self, node, replace):
-        pass
+        self.stmt(node.stmt, replace)
 

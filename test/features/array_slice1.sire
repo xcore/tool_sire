@@ -5,7 +5,7 @@ val N := 10;
 % Print the contents of an array on a single line.
 proc print_array(var a[n], val n) is
   var i;
-{ for i:=0 to n-1 do 
+{ for i in [0 for n] do 
   { printval(a[i]) 
   ; printstr(" ") 
   }
@@ -17,15 +17,15 @@ proc print_slices(var a[n], val n, val m) is
   var i;
   var l;
 { l := n / m
-; for i:=0 to m-1 do
-    print_array(a[l*i:l*(i+1)], l)
+; for i in [0 for m] do
+    print_array(a[l*i for l], l)
 }
 
 % Simple sliced traversals of a length 10 array.
 proc main() is
   var a[N];
   var i;
-{ for i := 0 to N-1 do a[i] := i 
+{ for i in [0 for N] do a[i] := i 
 ; print_array(a, N)
 ; print_slices(a, N, 1)
 ; print_slices(a, N, 2)

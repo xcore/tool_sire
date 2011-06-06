@@ -7,7 +7,7 @@ func sum_array(val a[n], val n) is
   var r;
   var i;
 { r := 0
-; for i:=0 to n-1 do r := r + a[i]
+; for i in [0 for n] do r := r + a[i]
 ; return r
 }
 
@@ -16,8 +16,8 @@ proc sum_slices(val a[n], val n, val m) is
   var i;
   var l;
 { l := n / m
-; for i:=0 to m-1 do
-  { printval(sum_array(a[l*i:l*(i+1)], l))
+; for i in [0 for m] do
+  { printval(sum_array(a[l*i for l], l))
   ; printstr(" ")
   }
 ; println()
@@ -27,7 +27,7 @@ proc sum_slices(val a[n], val n, val m) is
 proc main() is
   var a[N];
   var i;
-{ for i := 0 to N-1 do a[i] := 1
+{ for i in [0 for N] do a[i] := 1
 ; printvalln(sum_array(a, N))
 ; sum_slices(a, N, 1)
 ; sum_slices(a, N, 2)

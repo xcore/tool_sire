@@ -34,14 +34,16 @@ class NodeVisitor(object):
     def visit_stmt(self, node): pass
     def visit_stmt_seq(self, node): pass
     def visit_stmt_par(self, node): pass
-    def visit_stmt_alias(self, node): pass
     def visit_stmt_ass(self, node): pass
+    def visit_stmt_in(self, node): pass
+    def visit_stmt_out(self, node): pass
+    def visit_stmt_alias(self, node): pass
+    def visit_stmt_while(self, node): pass
     def visit_stmt_for(self, node): pass
+    def visit_stmt_rep(self, node): pass
     def visit_stmt_if(self, node): pass
     def visit_stmt_on(self, node): pass
-    def visit_stmt_while(self, node): pass
     def visit_stmt_pcall(self, node): pass
-    def visit_stmt_rep(self, node): pass
     def visit_stmt_return(self, node): pass
     def visit_stmt_skip(self, node): pass
     def visit_expr(self, node): pass
@@ -52,9 +54,9 @@ class NodeVisitor(object):
     def visit_elem_id(self, node): pass
     def visit_elem_sub(self, node): pass
     def visit_elem_slice(self, node): pass
+    def visit_elem_index_range(self, node): pass
     def visit_elem_group(self, node): pass
     def visit_elem_fcall(self, node): pass
-    def visit_elem_pcall(self, node): pass
     def visit_elem_number(self, node): pass
     def visit_elem_boolean(self, node): pass
     def visit_elem_string(self, node): pass
@@ -251,6 +253,81 @@ class StmtPar(Stmt):
         return s
 
 
+class StmtAss(Stmt):
+    def __init__(self, left, expr, coord=None):
+        self.left = left
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.left is not None: c.append(self.left)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_ass(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtAss('
+        s += ')'
+        return s
+
+
+class StmtIn(Stmt):
+    def __init__(self, left, expr, coord=None):
+        self.left = left
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.left is not None: c.append(self.left)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_in(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtIn('
+        s += ')'
+        return s
+
+
+class StmtOut(Stmt):
+    def __init__(self, left, expr, coord=None):
+        self.left = left
+        self.expr = expr
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.left is not None: c.append(self.left)
+        if self.expr is not None: c.append(self.expr)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_out(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtOut('
+        s += ')'
+        return s
+
+
 class StmtAlias(Stmt):
     def __init__(self, name, slice, coord=None):
         self.name = name
@@ -283,46 +360,40 @@ class StmtAlias(Stmt):
         return s
 
 
-class StmtAss(Stmt):
-    def __init__(self, left, expr, coord=None):
-        self.left = left
-        self.expr = expr
+class StmtWhile(Stmt):
+    def __init__(self, cond, stmt, coord=None):
+        self.cond = cond
+        self.stmt = stmt
         self.coord = coord
 
     def children(self):
         c = []
-        if self.left is not None: c.append(self.left)
-        if self.expr is not None: c.append(self.expr)
+        if self.cond is not None: c.append(self.cond)
+        if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
     def accept(self, visitor):
-        tag = visitor.visit_stmt_ass(self)
+        tag = visitor.visit_stmt_while(self)
         visitor.down(tag)
         for c in self.children():
             c.accept(visitor)
         visitor.up(tag)
 
     def __repr__(self):
-        s =  'StmtAss('
+        s =  'StmtWhile('
         s += ')'
         return s
 
 
 class StmtFor(Stmt):
-    def __init__(self, var, init, bound, step, stmt, coord=None):
-        self.var = var
-        self.init = init
-        self.bound = bound
-        self.step = step
+    def __init__(self, index, stmt, coord=None):
+        self.index = index
         self.stmt = stmt
         self.coord = coord
 
     def children(self):
         c = []
-        if self.var is not None: c.append(self.var)
-        if self.init is not None: c.append(self.init)
-        if self.bound is not None: c.append(self.bound)
-        if self.step is not None: c.append(self.step)
+        if self.index is not None: c.append(self.index)
         if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
@@ -335,6 +406,31 @@ class StmtFor(Stmt):
 
     def __repr__(self):
         s =  'StmtFor('
+        s += ')'
+        return s
+
+
+class StmtRep(Stmt):
+    def __init__(self, indicies, stmt, coord=None):
+        self.indicies = indicies
+        self.stmt = stmt
+        self.coord = coord
+
+    def children(self):
+        c = []
+        if self.stmt is not None: c.append(self.stmt)
+        if self.indicies is not None: c.extend(self.indicies)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_stmt_rep(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __repr__(self):
+        s =  'StmtRep('
         s += ')'
         return s
 
@@ -367,15 +463,15 @@ class StmtIf(Stmt):
 
 
 class StmtOn(Stmt):
-    def __init__(self, core, pcall, coord=None):
+    def __init__(self, core, stmt, coord=None):
         self.core = core
-        self.pcall = pcall
+        self.stmt = stmt
         self.coord = coord
 
     def children(self):
         c = []
         if self.core is not None: c.append(self.core)
-        if self.pcall is not None: c.append(self.pcall)
+        if self.stmt is not None: c.append(self.stmt)
         return tuple(c)
 
     def accept(self, visitor):
@@ -387,31 +483,6 @@ class StmtOn(Stmt):
 
     def __repr__(self):
         s =  'StmtOn('
-        s += ')'
-        return s
-
-
-class StmtWhile(Stmt):
-    def __init__(self, cond, stmt, coord=None):
-        self.cond = cond
-        self.stmt = stmt
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.cond is not None: c.append(self.cond)
-        if self.stmt is not None: c.append(self.stmt)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_while(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtWhile('
         s += ')'
         return s
 
@@ -444,35 +515,6 @@ class StmtPcall(Stmt):
     def __repr__(self):
         s =  'StmtPcall('
         s += ', '.join('%s' % v for v in [self.name])
-        s += ')'
-        return s
-
-
-class StmtRep(Stmt):
-    def __init__(self, var, init, count, stmt, coord=None):
-        self.var = var
-        self.init = init
-        self.count = count
-        self.stmt = stmt
-        self.coord = coord
-
-    def children(self):
-        c = []
-        if self.var is not None: c.append(self.var)
-        if self.init is not None: c.append(self.init)
-        if self.count is not None: c.append(self.count)
-        if self.stmt is not None: c.append(self.stmt)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_stmt_rep(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __repr__(self):
-        s =  'StmtRep('
         s += ')'
         return s
 
@@ -692,17 +734,17 @@ class ElemSub(Elem):
 
 
 class ElemSlice(Elem):
-    def __init__(self, name, begin, end, coord=None):
+    def __init__(self, name, base, count, coord=None):
         self.name = name
-        self.begin = begin
-        self.end = end
+        self.base = base
+        self.count = count
         self.coord = coord
         self.symbol = None
 
     def children(self):
         c = []
-        if self.begin is not None: c.append(self.begin)
-        if self.end is not None: c.append(self.end)
+        if self.base is not None: c.append(self.base)
+        if self.count is not None: c.append(self.count)
         return tuple(c)
 
     def accept(self, visitor):
@@ -720,6 +762,40 @@ class ElemSlice(Elem):
 
     def __repr__(self):
         s =  'ElemSlice('
+        s += ', '.join('%s' % v for v in [self.name])
+        s += ')'
+        return s
+
+
+class ElemIndexRange(Elem):
+    def __init__(self, name, base, count, coord=None):
+        self.name = name
+        self.base = base
+        self.count = count
+        self.coord = coord
+        self.symbol = None
+
+    def children(self):
+        c = []
+        if self.base is not None: c.append(self.base)
+        if self.count is not None: c.append(self.count)
+        return tuple(c)
+
+    def accept(self, visitor):
+        tag = visitor.visit_elem_index_range(self)
+        visitor.down(tag)
+        for c in self.children():
+            c.accept(visitor)
+        visitor.up(tag)
+
+    def __eq__(self, other):
+        return self.name == other.name
+
+    def __hash__(self):
+        return self.name.__hash__()
+
+    def __repr__(self):
+        s =  'ElemIndexRange('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s
@@ -775,38 +851,6 @@ class ElemFcall(Elem):
 
     def __repr__(self):
         s =  'ElemFcall('
-        s += ', '.join('%s' % v for v in [self.name])
-        s += ')'
-        return s
-
-
-class ElemPcall(Elem):
-    def __init__(self, name, args, coord=None):
-        self.name = name
-        self.args = args
-        self.coord = coord
-        self.symbol = None
-
-    def children(self):
-        c = []
-        if self.args is not None: c.extend(self.args)
-        return tuple(c)
-
-    def accept(self, visitor):
-        tag = visitor.visit_elem_pcall(self)
-        visitor.down(tag)
-        for c in self.children():
-            c.accept(visitor)
-        visitor.up(tag)
-
-    def __eq__(self, other):
-        return self.name == other.name
-
-    def __hash__(self):
-        return self.name.__hash__()
-
-    def __repr__(self):
-        s =  'ElemPcall('
         s += ', '.join('%s' % v for v in [self.name])
         s += ')'
         return s

@@ -65,12 +65,12 @@ proc main() is
   var c[2*N];
   var succ;
   var i;
-{ for i:=0 to N-1     do a[i] := true
-; for i:=0 to (2*N)-1 do b[i] := true
-; for i:=0 to (2*N)-1 do c[i] := true
+{ for i in [0 for N]     do a[i] := true
+; for i in [0 for (2*N)] do b[i] := true
+; for i in [0 for (2*N)] do c[i] := true
 ; try(0, x, a, b, c, succ)
 ; if succ then 
-  for i:=0 to N-1 do 
+  for i in [0 for N] do 
   { printval(x[i]) ; printstr(" ") }
   else skip
 ; println()

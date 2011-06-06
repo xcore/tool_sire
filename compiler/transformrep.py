@@ -224,6 +224,13 @@ class TransformRep(NodeWalker):
             p.append(d)
         return p
 
+    def stmt_on(self, node):
+        p = self.stmt(node.stmt)
+        if isinstance(node.stmt, ast.StmtRep):
+            (d, node.stmt) = self.transform_rep(node.stmt)
+            p.append(d)
+        return p
+
     def stmt_skip(self, node):
         return []
 
@@ -233,10 +240,13 @@ class TransformRep(NodeWalker):
     def stmt_ass(self, node):
         return []
 
-    def stmt_alias(self, node):
+    def stmt_in(self, node):
         return []
 
-    def stmt_on(self, node):
+    def stmt_out(self, node):
+        return []
+
+    def stmt_alias(self, node):
         return []
 
     def stmt_return(self, node):

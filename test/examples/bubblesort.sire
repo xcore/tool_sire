@@ -1,11 +1,11 @@
 val N:=10;
 
-proc bsort(var a[len], val len) is
+proc bsort(var a[n], val n) is
   var i;
   var j;
   var tmp;
-{ for i:=0 to len-1 do 
-    for j:=0 to len-i-2 do
+{ for i in [0 for n] do 
+    for j in [0 for n-i-1] do
       if a[j] > a[j+1] then 
       { tmp := a[j]
       ; a[j] := a[j+1]
@@ -18,8 +18,8 @@ proc bsort(var a[len], val len) is
 proc main() is
   var a[N];
   var i;
-{ for i:=0 to N-1 do a[i] := N-(i+1)
+{ for i in [0 for N] do a[i] := N-(i+1)
 ; bsort(a, N)
-; for i:=0 to N-1 do printval(a[i])
+; for i in [0 for N] do printval(a[i])
 ; printstrln("")
 }

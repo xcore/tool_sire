@@ -10,14 +10,14 @@ endif
 syn case match
 
 " Keywords
-syn keyword	sType	     var val
+syn keyword	sType	     var val chan chanend
 syn keyword	sKeyword     proc func is return skip 
 syn keyword	sKeyword     on aliases skip
 syn keyword	sKeyword     true false
 
 " Control structures
 syn keyword	sStructure   if then else
-syn keyword     sRepeat      while do for step to par
+syn keyword     sRepeat      while do for in to step par
 
 " Bracketing
 syn match       sBrackets     /\[\|\]/

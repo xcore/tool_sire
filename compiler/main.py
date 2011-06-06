@@ -141,27 +141,27 @@ def setup_globals(a):
     infile = a.infile
     outfile = a.outfile[0] if a.outfile else defs.DEFAULT_OUT_FILE
 
-def produce_ast(input_file, errorlog, logging=False):
+def produce_ast(input_file, errorlog, log=True):
     """ 
     Parse an input string to produce an AST.
     """
     vmsg(v, "Parsing file '{}'".format(infile if infile else 'stdin'))
    
     # Setup logging if we need to
-    if logging:
+    if log:
         logging.basicConfig(
             level = logging.DEBUG,
             filename = defs.PARSE_LOG_FILE,
             filemode = "w",
             format = "%(filename)10s:%(lineno)4d:%(message)s")
-        log = logging.getLogger()
+        logger = logging.getLogger()
     else:
-        log = 0
+        logger = 0
    
     # Create the parser and produce the AST
     parser = Parser(errorlog, lex_optimise=True, 
             yacc_debug=False, yacc_optimise=False)
-    ast = parser.parse(input_file, infile, debug=log)
+    ast = parser.parse(input_file, infile, debug=logger)
     
     if errorlog.any():
         raise Error()
@@ -216,22 +216,22 @@ def transform_ast(sem, sig, ast, errorlog):
         print('')
 
     # Perform liveness analysis
-    vmsg(v, "Performing liveness analysis")
-    BuildCFG().run(ast)
-    Liveness().run(ast)
-    #ast.accept(Display(print_livesets))
+    #vmsg(v, "Performing liveness analysis")
+    #BuildCFG().run(ast)
+    #Liveness().run(ast)
+    ##ast.accept(Display(print_livesets))
 
     # Transform parallel composition
-    vmsg(v, "Transforming parallel composition")
-    TransformPar(sem, sig).walk_program(ast)
+    #vmsg(v, "Transforming parallel composition")
+    #TransformPar(sem, sig).walk_program(ast)
     
     # Transform parallel replication
-    vmsg(v, "Transforming parallel replication")
-    TransformRep(sem, sig).walk_program(ast)
+    #vmsg(v, "Transforming parallel replication")
+    #TransformRep(sem, sig).walk_program(ast)
     
     # Flatten nested calls
-    vmsg(v, "Flattening nested calls")
-    FlattenCalls(sig).walk_program(ast)
+    #vmsg(v, "Flattening nested calls")
+    #FlattenCalls(sig).walk_program(ast)
    
     # Check for any errors
     if errorlog.any():

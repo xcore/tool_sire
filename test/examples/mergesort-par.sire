@@ -38,7 +38,7 @@ proc merge(var a[m], var b[n], var A[o], var S[o],
   else skip
 
  % Copy scratch back into the array
-; for i:=0 to o-1 do
+; for i in [0 for o] do
     A[i] := S[i]
 }
 
@@ -50,14 +50,14 @@ proc msort(val t, val n, var A[len], var S[len], val len) is
   { i := len / 2
   ; j := len - i
   ; if len > THRESHOLD then
-    { msort(t, n/2, A[0:i], S[0:i], i) 
-    | on core[t+(n/2)] do msort(t+(n/2), n/2, A[i:len], S[i:len], j) 
+    { msort(t, n/2, A[0 for i], S[0 for i], i) 
+    | on core[t+(n/2)] do msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
     }
     else
     { msort(t, n/2, A[0:i], S[0:i], i) 
-    ; msort(t+(n/2), n/2, A[i:len], S[i:len], j) 
+    ; msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
     }
-  ; merge(A[0:i], A[i:len], A, S, i, j, len)
+  ; merge(A[0 for i], A[i for j], A, S, i, j, len)
   }
   else skip
 }
@@ -67,9 +67,9 @@ proc main() is
   var A[N];
   var S[N];
   var i;
-{ for i:=0 to N-1 do A[i] := N-(i+1)
+{ for i in [0 for N] do A[i] := N-(i+1)
 ; msort(0, NUM_CORES, A, S, N)
-; for i:=0 to N-1 do printval(A[i])
+; for i in [0 for N] do printval(A[i])
 ; printstrln("")
 }
 

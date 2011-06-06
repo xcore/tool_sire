@@ -37,7 +37,7 @@ proc merge(val a[x], val b[y], var array[n], var scratch[n],
   else skip
 
   % Copy scratch back into the array
-; for i:=0 to n-1 do
+; for i in [0 for n] do
     array[i] := scratch[i]
 }
 
@@ -50,8 +50,8 @@ proc msort(var array[n], var scratch[n], val n) is
 { if n > 1 then
   { x := n >> 1
   ; y := n - x
-  ; a aliases array[0:x]
-  ; b aliases array[x:n]
+  ; a aliases array[0 for x]
+  ; b aliases array[x for y]
   ; msort(a, scratch, x)
   ; msort(b, scratch, y)
   ; merge(a, b, array, scratch, x, y, n)
@@ -64,9 +64,9 @@ proc main() is
   var a[N];
   var scratch[N];
   var i;
-{ for i:=0 to N-1 do a[i] := N-(i+1)
+{ for i in [0 for N] do a[i] := N-(i+1)
 ; msort(a, scratch, N)
-; for i:=0 to N-1 do printval(a[i])
+; for i in [0 for N] do printval(a[i])
 ; printstrln("")
 }
 

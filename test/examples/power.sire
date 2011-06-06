@@ -4,7 +4,7 @@ func power(val base, val exp) is
   var result;
   var i;
 { result := 1
-; for i:=0 to exp-1 do
+; for i in [0 for exp] do
     result := result * base
 ; return result
 }

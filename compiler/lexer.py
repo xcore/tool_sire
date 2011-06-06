@@ -15,8 +15,8 @@ class Lexer(object):
         """
         self.error_func = error_func
         self.filename = ''
-        self.lineno=0
-        self.lexpos=0
+        self.lineno = 0
+        self.lexpos = 0
 
     def build(self, **kwargs):
         """ 
@@ -57,49 +57,49 @@ class Lexer(object):
  
     # Reserved tokens
     reserved = {
-        'aliases'  : 'ALIASES',
-        'do'       : 'DO',
-        'else'     : 'ELSE',
-        'false'    : 'FALSE',
-        'for'      : 'FOR',
-        'func'     : 'FUNC',
-        'if'       : 'IF',
-        'is'       : 'IS',
-        'on'       : 'ON',
-        'par'      : 'PAR',
-        'proc'     : 'PROC',
-        'return'   : 'RETURN',
-        'skip'     : 'SKIP',
-        'step'     : 'STEP',
-        'then'     : 'THEN',
-        'to'       : 'TO',
-        'true'     : 'TRUE',
-        'val'      : 'VAL',
-        'var'      : 'VAR',
-        'while'    : 'WHILE',
-        'rem'      : 'REM',
-        'or'       : 'OR',
-        'and'      : 'AND',
-        'xor'      : 'XOR',
+      'aliases'  : 'ALIASES',
+      'chan'     : 'CHAN',
+      'chanend'  : 'CHANEND',
+      'do'       : 'DO',
+      'else'     : 'ELSE',
+      'false'    : 'FALSE',
+      'for'      : 'FOR',
+      'func'     : 'FUNC',
+      'if'       : 'IF',
+      'is'       : 'IS',
+      'in'       : 'IN',
+      'on'       : 'ON',
+      'par'      : 'PAR',
+      'proc'     : 'PROC',
+      'return'   : 'RETURN',
+      'skip'     : 'SKIP',
+      'then'     : 'THEN',
+      'true'     : 'TRUE',
+      'val'      : 'VAL',
+      'var'      : 'VAR',
+      'while'    : 'WHILE',
+      'rem'      : 'REM',
+      'or'       : 'OR',
+      'and'      : 'AND',
+      'xor'      : 'XOR',
     }
 
     # All tokens
     tokens = (
-        # Operators
-        'PLUS','MINUS','MULT','DIV', #REM
-        'NOT', #OR, AND, XOR
-        'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
-        # Assignment operators
-        'ASS',
-        # Delimiters
-        'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
-        'COLON',
-        # Separators
-        'SEMI','BAR',
-        # Literals
-        'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING',
-        # Identifiers
-        'ID',
+      # Operators
+      'PLUS','MINUS','MULT','DIV', #REM
+      'NOT', #OR, AND, XOR
+      'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
+      # Assignment operators
+      'ASS', 'INP', 'OUT',
+      # Delimiters
+      'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
+      # Separators
+      'SEMI','BAR',
+      # Literals
+      'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING',
+      # Identifiers
+      'ID',
     ) + tuple(reserved.values())
 
     # Operators ================
@@ -129,6 +129,8 @@ class Lexer(object):
 
     # Assignment operators
     t_ASS      = r':='
+    t_INP      = r'\?'
+    t_OUT      = r'\!'
 
     # Delimeters
     t_LPAREN   = r'\('
@@ -138,7 +140,6 @@ class Lexer(object):
     t_START    = r'\{'
     t_END      = r'\}'
     t_COMMA    = r','
-    t_COLON    = r':'
 
     # Separators
     t_SEMI     = r';'
@@ -198,3 +199,4 @@ class Lexer(object):
         msg = "Illegal character '%s'" % repr(t.value[0])
         self._error(msg, t)
         t.lexer.skip(1)
+

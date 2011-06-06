@@ -17,7 +17,7 @@ proc partition(var array[len], val len) is
 ; array[len-1] := pivotValue
 
   % Reorder list (upto the pivot)
-; for i:=0 to len-2 do 
+; for i in [0 for len-1] do 
     if array[i] <= pivotValue then 
     { hold := array[i]
     ; array[i] := array[storeIndex]
@@ -36,15 +36,11 @@ proc partition(var array[len], val len) is
 
 % Quicksort
 proc quick(var array[len], val len) is
-  var a[];
-  var b[]; 
   var pivot;
 { if len > 1 then 
   { pivot := partition(array, len)
-  ; a aliases array[0:pivot+1]
-  ; b aliases array[pivot+1:len]
-  ; quick(a, pivot)
-  ; quick(b, len-(pivot+1))
+  ; quick(array[0 for pivot+1], pivot)
+  ; quick(array[pivot+1 for len-(pivot+1)], len-(pivot+1))
   }
   else skip
 }
@@ -52,11 +48,9 @@ proc quick(var array[len], val len) is
 % Ouput: 0123456789
 proc main() is
   var i;
-{ for i:=0 to LENGTH-1 do 
-    a[i] := LENGTH-(i+1)
+{ for i in [0 for LENGTH] do a[i] := LENGTH-(i+1)
 ; quick(a, LENGTH)
-; for i:=0 to LENGTH-1 do
-    printval(a[i])
+; for i in [0 for LENGTH] do printval(a[i])
 ; printstrln("")
 }
 

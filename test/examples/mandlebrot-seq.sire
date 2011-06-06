@@ -41,8 +41,8 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
 { iterations := 0
 ; dx := divf8_24(xmax-xmin, fix(XDIM))
 ; dy := divf8_24(ymax-ymin, fix(YDIM))
-; for y:=0 to YDIM-1 do
-  { for x:=0 to XDIM-1 do
+; for y in [0 for YDIM] do
+  { for x in [0 for XDIM] do
     { p := xmin + mulf8_24(fix(x), dx)
     ; q := ymin + mulf8_24(fix(y), dy)
     ; xn := 0

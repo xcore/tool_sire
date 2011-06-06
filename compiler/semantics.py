@@ -110,7 +110,7 @@ class Semantics(NodeWalker):
             if s: 
                 return s.type
             else:
-                self.nodecl_error(elem.name, 'single', None)
+                self.nodecl_error(elem.name)
                 return None
         
         # If its a subscripted identifier, lookup and return subscripted type
@@ -119,7 +119,7 @@ class Semantics(NodeWalker):
             if s:
                 return s.type.subscriptOf()
             else:
-                self.nodecl_error(elem.name, 'array', None)
+                self.nodecl_error(elem.name)
                 return None
 
         # If it is an array slice
@@ -128,7 +128,7 @@ class Semantics(NodeWalker):
             if s:
                 return s.type
             else:
-                self.nodecl_error(elem.name, 'array', None)
+                self.nodecl_error(elem.name)
                 return None
 
         # Otherwise, return the specified elem type
@@ -154,7 +154,7 @@ class Semantics(NodeWalker):
         t = self.get_elem_type(elem)
         return True if t and any([x==t for x in types]) else False
 
-    def check_args(self, type, node):
+    def check_def(self, node):
         """ 
         Check if a procedure signature is defined for a [pf]call AST node.
         """
@@ -165,10 +165,12 @@ class Semantics(NodeWalker):
         
         # Check the signature exists.
         if not self.sig.sig_exists(node.name):
+            self.nodef_error(node.name, node.coord)
             return False
 
         # Check there is the right number
         if len(self.sig.get_params(node.name)) != len(node.args):
+            self.nodef_error(node.name, node.coord)
             return False
         
         # Check the type of each actual matches the formal
@@ -180,35 +182,49 @@ class Semantics(NodeWalker):
 
             # If argument y has no type, i.e. not defined
             if not t:
+                self.nodef_error(node.name, node.coord)
                 return False
 
             # Check it against each valid conversion
             if not any(t==z for z in param_conversions[x.type]):
+                self.nodef_error(node.name, node.coord)
                 return False
         
         return True
-   
+  
+    def check_decl(self, name, coord=None):
+        """
+        Check a symbol has been declared. If it has then mark it as used.
+        """
+        if self.sym.check_decl(name):
+            symbol = self.sym.lookup(name)
+            symbol.mark_used()
+            return symbol
+        else:
+            self.nodecl_error(name, coord)
+            return None
+
     # Errors and warnings =================================
 
-    def nodecl_error(self, name, specifier, coord):
+    def nodecl_error(self, name, coord):
         """ 
-        No declaration error
+        No declaration.
         """
         self.errorlog.report_error(
-                "{} '{}' not declared"
+                "'{}' not declared"
                 .format(specifier, name), coord)
 
-    def badargs_error(self, name, coord):
+    def nodef_error(self, name, coord):
         """ 
-        No definition error 
+        No definition.
         """
         self.errorlog.report_error(
-                "invalid arguments for procedure '{}' "
+                "no definition for '{}' "
                 .format(name), coord)
 
     def redecl_error(self, name, coord):
         """
-        Re-declaration error 
+        Re-declaration
         """
         self.errorlog.report_error(
                 "variable '{}' already declared in scope"
@@ -216,7 +232,7 @@ class Semantics(NodeWalker):
 
     def redef_error(self, name, coord):
         """ 
-        Re-definition error 
+        Re-definition
         """
         self.errorlog.report_error(
                 "procedure '{}' already declared"
@@ -224,7 +240,7 @@ class Semantics(NodeWalker):
 
     def procedure_def_error(self, name, coord):
         """ 
-        Re-definition error 
+        Re-definition
         """
         self.errorlog.report_error(
                 "procedure '{}' definition invalid"
@@ -232,7 +248,7 @@ class Semantics(NodeWalker):
 
     def type_error(self, msg, name, coord):
         """ 
-        Mismatching type error
+        Mismatching type
         """
         self.errorlog.report_error(
                 "type error in {} with '{}'"
@@ -240,7 +256,7 @@ class Semantics(NodeWalker):
 
     def form_error(self, msg, name, coord):
         """ 
-        Mismatching form error
+        Mismatching form
         """
         self.errorlog.report_error(
                 "form error in {} with '{}'"
@@ -332,27 +348,19 @@ class Semantics(NodeWalker):
     # Statements ==========================================
 
     def stmt_seq(self, node):
-        [self.stmt(x) for x in node.children()]
+        [self.stmt(x) for x in node.stmt]
 
     def stmt_par(self, node):
-        [self.stmt(x) for x in node.children()]
+        [self.stmt(x) for x in node.stmt]
 
     def stmt_skip(self, node):
         pass
 
     def stmt_pcall(self, node):
-        
-        # Check the name is declared
-        if self.sym.check_decl(node.name):
-            # Check the arguments are correct
-            if not self.check_args('proc', node):
-                self.badargs_error(node.name, node.coord)
-            # And mark the symbol as used
-            s = self.sym.lookup(node.name)
-            s.mark_used()
-        else:
-            self.nodecl_error(node.name, 'process', node.coord)
 
+        node.symbol = self.check_decl(node.name, node.coord)
+        self.check_def(node)
+        
         # TODO: check actual-formal types match, e.g. with refs.
 
         # Children
@@ -373,16 +381,45 @@ class Semantics(NodeWalker):
         self.elem(node.left)
         self.expr(node.expr)
 
-    def stmt_alias(self, node):
+    def stmt_in(self, node):
 
-        if self.sym.check_form(node.name, ['array']):
-            node.symbol = self.sym.lookup(node.name)
-            self.sym.mark_used(node.name)
-        else:
+        # Check valid type for assignment target
+        if not self.check_elem_types(node.left, [
+               Type('chan',    'single'), 
+               Type('chanend', 'single'), 
+               Type('chan',    'sub'),
+               Type('chanend', 'sub'),]):
+            self.type_error('input', node.left.name, node.coord)
+
+        # Children
+        self.elem(node.left)
+        self.expr(node.expr)
+
+    def stmt_out(self, node):
+
+        # Check valid type for assignment target
+        if not self.check_elem_types(node.left, [
+               Type('chan',    'single'), 
+               Type('chanend', 'single'), 
+               Type('chan',    'sub'),
+               Type('chanend', 'sub'),]):
+            self.type_error('input', node.left.name, node.coord)
+
+        # Children
+        self.elem(node.left)
+        self.expr(node.expr)
+
+    def stmt_alias(self, node):
+        
+        node.symbol = self.check_decl(node.name, node.coord)
+
+        # Check the target variable type
+        if not self.sym.check_form(node.name, ['array']):
             self.type_error('array', node.dest, node.coord)
         
-        if not self.sym.check_form(node.slice.name, ['array']):
-            self.type_error('array', node.slice.name, node.coord)
+        # Check the element is a slice
+        if not isinstance(node.slice, ast.ElemSlice):
+            self.slice_error('alias', node.coord)
 
         # Children
         self.expr(node.slice)
@@ -401,34 +438,34 @@ class Semantics(NodeWalker):
         self.stmt(node.stmt)
 
     def stmt_for(self, node):
+           
+        # Check the index is an ElemIndexRange
+        if not isinstance(node.index, ast.ElemIndexRange):
+            self.index_range_error('for loop', node.coord)
         
-        if not self.check_elem_types(node.var, [Type('var', 'single')]):
-            self.type_error('for loop index variable', node.var.name, node.coord)
-
         # Children
-        self.elem(node.var)
-        self.expr(node.init)
-        self.expr(node.bound)
-        self.expr(node.step)
+        self.elem(node.index)
         self.stmt(node.stmt)
 
     def stmt_rep(self, node):
         
-        if not self.check_elem_types(node.var, [Type('var', 'single')]):
-            self.type_error('repliacator index variable', node.var.name, node.coord)
+        # Check all index elements are ElemIndexRanges
+        for x in node.indicies:
+            if not isinstance(x, ast.ElemIndexRange):
+                self.index_range_error('parallel replicator', node.coord)
         
         # Children
-        self.elem(node.var)
-        self.expr(node.init)
-        self.expr(node.count)
+        [self.elem(x) for x in node.indicies]
         self.elem(node.stmt)
 
     def stmt_on(self, node):
+
+        # Check the type of the core element
         if not self.check_elem_types(node.core, [Type('core', 'sub')]):
             self.type_error('on target', node.core, node.coord)
 
         # Children
-        self.elem(node.pcall)
+        self.stmt(node.stmt)
 
     def stmt_return(self, node):
         
@@ -451,11 +488,6 @@ class Semantics(NodeWalker):
         """
         Unary elements can only be value, variable or array subscript types.
         """
-        #if not self.check_elem_types(node.elem, [
-        #        Type('val', 'single'),
-        #        Type('var', 'single'), 
-        #        Type('var', 'sub')]):
-        #    self.type_error('unary', node.elem, node.coord)
 
         # Children
         self.elem(node.elem)
@@ -464,6 +496,8 @@ class Semantics(NodeWalker):
         """
         Binop (right) elements can only be singles or subscripts.
         """
+
+        # Check type of right element
         if not self.check_elem_types(node.elem, [
                 Type('val', 'single'),
                 Type('var', 'single'), 
@@ -486,66 +520,43 @@ class Semantics(NodeWalker):
 
     def elem_id(self, node):
         
-        # Check the symbol has been declared
-        if self.sym.check_decl(node.name):
-            node.symbol = self.sym.lookup(node.name)
-            node.symbol.mark_used()
-        else:
-            self.nodecl_error(node.name, 'variable', node.coord)
+        node.symbol = self.check_decl(node.name, node.coord)
 
     def elem_sub(self, node):
         
-        # Check the symbol has been declared
-        if self.sym.check_decl(node.name):
-            node.symbol = self.sym.lookup(node.name)
-            node.symbol.mark_used()
-        else:
-            self.nodecl_error(node.name, 'array subscript', node.coord)
-        
+        node.symbol = self.check_decl(node.name, node.coord)
+
         # Children
         self.expr(node.expr)
 
     def elem_slice(self, node):
         
-        # Check the symbol has been declared
-        if self.sym.check_decl(node.name):
-            node.symbol = self.sym.lookup(node.name)
-            node.symbol.mark_used()
-        else:
-            self.nodecl_error(node.name, 'array slice', node.coord)
-        
-        # Children
-        self.expr(node.begin)
-        self.expr(node.end)
+        node.symbol = self.check_decl(node.name, node.coord)
 
-    def elem_pcall(self, node):
-        
-        # Check the name is declared
-        s = self.sym.check_decl(node.name)
-        if s:
-            # Check the arguments are correct
-            if not self.check_args('proc', node):
-                self.badargs_error(node.name, node.coord)
-            # And mark the symbol as used
-            s.mark_used()
-        else:
-            self.nodecl_error(node.name, 'process', node.coord)
+        # Check the symbol type
+        if not self.sym.check_form(node.name, ['array']):
+            self.type_error('array', node.name, node.coord)
         
         # Children
-        [self.expr(x) for x in node.args]
+        self.expr(node.base)
+        self.expr(node.count)
+
+    def elem_index_range(self, node):
+        
+        node.symbol = self.check_decl(node.name, node.coord)
+
+        # Check the symbol type
+        if not self.sym.check_type(node.name, [Type('var', 'single')]):
+            self.type_error('index range variable', node.name, node.coord)
+
+        # Children
+        self.expr(node.base)
+        self.expr(node.count)
 
     def elem_fcall(self, node):
-        
-        # Check the name is declared
-        if self.sym.check_decl(node.name):
-            # Check the arguments are correct
-            if not self.check_args('func', node):
-                self.badargs_error(node.name, node.coord)
-            # And mark the symbol as used
-            s = self.sym.lookup(node.name)
-            s.mark_used()
-        else:
-            self.nodecl_error(node.name, 'function', node.coord)
+
+        node.symbol = self.check_decl(node.name, node.coord)
+        self.check_def(node)
 
         # Children
         [self.expr(x) for x in node.args]

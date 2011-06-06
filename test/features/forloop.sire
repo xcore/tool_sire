@@ -2,12 +2,12 @@ val N := 64;
 
 proc main() is
   var i;
-{ for i := 1 to N         do printval(i) ; println()
-; for i := 1 to N step 1  do printval(i) ; println()
-; for i := 1 to N step 2  do printval(i) ; println()
-; for i := 1 to N step 4  do printval(i) ; println()
-; for i := 1 to N step 8  do printval(i) ; println()
-; for i := 1 to N step 16 do printval(i) ; println()
-; for i := 1 to N step 32 do printval(i) ; println()
-; for i := 1 to N step 64 do printval(i) ; println()
+{ for i in [1 for N]         do printval(i) ; println()
+%; for i in [1 for N] step 1  do printval(i) ; println()
+%; for i in [1 for N] step 2  do printval(i) ; println()
+%; for i in [1 for N] step 4  do printval(i) ; println()
+%; for i in [1 for N] step 8  do printval(i) ; println()
+%; for i in [1 for N] step 16 do printval(i) ; println()
+%; for i in [1 for N] step 32 do printval(i) ; println()
+%; for i in [1 for N] step 64 do printval(i) ; println()
 }

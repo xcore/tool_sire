@@ -157,6 +157,14 @@ class Printer(NodeWalker):
         self.out('{} := {}'.format(
             self.elem(node.left), self.expr(node.expr)))
 
+    def stmt_in(self, node):
+        self.out('{} ? {}'.format(
+            self.elem(node.left), self.expr(node.expr)))
+
+    def stmt_out(self, node):
+        self.out('{} ! {}'.format(
+            self.elem(node.left), self.expr(node.expr)))
+
     def stmt_alias(self, node):
         self.out('{} aliases {}'.format(
             node.name, self.expr(node.slice)))
@@ -179,24 +187,23 @@ class Printer(NodeWalker):
         self.indent.pop()
 
     def stmt_for(self, node):
-        self.out('for {} := {} to {} step {} do\n'.format(
-            self.elem(node.var), self.expr(node.init), 
-            self.expr(node.step), self.expr(node.bound)))
+        self.out('for {} do\n'.format(self.elem(node.index)))
         self.indent.append(INDENT)
         self.stmt(node.stmt)
         self.indent.pop()
 
     def stmt_rep(self, node):
-        self.out('par {} := {} for {} do\n'.format(
-            self.elem(node.var), self.expr(node.init), 
-            self.expr(node.count)))
+        self.out('par {} do\n'.format(
+            ', '.join([self.elem(x) for x in node.indicies]))) 
         self.indent.append(INDENT)
         self.stmt(node.stmt)
         self.indent.pop()
 
     def stmt_on(self, node):
-        self.out('on {} do {}'.format(self.elem(node.core), 
-            self.elem(node.pcall)))
+        self.out('on {} do'.format(self.elem(node.core)))
+        self.indent.append(INDENT)
+        self.stmt(node.stmt)
+        self.indent.pop()
 
     def stmt_return(self, node):
         self.out('return {}'.format(self.expr(node.expr)))
@@ -222,8 +229,12 @@ class Printer(NodeWalker):
         return '{}[{}]'.format(node.name, self.expr(node.expr))
 
     def elem_slice(self, node):
-        return '{}[{} : {}]'.format(node.name, 
-                self.expr(node.begin), self.expr(node.end))
+        return '{}[{} for {}]'.format(node.name, 
+                self.expr(node.base), self.expr(node.count))
+
+    def elem_index_range(self, node):
+        return '{} in [{} for {}]'.format(node.name, 
+                self.expr(node.base), self.expr(node.count))
 
     def elem_fcall(self, node):
         return '{}({})'.format(node.name, self.arg_list(node.args))

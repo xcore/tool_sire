@@ -99,9 +99,9 @@ class BuildCFG(NodeWalker):
     def stmt_rep(self, node, pred, succ):
         self.init_sets(node, pred, [node.stmt])
         self.stmt(node.stmt, pred, succ)
-        node.defs |= set([node.var])
-        node.use |= self.expr(node.init)
-        node.use |= self.expr(node.count)
+        node.defs |= set([x.name for x in node.indicies])
+        [node.use.append(self.expr(x.init)) for x in node.indicies]
+        [node.use.append(self.expr(x.count)) for x in node.indicies]
 
     def stmt_on(self, node, pred, succ):
         self.init_sets(node, pred, succ)
@@ -141,19 +141,23 @@ class BuildCFG(NodeWalker):
         c |= self.expr(node.end)
         return c | set([node])
 
+    # Index
+    def elem_index(self, node):
+        node.defs |= set([node.name])
+        node.use |= self.expr(node.init)
+        node.use |= self.expr(node.count)
+
     def elem_group(self, node):
         return self.expr(node.expr)
 
     def elem_pcall(self, node):
         c = set()
-        for x in node.args:
-            c |= self.expr(x)
+        [c.append(self.expr(x)) for x in node.args]
         return c
 
     def elem_fcall(self, node):
         c = set()
-        for x in node.args:
-            c |= self.expr(x)
+        [c.append(self.expr(x)) for x in node.args]
         return c
 
     def elem_number(self, node):

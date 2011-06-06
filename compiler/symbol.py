@@ -126,14 +126,6 @@ class SymbolTable(object):
             return any(x == self.tab[key].type for x in types)
         return False
 
-    #def mark_decl(self, key):
-    #    """ Mark the first symbol.
-    #    """
-    #    for x in reversed(self.scope):
-    #        if x.name == key:
-    #            x.mark = True
-    #            break;
-
     def dump(self, buf=sys.stdout):
         """ 
         Dump the contents of the table to buf.

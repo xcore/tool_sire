@@ -86,12 +86,12 @@ class Parser(object):
 
     # Define operator presidence
     precedence = (
-        ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
-        ('left', 'LSHIFT', 'RSHIFT'),
-        ('left', 'AND', 'OR', 'XOR'),
-        ('left', 'PLUS', 'MINUS', 'REM'),
-        ('left', 'MULT', 'DIV'),
-        ('right', 'UMINUS', 'UNOT')
+      ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
+      ('left',     'LSHIFT', 'RSHIFT'),
+      ('left',     'AND', 'OR', 'XOR'),
+      ('left',     'PLUS', 'MINUS', 'REM'),
+      ('left',     'MULT', 'DIV'),
+      ('right',    'UMINUS', 'UNOT')
     )
 
     start = 'program'
@@ -139,12 +139,22 @@ class Parser(object):
         'var_decl : VAR name'
         p[0] = ast.Decl(p[2], Type('var', 'single'), None, self.coord(p))
 
+    # Single channel declaration
+    def p_var_decl_chan(self, p):
+        'var_decl : CHAN name'
+        p[0] = ast.Decl(p[2], Type('chan', 'single'), None, self.coord(p))
+
+    # Single channel declaration
+    def p_var_decl_chanend(self, p):
+        'var_decl : CHANEND name'
+        p[0] = ast.Decl(p[2], Type('chanend', 'single'), None, self.coord(p))
+
     # Single value declaration
     def p_var_decl_val(self, p):
         'var_decl : VAL name ASS expr'
         p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], self.coord(p))
 
-    # Array declaration
+    # Array reference declaration
     def p_var_decl_array_ref(self, p):
         'var_decl : VAR name LBRACKET RBRACKET'
         p[0] = ast.Decl(p[2], Type('ref', 'array'), None, self.coord(p))
@@ -154,11 +164,10 @@ class Parser(object):
         'var_decl : VAR name LBRACKET expr RBRACKET'
         p[0] = ast.Decl(p[2], Type('var', 'array'), p[4], self.coord(p))
 
-    # Process call =============================================
-
-    def p_pcall(self, p):
-        'pcall : name LPAREN expr_list RPAREN'
-        p[0] = ast.ElemPcall(p[1], p[3], self.coord(p))
+    # Channel array declaration
+    def p_var_decl_chan_array(self, p):
+        'var_decl : CHAN name LBRACKET expr RBRACKET'
+        p[0] = ast.Decl(p[2], Type('chan', 'array'), p[4], self.coord(p))
 
     # Procedure declarations ===================================
 
@@ -246,6 +255,11 @@ class Parser(object):
         'param_decl : VAR name'
         p[0] = ast.Param(p[2], Type('ref', 'single'), None, self.coord(p))
 
+    # Single reference parameter
+    def p_param_decl_chanend(self, p):
+        'param_decl : CHANEND name'
+        p[0] = ast.Param(p[2], Type('chanend', 'single'), None, self.coord(p))
+
     # Array reference parameter
     # TODO: record where the reference is 'var' or 'val'.
     def p_param_decl_array_ref(self, p):
@@ -308,11 +322,17 @@ class Parser(object):
         'stmt : left ASS expr'
         p[0] = ast.StmtAss(p[1], p[3], self.coord(p))
 
+    def p_stmt_in(self, p):
+        'stmt : left INP expr'
+        p[0] = ast.StmtIn(p[1], p[3], self.coord(p))
+
+    def p_stmt_out(self, p):
+        'stmt : left OUT expr'
+        p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
+
     def p_stmt_alias(self, p):
-        'stmt : name ALIASES name LBRACKET expr COLON expr RBRACKET'
-        p[0] = ast.StmtAlias(
-                p[1], ast.ElemSlice(p[3], p[5], p[7], self.coord(p)),
-                self.coord(p))
+        'stmt : name ALIASES elem'
+        p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))
 
     def p_stmt_if(self, p):
         'stmt : IF expr THEN stmt ELSE stmt'
@@ -322,26 +342,26 @@ class Parser(object):
         'stmt : WHILE expr DO stmt'
         p[0] = ast.StmtWhile(p[2], p[4], self.coord(p))
 
-    # for index:=init to bound do ...
+    # for <index-range> do ...
     def p_stmt_for(self, p):
-        'stmt : FOR left ASS expr TO expr DO stmt'
-        p[0] = ast.StmtFor(p[2], p[4], p[6], 
-                ast.ExprSingle(ast.ElemNumber(1)), p[8],
-                self.coord(p))
+        'stmt : FOR elem DO stmt'
+        p[0] = ast.StmtFor(p[2], p[4], self.coord(p))
 
-    # for index:=init to bound step increment do ...
-    def p_stmt_for_step(self, p):
-        'stmt : FOR left ASS expr TO expr STEP expr DO stmt'
-        p[0] = ast.StmtFor(p[2], p[4], p[6], p[8], p[10],
-                self.coord(p))
-
-    # par index:=init for count do ...
+    # par <index_range, >+ do ...
     def p_stmt_rep(self, p):
-        'stmt : PAR left ASS expr FOR expr DO stmt'
-        p[0] = ast.StmtRep(p[2], p[4], p[6], p[8], self.coord(p))
+        'stmt : PAR index_list DO stmt'
+        p[0] = ast.StmtRep(p[2], p[4], self.coord(p))
+
+    def p_rep_indices(self, p):
+        'index_list : elem'
+        p[0] = [p[1]]
+
+    def p_rep_indicies_(self, p):
+        'index_list : elem COMMA index_list'
+        p[0] = [p[1]] + p[3]
 
     def p_stmt_on(self, p):
-        'stmt : ON left DO pcall'
+        'stmt : ON left DO stmt'
         p[0] = ast.StmtOn(p[2], p[4], self.coord(p))
 
     def p_stmt_return(self, p):
@@ -430,9 +450,15 @@ class Parser(object):
         'elem : name LBRACKET expr RBRACKET'
         p[0] = ast.ElemSub(p[1], p[3], self.coord(p))
 
+    # Slice: '<name>[<base> for <limit>]'
     def p_elem_slice(self, p):
-        'elem : name LBRACKET expr COLON expr RBRACKET'
+        'elem : name LBRACKET expr FOR expr RBRACKET'
         p[0] = ast.ElemSlice(p[1], p[3], p[5], self.coord(p))
+
+    # Index: '<index> in [<init> for <bound>]'
+    def p_elem_index_range(self, p):
+        'elem : name IN LBRACKET expr FOR expr RBRACKET'
+        p[0] = ast.ElemIndexRange(p[1], p[4], p[6], self.coord(p))
 
     def p_elem_fcall(self, p):
         'elem : name LPAREN expr_list RPAREN'
