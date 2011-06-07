@@ -1,0 +1,41 @@
+val X := 4;
+val Y := 3;
+val Z := 2;
+
+val B := 3; % Base processor (from which we are allocating)
+val F := 6; % Compression factor
+
+proc p0(val c, val i, val j, val k) is
+{ printval(c); printstr(": "); 
+  printval(i); printstr(", "); 
+  printval(j); printstr(", "); 
+  printvalln(k) 
+}
+
+proc p2(val t, val n, val m, val c) is
+  var x;
+  var newc;
+  if n = 1
+  then
+    p0(c, (t/(Y*Z)) rem (X), (t / Z) rem Y, t rem Z)
+  else
+    {
+      x := n / 2;
+      if m > x
+      then
+        {
+          p2(t, x, x, c) ;
+          newc := (B + ((t + x) / F)) rem NUM_CORES;
+          p2(t + x, x, m - x, newc)
+        }
+      else
+        p2(t, x, m, c)
+    }
+
+proc main() is
+{
+  printval(X*(Y*Z)); printstr(" processes from core "); 
+  printvalln(B);
+  p2(0, 32, X*(Y*Z), B)
+}
+

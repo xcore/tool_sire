@@ -28,7 +28,8 @@ To::
     else if x > n/2
     then 
     { d(t, n/2, n/2)
-    | on ((id()+t+n/2) mod N) / f do d(t+n/2, n/2, x-n/2)
+    | on ((procid()+t+n/2) rem NUM_CORES) / f do 
+        d(t+n/2, n/2, x-n/2)
     }
     else d(t, n/2, x)
 
@@ -43,17 +44,18 @@ Transforming::
 
 To::
 
-  proc d(val t, val n, val m) is
+  proc d(val t, val n, val m, ...) is
     if n = 0
-    then p(t/Y, t/X)
-    else if X*Y > n/2
+    then p(t/((x*y)/x), t/((x*y)/y), ...)
+    else if m > n/2
     then 
-    { d(t, n/2, n/2)
-    | on ((id()+t+n/2) mod N) / f do d(t+n/2, n/2, (x*y)-n/2)
+    { d(t, n/2, n/2, ...)
+    | on ((procid()+t+n/2) rem N) / f do
+        d(t+n/2, n/2, m-n/2, ...)
     }
-    else d(t, n/2, x*y)
+    else d(t, n/2, m, ...)
 
-  d(0, nextpow2(x*y), x, y)
+  d(0, nextpow2(x*y), x*y, ...)
 
 General case
 ------------
@@ -61,4 +63,9 @@ General case
 For dimensions of length d_1, d_2, ..., d_k and a process with identifier i the index
 parameter for dimension d_i for 0 < i <= k is
 
-    i/(d_1*d_2*...*d_{i-1}*d_{i+1}*...*d_k)
+    i/(N/d_i)
+
+where
+
+    N = d_1*d_2*...*d_k
+

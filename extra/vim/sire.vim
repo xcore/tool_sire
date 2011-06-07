@@ -24,8 +24,8 @@ syn match       sBrackets     /\[\|\]/
 syn match       sParentheses  /(\|)/
 
 " Operators
-syn keyword  	sOperator    and or xor lor land
-syn match       sOperator    /:=/
+syn keyword  	sOperator    and or xor rem 
+syn match       sOperator    /:=\|?\|!/
 syn match       sOperator    /<\|>\|+\|-\|\*\|\/\|\\\|=\|\~/
 syn match       sOperator    /<<\|>>\|^\|&\||/
 

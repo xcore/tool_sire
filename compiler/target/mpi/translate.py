@@ -45,8 +45,10 @@ builtin_conversion = {
   'printstrln'  : '_PRINTSTRLN',
   'println'     : '_PRINTLN',
   # Fixed point
-  'mulf8_24'     : '_mulf8_24',
-  'divf8_24'     : '_divf8_24',
+  'mulf8_24'    : 'mulf8_24',
+  'divf8_24'    : 'divf8_24',
+  # System
+  'procid'      : 'procid'
   }
 
 class TranslateMPI(NodeWalker):

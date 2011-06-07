@@ -46,8 +46,10 @@ builtin_conversion = {
   'printstrln'  : '_PRINTSTRLN',
   'println'     : '_PRINTLN',
   # Fixed point
-  'mul8_24'     : '_MUL_8_24',
-  'div8_24'     : '_DIV_8_24',
+  'mul8_24'     : 'mul8_24',
+  'div8_24'     : 'div8_24',
+  # System
+  'procid'      : 'procid'
 }
 
 class TranslateXS1(NodeWalker):

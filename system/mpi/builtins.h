@@ -13,11 +13,11 @@
 #define _PRINTLN()      printf("\n") 
 
 // Fixed point
-#define _MUL_8_24(x, y) mul8_24(x, y)
-#define _DIV_8_24(x, y) div8_24(x, y)
+int mulf8_24(int, int);
+int divf8_24(int, int);
 
-int _mulf8_24(int, int);
-int _divf8_24(int, int);
+// System
+int procid();
 
 #endif
 

@@ -46,6 +46,8 @@ println     = proc_decl('println',     [])
 mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
+procid = func_decl('procid', [], mobile=True)
+
 builtins = {
   'printchar'   : printchar,
   'printcharln' : printcharln,
@@ -58,6 +60,7 @@ builtins = {
   'println'     : println,
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
+  'procid'      : procid,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.

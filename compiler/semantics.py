@@ -100,7 +100,8 @@ class Semantics(NodeWalker):
         """ 
         Given an element, return its type
         """
-        
+        assert isinstance(elem, ast.Elem)
+
         # If its an expression group, get_expr_type
         if isinstance(elem, ast.ElemGroup):
             return self.get_expr_type(elem.expr)
@@ -143,7 +144,7 @@ class Semantics(NodeWalker):
         
         #If it's a single value, lookup the type
         if isinstance(expr, ast.ExprSingle):
-            return self.get_elem_type(expr.elem)    
+            return self.get_elem_type(expr.elem) 
         
         # Otherwise it must be a unary or binop, and hence a var
         return Type('var', 'single')

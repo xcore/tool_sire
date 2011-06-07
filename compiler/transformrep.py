@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import copy
+from math import log, ceil, floor
 import ast
 from ast import NodeVisitor
 from walker import NodeWalker
@@ -74,27 +75,78 @@ class TransformRep(NodeWalker):
         self.sig = sig
         self.debug = debug
 
-    def distribute_stmt(self, name, elem_t, elem_n, elem_m, index_actuals, proc_actuals, pcall):
+    def distribute_stmt(self, elem_t, elem_n, elem_m, elem_b, 
+            m, indicies, proc_actuals, formals, pcall):
         """
         Create the distribution process body statement.
         """
-        expr_zero = ast.ExprSingle(ast.ElemNumber(0))
-        expr_two  = ast.ExprSingle(ast.ElemNumber(2))
-        n_div_2   = ast.ExprBinop('/', elem_n, expr_two)
 
-        s1 = ast.StmtSkip()
-            #ast.StmtIf()
-            #    ast.StmtPar([
-            #        ast.StmtPcall(name, [ast.ExprSingle(elem_t), n_div_2] 
-            #            + index_actuals + proc_actuals),
-            #        ast.StmtPcall(name, [ast.ExprBinop('+', elem_t,
-            #            ast.ElemGroup(n_div_2)), n_div_2] 
-            #            + index_actuals + proc_actuals)
-            #        ]))
+        # Setup some useful expressions
+        name = self.sig.unique_process_name()
+        elem_x = ast.ElemId('_x')
+        expr_x = ast.ExprSingle(elem_x)
+        expr_t = ast.ExprSingle(elem_t)
+        expr_n = ast.ExprSingle(elem_n)
+        expr_m = ast.ExprSingle(elem_m)
+        expr_b = ast.ExprSingle(elem_b)
 
-        #s1 = ast.StmtIf(ast.ExprBinop('=', elem_n, expr_zero), pcall, s2)
+        # Replace ocurrances of index variables i with i = f(_t)
+        divisor = m
+        for x in indicies:
+            divisor = floor(divisor / x.count_value)
+            for y in pcall.args:
+                # Calculate the index i as a function of _t and the dimensions.
+                e = ast.ElemGroup(
+                        ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('/', elem_t,
+                    ast.ElemNumber(divisor))), ast.ElemNumber(x.count_value)))
+                # Then replace it for each ocurrance of i
+                y.accept(ReplaceElemInExpr(ast.ElemId(x.name), e))
+   
+        # ((procid()+t+n/2) rem NUM_CORES
+        d = ast.ExprBinop('rem', 
+                ast.ElemGroup(ast.ExprBinop('+', elem_b,
+                ast.ExprBinop('+', elem_t, elem_x))),
+                ast.ElemId('NUM_CORES'))
+
+        # Conditionally recurse {d()|d()} or d()
+        s1 = ast.StmtIf(
+                # if m > n/2
+                ast.ExprBinop('>', elem_m, elem_x),
+                # then
+                ast.StmtPar([
+                    # d(t, n/2, n/2)
+                    ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
+                        + proc_actuals),
+                    # on ((id()+t+n/2) rem NUM_CORES) / f do 
+                    #   d(t+n/2, n/2, m-n/2, ...)
+                    ast.StmtOn(ast.ElemSub('core', d),
+                        ast.StmtPcall(name,
+                            [ast.ExprBinop('+', elem_t, elem_x), 
+                            expr_x, ast.ExprBinop('-', elem_m, elem_x),
+                            expr_b] + proc_actuals)
+                        )
+                    ]),
+                # else d(t, n/2, m)
+                ast.StmtPcall(name, [expr_t, expr_x, expr_m, expr_b] 
+                        + proc_actuals))
+
+        # _x = n/2 ; s1
+        n_div_2 = ast.ExprBinop('>>', elem_n, ast.ElemNumber(1))
+        s2 = ast.StmtSeq([ast.StmtAss(elem_x, n_div_2), s1])
+
+        # if n = 0 then process() else s1
+        s3 = ast.StmtIf(ast.ExprBinop('=', elem_n, ast.ElemNumber(0)), pcall, s2)
+     
+        # Create the local declarations
+        decls = [ast.Decl(elem_x.name, Type('var', 'single'), None)]
+
+        # Create the definition
+        d = ast.Def(name, Type('proc', 'procedure'), formals, decls, s3)
         
-        return s1
+        return d
+
+    def next_power_of_2(self, n):
+        return (2 ** ceil(log(n, 2)))
 
     def transform_rep(self, stmt):
         """
@@ -110,36 +162,39 @@ class TransformRep(NodeWalker):
         context = FreeVars().allvars(pcall)
         #Printer().stmt(pcall)
         
-        # Create new variables _t and _n.
-        elem_t = ast.ElemId('_t')
-        elem_n = ast.ElemId('_n')
-        elem_m = ast.ElemId('_m')
-        elem_t.symbol = Symbol('_t', Type('val', 'single'))
-        elem_n.symbol = Symbol('_n', Type('val', 'single'))
-        elem_m.symbol = Symbol('_m', Type('val', 'single'))
-
-        # TODO Replace ocurrances of index variable in Pcall with _t
-        #for x in pcall.args:
-        #    x.accept(ReplaceElemInExpr(pcall, elem_t))
-
+        # Calculate total # processes (m) and the next power of two of this (n)
+        m = stmt.indicies[0].count_value
+        for x in stmt.indicies[1:]:
+            m *= x.count_value
+        n = self.next_power_of_2(m)
+    
+        # Create new variables
+        T_VAL_SINGLE = Type('val', 'single')
         formals = []       # Formals for the new distribution process
         actuals = []       # Actuals for the new distribution process
-        index_actuals = [] # Index variables from the replicator
         proc_actuals = []  # All other live-in variables
+        elem_t = ast.ElemId('_t') # Interval base
+        elem_n = ast.ElemId('_n') # Interval width
+        elem_m = ast.ElemId('_m') # Processes in interval
+        elem_b = ast.ElemId('_b') # Base address
+        #elem_t.symbol = Symbol('_t', T_VAL_SINGLE)
+        #elem_n.symbol = Symbol('_n', T_VAL_SINGLE)
+        #elem_m.symbol = Symbol('_m', T_VAL_SINGLE)
 
         # Populate the distribution and replicator indicies
-        formals.append(ast.Param('_t', Type('val', 'single'), None))
+        formals.append(ast.Param('_t', T_VAL_SINGLE, None))
+        formals.append(ast.Param('_n', T_VAL_SINGLE, None))
+        formals.append(ast.Param('_m', T_VAL_SINGLE, None))
+        formals.append(ast.Param('_b', T_VAL_SINGLE, None))
         actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
-        formals.append(ast.Param('_n', Type('val', 'single'), None))
-        actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
-        formals.append(ast.Param('_m', Type('val', 'single'), None))
-        actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
-        for x in stmt.indicies:
-            index_actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
-            #print(x.count_value)
+        actuals.append(ast.ExprSingle(ast.ElemNumber(n)))
+        actuals.append(ast.ExprSingle(ast.ElemNumber(m)))
+        actuals.append(ast.ExprSingle(ast.ElemFcall('procid', [])))
        
-        # Add each unique variable ocurrance from context as a formal param
+        # For each non-index free-variable of the process call
         for x in context - set([x for x in stmt.indicies]):
+        
+            # Add each unique variable ocurrance from context as a formal param
             formals.append(ast.Param(x.name, rep_var_to_param[x.symbol.type], 
                      x.symbol.expr))
             
@@ -154,17 +209,14 @@ class TransformRep(NodeWalker):
         # Add the extra actual params to the distribution actuals
         actuals.extend(proc_actuals)
 
-        # Create the process definition 
-        name = self.sig.unique_process_name()
-        d = ast.Def(name, Type('proc', 'procedure'), 
-                formals, [], self.distribute_stmt(name, elem_t, elem_n, elem_m,
-                    index_actuals, proc_actuals, pcall))
-
-        # Perform semantic analysis to update symbol bindings. 
+        # Create the process definition and perform semantic analysis to 
+        # update symbol bindings. 
+        d = self.distribute_stmt(elem_t, elem_n, elem_m, elem_b,
+                    m, stmt.indicies, proc_actuals, formals, pcall)
         self.sem.defn(d)
         
         # Create the corresponding call.
-        c = ast.StmtPcall(name, actuals)
+        c = ast.StmtPcall(d.name, actuals)
         self.sig.insert(d.type, d)
         return (d, c)
 

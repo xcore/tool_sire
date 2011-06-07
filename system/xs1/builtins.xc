@@ -1,3 +1,11 @@
+// Copyright (c) 2011, James Hanlon, All rights reserved
+// This software is freely distributable under a derivative of the
+// University of Illinois/NCSA Open Source License posted in
+// LICENSE.txt and at <http://github.xcore.com/>
+
+#include "system/xs1/definitions.h"
+#include "device.h"
+
 // Printing
 #define _PRINTCHAR(x)   printchar(x)
 #define _PRINTCHARLN(x) printcharln(x) 
@@ -10,9 +18,6 @@
 #define _PRINTLN()      printstrln("") 
 
 // Fixed point
-#define _MUL_8_24(x, y) mul8_24(x, y)
-#define _DIV_8_24(x, y) div8_24(x, y)
-
 #define _FBITS 24
 #define ldivu(a,b,c,d,e) asm("ldivu %0,%1,%2,%3,%4" : "=r"(a), "=r"(b) : "r"(c), "r"(d), "r"(e))
 
@@ -42,3 +47,13 @@ int divf8_24(int x, int y) {
     return r * sgn;
 }
 
+// Return the processor id by allocating a channel end, extracting the node and
+// core id, then deallocating it again.
+int procid() {
+    unsigned c, v;
+    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+    asm("bitrev %0, %1" : "=r"(v) : "r"(c));
+    v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
+    asm("freer res[%0]" :: "r"(c));
+    return v;
+}
