@@ -55,6 +55,7 @@ xs1_feature_thread = [
   ]
 
 xs1_feature_on = [
+  Test('on_self'),
   Test('on_basic',       [4, 16, 32, 64]),
   Test('on_children',    [4]),
   Test('on_arguments',   [4]),
@@ -72,6 +73,9 @@ xs1_feature_on = [
   ] 
 
 xs1_feature_replicator = [
+  Test('rep_basic_1d',   [4, 16, 32, 64]),
+  Test('rep_basic_2d',   [4, 16, 32, 64]),
+  Test('rep_basic_3d',   [4, 16, 32, 64]),
   ]
 
 xs1_feature_tests =\

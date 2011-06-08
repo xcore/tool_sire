@@ -1,0 +1,7 @@
+proc main() is
+  var a;
+{ on core[0] do a := 0xDEADBEEF
+; printhexln(a)
+}
+
+

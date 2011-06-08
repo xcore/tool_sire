@@ -1,11 +1,10 @@
-val LENGTH := 10;
-
-proc foo(var a[len], val len) is 
-  a[len-1] := 0xDEADBEEF
+val N := 10;
 
 proc main() is
- var a[LENGTH];
-{ on core[NUM_CORES-1] do foo(a, LENGTH) 
-; printhexln(a[LENGTH-1])
+ var a[N];
+{ a[N-1] := 0x00000000
+; on core[NUM_CORES-1] do
+    a[N-1] := 0xDEADBEEF
+; printhexln(a[N-1])
 }
 
