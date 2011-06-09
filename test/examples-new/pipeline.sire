@@ -6,7 +6,7 @@ proc main() is
   { { c[0] ! 0
     ; c[N] ? v
     }
-  | par i:=1 for N do
+  | par i in [0 for N] do
     { c[i-1] ? v
     ; c[i] ! v + 1
     }
