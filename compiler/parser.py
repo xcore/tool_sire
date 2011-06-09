@@ -7,7 +7,7 @@ import os
 
 import ply.yacc as yacc
 from lexer import Lexer
-from type import Type
+from typedefs import *
 
 import error
 import ast
@@ -137,37 +137,37 @@ class Parser(object):
   # Single variable declaration
   def p_var_decl_var(self, p):
     'var_decl : VAR name'
-    p[0] = ast.Decl(p[2], Type('var', 'single'), None, self.coord(p))
+    p[0] = ast.Decl(p[2], T_VAR_SINGLE, None, self.coord(p))
 
   # Single channel declaration
   def p_var_decl_chan(self, p):
     'var_decl : CHAN name'
-    p[0] = ast.Decl(p[2], Type('chan', 'single'), None, self.coord(p))
+    p[0] = ast.Decl(p[2], T_CHAN_SINGLE, None, self.coord(p))
 
   # Single channel declaration
   def p_var_decl_chanend(self, p):
     'var_decl : CHANEND name'
-    p[0] = ast.Decl(p[2], Type('chanend', 'single'), None, self.coord(p))
+    p[0] = ast.Decl(p[2], T_CHANEND_SINGLE, None, self.coord(p))
 
   # Single value declaration
   def p_var_decl_val(self, p):
     'var_decl : VAL name ASS expr'
-    p[0] = ast.Decl(p[2], Type('val', 'single'), p[4], self.coord(p))
+    p[0] = ast.Decl(p[2], T_VAL_SINGLE, p[4], self.coord(p))
 
   # Array reference declaration
   def p_var_decl_array_ref(self, p):
     'var_decl : VAR name LBRACKET RBRACKET'
-    p[0] = ast.Decl(p[2], Type('ref', 'array'), None, self.coord(p))
+    p[0] = ast.Decl(p[2], T_REF_ARRAY, None, self.coord(p))
 
   # Array declaration
   def p_var_decl_array(self, p):
     'var_decl : VAR name LBRACKET expr RBRACKET'
-    p[0] = ast.Decl(p[2], Type('var', 'array'), p[4], self.coord(p))
+    p[0] = ast.Decl(p[2], T_VAR_ARRAY, p[4], self.coord(p))
 
   # Channel array declaration
   def p_var_decl_chan_array(self, p):
     'var_decl : CHAN name LBRACKET expr RBRACKET'
-    p[0] = ast.Decl(p[2], Type('chan', 'array'), p[4], self.coord(p))
+    p[0] = ast.Decl(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
 
   # Procedure declarations ===================================
 
@@ -192,25 +192,25 @@ class Parser(object):
   # Process
   def p_proc_def_proc(self, p):
     'proc_def : PROC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.Def(p[2], Type('proc', 'procedure'), 
+    p[0] = ast.Def(p[2], T_PROC, 
         p[4], p[7], p[8], self.coord(p)) 
 
   # Function
   def p_proc_def_func(self, p):
     'proc_def : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.Def(p[2], Type('func', 'procedure'),
+    p[0] = ast.Def(p[2], T_FUNC,
         p[4], p[7], p[8], self.coord(p)) 
 
   # Process prototype
   def p_proc_prototype_proc(self, p):
     'proc_def : PROC name LPAREN formals RPAREN SEMI'
-    p[0] = ast.Def(p[2], Type('proc', 'procedure'), 
+    p[0] = ast.Def(p[2], T_PROC, 
         p[4], None, None, self.coord(p)) 
 
   # Function prototype
   def p_proc_prototype_func(self, p):
     'proc_def : FUNC name LPAREN formals RPAREN SEMI'
-    p[0] = ast.Def(p[2], Type('func', 'procedure'),
+    p[0] = ast.Def(p[2], T_FUNC,
         p[4], None, None, self.coord(p)) 
 
   # Procedure errors
@@ -248,24 +248,24 @@ class Parser(object):
   # Single value parameter
   def p_param_decl_val(self, p):
     'param_decl : VAL name'
-    p[0] = ast.Param(p[2], Type('val', 'single'), None, self.coord(p))
+    p[0] = ast.Param(p[2], T_VAL_SINGLE, None, self.coord(p))
 
   # Single reference parameter
   def p_param_decl_ref(self, p):
     'param_decl : VAR name'
-    p[0] = ast.Param(p[2], Type('ref', 'single'), None, self.coord(p))
+    p[0] = ast.Param(p[2], T_REF_SINGLE, None, self.coord(p))
 
   # Single reference parameter
   def p_param_decl_chanend(self, p):
     'param_decl : CHANEND name'
-    p[0] = ast.Param(p[2], Type('chanend', 'single'), None, self.coord(p))
+    p[0] = ast.Param(p[2], T_CHANEND_SINGLE, None, self.coord(p))
 
   # Array reference parameter
   # TODO: record where the reference is 'var' or 'val'.
   def p_param_decl_array_ref(self, p):
     '''param_decl : VAL name LBRACKET expr RBRACKET
             | VAR name LBRACKET expr RBRACKET'''
-    p[0] = ast.Param(p[2], Type('ref', 'array'), p[4], self.coord(p))
+    p[0] = ast.Param(p[2], T_REF_ARRAY, p[4], self.coord(p))
 
   # Statement blocks =========================================
   

@@ -6,7 +6,7 @@
 import sys
 
 import definitions as defs
-from type import Type
+from typedefs import * 
 
 class SignatureTable(object):
   """
@@ -71,7 +71,7 @@ class SignatureTable(object):
     qualifying paramemer in the ordered set of formal parameters.
     """
     params = self.tab[name].params
-    assert(params[i].type == Type('ref', 'array')) 
+    assert(params[i].type == T_REF_ARRAY) 
     
     qualifier = params[i].expr.elem.name
     for (i, x) in enumerate(params):

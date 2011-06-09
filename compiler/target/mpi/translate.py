@@ -9,7 +9,7 @@ import definitions as defs
 import config as config
 import ast
 from walker import NodeWalker
-from type import Type
+from typedefs import *
 from blocker import Blocker
 from blocker import INDENT
 
@@ -106,21 +106,21 @@ class TranslateMPI(NodeWalker):
       arg = None
       
       t = self.sig.lookup_param_type(name, i)
-      if t == Type('ref', 'single'):
+      if t == T_REF_SINGLE:
         assert isinstance(x, ast.ExprSingle)
 
         # For single variables, take the address if they are not ref
         if isinstance(x.elem, ast.ElemId):
-          if x.elem.symbol.type == Type('var', 'single'):
+          if x.elem.symbol.type == T_VAR_SINGLE:
             arg = '&'+x.elem.name
-          elif x.elem.symbol.type == Type('ref', 'single'):
+          elif x.elem.symbol.type == T_REF_SINGLE:
             arg = x.elem.name
 
         # For subscripts, take their address
         elif isinstance(x.elem, ast.ElemSub):
-          if x.elem.symbol.type == Type('var', 'array'):
+          if x.elem.symbol.type == T_VAR_ARRAY:
             arg = '&{}'.format(self.elem(x))
-          elif x.elem.symbol.type == Type('ref', 'array'):
+          elif x.elem.symbol.type == T_REF_ARRAY:
             arg = '&{}'.format(self.elem(x))
         else:
           assert 0
@@ -167,19 +167,19 @@ class TranslateMPI(NodeWalker):
   # Variable declarations ===============================
 
   def decl(self, node):
-    if node.type == Type('var', 'array'):
+    if node.type == T_VAR_ARRAY:
       return 'int {}[{}];'.format(node.name, self.expr(node.expr))
-    elif node.type == Type('ref', 'array'):
+    elif node.type == T_REF_ARRAY:
       return 'int *'+node.name+';'
-    elif node.type == Type('var', 'single'):
+    elif node.type == T_VAR_SINGLE:
       return 'int '+node.name+';'
-    elif node.type == Type('val', 'single'):
+    elif node.type == T_VAL_SINGLE:
       return '#define '+node.name+' {}'.format(self.expr(node.expr))
-    elif node.type == Type('chanend', 'single'):
+    elif node.type == T_CHANEND_SINGLE:
       return 'chanend'
-    elif node.type == Type('chan', 'single'):
+    elif node.type == T_CHAN_SINGLE:
       return 'chan'
-    elif node.type == Type('chan', 'array'):
+    elif node.type == T_CHAN_ARRAY:
       return 'chanarray'
     else:
       assert 0
@@ -211,13 +211,13 @@ class TranslateMPI(NodeWalker):
   # Formals =============================================
   
   def param(self, node):
-    if node.type == Type('val', 'single'):
+    if node.type == T_VAL_SINGLE:
       return 'int '+node.name
-    elif node.type == Type('ref', 'single'):
+    elif node.type == T_REF_SINGLE:
       return 'int *'+node.name
-    elif node.type == Type('ref', 'array'):
+    elif node.type == T_REF_ARRAY:
       return 'int '+node.name+'[]'
-    elif node.type == Type('chanend', 'single'):
+    elif node.type == T_CHANEND_SINGLE:
       return 'unsigned '+node.name
     else:
       assert 0
@@ -322,7 +322,7 @@ class TranslateMPI(NodeWalker):
         t = self.sig.lookup_param_type(proc_name, i)
 
         # If the parameter type is an array reference
-        if t == Type('ref', 'array'):
+        if t == T_REF_ARRAY:
 
           # Output the length of the array
           q = self.sig.lookup_array_qualifier(proc_name, i)
@@ -332,12 +332,12 @@ class TranslateMPI(NodeWalker):
             self.expr(node.pcall.args.expr[q]))) ; n+=1
            
           # If the elem is a proper array, load the address
-          if x.elem.symbol.type == Type('var', 'array'):
+          if x.elem.symbol.type == T_VAR_ARRAY:
             tmp = self.blocker.get_tmp()
             self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
             self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
           # Otherwise, just assign
-          if x.elem.symbol.type == Type('ref', 'array'):
+          if x.elem.symbol.type == T_REF_ARRAY:
             self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
         
         # Otherwise, a var or val single
@@ -397,7 +397,7 @@ class TranslateMPI(NodeWalker):
   def elem_slice(self, node):
     # If source is an array take the address, if a reference then just the value
     address = ''+node.name
-    if node.symbol.type == Type('var', 'array'):
+    if node.symbol.type == T_VAR_ARRAY:
       address = '&'+address
     return '({} + {})'.format(address, self.expr(node.base))
 
@@ -419,7 +419,7 @@ class TranslateMPI(NodeWalker):
 
   def elem_id(self, node):
     #print('{} {}'.format(node.symbol.type, node.name))
-    if node.symbol.type == Type('ref', 'single'):
+    if node.symbol.type == T_REF_SINGLE:
       return '*'+node.name
     else:
       return node.name

@@ -8,12 +8,10 @@
 # executable remotely.
 
 from ast import Def, Param
-from type import Type
+from typedefs import * 
 
-PROC_TYPE = Type('proc', 'procedure')  
-FUNC_TYPE = Type('func', 'procedure')
-SVAL_PARAM = Param('v', Type('val', 'single'), None) 
-AVAL_PARAM = Param('v', Type('ref', 'array'), None) 
+SVAL_PARAM = Param('v', T_VAL_SINGLE, None) 
+AVAL_PARAM = Param('v', T_REF_ARRAY, None) 
 
 class Builtin(object):
   """
@@ -25,11 +23,11 @@ class Builtin(object):
 
 # Create a process declaration (prototype).
 def proc_decl(name, params, mobile=False):
-  return Builtin(Def(name, PROC_TYPE, params, None, None), mobile)
+  return Builtin(Def(name, T_PROC, params, None, None), mobile)
 
 # Create a function declaration (prototype).
 def func_decl(name, params, mobile=False):
-  return Builtin(Def(name, FUNC_TYPE, params, None, None), mobile)
+  return Builtin(Def(name, T_FUNC, params, None, None), mobile)
 
 # Printing builtins
 printchar   = proc_decl('printchar',   [SVAL_PARAM])
@@ -68,3 +66,4 @@ runtime_functions = [
   '_migrate',
   '_setupthread',
   ]
+

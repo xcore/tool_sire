@@ -6,7 +6,7 @@
 import sys
 
 import definitions as defs
-from type import Type
+from typedefs import *
 
 scopes = ['system', 'module', 'proc', 'func']
 
@@ -145,8 +145,8 @@ class Symbol(object):
     self.expr = expr
     self.coord = coord
     self.scope = scope
-    self.value = None    # If it is a 'val', its actual value.
-    self.mark = False    # Whether it has been used
+    self.value = None      # If it is a 'val', its actual value.
+    self.mark = False      # Whether it has been used
     self.prototype = True  # If it's a prototype and not a definition
 
   def mark_used(self):
@@ -166,5 +166,5 @@ class ScopeTag(Symbol):
   """ A scope tag symbol.
   """
   def __init__(self, name):
-    super(ScopeTag, self).__init__(name, Type('tag'), None, None, '')
+    super(ScopeTag, self).__init__(name, T_TAG, None, None, '')
 

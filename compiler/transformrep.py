@@ -12,7 +12,7 @@ from ast import NodeVisitor
 from walker import NodeWalker
 from freevars import FreeVars
 from semantics import rep_var_to_param
-from type import Type
+from typedefs import *
 from symbol import Symbol
 from replaceelem import ReplaceElemInExpr
 from evalexpr import EvaluateExpr
@@ -121,10 +121,10 @@ class TransformRep(NodeWalker):
     s3 = ast.StmtIf(ast.ExprBinop('=', elem_n, ast.ElemNumber(0)), pcall, s2)
   
     # Create the local declarations
-    decls = [ast.Decl(elem_x.name, Type('var', 'single'), None)]
+    decls = [ast.Decl(elem_x.name, T_VAR_SINGLE, None)]
 
     # Create the definition
-    d = ast.Def(name, Type('proc', 'procedure'), formals, decls, s3)
+    d = ast.Def(name, T_PROC, formals, decls, s3)
     
     return d
 
@@ -151,7 +151,6 @@ class TransformRep(NodeWalker):
       f = f + 1
 
     # Create new variables
-    T_VAL_SINGLE = Type('val', 'single')
     formals = []       # Formals for the new distribution process
     actuals = []       # Actuals for the new distribution process
     proc_actuals = []  # All other live-in variables

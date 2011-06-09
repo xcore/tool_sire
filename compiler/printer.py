@@ -7,7 +7,7 @@ import sys
 
 import ast
 from walker import NodeWalker
-from type import Type
+from typedefs import *
 
 INDENT = '  '
 NO_INDENT = ''
@@ -64,11 +64,11 @@ class Printer(NodeWalker):
 
   def decl(self, node):
     s = '{}'.format(node.name)
-    if node.type == Type('var', 'array'):
+    if node.type == T_VAR_ARRAY:
       s += '[{}]'.format(self.expr(node.expr))
-    elif node.type == Type('ref', 'array'):
+    elif node.type == T_REF_ARRAY:
       s += '[]'
-    if node.type.specifier == 'val':
+    if node.type == T_VAL_SINGLE:
       s = 'val {} := {}'.format(s, self.expr(node.expr))
     else:
       s = '{} {}'.format(node.type.specifier, s)
@@ -107,12 +107,11 @@ class Printer(NodeWalker):
   # Formals =============================================
   
   def param(self, node):
-    if node.type == Type('val', 'single'):
+    if node.type == T_VAL_SINGLE:
       return 'val '+node.name
-    elif node.type == Type('ref', 'single'):
+    elif node.type == T_REF_SINGLE:
       return 'var '+node.name
-    elif (node.type == Type('ref', 'array')
-        or node.type == Type('val', 'array')):
+    elif (node.type == T_REF_ARRAY or node.type == T_VAL_ARRAY):
       return 'var {}[{}]'.format(node.name, self.expr(node.expr))
     else:
       assert 0

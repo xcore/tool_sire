@@ -7,7 +7,7 @@ import copy
 import ast
 from walker import NodeWalker
 from freevars import FreeVars
-from type import Type
+from typedefs import *
 from semantics import par_var_to_param
 from semantics import rep_var_to_param
 
@@ -82,7 +82,7 @@ class TransformPar(NodeWalker):
     # single value (not a variable) to the formals and as-is to the actuals, 
     # then remove it from the variable live-in set.
     for x in indicies:
-      formals.append(ast.Param(x.name, Type('val', 'single'), None))
+      formals.append(ast.Param(x.name, T_VAL_SINGLE, None))
       actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
       live_in -= set([x])
 
@@ -109,7 +109,7 @@ class TransformPar(NodeWalker):
       # reference) then we must include the length as the next parameter.
       if (x.symbol.type.form == 'array' 
           and isinstance(x.symbol.expr, ast.ExprSingle)):
-        p = ast.Param(x.symbol.expr.elem.name, Type('val', 'single'), None)
+        p = ast.Param(x.symbol.expr.elem.name, T_VAL_SINGLE, None)
         formals.append(p)
         actuals.append(x.symbol.expr)
       
@@ -118,11 +118,11 @@ class TransformPar(NodeWalker):
 
     # Create the local declarations
     for x in local_decls:
-      assert x.symbol.type == Type('var', 'single')
-      decls.append(ast.Decl(x.name, Type('var', 'single'), None))
+      assert x.symbol.type == T_VAR_SINGLE
+      decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
     
     # Create the new process definition
-    d = ast.Def(name, Type('proc', 'procedure'), formals, decls, stmt)
+    d = ast.Def(name, T_PROC, formals, decls, stmt)
 
     # perform semantic analysis to update symbol bindings. 
     #Printer().defn(d, 0)

@@ -10,7 +10,7 @@ import config
 import ast
 from util import read_file
 from walker import NodeWalker
-from type import Type
+from typedefs import *
 from blocker import Blocker
 from blocker import INDENT
 
@@ -128,7 +128,7 @@ class TranslateXS1(NodeWalker):
        
         # Whole arrays
         if isinstance(x.elem, ast.ElemId):
-          if x.elem.symbol.type == Type('var', 'array'):
+          if x.elem.symbol.type == T_VAR_ARRAY:
             tmp = self.blocker.get_tmp()
             self.asm('mov %0, %1', outop=tmp,
                 inops=[x.elem.name])
@@ -136,14 +136,14 @@ class TranslateXS1(NodeWalker):
         
         # Array slices: either create or use a reference
         elif isinstance(x.elem, ast.ElemSlice):
-          if x.elem.symbol.type == Type('var', 'array'):
+          if x.elem.symbol.type == T_VAR_ARRAY:
             tmp = self.blocker.get_tmp()
             self.asm('add %0, %1, %2', outop=tmp,
                 inops=[x.elem.name, '({})*{}'.format(
                 self.expr(x.elem.begin),
                 defs.BYTES_PER_WORD)])
             arg = tmp
-          elif x.elem.symbol.type == Type('ref', 'array'):
+          elif x.elem.symbol.type == T_REF_ARRAY:
             arg = '{}+(({})*{})'.format(
                 x.elem.name, self.expr(x.elem.base),
                 defs.BYTES_PER_WORD)
@@ -204,19 +204,19 @@ class TranslateXS1(NodeWalker):
   # Variable declarations ===============================
 
   def decl(self, node):
-    if node.type == Type('var', 'array'):
+    if node.type == T_VAR_ARRAY:
       return 'int {}[{}];'.format(node.name, self.expr(node.expr))
-    elif node.type == Type('ref', 'array'):
+    elif node.type == T_REF_ARRAY:
       return 'unsigned '+node.name+';'
-    elif node.type == Type('var', 'single'):
+    elif node.type == T_VAR_SINGLE:
       return 'int '+node.name+';'
-    elif node.type == Type('val', 'single'):
+    elif node.type == T_VAL_SINGLE:
       return '#define {} {}'.format(node.name, self.expr(node.expr))
-    elif node.type == Type('chanend', 'single'):
+    elif node.type == T_CHANEND_SINGLE:
       return 'chanend'
-    elif node.type == Type('chan', 'single'):
+    elif node.type == T_CHAN_SINGLE:
       return 'chan'
-    elif node.type == Type('chan', 'array'):
+    elif node.type == T_CHAN_ARRAY:
       return 'chanarray'
     else:
       assert 0
@@ -247,13 +247,13 @@ class TranslateXS1(NodeWalker):
   # Formals =============================================
   
   def param(self, node):
-    if node.type == Type('val', 'single'):
+    if node.type == T_VAL_SINGLE:
       return 'int '+node.name
-    elif node.type == Type('ref', 'single'):
+    elif node.type == T_REF_SINGLE:
       return 'int &'+node.name
-    elif node.type == Type('ref', 'array'):
+    elif node.type == T_REF_ARRAY:
       return 'unsigned '+node.name
-    elif node.type == Type('chanend', 'single'):
+    elif node.type == T_CHANEND_SINGLE:
       return 'unsigned '+node.name
     else:
       assert 0
@@ -396,7 +396,7 @@ class TranslateXS1(NodeWalker):
   def stmt_ass(self, node):
   
     # If the target is an array reference, then generate a store after
-    if node.left.symbol.type == Type('ref', 'array'):
+    if node.left.symbol.type == T_REF_ARRAY:
       tmp = self.blocker.get_tmp()
       self.out('{} = {};'.format(tmp, self.expr(node.expr)))
       self.asm('stw %0, %1[%2]', 
@@ -479,7 +479,7 @@ class TranslateXS1(NodeWalker):
         t = self.sig.lookup_param_type(proc_name, i)
 
         # If the parameter type is an array reference
-        if t == Type('ref', 'array'):
+        if t == T_REF_ARRAY:
 
           # Output the length of the array. Either it's a variable in the list
           # of the parameters or it's a constant value.
@@ -491,13 +491,13 @@ class TranslateXS1(NodeWalker):
             i = celem(i, self.expr(y.expr))
            
           # If the elem is a proper array, load the address
-          if x.elem.symbol.type == Type('var', 'array'):
+          if x.elem.symbol.type == T_VAR_ARRAY:
             self.comment('Array')
             tmp = self.blocker.get_tmp()
             self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
             i = celem(i, tmp)
           # Otherwise, just assign
-          if x.elem.symbol.type == Type('ref', 'array'):
+          if x.elem.symbol.type == T_REF_ARRAY:
             self.comment('Array reference')
             i = celem(i, self.expr(x))
         
@@ -540,11 +540,11 @@ class TranslateXS1(NodeWalker):
     some inline assembly to get xcc to load the address for us. Otherwise,
     we can just perform arithmetic on the pointer.
     """
-    if node.symbol.type == Type('var', 'array'):
+    if node.symbol.type == T_VAR_ARRAY:
       self.asm('add %0, %1, %2', outop=node.name, 
           inops=[node.slice.name, '({})*{}'.format(
             self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
-    elif node.symbol.type == Type('ref', 'array'):
+    elif node.symbol.type == T_REF_ARRAY:
       self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
         self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
@@ -557,7 +557,7 @@ class TranslateXS1(NodeWalker):
 
     # If the elem is an array reference subscript, generate a load
     if isinstance(node.elem, ast.ElemSub):
-      if node.elem.symbol.type == Type('ref', 'array'):
+      if node.elem.symbol.type == T_REF_ARRAY:
         tmp = self.blocker.get_tmp()
         self.asm('ldw %0, %1[%2]', outop=tmp,
             inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -570,7 +570,7 @@ class TranslateXS1(NodeWalker):
     
     # If the elem is an array reference subscript, generate a load
     if isinstance(node.elem, ast.ElemSub):
-      if node.elem.symbol.type == Type('ref', 'array'):
+      if node.elem.symbol.type == T_REF_ARRAY:
         tmp = self.blocker.get_tmp()
         self.asm('ldw %0, %1[%2]', outop=tmp,
             inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -584,7 +584,7 @@ class TranslateXS1(NodeWalker):
     
     # If the elem is an array reference subscript, generate a load
     if isinstance(node.elem, ast.ElemSub):
-      if node.elem.symbol.type == Type('ref', 'array'):
+      if node.elem.symbol.type == T_REF_ARRAY:
         tmp = self.blocker.get_tmp()
         self.asm('ldw %0, %1[%2]', outop=tmp,
             inops=[node.elem.name, self.expr(node.elem.expr)])
@@ -606,7 +606,7 @@ class TranslateXS1(NodeWalker):
   def elem_slice(self, node):
     # If source is an array take the address, if reference then just the value
     address = ''+node.name
-    if node.symbol.type == Type('var', 'array'):
+    if node.symbol.type == T_VAR_ARRAY:
       address = '(unsigned, '+address+')'
     return '({} + ({})*{})'.format(address, self.expr(node.begin),
          defs.BYTES_PER_WORD)

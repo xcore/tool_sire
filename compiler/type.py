@@ -6,14 +6,31 @@
 from util import indexed_dict
 from error import Error
 
-specifier_names = ['proc','func', 'var', 'val', 'ref', 'chan', 'chanend', 'core', 'tag']
+specifier_names = [
+  'proc',
+  'func', 
+  'var', 
+  'val', 
+  'ref', 
+  'chan', 
+  'chanend', 
+  'core', 
+  'tag'
+  ]
 specifiers = indexed_dict(specifier_names)
 
-form_names = ['undefined', 'single', 'array', 'sub', 'procedure']
+form_names = [
+  'undefined', 
+  'single', 
+  'array', 
+  'sub', 
+  'procedure'
+  ]
 forms = indexed_dict(form_names)
 
 class Type(object):
-  """ A type class, where a type has a specifier and a form.
+  """ 
+  A type class, where a type has a specifier and a form.
   """
   def __init__(self, specifier, form='undefined'):
     if not specifier in specifiers:
@@ -24,12 +41,14 @@ class Type(object):
     self.form = form
 
   def isTag(self):
-    """ Check if this type is a tag.
+    """ 
+    Check if this type is a tag.
     """
     return self.specifier == 'tag'
 
   def subscriptOf(self):
-    """ Return a subscripted type of this type.
+    """ 
+    Return a subscripted type of this type.
     """
     return Type(self.specifier, 'sub')
 

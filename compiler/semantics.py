@@ -12,66 +12,66 @@ import definitions as defs
 import ast
 from walker import NodeWalker
 from builtin import builtins
-from type import Type
+from typedefs import *
 from evalexpr import EvaluateExpr
 
 elem_types = {
   'elem_sub'     : None,
   'elem_id'      : None,
   'elem_group'   : None,
-  'elem_fcall'   : Type('var', 'single'),
-  'elem_string'  : Type('var', 'array'),
-  'elem_number'  : Type('val', 'single'),
-  'elem_boolean' : Type('val', 'single'),
-  'elem_char'    : Type('val', 'single'),
+  'elem_fcall'   : T_VAR_SINGLE,
+  'elem_string'  : T_VAR_ARRAY,
+  'elem_number'  : T_VAL_SINGLE,
+  'elem_boolean' : T_VAL_SINGLE,
+  'elem_char'    : T_VAL_SINGLE,
   }
 
 # Valid actual parameter types that can be taken by each formal type.
 param_conversions = {
   
-  Type('val', 'single') : [
-    Type('val', 'single'), 
-    Type('var', 'single'), 
-    Type('ref', 'single'), 
-    Type('var', 'sub'),
-    Type('ref', 'sub'),
+  T_VAL_SINGLE : [
+    T_VAL_SINGLE, 
+    T_VAR_SINGLE, 
+    T_REF_SINGLE, 
+    T_VAR_SUB,
+    T_REF_SUB,
   ],
 
-  Type('ref', 'single') : [
-    Type('var', 'single'), 
-    Type('ref', 'single'), 
-    Type('var', 'sub'),
-    Type('ref', 'sub'),
+  T_REF_SINGLE : [
+    T_VAR_SINGLE, 
+    T_REF_SINGLE, 
+    T_VAR_SUB,
+    T_REF_SUB,
   ],
 
-  Type('ref', 'array') : [
-    Type('var', 'array'), 
-    Type('ref', 'array'), 
+  T_REF_ARRAY : [
+    T_VAR_ARRAY, 
+    T_REF_ARRAY, 
   ],
 }
 
 # Relation of variable types to formal parameter types for parallel composition.
 par_var_to_param = {
-  Type('val', 'single') : Type('val', 'single'),
-  Type('var', 'single') : Type('ref', 'single'), 
-  Type('ref', 'single') : Type('ref', 'single'),
-  Type('var', 'sub')    : Type('val', 'single'),
-  Type('ref', 'sub')    : Type('val', 'single'),
-  Type('var', 'array')  : Type('ref', 'array'), 
-  Type('ref', 'array')  : Type('ref', 'array'),
+  T_VAL_SINGLE : T_VAL_SINGLE,
+  T_VAR_SINGLE : T_REF_SINGLE, 
+  T_REF_SINGLE : T_REF_SINGLE,
+  T_VAR_SUB    : T_VAL_SINGLE,
+  T_REF_SUB    : T_VAL_SINGLE,
+  T_VAR_ARRAY  : T_REF_ARRAY, 
+  T_REF_ARRAY  : T_REF_ARRAY,
 }
 
 # Relation of variable types to formal parameter types for parallel replication.
 # All singles map to values as there can be no single assignment in a
 # replicator.
 rep_var_to_param = {
-  Type('val', 'single') : Type('val', 'single'),
-  Type('var', 'single') : Type('val', 'single'), 
-  Type('ref', 'single') : Type('val', 'single'),
-  Type('var', 'sub')  : Type('val', 'single'),
-  Type('ref', 'sub')  : Type('val', 'single'),
-  Type('var', 'array')  : Type('ref', 'array'), 
-  Type('ref', 'array')  : Type('ref', 'array'),
+  T_VAL_SINGLE : T_VAL_SINGLE,
+  T_VAR_SINGLE : T_VAL_SINGLE, 
+  T_REF_SINGLE : T_VAL_SINGLE,
+  T_VAR_SUB  : T_VAL_SINGLE,
+  T_REF_SUB  : T_VAL_SINGLE,
+  T_VAR_ARRAY  : T_REF_ARRAY, 
+  T_REF_ARRAY  : T_REF_ARRAY,
 }
 
 class Semantics(NodeWalker):
@@ -88,8 +88,8 @@ class Semantics(NodeWalker):
     
     # Add system variables core, chan
     self.sym.begin_scope('system')
-    self.sym.insert(defs.SYS_CORE_ARRAY, Type('core', 'array'))
-    self.sym.insert(defs.SYS_NUM_CORES_CONST, Type('val', 'single'))
+    self.sym.insert(defs.SYS_CORE_ARRAY, T_CORE_ARRAY)
+    self.sym.insert(defs.SYS_NUM_CORES_CONST, T_VAL_SINGLE)
 
     # Add all mobile builtin functions
     for x in builtins.values():
@@ -147,7 +147,7 @@ class Semantics(NodeWalker):
       return self.get_elem_type(expr.elem) 
     
     # Otherwise it must be a unary or binop, and hence a var
-    return Type('var', 'single')
+    return T_VAR_SINGLE
 
   def check_elem_types(self, elem, types):
     """ 
@@ -313,8 +313,8 @@ class Semantics(NodeWalker):
       self.redecl_error(node.name, node.coord)
 
     # If it's a value or array, then determine the value of the expr 
-    if (node.type == Type('val', 'single') 
-        or node.type == Type('var', 'array')):
+    if (node.type == T_VAL_SINGLE 
+        or node.type == T_VAR_ARRAY):
       node.symbol.value = self.eval_expr(node.expr)
 
   # Procedure definitions ===============================
@@ -373,7 +373,7 @@ class Semantics(NodeWalker):
       self.redecl_error(node.name, node.coord)
 
     # Try and determine the array bound (if it's constant valued)
-    if node.type == Type('ref', 'array'):
+    if node.type == T_REF_ARRAY:
       node.symbol.value = EvaluateExpr().expr(node.expr)
       #print(node.name+' = {}'.format(node.symbol.value))
 
@@ -383,7 +383,7 @@ class Semantics(NodeWalker):
         self.array_param_bound_decl_error(node.name, node.coord)
 
     # Children
-    if node.type == Type('ref', 'array'):
+    if node.type == T_REF_ARRAY:
       self.expr(node.expr)
 
   # Statements ==========================================
@@ -416,11 +416,11 @@ class Semantics(NodeWalker):
 
     # Check valid type for assignment target
     if not self.check_elem_types(node.left, [
-         Type('val', 'single'), 
-         Type('var', 'single'), 
-         Type('ref', 'single'), 
-         Type('var', 'sub'),
-         Type('ref', 'sub'),]):
+         T_VAL_SINGLE, 
+         T_VAR_SINGLE, 
+         T_REF_SINGLE, 
+         T_VAR_SUB,
+         T_REF_SUB,]):
       self.type_error('assignment', node.left.name, node.coord)
 
   def stmt_in(self, node):
@@ -431,18 +431,18 @@ class Semantics(NodeWalker):
 
     # Check valid type for channel target
     if not self.check_elem_types(node.left, [
-         Type('chan',  'single'), 
-         Type('chanend', 'single'), 
-         Type('chan',  'sub'),
-         Type('chanend', 'sub'),]):
+         T_CHAN_SINGLE, 
+         T_CHANEND_SINGLE, 
+         T_CHAN_SUB,
+         T_CHANEND_SUB,]):
       self.type_error('input channel', node.left.name, node.coord)
 
     # Check valid type for assignment target
     if not self.check_elem_types(node.left, [
-         Type('var', 'single'), 
-         Type('ref', 'single'), 
-         Type('var', 'sub'),
-         Type('ref', 'sub'),]):
+         T_VAR_SINGLE, 
+         T_REF_SINGLE, 
+         T_VAR_SUB,
+         T_REF_SUB,]):
       self.type_error('input target', node.left.name, node.coord)
 
   def stmt_out(self, node):
@@ -453,10 +453,10 @@ class Semantics(NodeWalker):
 
     # Check valid type for channel target
     if not self.check_elem_types(node.left, [
-         Type('chan',  'single'), 
-         Type('chanend', 'single'), 
-         Type('chan',  'sub'),
-         Type('chanend', 'sub'),]):
+         T_CHAN_SINGLE, 
+         T_CHANEND_SINGLE, 
+         T_CHAN_SUB,
+         T_CHANEND_SUB,]):
       self.type_error('output channel', node.left.name, node.coord)
 
   def stmt_alias(self, node):
@@ -515,7 +515,7 @@ class Semantics(NodeWalker):
     self.stmt(node.stmt)
 
     # Check the type of the core element
-    if not self.check_elem_types(node.core, [Type('core', 'sub')]):
+    if not self.check_elem_types(node.core, [T_CORE_SUB]):
       self.type_error('on target', node.core, node.coord)
 
   def stmt_return(self, node):
@@ -554,12 +554,12 @@ class Semantics(NodeWalker):
 
     # Check type of right element
     if not self.check_elem_types(node.elem, [
-        Type('val', 'single'),
-        Type('var', 'single'), 
-        Type('ref', 'single'), 
-        Type('val', 'sub'), 
-        Type('var', 'sub'), 
-        Type('ref', 'sub')]):
+        T_VAL_SINGLE,
+        T_VAR_SINGLE, 
+        T_REF_SINGLE, 
+        T_VAL_SUB, 
+        T_VAR_SUB, 
+        T_REF_SUB]):
       self.type_error('binop right element', node.elem, node.coord)
   
   # Elements= ===========================================
@@ -601,7 +601,7 @@ class Semantics(NodeWalker):
     node.symbol = self.check_decl(node.name, node.coord)
 
     # Check the symbol type
-    if not self.sym.check_type(node.name, [Type('var', 'single')]):
+    if not self.sym.check_type(node.name, [T_VAR_SINGLE]):
       self.type_error('index range variable', node.name, node.coord)
       
     # Determine the values of the base and count expressions  
