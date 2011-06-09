@@ -136,6 +136,9 @@ class FlattenCalls(NodeWalker):
   def stmt_alias(self, node, replace):
     pass
 
+  def stmt_connect(self, node, replace):
+    pass
+
   def stmt_return(self, node, replace):
     pass
 

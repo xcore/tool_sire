@@ -12,3 +12,48 @@ proc main() is
     ; c[i] ! v + 1
     }
   }
+
+% Add connections
+
+proc main() is
+  chan c[N+1];
+  var i;
+  var v;
+  { { connect c[0] to core[x]
+    ; connect c[N]
+    ; { c[0] ! 0
+      ; c[N] ? v
+      }
+    }
+  | par i in [0 for N] do
+    { connect c[i-1]
+    ; connect c[i] to core[x]
+    ; { c[i-1] ? v
+      ; c[i] ! v + 1
+      }
+    }
+  }
+
+% Rename connections
+
+proc main() is
+  var i;
+  var v;
+  chanend c1;
+  chanend c2;
+  chanend c3;
+  chanend c4;
+  { { connect c1 to core[x]
+    ; connect c2
+    ; { c1 ! 0
+      ; c2 ? v
+      }
+    }
+  | par i in [0 for N] do
+    { connect c3
+    ; connect c4 to core[x]
+    ; { c3 ? v
+      ; c4 ! v + 1
+      }
+    }
+  }

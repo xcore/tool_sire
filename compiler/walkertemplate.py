@@ -64,6 +64,10 @@ class TemplateWalker(NodeWalker):
   def stmt_alias(self, node):
     self.expr(node.slice)
 
+  def stmt_connect(self, node):
+    self.elem(node.chan)
+    self.elem(node.core)
+
   def stmt_if(self, node):
     self.expr(node.cond)
     self.stmt(node.thenstmt)

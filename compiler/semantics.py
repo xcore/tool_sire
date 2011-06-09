@@ -119,6 +119,7 @@ class Semantics(NodeWalker):
     elif isinstance(elem, ast.ElemSub):
       s = self.sym.lookup(elem.name)
       if s:
+        #print(s.type.subscriptOf())
         return s.type.subscriptOf()
       else:
         self.nodecl_error(elem.name)
@@ -288,6 +289,12 @@ class Semantics(NodeWalker):
     self.errorlog.report_error(
         "invalid array length for '{}'"
         .format(name), coord)
+      
+  def input_target_error(self, coord):
+    """ 
+    Input statement target must be a single element.
+    """
+    self.errorlog.report_error("invalid input target", coord)
 
   # Program ============================================
 
@@ -432,13 +439,17 @@ class Semantics(NodeWalker):
     # Check valid type for channel target
     if not self.check_elem_types(node.left, [
          T_CHAN_SINGLE, 
-         T_CHANEND_SINGLE, 
          T_CHAN_SUB,
+         T_CHANEND_SINGLE, 
          T_CHANEND_SUB,]):
       self.type_error('input channel', node.left.name, node.coord)
 
-    # Check valid type for assignment target
-    if not self.check_elem_types(node.left, [
+    # Check the input target is a single element
+    if not isinstance(node.expr, ast.ExprSingle):
+      self.input_target_error(node.coord)
+
+    # Check valid type for input target
+    if not self.check_elem_types(node.expr.elem, [
          T_VAR_SINGLE, 
          T_REF_SINGLE, 
          T_VAR_SUB,
@@ -454,8 +465,8 @@ class Semantics(NodeWalker):
     # Check valid type for channel target
     if not self.check_elem_types(node.left, [
          T_CHAN_SINGLE, 
-         T_CHANEND_SINGLE, 
          T_CHAN_SUB,
+         T_CHANEND_SINGLE, 
          T_CHANEND_SUB,]):
       self.type_error('output channel', node.left.name, node.coord)
 
@@ -473,6 +484,21 @@ class Semantics(NodeWalker):
     # Check the element is a slice
     if not isinstance(node.slice, ast.ElemSlice):
       self.slice_error('alias', node.coord)
+
+  def stmt_connect(self, node):
+
+    # Children
+    self.elem(node.chan)
+    if node.core:
+      self.elem(node.core)
+
+    # Check the type of the chan element
+    if not self.check_elem_types(node.core, [T_CHANEND_SUB]):
+      self.type_error('connect source channel', node.core, node.coord)
+
+    # Check the type of the core element
+    if node.core and not self.check_elem_types(node.core, [T_CORE_SUB]):
+      self.type_error('connect destination core', node.core, node.coord)
 
   def stmt_if(self, node):
 

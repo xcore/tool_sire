@@ -92,6 +92,11 @@ class BuildCFG(NodeWalker):
     # Add alias targets to use set to they are live until this point.
     node.use |= node.defs 
 
+  def stmt_connect(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    node.use |= self.elem(node.core)
+    node.defs |= set([node.chan])
+
   def stmt_if(self, node, pred, succ):
     self.init_sets(node, pred, [node.thenstmt, node.elsestmt])
     self.stmt(node.thenstmt, [node], succ)
@@ -119,6 +124,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_on(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
+    node.use |= self.elem(node.core)
     self.stmt(node.stmt, [node], succ)
 
   def stmt_return(self, node, pred, succ):

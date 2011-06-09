@@ -301,6 +301,9 @@ class TransformRep(NodeWalker):
   def stmt_alias(self, node):
     return []
 
+  def stmt_connect(self, node):
+    return []
+
   def stmt_return(self, node):
     return []
 

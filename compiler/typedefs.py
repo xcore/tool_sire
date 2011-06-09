@@ -31,6 +31,7 @@ T_VAL_SINGLE     = Type('val', 'single')
 
 # Single variables
 T_VAR_SINGLE     = Type('var', 'single')
+T_VAL_SUB        = Type('val', 'sub')
 T_VAR_SUB        = Type('ref', 'sub')
 T_REF_SINGLE     = Type('ref', 'single')
 T_REF_SUB        = Type('ref', 'sub')
@@ -39,7 +40,7 @@ T_REF_SUB        = Type('ref', 'sub')
 T_CHAN_SINGLE    = Type('chan', 'single')
 T_CHAN_SUB       = Type('chan', 'sub')
 T_CHANEND_SINGLE = Type('chanend', 'single')
-#T_CHANEND_SUB    = Type('chanend', 'sub')
+T_CHANEND_SUB    = Type('chanend', 'sub')
 
 # Variable arrays
 T_VAR_ARRAY      = Type('var', 'array') 

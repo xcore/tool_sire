@@ -415,6 +415,26 @@ class TranslateXS1(NodeWalker):
     self.out('{} ! {};'.format(
       self.elem(node.left), self.expr(node.expr)))
 
+  def stmt_alias(self, node):
+    """ 
+    Generate an alias statement. If the slice target is an array we must use
+    some inline assembly to get xcc to load the address for us. Otherwise,
+    we can just perform arithmetic on the pointer.
+    """
+    if node.symbol.type == T_VAR_ARRAY:
+      self.asm('add %0, %1, %2', outop=node.name, 
+          inops=[node.slice.name, '({})*{}'.format(
+            self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
+    elif node.symbol.type == T_REF_ARRAY:
+      self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
+        self.expr(node.slice.base), defs.BYTES_PER_WORD))
+
+  def stmt_connect(self, node):
+    if node.core:
+      self.out('connect master')
+    else:
+      self.out('connect slave')
+
   def stmt_if(self, node):
     self.out('if ({})'.format(self.expr(node.cond)))
     self.stmt_block(node.thenstmt)
@@ -533,20 +553,6 @@ class TranslateXS1(NodeWalker):
       self.expr(node.core.expr)))
 
     self.blocker.end()
-
-  def stmt_alias(self, node):
-    """ 
-    Generate an alias statement. If the slice target is an array we must use
-    some inline assembly to get xcc to load the address for us. Otherwise,
-    we can just perform arithmetic on the pointer.
-    """
-    if node.symbol.type == T_VAR_ARRAY:
-      self.asm('add %0, %1, %2', outop=node.name, 
-          inops=[node.slice.name, '({})*{}'.format(
-            self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
-    elif node.symbol.type == T_REF_ARRAY:
-      self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
-        self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
   def stmt_return(self, node):
     self.out('return {};'.format(self.expr(node.expr)))

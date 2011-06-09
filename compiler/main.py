@@ -215,6 +215,10 @@ def transform_ast(sem, sig, ast, errorlog, device):
     #print('Live:  {}'.format(node.inp))
     print('')
 
+  # Perform channel analysis
+
+  # Insert channel connections
+
   # Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   BuildCFG().run(ast)

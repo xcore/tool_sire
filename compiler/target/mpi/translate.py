@@ -267,6 +267,12 @@ class TranslateMPI(NodeWalker):
     self.out('{} = {};'.format(
       node.name, self.expr(node.slice)))
 
+  def stmt_connect(self, node):
+    if node.core:
+      self.out('connect master')
+    else:
+      self.out('connect slave')
+
   def stmt_if(self, node):
     self.out('if ({})'.format(self.expr(node.cond)))
     self.stmt_block(node.thenstmt)

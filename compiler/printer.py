@@ -63,16 +63,33 @@ class Printer(NodeWalker):
   # Variable declarations ===============================
 
   def decl(self, node):
-    s = '{}'.format(node.name)
-    if node.type == T_VAR_ARRAY:
-      s += '[{}]'.format(self.expr(node.expr))
-    elif node.type == T_REF_ARRAY:
-      s += '[]'
+    
     if node.type == T_VAL_SINGLE:
-      s = 'val {} := {}'.format(s, self.expr(node.expr))
+      return 'val {} := {}'.format(node.name, self.expr(node.expr))
+    
+    if node.type == T_VAR_SINGLE:
+      return 'var {}'.format(node.name)
+    
+    elif node.type == T_VAR_ARRAY:
+      return '{}[{}]'.format(node.name, self.expr(node.expr))
+    
+    elif node.type == T_REF_ARRAY:
+      return node.name+'[]'
+   
+    elif node.type == T_CHAN_SINGLE:
+      return 'chan '+node.name
+
+    elif node.type == T_CHAN_ARRAY:
+      return 'chan '+node.name+'[{}]'.format(self.expr(node.expr))
+
+    elif node.type == T_CHANEND_SINGLE:
+      return 'chanend '+node.name
+
+    elif node.type == T_CHANEND_ARRAY:
+      return 'chanend '+node.name+'[{}]'.format(self.expr(node.expr))
+
     else:
-      s = '{} {}'.format(node.type.specifier, s)
-    return s
+      assert 0
 
   # Procedure declarations ==============================
 
@@ -167,6 +184,13 @@ class Printer(NodeWalker):
   def stmt_alias(self, node):
     self.out('{} aliases {}'.format(
       node.name, self.expr(node.slice)))
+
+  def stmt_connect(self, node):
+    if node.core:
+      self.out('connect {} to {}'.format(
+          self.elem(node.chan), self.elem(node.core)))
+    else:
+      self.out('connect {}'.format(self.elem(node.chan)))
 
   def stmt_if(self, node):
     self.out('if {}\n'.format(self.expr(node.cond)))

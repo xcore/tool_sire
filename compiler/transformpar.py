@@ -80,18 +80,22 @@ class TransformPar(NodeWalker):
 
     # Deal with the index variable of a replicator statement: add it as a
     # single value (not a variable) to the formals and as-is to the actuals, 
-    # then remove it from the variable live-in set.
+    # then remove it from the variable live-in set and locals so it is not
+    # declared again.
     for x in indicies:
       formals.append(ast.Param(x.name, T_VAL_SINGLE, None))
       actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
       live_in -= set([x])
+      local_decls -= set([x])
 
     # Replicated parallel statements are more restrivtive
     var_to_param = rep_var_to_param if len(indicies)>0 else par_var_to_param
     
     # For each variable in the live-in set add accordingly to formals and actuals.
     for x in live_in:
-
+      #if x.symbol.type==T_CHAN_ARRAY:
+      #  continue
+      
       # All parameters are added as formals with the appropriate conversion
       p = ast.Param(x.name, var_to_param[x.symbol.type], x.symbol.expr)
       p.symbol = x.symbol
@@ -116,10 +120,11 @@ class TransformPar(NodeWalker):
     # Create a unique name
     name = self.sig.unique_process_name()
 
-    # Create the local declarations
+    # Create the local declarations (excluding values)
     for x in local_decls:
-      assert x.symbol.type == T_VAR_SINGLE
-      decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
+      if not x.symbol.type == T_VAL_SINGLE:
+        assert x.symbol.type == T_VAR_SINGLE
+        decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
     
     # Create the new process definition
     d = ast.Def(name, T_PROC, formals, decls, stmt)
@@ -221,6 +226,9 @@ class TransformPar(NodeWalker):
     return []
 
   def stmt_alias(self, node):
+    return []
+
+  def stmt_connect(self, node):
     return []
 
   def stmt_return(self, node):
