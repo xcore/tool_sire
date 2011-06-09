@@ -9,7 +9,7 @@
 #define MAX_PROC_PARAMETERS 10
 
 typedef enum {
-    t_arg_ALIAS,
-    t_arg_VAL,
-    t_arg_VAR
+  t_arg_ALIAS,
+  t_arg_VAL,
+  t_arg_VAR
 } t_argument;

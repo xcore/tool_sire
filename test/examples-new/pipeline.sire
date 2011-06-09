@@ -2,6 +2,7 @@ val N := 10;
 
 proc main() is
   chan c[N+1];
+  var i;
   var v;
   { { c[0] ! 0
     ; c[N] ? v

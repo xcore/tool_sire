@@ -9,27 +9,27 @@ import os
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 
 def init():
-    """
-    Initialise configuration variables.
-    """
-    global INSTALL_PATH
-    INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
+  """
+  Initialise configuration variables.
+  """
+  global INSTALL_PATH
+  INSTALL_PATH = os.environ[INSTALL_PATH_ENV]
 
-    if INSTALL_PATH:
-        init_paths()
-    else:
-        raise Exception("no '"+INSTALL_PATH_env+"' enviromnent variable")
+  if INSTALL_PATH:
+    init_paths()
+  else:
+    raise Exception("no '"+INSTALL_PATH_env+"' enviromnent variable")
 
 def init_paths():
-    """
-    Initialise various paths.
-    """
-    globals()['SYSTEM_PATH'] = INSTALL_PATH+'/system'
-    
-    globals()['XS1_DEVICE_PATH']  = INSTALL_PATH+'/device/xs1'
-    globals()['XS1_SYSTEM_PATH'] = INSTALL_PATH+'/system/xs1'
-    globals()['XS1_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/xs1'
-    
-    globals()['MPI_SYSTEM_PATH'] = INSTALL_PATH+'/system/mpi'
-    globals()['MPI_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/mpi'
-    
+  """
+  Initialise various paths.
+  """
+  globals()['SYSTEM_PATH'] = INSTALL_PATH+'/system'
+  
+  globals()['XS1_DEVICE_PATH']  = INSTALL_PATH+'/device/xs1'
+  globals()['XS1_SYSTEM_PATH'] = INSTALL_PATH+'/system/xs1'
+  globals()['XS1_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/xs1'
+  
+  globals()['MPI_SYSTEM_PATH'] = INSTALL_PATH+'/system/mpi'
+  globals()['MPI_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/mpi'
+  

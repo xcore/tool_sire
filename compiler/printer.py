@@ -13,247 +13,247 @@ INDENT = '  '
 NO_INDENT = ''
 
 class Printer(NodeWalker):
+  """ 
+  A walker class to pretty-print the AST in the langauge syntax.
+  """
+  def __init__(self, buf=sys.stdout):
+    super(Printer, self).__init__()
+    self.buf = buf
+    self.indent = []
+
+  def indt(self):
     """ 
-    A walker class to pretty-print the AST in the langauge syntax.
+    Produce an indent. If its the first statement of a seq or par block we
+    only produce a single space.
     """
-    def __init__(self, buf=sys.stdout):
-        super(Printer, self).__init__()
-        self.buf = buf
-        self.indent = []
-
-    def indt(self):
-        """ 
-        Produce an indent. If its the first statement of a seq or par block we
-        only produce a single space.
-        """
-        if len(self.indent) > 0:
-            if self.indent[-1] == NO_INDENT:
-                return ''
-            else:
-                return INDENT*(len(self.indent))
-                #return ''.join([x for x in self.indent])
+    if len(self.indent) > 0:
+      if self.indent[-1] == NO_INDENT:
         return ''
+      else:
+        return INDENT*(len(self.indent))
+        #return ''.join([x for x in self.indent])
+    return ''
+  
+  def out(self, s):
+    """ 
+    Write an indented line.
+    """
+    self.buf.write(self.indt()+s)
+
+  def arg_list(self, args):
+    return ', '.join([self.expr(x) for x in args])
+
+  def var_decls(self, decls):
+    self.buf.write((self.indt() if len(decls)>0 else '')
+        +(';\n'+self.indt()).join(
+        [self.decl(x) for x in decls]))
+    if len(decls)>0: self.buf.write(';\n')
+  
+  # Program ============================================
+
+  def walk_program(self, node):
     
-    def out(self, s):
-        """ 
-        Write an indented line.
-        """
-        self.buf.write(self.indt()+s)
+    # Program declarations
+    self.var_decls(node.decls)
+    self.buf.write('\n')
 
-    def arg_list(self, args):
-        return ', '.join([self.expr(x) for x in args])
+    # Program definitions (procedures)
+    [self.defn(x, 0) for x in node.defs]
+  
+  # Variable declarations ===============================
 
-    def var_decls(self, decls):
-        self.buf.write((self.indt() if len(decls)>0 else '')
-                +(';\n'+self.indt()).join(
-                [self.decl(x) for x in decls]))
-        if len(decls)>0: self.buf.write(';\n')
+  def decl(self, node):
+    s = '{}'.format(node.name)
+    if node.type == Type('var', 'array'):
+      s += '[{}]'.format(self.expr(node.expr))
+    elif node.type == Type('ref', 'array'):
+      s += '[]'
+    if node.type.specifier == 'val':
+      s = 'val {} := {}'.format(s, self.expr(node.expr))
+    else:
+      s = '{} {}'.format(node.type.specifier, s)
+    return s
+
+  # Procedure declarations ==============================
+
+  def defn(self, node, d):
     
-    # Program ============================================
-
-    def walk_program(self, node):
-        
-        # Program declarations
-        self.var_decls(node.decls)
-        self.buf.write('\n')
-
-        # Program definitions (procedures)
-        [self.defn(x, 0) for x in node.defs]
+    # Procedure definition
+    name = node.name if node.name != '_main' else 'main'
+    self.buf.write('{} {}({})'.format(node.type.specifier, name, 
+        ', '.join([self.param(x) for x in node.formals])))
     
-    # Variable declarations ===============================
-
-    def decl(self, node):
-        s = '{}'.format(node.name)
-        if node.type == Type('var', 'array'):
-            s += '[{}]'.format(self.expr(node.expr))
-        elif node.type == Type('ref', 'array'):
-            s += '[]'
-        if node.type.specifier == 'val':
-            s = 'val {} := {}'.format(s, self.expr(node.expr))
-        else:
-            s = '{} {}'.format(node.type.specifier, s)
-        return s
-
-    # Procedure declarations ==============================
-
-    def defn(self, node, d):
-        
-        # Procedure definition
-        name = node.name if node.name != '_main' else 'main'
-        self.buf.write('{} {}({})'.format(node.type.specifier, name, 
-                ', '.join([self.param(x) for x in node.formals])))
+    # If it is a prototype
+    if not node.stmt:
+      self.buf.write(';\n\n')
+    else:
+      self.buf.write(' is\n')
       
-        # If it is a prototype
-        if not node.stmt:
-            self.buf.write(';\n\n')
-        else:
-            self.buf.write(' is\n')
-            
-            # Procedure declarations
-            self.indent.append(INDENT)
-            self.var_decls(node.decls)
+      # Procedure declarations
+      self.indent.append(INDENT)
+      self.var_decls(node.decls)
 
-            # Statement block
-            if (isinstance(node.stmt, ast.StmtPar) 
-                    or isinstance(node.stmt, ast.StmtSeq)):
-                self.indent.pop()
-                self.stmt(node.stmt)
-                self.buf.write('\n\n')
-            else:
-                self.stmt(node.stmt)
-                self.buf.write('\n\n')
-                self.indent.pop()
-    
-    # Formals =============================================
-    
-    def param(self, node):
-        if node.type == Type('val', 'single'):
-            return 'val '+node.name
-        elif node.type == Type('ref', 'single'):
-            return 'var '+node.name
-        elif (node.type == Type('ref', 'array')
-                or node.type == Type('val', 'array')):
-            return 'var {}[{}]'.format(node.name, self.expr(node.expr))
-        else:
-            assert 0
-
-    # Statements ==========================================
-
-    def stmt_block(self, node, sep):
-        """
-        Output a block of statements. E.g.::
-          { 
-            stmt1;
-            stmt2;
-            { stmt3|
-              stmt4
-            };
-            stmt5
-          }
-        """
-        self.out('{\n')
-        self.indent.append(INDENT)
-        for (i, x) in enumerate(node.stmt): 
-            self.stmt(x)
-            self.buf.write(sep if i<(len(node.stmt)-1) else '')
-            self.buf.write('\n')
+      # Statement block
+      if (isinstance(node.stmt, ast.StmtPar) 
+          or isinstance(node.stmt, ast.StmtSeq)):
         self.indent.pop()
-        self.out('}')
-
-    def stmt_seq(self, node):
-        self.stmt_block(node, ';')
-
-    def stmt_par(self, node):
-        self.stmt_block(node, '|')
-
-    def stmt_skip(self, node):
-        self.out('skip')
-
-    def stmt_pcall(self, node):
-        self.out('{}({})'.format(
-            node.name, self.arg_list(node.args)))
-
-    def stmt_ass(self, node):
-        self.out('{} := {}'.format(
-            self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_in(self, node):
-        self.out('{} ? {}'.format(
-            self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_out(self, node):
-        self.out('{} ! {}'.format(
-            self.elem(node.left), self.expr(node.expr)))
-
-    def stmt_alias(self, node):
-        self.out('{} aliases {}'.format(
-            node.name, self.expr(node.slice)))
-
-    def stmt_if(self, node):
-        self.out('if {}\n'.format(self.expr(node.cond)))
-        self.out('then\n')
-        self.indent.append(INDENT)
-        self.stmt(node.thenstmt) ; self.buf.write('\n')
-        self.indent.pop()
-        self.out('else\n')
-        self.indent.append(INDENT)
-        self.stmt(node.elsestmt)
-        self.indent.pop()
-
-    def stmt_while(self, node):
-        self.out('while {} do\n'.format(self.expr(node.cond)))
-        self.indent.append(INDENT)
         self.stmt(node.stmt)
-        self.indent.pop()
-
-    def stmt_for(self, node):
-        self.out('for {} do\n'.format(self.elem(node.index)))
-        self.indent.append(INDENT)
+        self.buf.write('\n\n')
+      else:
         self.stmt(node.stmt)
+        self.buf.write('\n\n')
         self.indent.pop()
+  
+  # Formals =============================================
+  
+  def param(self, node):
+    if node.type == Type('val', 'single'):
+      return 'val '+node.name
+    elif node.type == Type('ref', 'single'):
+      return 'var '+node.name
+    elif (node.type == Type('ref', 'array')
+        or node.type == Type('val', 'array')):
+      return 'var {}[{}]'.format(node.name, self.expr(node.expr))
+    else:
+      assert 0
 
-    def stmt_rep(self, node):
-        self.out('par {} do\n'.format(
-            ', '.join([self.elem(x) for x in node.indicies]))) 
-        self.indent.append(INDENT)
-        self.stmt(node.stmt)
-        self.indent.pop()
+  # Statements ==========================================
 
-    def stmt_on(self, node):
-        self.out('on {} do\n'.format(self.elem(node.core)))
-        self.indent.append(INDENT)
-        self.stmt(node.stmt)
-        self.indent.pop()
+  def stmt_block(self, node, sep):
+    """
+    Output a block of statements. E.g.::
+      { 
+      stmt1;
+      stmt2;
+      { stmt3|
+        stmt4
+      };
+      stmt5
+      }
+    """
+    self.out('{\n')
+    self.indent.append(INDENT)
+    for (i, x) in enumerate(node.stmt): 
+      self.stmt(x)
+      self.buf.write(sep if i<(len(node.stmt)-1) else '')
+      self.buf.write('\n')
+    self.indent.pop()
+    self.out('}')
 
-    def stmt_return(self, node):
-        self.out('return {}'.format(self.expr(node.expr)))
+  def stmt_seq(self, node):
+    self.stmt_block(node, ';')
 
-    # Expressions =========================================
+  def stmt_par(self, node):
+    self.stmt_block(node, '|')
 
-    def expr_single(self, node):
-        return self.elem(node.elem)
+  def stmt_skip(self, node):
+    self.out('skip')
 
-    def expr_unary(self, node):
-        return '({}{})'.format(node.op, self.elem(node.elem))
+  def stmt_pcall(self, node):
+    self.out('{}({})'.format(
+      node.name, self.arg_list(node.args)))
 
-    def expr_binop(self, node):
-        return '{} {} {}'.format(self.elem(node.elem), 
-                node.op, self.expr(node.right))
-    
-    # Elements= ===========================================
+  def stmt_ass(self, node):
+    self.out('{} := {}'.format(
+      self.elem(node.left), self.expr(node.expr)))
 
-    def elem_group(self, node):
-        return '({})'.format(self.expr(node.expr))
+  def stmt_in(self, node):
+    self.out('{} ? {}'.format(
+      self.elem(node.left), self.expr(node.expr)))
 
-    def elem_sub(self, node):
-        return '{}[{}]'.format(node.name, self.expr(node.expr))
+  def stmt_out(self, node):
+    self.out('{} ! {}'.format(
+      self.elem(node.left), self.expr(node.expr)))
 
-    def elem_slice(self, node):
-        return '{}[{} for {}]'.format(node.name, 
-                self.expr(node.base), self.expr(node.count))
+  def stmt_alias(self, node):
+    self.out('{} aliases {}'.format(
+      node.name, self.expr(node.slice)))
 
-    def elem_index_range(self, node):
-        return '{} in [{} for {}]'.format(node.name, 
-                self.expr(node.base), self.expr(node.count))
+  def stmt_if(self, node):
+    self.out('if {}\n'.format(self.expr(node.cond)))
+    self.out('then\n')
+    self.indent.append(INDENT)
+    self.stmt(node.thenstmt) ; self.buf.write('\n')
+    self.indent.pop()
+    self.out('else\n')
+    self.indent.append(INDENT)
+    self.stmt(node.elsestmt)
+    self.indent.pop()
 
-    def elem_fcall(self, node):
-        return '{}({})'.format(node.name, self.arg_list(node.args))
+  def stmt_while(self, node):
+    self.out('while {} do\n'.format(self.expr(node.cond)))
+    self.indent.append(INDENT)
+    self.stmt(node.stmt)
+    self.indent.pop()
 
-    def elem_pcall(self, node):
-        return '{}({})'.format(node.name, self.arg_list(node.args))
+  def stmt_for(self, node):
+    self.out('for {} do\n'.format(self.elem(node.index)))
+    self.indent.append(INDENT)
+    self.stmt(node.stmt)
+    self.indent.pop()
 
-    def elem_number(self, node):
-        return '{}'.format(node.value)
+  def stmt_rep(self, node):
+    self.out('par {} do\n'.format(
+      ', '.join([self.elem(x) for x in node.indicies]))) 
+    self.indent.append(INDENT)
+    self.stmt(node.stmt)
+    self.indent.pop()
 
-    def elem_boolean(self, node):
-        return '{}'.format(node.value)
+  def stmt_on(self, node):
+    self.out('on {} do\n'.format(self.elem(node.core)))
+    self.indent.append(INDENT)
+    self.stmt(node.stmt)
+    self.indent.pop()
 
-    def elem_string(self, node):
-        return '{}'.format(node.value)
+  def stmt_return(self, node):
+    self.out('return {}'.format(self.expr(node.expr)))
 
-    def elem_char(self, node):
-        return '{}'.format(node.value)
+  # Expressions =========================================
 
-    def elem_id(self, node):
-        return node.name
+  def expr_single(self, node):
+    return self.elem(node.elem)
+
+  def expr_unary(self, node):
+    return '({}{})'.format(node.op, self.elem(node.elem))
+
+  def expr_binop(self, node):
+    return '{} {} {}'.format(self.elem(node.elem), 
+        node.op, self.expr(node.right))
+  
+  # Elements= ===========================================
+
+  def elem_group(self, node):
+    return '({})'.format(self.expr(node.expr))
+
+  def elem_sub(self, node):
+    return '{}[{}]'.format(node.name, self.expr(node.expr))
+
+  def elem_slice(self, node):
+    return '{}[{} for {}]'.format(node.name, 
+        self.expr(node.base), self.expr(node.count))
+
+  def elem_index_range(self, node):
+    return '{} in [{} for {}]'.format(node.name, 
+        self.expr(node.base), self.expr(node.count))
+
+  def elem_fcall(self, node):
+    return '{}({})'.format(node.name, self.arg_list(node.args))
+
+  def elem_pcall(self, node):
+    return '{}({})'.format(node.name, self.arg_list(node.args))
+
+  def elem_number(self, node):
+    return '{}'.format(node.value)
+
+  def elem_boolean(self, node):
+    return '{}'.format(node.value)
+
+  def elem_string(self, node):
+    return '{}'.format(node.value)
+
+  def elem_char(self, node):
+    return '{}'.format(node.value)
+
+  def elem_id(self, node):
+    return node.name
 

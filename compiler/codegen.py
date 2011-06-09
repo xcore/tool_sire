@@ -22,58 +22,58 @@ from target.mpi.build import build_mpi
 DEFS_FILE = 'definitions.h'
 
 def translate(ast, sig, child, device, outfile, translate_only, v):
-    """ 
-    Translate the AST to target system.
-    """
-    vmsg(v, 'Translating AST...')
+  """ 
+  Translate the AST to target system.
+  """
+  vmsg(v, 'Translating AST...')
 
-    buf = io.StringIO()
-    ext = None
+  buf = io.StringIO()
+  ext = None
 
-    # Create a tranlator AST walker
-    if device.system == 'xs1':
-        walker = TranslateXS1(sig, child, buf)
-    elif device.system == 'mpi':
-        walker = TranslateMPI(sig, child, buf)
+  # Create a tranlator AST walker
+  if device.system == 'xs1':
+    walker = TranslateXS1(sig, child, buf)
+  elif device.system == 'mpi':
+    walker = TranslateMPI(sig, child, buf)
 
-    walker.walk_program(ast)
-    
-    if translate_only:
-        outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
-                outfile+'.'+device.source_file_ext())
-        util.write_file(outfile, buf.getvalue())
-        vmsg(v, 'Produced file: '+outfile)
-        raise SystemExit()
+  walker.walk_program(ast)
+  
+  if translate_only:
+    outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+        outfile+'.'+device.source_file_ext())
+    util.write_file(outfile, buf.getvalue())
+    vmsg(v, 'Produced file: '+outfile)
+    raise SystemExit()
 
-    return buf
+  return buf
 
 def build(sig, buf, device, outfile, compile_only, show_calls, v):
-    """ 
-    Compile the translated AST for the target system.
-    """
-    vmsg(v, 'Creating executable...')
+  """ 
+  Compile the translated AST for the target system.
+  """
+  vmsg(v, 'Creating executable...')
 
-    # Create a Build object
-    if device.system == 'xs1':
-        build_xs1(sig, device, buf, outfile, compile_only, show_calls, v)
-    elif device.system == 'mpi':
-        build_mpi(device, buf, outfile, compile_only, show_calls, v)
+  # Create a Build object
+  if device.system == 'xs1':
+    build_xs1(sig, device, buf, outfile, compile_only, show_calls, v)
+  elif device.system == 'mpi':
+    build_mpi(device, buf, outfile, compile_only, show_calls, v)
 
 def generate(ast, sig, child, device, outfile, 
-        translate_only, compile_only, show_calls, v):
-    """ 
-    Generate code intermediate/machine/binary from AST.
-    """
+    translate_only, compile_only, show_calls, v):
+  """ 
+  Generate code intermediate/machine/binary from AST.
+  """
 
-    # Load appropriate definitions for the system
-    if device.system == 'xs1':
-        defs.load(config.XS1_SYSTEM_PATH+'/'+DEFS_FILE)
-    elif device.system == 'mpi':
-        defs.load(config.MPI_SYSTEM_PATH+'/'+DEFS_FILE)
-    
-    # Translate the AST
-    buf = translate(ast, sig, child, device, outfile, translate_only, v)
-    
-    # Compile, assemble and link with the runtime
-    build(sig, buf, device, outfile, compile_only, show_calls, v)
+  # Load appropriate definitions for the system
+  if device.system == 'xs1':
+    defs.load(config.XS1_SYSTEM_PATH+'/'+DEFS_FILE)
+  elif device.system == 'mpi':
+    defs.load(config.MPI_SYSTEM_PATH+'/'+DEFS_FILE)
+  
+  # Translate the AST
+  buf = translate(ast, sig, child, device, outfile, translate_only, v)
+  
+  # Compile, assemble and link with the runtime
+  build(sig, buf, device, outfile, compile_only, show_calls, v)
 

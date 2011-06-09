@@ -16,20 +16,20 @@ SVAL_PARAM = Param('v', Type('val', 'single'), None)
 AVAL_PARAM = Param('v', Type('ref', 'array'), None) 
 
 class Builtin(object):
-    """
-    A class to represent a builtin and its mobility.
-    """
-    def __init__(self, definition, mobile):
-        self.definition = definition
-        self.mobile = mobile
+  """
+  A class to represent a builtin and its mobility.
+  """
+  def __init__(self, definition, mobile):
+    self.definition = definition
+    self.mobile = mobile
 
 # Create a process declaration (prototype).
 def proc_decl(name, params, mobile=False):
-    return Builtin(Def(name, PROC_TYPE, params, None, None), mobile)
+  return Builtin(Def(name, PROC_TYPE, params, None, None), mobile)
 
 # Create a function declaration (prototype).
 def func_decl(name, params, mobile=False):
-    return Builtin(Def(name, FUNC_TYPE, params, None, None), mobile)
+  return Builtin(Def(name, FUNC_TYPE, params, None, None), mobile)
 
 # Printing builtins
 printchar   = proc_decl('printchar',   [SVAL_PARAM])

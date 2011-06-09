@@ -429,13 +429,21 @@ class Semantics(NodeWalker):
     self.elem(node.left)
     self.expr(node.expr)
 
-    # Check valid type for assignment target
+    # Check valid type for channel target
     if not self.check_elem_types(node.left, [
          Type('chan',  'single'), 
          Type('chanend', 'single'), 
          Type('chan',  'sub'),
          Type('chanend', 'sub'),]):
-      self.type_error('input', node.left.name, node.coord)
+      self.type_error('input channel', node.left.name, node.coord)
+
+    # Check valid type for assignment target
+    if not self.check_elem_types(node.left, [
+         Type('var', 'single'), 
+         Type('ref', 'single'), 
+         Type('var', 'sub'),
+         Type('ref', 'sub'),]):
+      self.type_error('input target', node.left.name, node.coord)
 
   def stmt_out(self, node):
 
@@ -443,13 +451,13 @@ class Semantics(NodeWalker):
     self.elem(node.left)
     self.expr(node.expr)
 
-    # Check valid type for assignment target
+    # Check valid type for channel target
     if not self.check_elem_types(node.left, [
          Type('chan',  'single'), 
          Type('chanend', 'single'), 
          Type('chan',  'sub'),
          Type('chanend', 'sub'),]):
-      self.type_error('input', node.left.name, node.coord)
+      self.type_error('output channel', node.left.name, node.coord)
 
   def stmt_alias(self, node):
 

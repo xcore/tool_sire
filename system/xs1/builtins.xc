@@ -23,37 +23,38 @@
 
 // 8.24 fixed point multiply.
 int mulf8_24(int a, int b) {
-    int h;
-    unsigned l;
-    {h, l} = macs(a, b, 0, 1<<((32-_FBITS)*2-1));
-    return (h << (32-_FBITS)) | (l >> _FBITS);
+  int h;
+  unsigned l;
+  {h, l} = macs(a, b, 0, 1<<((32-_FBITS)*2-1));
+  return (h << (32-_FBITS)) | (l >> _FBITS);
 }
 
 // 8.24 fixed point divide.
 int divf8_24(int x, int y) {
-    int sgn = 1;
-    unsigned int d, d2, r;
-    if (x < 0) {
-        sgn = -1;
-        x = -x;
-    }
-    if (y < 0) {
-        sgn = -sgn;
-        y = -y;
-    }
-    ldivu(d, r, 0, x, y);
-    ldivu(d2, r, r, 0, y);
-    r = d << _FBITS | (d2 + (1<<(31-_FBITS))) >> (32-_FBITS);
-    return r * sgn;
+  int sgn = 1;
+  unsigned int d, d2, r;
+  if (x < 0) {
+    sgn = -1;
+    x = -x;
+  }
+  if (y < 0) {
+    sgn = -sgn;
+    y = -y;
+  }
+  ldivu(d, r, 0, x, y);
+  ldivu(d2, r, r, 0, y);
+  r = d << _FBITS | (d2 + (1<<(31-_FBITS))) >> (32-_FBITS);
+  return r * sgn;
 }
 
 // Return the processor id by allocating a channel end, extracting the node and
 // core id, then deallocating it again.
 int procid() {
-    unsigned c, v;
-    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-    asm("bitrev %0, %1" : "=r"(v) : "r"(c));
-    v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
-    asm("freer res[%0]" :: "r"(c));
-    return v;
+  unsigned c, v;
+  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+  asm("bitrev %0, %1" : "=r"(v) : "r"(c));
+  v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
+  asm("freer res[%0]" :: "r"(c));
+  return v;
 }
+
