@@ -40,10 +40,16 @@ xs1_example_tests = [
 # Features =====================================================
 
 xs1_feature_general = [
-  Test('forloop'),
+  Test('for'),
+  Test('array_elemref'),
   Test('array_slice1'),
   Test('array_slice2'),
-  Test('fixedpoint'),
+  ]
+
+xs1_feature_builtins = [
+  Test('builtin_fixedpoint'),
+  Test('builtin_printing'),
+  Test('builtin_procid'),
   ]
 
 xs1_feature_thread = [
@@ -80,6 +86,7 @@ xs1_feature_replicator = [
 
 xs1_feature_tests =\
   xs1_feature_general +\
+  xs1_feature_builtin +\
   xs1_feature_thread +\
   xs1_feature_on +\
   xs1_feature_replicator

@@ -1,0 +1,5 @@
+proc main() is
+  var v;
+{ on core[NUM_CORES-1] do v := procid()
+; printvalln(v)
+}

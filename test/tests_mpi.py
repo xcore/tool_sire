@@ -40,11 +40,16 @@ mpi_example_tests = [
 # Features =====================================================
 
 mpi_feature_general = [
-  Test('forloop'),
+  Test('for'),
   Test('array_elemref'),
   Test('array_slice1'),
   Test('array_slice2'),
-  Test('fixedpoint'),
+  ]
+
+xs1_feature_builtins = [
+  Test('builtin_fixedpoint'),
+  Test('builtin_printing'),
+  Test('builtin_procid'),
   ]
 
 mpi_feature_thread = [
@@ -73,10 +78,14 @@ mpi_feature_on = [
   ] 
 
 mpi_feature_replicator = [
+  #Test('rep_basic_1d',   [4, 16, 32, 64]),
+  #Test('rep_basic_2d',   [4, 16, 32, 64]),
+  #Test('rep_basic_3d',   [4, 16, 32, 64]),
   ]
 
 mpi_feature_tests =\
   mpi_feature_general +\
+  mpi_feature_builtin +\
   mpi_feature_thread +\
   mpi_feature_on +\
   mpi_feature_replicator
