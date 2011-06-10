@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from target.device import Device
+from error import Error
 
 XS1_SOURCE_FILE_EXT = 'xc'
 XS1_ASSEMBLY_FILE_EXT = 'S'

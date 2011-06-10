@@ -22,8 +22,11 @@ void slaveSync();
 // Yeild and idling
 void slaveMasterIdle();
 void slaveMasterYeild();
+void slaveYeild();
 
 // Resource usage
+void newAsyncThread(unsigned pc, unsigned arg1, 
+    unsigned arg2, unsigned arg3, unsigned arg4);
 unsigned int getAvailThreads();
 unsigned claimAsyncThread();
 unsigned claimSyncThread(unsigned);

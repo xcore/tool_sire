@@ -49,7 +49,7 @@ xs1_feature_general = [
 xs1_feature_builtins = [
   Test('builtin_fixedpoint'),
   Test('builtin_printing'),
-  Test('builtin_procid', [8]),
+  Test('builtin_procid', [16]),
   ]
 
 xs1_feature_thread = [

@@ -20,8 +20,8 @@ void waitForCompletion (unsigned, int);
 void receiveResults    (unsigned, int, unsigned[]);
 
 // Permute an address.
-unsigned permDest(unsigned d) {
-  if(d >= 16 && d <= 31)
+unsigned permDest(unsigned d) 
+{ if(d >= 16 && d <= 31)
     return d + 16;
   if(d >= 32 && d <= 47)
     return d - 16;
@@ -29,47 +29,23 @@ unsigned permDest(unsigned d) {
 }
 
 // Create a new remote process
-void _createprocess(unsigned dest, unsigned closure[]) {
-
+void _createprocess(unsigned dest, unsigned closure[]) 
+{
   unsigned threadId = GET_THREAD_ID();
   unsigned c = spawnChan[threadId];
- 
-  // Locally
-  if (GET_GLOBAL_CORE_ID(c) == dest)
-  { int procIndex = /*find proc index*/-1;
-    int numArgs;
-    unsigned argValues[MAX_PROC_PARAMETERS];
-    unsigned pc;
-    asm("ldap r11, runLocally ; mov %0, r11" : "=r"(pc) : "r11");
-    newAsyncThread(pc, closure[procIndex], argValues, numArgs);
-  }
+  unsigned destId = GEN_CHAN_RI_0(dest);
+
+  // Initialise the connection with the host
+  initHostConnection(c, destId);
   
-  // Remotely
-  else 
-  { unsigned destId = GEN_CHAN_RI_0(dest);
-
-    // Initialise the connection with the host
-    initHostConnection(c, destId);
-    
-    // Transfer closure data
-    sendClosure(c, closure);
-    
-    // Wait for ececution to complete
-    waitForCompletion(c, threadId);
-
-    // Receive any results
-    receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
-  }
-}
-
-// Run a process locally on a new asynchronous thread
-void runLocally(int procIndex, unsigned argValues[], in numArgs) {
-
-  // Initialise the thread
-  _initThread();
+  // Transfer closure data
+  sendClosure(c, closure);
   
-  // Run the process
-  runProcess(procIndex, argValues, numArgs);
+  // Wait for ececution to complete
+  waitForCompletion(c, threadId);
+
+  // Receive any results
+  receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
 }
 
 // Initialise the connection with the host thread

@@ -38,7 +38,7 @@ LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
-        'util.xc', 'memory.c', 'asyncthread.xc']
+        'util.xc', 'memory.c']
     
 def build_xs1(sig, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):

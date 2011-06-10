@@ -10,7 +10,6 @@
 #include "system.h"
 #include "util.h"
 #include "host.h"
-#include "asyncthread.h"
 #include "memory.h"
 
 extern void runProcess        (int, unsigned int[], int);
@@ -22,7 +21,6 @@ void       receiveArguments   (unsigned, int, t_argument[], unsigned[], int[]);
 int        receiveProcedures  (unsigned, int);
 void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, t_argument[], unsigned[], int[]);
-void       newAsyncThread     (unsigned);
 
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
@@ -87,7 +85,7 @@ void spawnHost() {
   OUTCT_END(mSpawnChan);
 
   // Give the next thread some space and launch it
-  asm("ldap r11, runThread ; mov %0, r11" : "=r"(pc) : "r11");
+  asm("ldap r11, runThread ; mov %0, r11" : "=r"(pc) :: "r11");
   newAsyncThread(pc, senderId, 0, 0, 0);
 }
 

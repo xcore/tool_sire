@@ -474,12 +474,24 @@ class TranslateXS1(NodeWalker):
       if t.form == 'array': closure_size = closure_size + 3
       elif t.form == 'single': closure_size = closure_size + 2 
 
+    # If the destination is the current processor, then we just evaluate the
+    # statement locally.
     self.comment('On')
-    
+    self.out('if ({} == procid())'.format(self.expr(node.core.expr)))
+
+    # Local evaluation
+    self.blocker.begin()
+    self.stmt(node.stmt)
+    self.blocker.end()
+
+    self.out('else')
+
+    # Remote evaluation
     self.blocker.begin()
     self.out('unsigned _closure[{}];'.format(closure_size))
     n = 0
 
+    # Output an element of the closure
     def celem(i, e):
       self.out('_closure[{}] = {};'.format(i, e))
       return n + 1
