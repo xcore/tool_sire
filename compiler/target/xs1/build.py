@@ -38,7 +38,7 @@ LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
         'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
-        'util.xc', 'memory.c']
+        'util.xc', 'memory.c', 'asyncthread.xc']
     
 def build_xs1(sig, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):
@@ -390,7 +390,7 @@ def build_jumptab(sig, buf, v):
     buf.write(defs.LABEL_JUMP_TABLE+':\n')
     
     # Runtime entries
-    buf.write('\t.word '+defs.LABEL_MIGRATE+'\n')
+    buf.write('\t.word '+defs.LABEL_CREATE_PROCESS+'\n')
     buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
 
     # Program entries

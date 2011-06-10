@@ -478,16 +478,16 @@ class TranslateXS1(NodeWalker):
     
     self.blocker.begin()
     self.out('unsigned _closure[{}];'.format(closure_size))
-    i = 0
+    n = 0
 
     def celem(i, e):
       self.out('_closure[{}] = {};'.format(i, e))
-      return i + 1
+      return n + 1
 
     # Header: (#args, #procs)
     self.comment('Header: (#args, #procs)')
-    i = celem(i, num_args)
-    i = celem(i, num_procs)
+    n = celem(n, num_args)
+    n = celem(n, num_procs)
 
     # Arguments: 
     #   Array: (0, length, address)
@@ -503,23 +503,23 @@ class TranslateXS1(NodeWalker):
 
           # Output the length of the array. Either it's a variable in the list
           # of the parameters or it's a constant value.
-          i = celem(i, 't_arg_ALIAS')
+          n = celem(n, 't_arg_ALIAS')
           if y.symbol.value == None:
             q = self.sig.lookup_array_qualifier(proc_name, i)
-            i = celem(i, self.expr(pcall.args[q]))
+            n = celem(n, self.expr(pcall.args[q]))
           else:
-            i = celem(i, self.expr(y.expr))
+            n = celem(n, self.expr(y.expr))
            
           # If the elem is a proper array, load the address
           if x.elem.symbol.type == T_VAR_ARRAY:
             self.comment('Array')
             tmp = self.blocker.get_tmp()
             self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
-            i = celem(i, tmp)
+            n = celem(n, tmp)
           # Otherwise, just assign
           if x.elem.symbol.type == T_REF_ARRAY:
             self.comment('Array reference')
-            i = celem(i, self.expr(x))
+            n = celem(n, self.expr(x))
         
         # Otherwise, a single
         elif t.form == 'single':
@@ -527,29 +527,29 @@ class TranslateXS1(NodeWalker):
           # Variable reference
           if t.specifier == 'ref':
             self.comment('Variable reference')
-            i = celem(i, 't_arg_VAR')
+            n = celem(n, 't_arg_VAR')
             tmp = self.blocker.get_tmp()
             self.asm('mov %0, %1', outop=tmp,
                 inops=['('+x.elem.name+', unsigned[])'])
-            i = celem(i, tmp)
+            n = celem(n, tmp)
 
           # Value
           elif t.specifier == 'val':
             self.comment('Value')
-            i = celem(i, 't_arg_VAL')
-            i = celem(i, self.expr(x))
+            n = celem(n, 't_arg_VAL')
+            n = celem(n, self.expr(x))
 
     # Procedures: (jumpindex)*
     self.comment('Proc: parent '+proc_name)
-    i = celem(i, defs.JUMP_INDEX_OFFSET
+    n = celem(n, defs.JUMP_INDEX_OFFSET
         +self.sig.mobile_proc_names.index(proc_name))
     for x in self.child.children[proc_name]:
       self.comment('Proc: child '+x)
-      i = celem(i, defs.JUMP_INDEX_OFFSET
+      n = celem(n, defs.JUMP_INDEX_OFFSET
           +self.sig.mobile_proc_names.index(x))
 
     # Call runtime TODO: length argument?
-    self.out('{}({}, _closure);'.format(defs.LABEL_MIGRATE, 
+    self.out('{}({}, _closure);'.format(defs.LABEL_CREATE_PROCESS, 
       self.expr(node.core.expr)))
 
     self.blocker.end()

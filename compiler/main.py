@@ -182,13 +182,13 @@ def produce_ast(input_file, errorlog, log=True):
 
   return ast
 
-def semantic_analysis(sym, sig, ast, errorlog):
+def semantic_analysis(sym, sig, ast, device, errorlog):
   """ 
   Perform semantic analysis on an AST.
   """
   vmsg(v, "Performing semantic analysis")
   
-  sem = Semantics(sym, sig, errorlog)
+  sem = Semantics(sym, sig, device, errorlog)
   sem.walk_program(ast)
   
   # Check for any errors
@@ -215,28 +215,32 @@ def transform_ast(sem, sig, ast, errorlog, device):
     #print('Live:  {}'.format(node.inp))
     print('')
 
-  # Perform channel analysis
+  # 1. Perform channel analysis
 
-  # Insert channel connections
+  # 2. Insert channel connections
 
-  # Perform liveness analysis
+  # 3. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   BuildCFG().run(ast)
   Liveness().run(ast)
   #ast.accept(Display(print_livesets))
 
-  # Transform parallel composition
+  # 4. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
   TransformPar(sem, sig).walk_program(ast)
   
-  # Transform parallel replication
+  # 5. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
   TransformRep(sem, sig, device).walk_program(ast)
   
-  # Flatten nested calls
+  # 6. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
    
+  # 7. Perform child analysis
+  child = child_analysis(sig, ast)
+  #child.display()
+
   # Check for any errors
   if errorlog.any():
     raise Error()
@@ -245,6 +249,8 @@ def transform_ast(sem, sig, ast, errorlog, device):
   if pprint_trans_ast: 
     Printer().walk_program(ast)
     raise SystemExit()
+
+  return child
 
 def child_analysis(sig, ast):
   """ 
@@ -285,13 +291,10 @@ def main(args):
     # Perform semantic analysis on the AST
     sym = SymbolTable(errorlog)
     sig = SignatureTable(errorlog)
-    sem = semantic_analysis(sym, sig, ast, errorlog)
+    sem = semantic_analysis(sym, sig, ast, device, errorlog)
     
     # Perform AST transformations
-    transform_ast(sem, sig, ast, errorlog, device)
-
-    # Perform child analysis
-    child = child_analysis(sig, ast)
+    child = transform_ast(sem, sig, ast, errorlog, device)
 
     # Generate code
     vhdr(v, 'Generating code for {}'.format(device))

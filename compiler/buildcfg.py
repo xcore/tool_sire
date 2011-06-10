@@ -94,7 +94,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_connect(self, node, pred, succ):
     self.init_sets(node, pred, succ)
-    node.use |= self.elem(node.core)
+    node.use |= self.elem(node.core.expr)
     node.defs |= set([node.chan])
 
   def stmt_if(self, node, pred, succ):
@@ -124,7 +124,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_on(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
-    node.use |= self.elem(node.core)
+    node.use |= self.elem(node.core.expr)
     self.stmt(node.stmt, [node], succ)
 
   def stmt_return(self, node, pred, succ):
@@ -148,7 +148,12 @@ class BuildCFG(NodeWalker):
 
   # Identifier
   def elem_id(self, node):
-    return set([node])
+    """
+    We only want to return variables in the program/procedure scopes, not in
+    the system scope.
+    """
+    #print('elem: '+node.name+', {}'.format(node.symbol.scope))
+    return set([node]) if not node.symbol.scope == 'system' else set()
 
   # Array subscript
   def elem_sub(self, node):

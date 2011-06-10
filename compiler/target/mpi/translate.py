@@ -371,7 +371,7 @@ class TranslateMPI(NodeWalker):
           +self.sig.mobile_proc_names.index(x))) ; n+=1
 
     # Call runtime TODO: length argument?
-    self.out('{}({}, _closure);'.format(defs.LABEL_MIGRATE, 
+    self.out('{}({}, _closure);'.format(defs.LABEL_CREATE_PROCESS, 
       self.expr(node.core.expr)))
 
     self.blocker.end()

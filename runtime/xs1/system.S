@@ -317,7 +317,7 @@ _initThread:
 
 /* TODO: move these declarations into XC? */
 
-// Master/migrate 
+// Master/spawn 
 mSpawnChan:
   .space BYTES_PER_WORD
   .globl mSpawnChan.globound

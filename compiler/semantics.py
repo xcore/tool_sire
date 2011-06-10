@@ -78,7 +78,7 @@ class Semantics(NodeWalker):
   """ 
   An AST walker class to check the semantics of a sire program.
   """
-  def __init__(self, sym, sig, errorlog, debug=False):
+  def __init__(self, sym, sig, device, errorlog, debug=False):
     self.sym = sym
     self.sig = sig
     self.errorlog = errorlog
@@ -89,7 +89,8 @@ class Semantics(NodeWalker):
     # Add system variables core, chan
     self.sym.begin_scope('system')
     self.sym.insert(defs.SYS_CORE_ARRAY, T_CORE_ARRAY)
-    self.sym.insert(defs.SYS_NUM_CORES_CONST, T_VAL_SINGLE)
+    s = self.sym.insert(defs.SYS_NUM_CORES_CONST, T_VAL_SINGLE)
+    s.set_value(device.num_cores())
 
     # Add all mobile builtin functions
     for x in builtins.values():

@@ -6,6 +6,6 @@
 #ifndef GUEST_H
 #define GUEST_H
 
-void _migrate(unsigned, unsigned[]);
+void _createprocess(unsigned, unsigned[]);
 
 #endif

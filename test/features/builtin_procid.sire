@@ -1,5 +1,8 @@
 proc main() is
   var v;
-{ on core[NUM_CORES-1] do v := procid()
-; printvalln(v)
+  var i;
+{ for i in [0 for NUM_CORES] do
+  { on core[i] do v := procid()
+  ; printvalln(v)
+  }
 }

@@ -40,6 +40,7 @@ class SignatureTable(object):
       # Add it to the list of mobiles if it is mobile
       if mobile:
         self.mobile_proc_names.append(node.name)
+        #print('Added mobile '+node.name)
       
       if(self.debug):
         print("Inserted sig for '{}' ({})".format(node.name, type))
@@ -89,10 +90,7 @@ class SignatureTable(object):
     """
     Return the list of formal parameter declarations for a named procedure.
     """
-    if name in self.tab:
-      return self.tab[name].params
-    else:
-      return None
+    return self.tab[name].params if name in self.tab else None
 
   def add_mobile_proc(self, name):
     """
@@ -109,8 +107,7 @@ class SignatureTable(object):
     """
     Dump the contents of the table to buf.
     """
-    for x in self.scope:
-      buf.write(repr(x))
+    [buf.write(repr(x)) for x in self.scope]
 
 
 class Signature(object):

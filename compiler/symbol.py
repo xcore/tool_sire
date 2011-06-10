@@ -65,7 +65,7 @@ class SymbolTable(object):
     """ 
     Insert a new symbol in the table.
     """
-    s = Symbol(name, type, expr, coord, self.scope[-1])
+    s = Symbol(name, type, expr, coord, self.curr_scope)
     self.tab[name] = s 
     self.scope.append(self.tab[name])
     if(self.debug):
@@ -149,6 +149,9 @@ class Symbol(object):
     self.mark = False      # Whether it has been used
     self.prototype = True  # If it's a prototype and not a definition
 
+  def set_value(self, v):
+    self.value = v
+  
   def mark_used(self):
     self.mark = True
 

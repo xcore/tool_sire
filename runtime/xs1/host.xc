@@ -10,9 +10,10 @@
 #include "system.h"
 #include "util.h"
 #include "host.h"
+#include "asyncthread.h"
 #include "memory.h"
 
-extern void runProcedure      (int, unsigned int[], int);
+extern void runProcess        (int, unsigned int[], int);
 
 void       initGuestConnection(unsigned, unsigned);
 {int, int} receiveClosure     (unsigned, t_argument[], unsigned[], int[]);
@@ -43,10 +44,10 @@ void runThread(unsigned senderId) {
   {procIndex, numArgs} = receiveClosure(spawnChan[threadId], 
       argTypes, argValues, argLengths);
 
-  // Run the procedure
-  runProcedure(procIndex, argValues, numArgs);
+  // Run the process
+  runProcess(procIndex, argValues, numArgs);
 
-  // Complete the migration by sending back any results
+  // Complete the creation by sending back any results
   informCompleted(spawnChan[threadId], senderId);
   
   // Send any results back
@@ -75,6 +76,7 @@ unsigned setHost() {
 void spawnHost() {
 
   unsigned senderId;
+  unsigned pc;
   
   // Connect to the sender and receive their id 
   senderId = IN(mSpawnChan);
@@ -85,7 +87,8 @@ void spawnHost() {
   OUTCT_END(mSpawnChan);
 
   // Give the next thread some space and launch it
-  newAsyncThread(senderId);
+  asm("ldap r11, runThread ; mov %0, r11" : "=r"(pc) : "r11");
+  newAsyncThread(pc, senderId, 0, 0, 0);
 }
 
 // Initialise the conneciton with the sender
@@ -129,7 +132,7 @@ void initGuestConnection(unsigned c, unsigned senderId) {
   return {numArgs, numProcs};
 }
 
-// Receive the arguments to the migrated procedure
+// Receive the arguments to the new procedure
 #pragma unsafe arrays
 void receiveArguments(unsigned c, int numArgs, 
     t_argument argTypes[], unsigned argValues[], int argLengths[]) {
@@ -270,51 +273,5 @@ void sendResults(unsigned c, int numArgs,
       break;
     }
   }
-}
-
-// Spawn a new asynchronous thread
-void newAsyncThread(unsigned senderId) {
-  
-  // Claim a thread
-  unsigned t = claimAsyncThread();
-  
-  // Claim a stack slot
-  unsigned sp = claimStackSlot(THREAD_ID(t));
-  
-  // Initialise cp, dp, sp, pc, lr
-  asm("ldaw r11, cp[0] "
-    "; init t[%0]:cp, r11" ::"r"(t) : "r11");
-  asm("ldaw r11, dp[0] "
-    "; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
-  asm("ldap r11, runThread" 
-    " ; init t[%0]:pc, r11" :: "r"(t) : "r11");
-  asm("ldap r11, slaveYeild" 
-    " ; init t[%0]:lr, r11" :: "r"(t) : "r11");
-               
-  // Set senderId arg 
-  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(senderId));
-
-  // Touch remaining GPRs
-  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
-
-  // Start the thread
-  asm("start t[%0]" :: "r"(t));
-}
-
-// Yeild execution of a slave thread (only 1-7)
-void slaveYeild() {
-  releaseStackSlot(GET_THREAD_ID());
-  releaseThread();
-  asm("freet");
 }
 

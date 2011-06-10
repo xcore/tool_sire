@@ -18,14 +18,14 @@
 #define LABEL_BEGIN_BSS          "_fdp.bss"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
-#define LABEL_MIGRATE            "_migrate"
+#define LABEL_CREATE_PROCESS     "_createprocess"
 #define LABEL_INIT_THREAD        "_initThread"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
 #define LABEL_FRAME_TABLE        "_frametab"
 
 // Jump table indicies
-#define JUMPI_MIGRATE            0
+#define JUMPI_CREATE_REMOTE      0
 #define JUMPI_INIT_THREAD        1
 
 // Index offset of program jump indicies

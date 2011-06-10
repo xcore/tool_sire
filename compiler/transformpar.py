@@ -69,8 +69,12 @@ class TransformPar(NodeWalker):
     """
     assert isinstance(stmt, ast.Stmt)
     # Sets for live-in and local decls (for non-live, non-array targets).
-    live_in = stmt.inp.copy()
-    local_decls = FreeVars().allvars(stmt) - live_in
+    # Live-over = live-in u live-out
+    # TODO: we want to add variables as parameters if (they are live in or live
+    # out) and are used in the statement body.
+    free = FreeVars().allvars(stmt) 
+    live = (stmt.inp | stmt.out) & free
+    local_decls = free - live
     #Printer().stmt(stmt)
 
     # Create the formal and actual paramerer and local declaration lists
@@ -85,14 +89,14 @@ class TransformPar(NodeWalker):
     for x in indicies:
       formals.append(ast.Param(x.name, T_VAL_SINGLE, None))
       actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
-      live_in -= set([x])
+      live -= set([x])
       local_decls -= set([x])
 
     # Replicated parallel statements are more restrivtive
     var_to_param = rep_var_to_param if len(indicies)>0 else par_var_to_param
     
     # For each variable in the live-in set add accordingly to formals and actuals.
-    for x in live_in:
+    for x in live:
       #if x.symbol.type==T_CHAN_ARRAY:
       #  continue
       

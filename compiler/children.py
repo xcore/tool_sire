@@ -18,8 +18,6 @@ class Children(NodeVisitor):
     self.children = {}
     for x in sig.mobile_proc_names:
       self.children[x] = []
-    if(self.debug):
-      self.display()
 
   def up(self, tag):
     pass
@@ -30,16 +28,16 @@ class Children(NodeVisitor):
   def add_child(self, name):
     """ 
     Add a child procedure call of the program:
-     - omit builtins
+     - omit non-mobile builtins
      - add only if it hasn't been already
      - don't add if it is its parent (recursive)
     """
-    if ((not name in builtins.keys()) 
+    if ((name in filter(lambda x: builtins[x].mobile, builtins.keys()))
         and (not name in self.children[self.parent])
         and (not name == self.parent)):
       self.children[self.parent].append(name)
       if(self.debug):
-        print('added child '+name+' to '+self.parent)
+        print('  added child '+name+' to '+self.parent)
 
   def build(self):
     """ 
@@ -71,15 +69,18 @@ class Children(NodeVisitor):
           buf.write('\t'+y+'\n')
 
   def visit_def(self, node):
+    if self.debug:
+      print('Definition: '+node.name)
     self.parent = node.name
     return 'proc'
   
   def visit_stmt_pcall(self, node):
+    if self.debug:
+      print('  visiting pcall '+node.name)
     self.add_child(node.name)
 
   def visit_elem_fcall(self, node):
-    self.add_child(node.name)
-
-  def visit_elem_pcall(self, node):
+    if self.debug:
+      print('  visiting fcall '+node.name)
     self.add_child(node.name)
 

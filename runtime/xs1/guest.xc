@@ -19,6 +19,7 @@ void sendProcedures    (unsigned, int, int, unsigned[]);
 void waitForCompletion (unsigned, int);
 void receiveResults    (unsigned, int, unsigned[]);
 
+// Permute an address.
 unsigned permDest(unsigned d) {
   if(d >= 16 && d <= 31)
     return d + 16;
@@ -27,24 +28,48 @@ unsigned permDest(unsigned d) {
   return d;
 }
 
-// Migrate a procedure to a destination
-void _migrate(unsigned dest, unsigned closure[]) {
-  
+// Create a new remote process
+void _createprocess(unsigned dest, unsigned closure[]) {
+
   unsigned threadId = GET_THREAD_ID();
   unsigned c = spawnChan[threadId];
-  unsigned destId = GEN_CHAN_RI_0(dest);
-
-  // Initialise the connection with the host
-  initHostConnection(c, destId);
+ 
+  // Locally
+  if (GET_GLOBAL_CORE_ID(c) == dest)
+  { int procIndex = /*find proc index*/-1;
+    int numArgs;
+    unsigned argValues[MAX_PROC_PARAMETERS];
+    unsigned pc;
+    asm("ldap r11, runLocally ; mov %0, r11" : "=r"(pc) : "r11");
+    newAsyncThread(pc, closure[procIndex], argValues, numArgs);
+  }
   
-  // Transfer closure data
-  sendClosure(c, closure);
-  
-  // Wait for ececution to complete
-  waitForCompletion(c, threadId);
+  // Remotely
+  else 
+  { unsigned destId = GEN_CHAN_RI_0(dest);
 
-  // Receive any results
-  receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
+    // Initialise the connection with the host
+    initHostConnection(c, destId);
+    
+    // Transfer closure data
+    sendClosure(c, closure);
+    
+    // Wait for ececution to complete
+    waitForCompletion(c, threadId);
+
+    // Receive any results
+    receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
+  }
+}
+
+// Run a process locally on a new asynchronous thread
+void runLocally(int procIndex, unsigned argValues[], in numArgs) {
+
+  // Initialise the thread
+  _initThread();
+  
+  // Run the process
+  runProcess(procIndex, argValues, numArgs);
 }
 
 // Initialise the connection with the host thread
@@ -147,6 +172,8 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   
   unsigned cp;
+
+  // Load the address of the constant pointer
   asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(cp) :: "r11");
 
   for(int i=0; i<numProcs; i++) {
@@ -179,7 +206,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   }
 }
 
-// Wait for the completion of the migrated procedure
+// Wait for the completion of the new procedure
 void waitForCompletion(unsigned c, int threadId) {
   
   // (wait to) Acknowledge completion
@@ -191,7 +218,7 @@ void waitForCompletion(unsigned c, int threadId) {
   OUTCT_END(c);
 }
 
-// Receive any array arguments that may have been updated by the migrated
+// Receive any array arguments that may have been updated by the new
 // procedure 
 #pragma unsafe arrays
 void receiveResults(unsigned c, int numArgs, unsigned closure[]) {

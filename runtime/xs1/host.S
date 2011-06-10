@@ -3,7 +3,7 @@
 // University of Illinois/NCSA Open Source License posted in
 // LICENSE.txt and at <http://github.xcore.com/>
 
-  .globl runProcedure, "f{0}(si,&(a(:ui)),si)"
+  .globl runProcess, "f{0}(si,&(a(:ui)),si)"
 
   .text
 
@@ -13,19 +13,22 @@
 //  r1: unsigned int args[]
 //  r2: int numArgs
 //==========================================================
-  .cc_top runProcedure.function, runProcedure
+  .cc_top runProcess.function, runProcess
   .align 2
-runProcedure:
+runProcess:
 
-// NOTE: maximum of 8 arguments can be used
+// NOTE: maximum of MAX_PROC_PARAMETERS arguments can be used, but this code
+// must be modified manually.
 
-  entsp 8 
-  stw r8,  sp[5]
-  stw r9,  sp[6]
-  stw r10, sp[7]
+  entsp 10 
+  stw r6,  sp[5]
+  stw r7,  sp[6]
+  stw r8,  sp[7]
+  stw r9,  sp[9]
+  stw r10, sp[8]
  
   // Load args 5-n into sp[1]...sp[n]
-  ldc r10, 4        // i = 4
+  ldc r10, 6        // i = 4
   lss r9, r10, r2   // r9 = i < numArgs
   bf  r9, .LrunProc // if (i >= numArgs) runProc
   ldaw r3, sp[0]    // r3 = sp
@@ -57,11 +60,13 @@ runProcedure:
   // Branch and link to the procedure
   bla r10
 
-  ldw r8,  sp[5]
-  ldw r9,  sp[6]
-  ldw r10, sp[7]
-  retsp 8
+  ldw r6,  sp[5]
+  ldw r7,  sp[6]
+  ldw r8,  sp[7]
+  ldw r9,  sp[8]
+  ldw r10, sp[9]
+  retsp 10
 
-  .cc_bottom runProcedure.function
+  .cc_bottom runProcess.function
 
 

@@ -44,6 +44,7 @@ println     = proc_decl('println',     [])
 mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
+# System builtins
 procid = func_decl('procid', [], mobile=True)
 
 builtins = {
@@ -63,7 +64,7 @@ builtins = {
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
 runtime_functions = [ 
-  '_migrate',
+  '_createprocess',
   '_setupthread',
   ]
 

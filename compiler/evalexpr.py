@@ -78,7 +78,8 @@ class EvaluateExpr(NodeWalker):
 
   def elem_id(self, node):
     s = node.symbol
-    #print('Evaluating elem: '+node.name+', {}'.format(s))
+    #if s.value: 
+    #  print('Evaluating elem: '+node.name+', {} = {}'.format(s, s.value))
     return s.value if s and s.value else None
 
   def elem_group(self, node):
