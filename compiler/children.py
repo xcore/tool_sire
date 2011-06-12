@@ -32,12 +32,11 @@ class Children(NodeVisitor):
      - add only if it hasn't been already
      - don't add if it is its parent (recursive)
     """
-    if ((name in filter(lambda x: builtins[x].mobile, builtins.keys()))
-        and (not name in self.children[self.parent])
-        and (not name == self.parent)):
-      self.children[self.parent].append(name)
-      if(self.debug):
-        print('  added child '+name+' to '+self.parent)
+    if ((not name in self.children[self.parent]) and name != self.parent
+        and not name in filter(lambda x: not builtins[x].mobile, builtins.keys())):
+            self.children[self.parent].append(name)
+            if(self.debug):
+              print('  added child '+name+' to '+self.parent)
 
   def build(self):
     """ 
@@ -54,7 +53,7 @@ class Children(NodeVisitor):
           # for each child z of call y, or grandchild of x
           for z in self.children[y]:
             # Add it if it hasn't already been
-            if not z in self.children[x]:
+            if not z in self.children[x] and x != z:
               self.children[x].append(z)
               change = True
 
@@ -67,6 +66,7 @@ class Children(NodeVisitor):
       if x in self.children:
         for y in self.children[x]:
           buf.write('\t'+y+'\n')
+      buf.write('\n')
 
   def visit_def(self, node):
     if self.debug:

@@ -18,20 +18,22 @@ func div(val x, val y) is
   return divf8_24(x, y)
 
 proc printfix(val x) is
+  var v;
   var n;
   var i;
-{ if x < 0 then
+{ v := x
+; if v < 0 then
   { printchar('-')
-  ; x := -x
+  ; v := -v
   }
   else skip
-; n := unfix(x)
+; n := unfix(v)
 ; printval(n)
 ; printchar('.')
 ; for i in [0 for FIX_IBITS] do
-  { x := x - fix(n)
-  ; x := x * 10
-  ; n := unfix(x)
+  { v := v - fix(n)
+  ; v := v * 10
+  ; n := unfix(v)
   ; printchar(n+'0')
   }
 }

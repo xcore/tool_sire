@@ -331,7 +331,7 @@ class Parser(object):
     p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
 
   def p_stmt_alias(self, p):
-    'stmt : name ALIASES elem'
+    'stmt : left ALIASES elem'
     p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))
 
   def p_stmt_connect_master(self, p):

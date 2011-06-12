@@ -183,7 +183,7 @@ class Printer(NodeWalker):
 
   def stmt_alias(self, node):
     self.out('{} aliases {}'.format(
-      node.name, self.expr(node.slice)))
+      self.elem(node.left), self.elem(node.slice)))
 
   def stmt_connect(self, node):
     if node.core:

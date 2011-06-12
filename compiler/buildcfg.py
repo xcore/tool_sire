@@ -86,7 +86,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_alias(self, node, pred, succ):
     self.init_sets(node, pred, succ)
-    node.use |= self.expr(node.expr)
+    node.use |= self.elem(node.slice)
     node.defs |= set([node.left])
 
     # Add alias targets to use set to they are live until this point.
@@ -162,14 +162,14 @@ class BuildCFG(NodeWalker):
 
   # Array slice
   def elem_slice(self, node):
-    c = self.expr(node.begin)
-    c |= self.expr(node.end)
+    c = self.expr(node.base)
+    c |= self.expr(node.count)
     return c | set([node])
 
   # Index range
   def elem_index_range(self, node):
     node.defs |= set([node.name])
-    node.use |= self.expr(node.init)
+    node.use |= self.expr(node.base)
     node.use |= self.expr(node.count)
 
   def elem_group(self, node):

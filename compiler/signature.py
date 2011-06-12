@@ -54,6 +54,8 @@ class SignatureTable(object):
     if name in self.tab:
       s = self.tab[name] 
       del self.tab[name]
+      if name in self.mobile_proc_names:
+        self.mobile_proc_names.remove(name)
       if(self.debug):
         print("Deleted sig for '{}' ({})".format(s.name, s.type))
       return True

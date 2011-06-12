@@ -79,6 +79,7 @@ class TransformPar(NodeWalker):
 
     # Create the formal and actual paramerer and local declaration lists
     formals = []
+    formal_set = set()
     actuals = []
     decls = []
 
@@ -88,6 +89,7 @@ class TransformPar(NodeWalker):
     # declared again.
     for x in indicies:
       formals.append(ast.Param(x.name, T_VAL_SINGLE, None))
+      formal_set.add(x)
       actuals.append(ast.ExprSingle(ast.ElemId(x.name)))
       live -= set([x])
       local_decls -= set([x])
@@ -99,11 +101,16 @@ class TransformPar(NodeWalker):
     for x in live:
       #if x.symbol.type==T_CHAN_ARRAY:
       #  continue
+
+      # Don't include constant values.
+      if x.symbol.type == T_VAL_SINGLE and x.symbol.scope == 'program':
+          continue
       
       # All parameters are added as formals with the appropriate conversion
       p = ast.Param(x.name, var_to_param[x.symbol.type], x.symbol.expr)
       p.symbol = x.symbol
       formals.append(p)
+      formal_set.add(x)
 
       # If the actual is an array subscript or slice, we only pass the id.
       if isinstance(x, ast.ElemSlice) or isinstance(x, ast.ElemSub):
@@ -114,11 +121,17 @@ class TransformPar(NodeWalker):
         actuals.append(ast.ExprSingle(copy.copy(x)))
     
       # For arrays with lengths specified with variables (i.e. arrays passed by
-      # reference) then we must include the length as the next parameter.
+      # reference) then we must include the length as the next parameter as long
+      # as it is not already in the live set OR the formals and it's not a
+      # defined value.
       if (x.symbol.type.form == 'array' 
-          and isinstance(x.symbol.expr, ast.ExprSingle)):
+          and isinstance(x.symbol.expr, ast.ExprSingle)
+          and not x.symbol.expr.elem in live
+          and not x.symbol.expr.elem in formal_set
+          and x.symbol.value == None):
         p = ast.Param(x.symbol.expr.elem.name, T_VAL_SINGLE, None)
         formals.append(p)
+        formal_set.add(x.symbol.expr.elem)
         actuals.append(x.symbol.expr)
       
     # Create a unique name

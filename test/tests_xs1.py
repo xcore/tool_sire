@@ -42,6 +42,7 @@ xs1_example_tests = [
 xs1_feature_general = [
   Test('for'),
   Test('array_elemref'),
+  Test('array_alias'),
   Test('array_slice1'),
   Test('array_slice2'),
   ]
@@ -85,11 +86,11 @@ xs1_feature_replicator = [
   ]
 
 xs1_feature_tests =\
-  xs1_feature_general +\
-  xs1_feature_builtin +\
-  xs1_feature_thread +\
-  xs1_feature_on +\
-  xs1_feature_replicator
+  xs1_feature_general\
+  + xs1_feature_builtins\
+  + xs1_feature_thread\
+  + xs1_feature_on 
+  #+ xs1_feature_replicator
 
 def run_test(self, name, path, num_cores, args=[]):
     """

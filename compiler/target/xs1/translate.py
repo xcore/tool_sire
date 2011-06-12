@@ -49,7 +49,7 @@ builtin_conversion = {
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',
   # System
-  'procid'     : 'procid',
+  'procid'     : '_procid',
 }
 
 class TranslateXS1(NodeWalker):
@@ -168,6 +168,7 @@ class TranslateXS1(NodeWalker):
     self.out('#include "runtime/xs1/globals.h"')
     self.out('#include "runtime/xs1/util.h"')
     self.out('#include "runtime/xs1/guest.h"')
+    self.out('#include "runtime/xs1/system.h"')
     self.out('#include "system/definitions.h"')
     self.out('#include "system/xs1/definitions.h"')
     self.out('')
@@ -196,7 +197,9 @@ class TranslateXS1(NodeWalker):
       self.out('')
      
     # Definitions
-    [self.defn(p, 0) for p in node.defs]
+    [self.prototype(p) for p in node.defs]
+    self.out('')
+    [self.definition(p) for p in node.defs]
 
     # Output the buffered blocks
     self.blocker.output()
@@ -223,25 +226,29 @@ class TranslateXS1(NodeWalker):
 
   # Procedure definitions ===============================
 
-  def defn(self, node, d):
+  def prototype(self, node):
+    s = ''
+    s += 'void' if node.type == T_PROC else 'int'
+    s += ' {}({});'.format(self.procedure_name(node.name),
+        ', '.join([self.param(x) for x in node.formals]))
+    self.out(s)
+
+  def definition(self, node):
     self.out('#pragma unsafe arrays')
     s = ''
-    s += 'void' if node.name == '_main' else 'int'
-    s += ' {}({})'.format(
-        self.procedure_name(node.name),
-        ', '.join([self.param(x) for x in node.formals]))
+    s += 'void' if node.type == T_PROC else 'int'
+    s += ' {}({}){}'.format(self.procedure_name(node.name),
+        ', '.join([self.param(x) for x in node.formals]),
+        ';' if not node.stmt else '')
     self.parent = node.name
     self.out(s)
-    self.blocker.begin()
     
-    # Declarations
-    [self.out(self.decl(x)) for x in node.decls]
-    if len(node.decls) > 0:
-      self.out('')
+    if node.stmt:
+        self.blocker.begin()
+        [self.out(self.decl(x)) for x in node.decls]
+        self.stmt_block(node.stmt)
+        self.blocker.end()
     
-    # Statement block
-    self.stmt_block(node.stmt)
-    self.blocker.end()
     self.out('')
   
   # Formals =============================================
@@ -421,12 +428,13 @@ class TranslateXS1(NodeWalker):
     some inline assembly to get xcc to load the address for us. Otherwise,
     we can just perform arithmetic on the pointer.
     """
-    if node.symbol.type == T_VAR_ARRAY:
-      self.asm('add %0, %1, %2', outop=node.name, 
+    if node.left.symbol.type == T_VAR_ARRAY:
+      self.asm('add %0, %1, %2', outop=node.left.name, 
           inops=[node.slice.name, '({})*{}'.format(
             self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
-    elif node.symbol.type == T_REF_ARRAY:
-      self.out('{} = {} + ({})*{};'.format(node.name, node.slice.name, 
+
+    elif node.left.symbol.type == T_REF_ARRAY:
+      self.out('{} = {} + ({})*{};'.format(self.elem(node.left), node.slice.name, 
         self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
   def stmt_connect(self, node):
@@ -477,7 +485,7 @@ class TranslateXS1(NodeWalker):
     # If the destination is the current processor, then we just evaluate the
     # statement locally.
     self.comment('On')
-    self.out('if ({} == procid())'.format(self.expr(node.core.expr)))
+    self.out('if ({} == _procid())'.format(self.expr(node.core.expr)))
 
     # Local evaluation
     self.blocker.begin()
@@ -626,14 +634,11 @@ class TranslateXS1(NodeWalker):
     address = ''+node.name
     if node.symbol.type == T_VAR_ARRAY:
       address = '(unsigned, '+address+')'
-    return '({} + ({})*{})'.format(address, self.expr(node.begin),
+    return '({} + ({})*{})'.format(address, self.expr(node.base),
          defs.BYTES_PER_WORD)
 
-  def elem_pcall(self, node):
-    return '{}({})'.format(node.name, self.arguments(node.args))
-
   def elem_fcall(self, node):
-    return '{}({})'.format(node.name, self.arguments(node.args))
+    return '{}({})'.format(self.procedure_name(node.name), self.arguments(node.args))
 
   def elem_number(self, node):
     return '{}'.format(node.value)

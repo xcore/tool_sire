@@ -137,6 +137,7 @@ class TranslateMPI(NodeWalker):
     self.out('#include <stdio.h>')
     self.out('#include <syscall.h>')
     self.out('#include "device.h"')
+    self.out('#include "runtime/mpi/system.h"')
     self.out('#include "runtime/mpi/guest.h"')
     self.out('#include "system/definitions.h"')
     self.out('#include "system/mpi/definitions.h"')
@@ -159,7 +160,9 @@ class TranslateMPI(NodeWalker):
       self.out('')
     
     # Definitions
-    [self.defn(p) for p in node.defs]
+    [self.prototype(p) for p in node.defs]
+    self.out('')
+    [self.definition(p) for p in node.defs]
    
     # Output the buffered blocks
     self.blocker.output()
@@ -186,9 +189,16 @@ class TranslateMPI(NodeWalker):
 
   # Procedure declarations ==============================
 
-  def defn(self, node):
+  def prototype(self, node):
     s = ''
-    s += 'void' if node.name == '_main' else 'int'
+    s += 'void' if node.type == T_PROC else 'int'
+    s += ' {}({});'.format(self.procedure_name(node.name),
+        ', '.join([self.param(x) for x in node.formals]))
+    self.out(s)
+
+  def definition(self, node):
+    s = ''
+    s += 'void' if node.type == T_PROC else 'int'
     s += ' {}({}){}'.format(self.procedure_name(node.name),
         ', '.join([self.param(x) for x in node.formals]),
         ';' if not node.stmt else '')
@@ -197,13 +207,8 @@ class TranslateMPI(NodeWalker):
 
     if node.stmt:
       self.blocker.begin()
-      
-      # Declarations
       [self.out(self.decl(x)) for x in node.decls]
-       
-      # Statement block
       self.stmt_block(node.stmt)
-     
       self.blocker.end()
     
     self.out('')
@@ -265,7 +270,7 @@ class TranslateMPI(NodeWalker):
 
   def stmt_alias(self, node):
     self.out('{} = {};'.format(
-      node.name, self.expr(node.slice)))
+      self.elem(node.left), self.elem(node.slice)))
 
   def stmt_connect(self, node):
     if node.core:
@@ -297,84 +302,7 @@ class TranslateMPI(NodeWalker):
     """ 
     Generate an on statement.
     """
-    proc_name = node.pcall.name
-    num_args = len(node.pcall.args.expr) if node.pcall.args.expr else 0 
-    num_procs = len(self.child.children[proc_name]) + 1
-    
-    # Calculate closure size 
-    closure_size = 2 + num_procs;
-    for (i, x) in enumerate(node.pcall.args.expr):
-      t = self.sig.lookup_param_type(proc_name, i)
-      if t.form == 'array': closure_size = closure_size + 3
-      elif t.form == 'single': closure_size = closure_size + 2 
-
-    self.comment('On')
-    
-    self.blocker.begin()
-    self.out('unsigned _closure[{}];'.format(closure_size))
-    n = 0
-
-    # Header: (#args, #procs)
-    self.comment('Header: (#args, #procs)')
-    self.out('_closure[{}] = {};'.format(n, num_args)) ; n+=1
-    self.out('_closure[{}] = {};'.format(n, num_procs)) ; n+=1
-
-    # Arguments: 
-    #   Array: (0, length, address)
-    #   Var:   (1, address)
-    #   Val:   (2, value)
-    if node.pcall.args.expr:
-      for (i, x) in enumerate(node.pcall.args.expr):
-        t = self.sig.lookup_param_type(proc_name, i)
-
-        # If the parameter type is an array reference
-        if t == T_REF_ARRAY:
-
-          # Output the length of the array
-          q = self.sig.lookup_array_qualifier(proc_name, i)
-          self.comment('array reference')
-          self.out('_closure[{}] = t_arg_ALIAS;'.format(n)) ; n+=1
-          self.out('_closure[{}] = {};'.format(n,
-            self.expr(node.pcall.args.expr[q]))) ; n+=1
-           
-          # If the elem is a proper array, load the address
-          if x.elem.symbol.type == T_VAR_ARRAY:
-            tmp = self.blocker.get_tmp()
-            self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
-            self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
-          # Otherwise, just assign
-          if x.elem.symbol.type == T_REF_ARRAY:
-            self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
-        
-        # Otherwise, a var or val single
-        elif t.form == 'single':
-
-          if t.specifier == 'var':
-            self.comment('var')
-            self.out('_closure[{}] = t_arg_VAR;'.format(n)) ; n+=1
-            tmp = self.blocker.get_tmp()
-            self.asm('mov %0, %1', outop=tmp,
-                inops=['('+x.elem.name+', unsigned[])'])
-            self.out('_closure[{}] = {};'.format(n, tmp)) ; n+=1
-          elif t.specifier == 'val':
-            self.comment('val')
-            self.out('_closure[{}] = t_arg_VAL;'.format(n)) ; n+=1
-            self.out('_closure[{}] = {};'.format(n, self.expr(x))) ; n+=1
-
-    # Procedures: (jumpindex)*
-    self.comment('Proc: parent '+proc_name)
-    self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-        +self.sig.mobile_proc_names.index(proc_name))) ; n+=1
-    for x in self.child.children[proc_name]:
-      self.comment('Proc: child '+x)
-      self.out('_closure[{}] = {};'.format(n, defs.JUMP_INDEX_OFFSET
-          +self.sig.mobile_proc_names.index(x))) ; n+=1
-
-    # Call runtime TODO: length argument?
-    self.out('{}({}, _closure);'.format(defs.LABEL_CREATE_PROCESS, 
-      self.expr(node.core.expr)))
-
-    self.blocker.end()
+    self.out('on statement') 
 
   def stmt_return(self, node):
     self.out('return {};'.format(self.expr(node.expr)))

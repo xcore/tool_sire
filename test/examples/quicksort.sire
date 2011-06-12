@@ -2,7 +2,7 @@ val LENGTH:=10;
 var a[LENGTH];
 
 % Partition
-proc partition(var array[len], val len) is
+func partition(var array[len], val len) is
   var storeIndex;
   var pivot;
   var pivotValue;

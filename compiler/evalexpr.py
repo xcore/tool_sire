@@ -77,6 +77,7 @@ class EvaluateExpr(NodeWalker):
   # Elements= ===========================================
 
   def elem_id(self, node):
+    #print('eval: id: '+node.name+', {}'.format(node.symbol))
     s = node.symbol
     #if s.value: 
     #  print('Evaluating elem: '+node.name+', {} = {}'.format(s, s.value))

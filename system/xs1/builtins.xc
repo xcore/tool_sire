@@ -42,14 +42,3 @@ int divf8_24(int x, int y) {
   return r * sgn;
 }
 
-// Return the processor id by allocating a channel end, extracting the node and
-// core id, then deallocating it again.
-int procid() {
-  unsigned c, v;
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-  asm("bitrev %0, %1" : "=r"(v) : "r"(c));
-  v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
-  asm("freer res[%0]" :: "r"(c));
-  return v;
-}
-

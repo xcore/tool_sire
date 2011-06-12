@@ -7,6 +7,7 @@
 #define SYSTEM_H
 
 extern void _initThread();
+int _procid();
 
 // Initialisation
 void resetChanends();

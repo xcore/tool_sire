@@ -54,7 +54,7 @@ proc msort(val t, val n, var A[len], var S[len], val len) is
     | on core[t+(n/2)] do msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
     }
     else
-    { msort(t, n/2, A[0:i], S[0:i], i) 
+    { msort(t, n/2, A[0 for i], S[0 for i], i) 
     ; msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
     }
   ; merge(A[0 for i], A[i for j], A, S, i, j, len)

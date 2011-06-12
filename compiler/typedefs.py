@@ -32,7 +32,7 @@ T_VAL_SINGLE     = Type('val', 'single')
 # Single variables
 T_VAR_SINGLE     = Type('var', 'single')
 T_VAL_SUB        = Type('val', 'sub')
-T_VAR_SUB        = Type('ref', 'sub')
+T_VAR_SUB        = Type('var', 'sub')
 T_REF_SINGLE     = Type('ref', 'single')
 T_REF_SUB        = Type('ref', 'sub')
 
@@ -51,7 +51,7 @@ T_CHAN_ARRAY     = Type('chan', 'array')
 
 # Procedures
 T_PROC           = Type('proc', 'procedure')
-T_FUNC           = Type('proc', 'procedure')
+T_FUNC           = Type('func', 'procedure')
 
 # System variables
 T_CORE_ARRAY     = Type('core', 'array')

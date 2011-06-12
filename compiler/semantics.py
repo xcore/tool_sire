@@ -68,8 +68,8 @@ rep_var_to_param = {
   T_VAL_SINGLE : T_VAL_SINGLE,
   T_VAR_SINGLE : T_VAL_SINGLE, 
   T_REF_SINGLE : T_VAL_SINGLE,
-  T_VAR_SUB  : T_VAL_SINGLE,
-  T_REF_SUB  : T_VAL_SINGLE,
+  T_VAR_SUB    : T_VAL_SINGLE,
+  T_REF_SUB    : T_VAL_SINGLE,
   T_VAR_ARRAY  : T_REF_ARRAY, 
   T_REF_ARRAY  : T_REF_ARRAY,
 }
@@ -156,6 +156,7 @@ class Semantics(NodeWalker):
     Given an elem and a set of types, check if one matches
     """
     t = self.get_elem_type(elem)
+    #print('type {}'.format(t))
     return True if t and any([x==t for x in types]) else False
 
   def check_def(self, node):
@@ -347,9 +348,10 @@ class Semantics(NodeWalker):
     # Begin a new scope for decls and stmt components
     self.sym.begin_scope('proc')
     
-    # Iterate over in parameters in reverse so length specifiers have been
-    # declared, which should appear after the array reference they relate to.
-    [self.param(x) for x in reversed(node.formals)]
+    # First obtain all the symbols so that we can resolve all array length
+    # specifiers, i.e. where the specifier appears before the array parameter.
+    [self.param_(x) for x in node.formals]
+    [self.param(x) for x in node.formals]
      
     # Check if this is a prototype or the actual definition
     if node.stmt:
@@ -372,13 +374,20 @@ class Semantics(NodeWalker):
   
   # Formals =============================================
   
-  def param(self, node):
-     
+  def param_(self, node):
+
+    # Check the declaration and add create the symbol
     if not self.sym.lookup_scoped(node.name):
       s = self.sym.insert(node.name, node.type, node.expr, node.coord)
       node.symbol = s
     else:
       self.redecl_error(node.name, node.coord)
+
+  def param(self, node):
+
+    # Children
+    if node.type == T_REF_ARRAY:
+      self.expr(node.expr)
 
     # Try and determine the array bound (if it's constant valued)
     if node.type == T_REF_ARRAY:
@@ -389,10 +398,6 @@ class Semantics(NodeWalker):
       if (node.symbol.value == None
           and not isinstance(node.expr, ast.ExprSingle)):
         self.array_param_bound_decl_error(node.name, node.coord)
-
-    # Children
-    if node.type == T_REF_ARRAY:
-      self.expr(node.expr)
 
   # Statements ==========================================
 
@@ -424,7 +429,6 @@ class Semantics(NodeWalker):
 
     # Check valid type for assignment target
     if not self.check_elem_types(node.left, [
-         T_VAL_SINGLE, 
          T_VAR_SINGLE, 
          T_REF_SINGLE, 
          T_VAR_SUB,
@@ -474,13 +478,12 @@ class Semantics(NodeWalker):
   def stmt_alias(self, node):
 
     # Children
-    self.expr(node.slice)
-    
-    node.symbol = self.check_decl(node.name, node.coord)
+    self.elem(node.left)
+    self.elem(node.slice)
 
     # Check the target variable type
-    if not self.sym.check_form(node.name, ['array']):
-      self.type_error('array', node.dest, node.coord)
+    if not self.check_elem_types(node.left, [T_REF_ARRAY]):
+      self.type_error('array', node.left, node.coord)
     
     # Check the element is a slice
     if not isinstance(node.slice, ast.ElemSlice):
@@ -534,6 +537,11 @@ class Semantics(NodeWalker):
     for x in node.indicies:
       if not isinstance(x, ast.ElemIndexRange):
         self.index_range_error('parallel replicator', node.coord)
+      
+    # Determine the values of the base and count expressions
+    for x in node.indicies:
+        x.base_value = self.eval_expr(x.base)
+        x.count_value = self.eval_expr(x.count)
 
   def stmt_on(self, node):
 
@@ -630,10 +638,6 @@ class Semantics(NodeWalker):
     # Check the symbol type
     if not self.sym.check_type(node.name, [T_VAR_SINGLE]):
       self.type_error('index range variable', node.name, node.coord)
-      
-    # Determine the values of the base and count expressions  
-    node.base_value = self.eval_expr(node.base)
-    node.count_value = self.eval_expr(node.count)
 
   def elem_fcall(self, node):
 

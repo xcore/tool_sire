@@ -392,6 +392,7 @@ def build_jumptab(sig, buf, v):
     # Runtime entries
     buf.write('\t.word '+defs.LABEL_CREATE_PROCESS+'\n')
     buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
+    buf.write('\t.word '+defs.LABEL_PROC_ID+'\n')
 
     # Program entries
     for x in sig.mobile_proc_names:

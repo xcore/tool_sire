@@ -11,7 +11,7 @@ import os
 import argparse
 import logging
 
-from error import Error
+from error import Error, QuietError
 from errorlog import ErrorLog
 from util import vmsg, vhdr
 import util
@@ -164,7 +164,7 @@ def produce_ast(input_file, errorlog, log=True):
   ast = parser.parse(input_file, infile, debug=logger)
   
   if errorlog.any():
-    raise Error()
+    raise QuietError()
   
   # Perform parsing only
   if parse_only: 
@@ -193,7 +193,7 @@ def semantic_analysis(sym, sig, ast, device, errorlog):
   
   # Check for any errors
   if errorlog.any():
-    raise Error()
+    raise QuietError()
    
   # Quit if we're only performing semantic analysis
   if sem_only: 
@@ -305,6 +305,10 @@ def main(args):
   except SystemExit:
     return 0
 
+  # Handle any specific compilation errors quietly
+  except QuietError as e:
+    return 1
+  
   # Handle any specific compilation errors
   except Error as e:
     sys.stderr.write('Error: {}\n'.format(e))

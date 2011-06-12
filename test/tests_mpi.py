@@ -42,14 +42,15 @@ mpi_example_tests = [
 mpi_feature_general = [
   Test('for'),
   Test('array_elemref'),
+  Test('array_alias'),
   Test('array_slice1'),
   Test('array_slice2'),
   ]
 
-xs1_feature_builtins = [
+mpi_feature_builtins = [
   Test('builtin_fixedpoint'),
   Test('builtin_printing'),
-  Test('builtin_procid'),
+  #Test('builtin_procid'),
   ]
 
 mpi_feature_thread = [
@@ -85,7 +86,7 @@ mpi_feature_replicator = [
 
 mpi_feature_tests =\
   mpi_feature_general +\
-  mpi_feature_builtin +\
+  mpi_feature_builtins +\
   mpi_feature_thread +\
   mpi_feature_on +\
   mpi_feature_replicator

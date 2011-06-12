@@ -21,6 +21,7 @@
 _jumptab:
   .word _createprocess
   .word _initThread
+  .word _procid
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

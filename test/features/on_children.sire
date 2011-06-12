@@ -12,3 +12,4 @@ proc main() is
 { on core[NUM_CORES-1] do h(v)
 ; printhexln(v)
 }
+
