@@ -2,6 +2,6 @@ proc main() is
   var i;
   for i in [1 for 100] do
   { skip 
-  | skip 
+  || skip 
   }
 

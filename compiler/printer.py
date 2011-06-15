@@ -160,7 +160,7 @@ class Printer(NodeWalker):
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
-    self.stmt_block(node, '|')
+    self.stmt_block(node, '||')
 
   def stmt_skip(self, node):
     self.out('skip')

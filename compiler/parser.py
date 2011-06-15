@@ -120,18 +120,18 @@ class Parser(object):
 
   # Variable declaration sequence (return a single list)
   def p_var_decl_seq(self, p):
-    'var_decl_seq : var_decl SEMI'
+    'var_decl_seq : var_decl SEQSEP'
     p[0] = [p[1]]
 
   # Variable declaration sequence (return a single list)
   def p_var_decl_seq_(self, p):
-    'var_decl_seq : var_decl SEMI var_decl_seq'
+    'var_decl_seq : var_decl SEQSEP var_decl_seq'
     p[0] = [p[1]] + p[3] if p[3] else [p[1]]
 
   # Variable declaration sequence error
   def p_var_decl_seq_err(self, p):
-    '''var_decl_seq : error SEMI
-            | error SEMI var_decl_seq'''
+    '''var_decl_seq : error SEQSEP
+            | error SEQSEP var_decl_seq'''
     self.parse_error('declarations', self.coord(p))
 
   # Single variable declaration
@@ -203,13 +203,13 @@ class Parser(object):
 
   # Process prototype
   def p_proc_prototype_proc(self, p):
-    'proc_def : PROC name LPAREN formals RPAREN SEMI'
+    'proc_def : PROC name LPAREN formals RPAREN SEQSEP'
     p[0] = ast.Def(p[2], T_PROC, 
         p[4], None, None, self.coord(p)) 
 
   # Function prototype
   def p_proc_prototype_func(self, p):
-    'proc_def : FUNC name LPAREN formals RPAREN SEMI'
+    'proc_def : FUNC name LPAREN formals RPAREN SEQSEP'
     p[0] = ast.Def(p[2], T_FUNC,
         p[4], None, None, self.coord(p)) 
 
@@ -281,7 +281,7 @@ class Parser(object):
 
   # Seq
   def p_stmt_seq_(self, p):
-    'stmt_seq : stmt SEMI stmt_seq'
+    'stmt_seq : stmt SEQSEP stmt_seq'
     p[0] = [p[1]] + p[3] if p[3] else [p[1]]
 
   # Par block
@@ -291,21 +291,21 @@ class Parser(object):
 
   # Par
   def p_stmt_par(self, p):
-    'stmt_par : stmt BAR stmt'
+    'stmt_par : stmt PARSEP stmt'
     p[0] = [p[1]] + [p[3]]
 
   def p_stmt_par_seq(self, p):
-    'stmt_par : stmt BAR stmt_par'
+    'stmt_par : stmt PARSEP stmt_par'
     p[0] = [p[1]] + p[3]
 
   # Seq error
   def p_stmt_seq_err(self, p):
-    'stmt_seq : error SEMI stmt_seq'
+    'stmt_seq : error SEQSEP stmt_seq'
     self.parse_error('in a sequential block', self.coord(p))
 
   # Par error
   def p_stmt_par_err(self, p):
-    'stmt_par : error BAR stmt_par'
+    'stmt_par : error PARSEP stmt_par'
     self.parse_error('in a parallel block', self.coord(p))
 
   # Statements ==========================================

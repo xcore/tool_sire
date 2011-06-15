@@ -51,7 +51,7 @@ proc msort(val t, val n, var A[len], var S[len], val len) is
   ; j := len - i
   ; if len > THRESHOLD then
     { msort(t, n/2, A[0 for i], S[0 for i], i) 
-    | on core[t+(n/2)] do msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
+    || on core[t+(n/2)] do msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
     }
     else
     { msort(t, n/2, A[0 for i], S[0 for i], i) 

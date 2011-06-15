@@ -13,7 +13,7 @@ proc mapreduce(val id, var A[n], val n, var r) is
       A[0] := f(A[0])
   else
   { { mapreduce(id,     A[0:n/2], n/2, p)
-    | mapreduce(id+n/2, A[n/2:n], n/2, q)
+    || mapreduce(id+n/2, A[n/2:n], n/2, q)
     }
   ; r := combine(p, q)
   }
