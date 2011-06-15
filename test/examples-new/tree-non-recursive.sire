@@ -1,5 +1,6 @@
 val D := 4;
 val N := 1 << D;
+val LEN := 100;
 
 func f(val v) is
   return v
@@ -7,36 +8,49 @@ func f(val v) is
 func g(val u, val v) is
   return u + v
 
-proc leaf(chanend c) is
-  var v;
-{ c ? v
-; c ! f(v)
+proc leaf(val i, chanend c) is
+  var data[LEN];
+  var enq;
+  var found;
+  var i;
+{ % initialise the data
+  while true do
+  { found := false
+  ; for i in [0 for LEN] do
+      found := (data[i] = enq) or found
+  ; c ! found
+  }
 }
 
 proc branch(chanend c, chanend left, chanend right) is
-  var u;
-  var v;
-{ c ? v
-; left ! v ; right ! v
-; left ? u ; right ? v
-; c ! g(u, v)
+  var enq;
+  var lfound;
+  var rfound;
+{ while true do
+  { c ? enq
+  ; left ! enq 
+  ; right ! enq
+  ; left ? lfound 
+  ; right ? rfound
+  ; c ! lfound or rfound
+  }
 }
 
 proc tree(chanend input) is
   chan c[2*N-1];
 {
-  { input ? v ; c[0] ! v} ||
+  { input ? v ; c[0] ! v } ||
   par i in [0 for N-1] do
     branch(c[i], c[2*i+1], c[2*i+2]) ||
   par i in [0 for N] do 
-    leaf(c[N-1+i])
+    leaf(i, c[N-1+i])
 }
 
 proc main() is
   chan c;
-  var query;
+  var enq;
   var result;
-{ { c ! query ; c ? result } ||
+{ { c ! enq ; c ? result } ||
   tree(c)
 }
 
