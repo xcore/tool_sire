@@ -335,7 +335,7 @@ class Parser(object):
     p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))
 
   def p_stmt_connect_master(self, p):
-    'stmt : CONNECT left TO left'
+    'stmt : CONNECT left TO expr'
     p[0] = ast.StmtConnect(p[2], p[4], self.coord(p))
 
   def p_stmt_connect_slave(self, p):
@@ -369,7 +369,7 @@ class Parser(object):
     p[0] = [p[1]] + p[3]
 
   def p_stmt_on(self, p):
-    'stmt : ON left DO stmt'
+    'stmt : ON expr DO stmt'
     p[0] = ast.StmtOn(p[2], p[4], self.coord(p))
 
   def p_stmt_return(self, p):

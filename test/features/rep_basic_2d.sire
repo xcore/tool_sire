@@ -4,8 +4,7 @@ val Y := 2;
 proc main() is
   var i;
   var j;
-  var v;
 { par i in [1 for X], j in [1 for Y] do 
-    v := i + j
+    skip
 }
 

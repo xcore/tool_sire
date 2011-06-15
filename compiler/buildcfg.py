@@ -124,7 +124,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_on(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
-    node.use |= self.elem(node.core.expr)
+    node.use |= self.expr(node.expr)
     self.stmt(node.stmt, [node], succ)
 
   def stmt_return(self, node, pred, succ):

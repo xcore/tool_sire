@@ -355,15 +355,15 @@ class StmtAlias(Stmt):
 
 
 class StmtConnect(Stmt):
-  def __init__(self, chan, core, coord=None):
+  def __init__(self, chan, expr, coord=None):
     self.chan = chan
-    self.core = core
+    self.expr = expr
     self.coord = coord
 
   def children(self):
     c = []
     if self.chan is not None: c.append(self.chan)
-    if self.core is not None: c.append(self.core)
+    if self.expr is not None: c.append(self.expr)
     return tuple(c)
 
   def accept(self, visitor):
@@ -482,14 +482,14 @@ class StmtIf(Stmt):
 
 
 class StmtOn(Stmt):
-  def __init__(self, core, stmt, coord=None):
-    self.core = core
+  def __init__(self, expr, stmt, coord=None):
+    self.expr = expr
     self.stmt = stmt
     self.coord = coord
 
   def children(self):
     c = []
-    if self.core is not None: c.append(self.core)
+    if self.expr is not None: c.append(self.expr)
     if self.stmt is not None: c.append(self.stmt)
     return tuple(c)
 

@@ -546,7 +546,7 @@ class Semantics(NodeWalker):
   def stmt_on(self, node):
 
     # Children
-    self.elem(node.core)
+    self.expr(node.expr)
     self.stmt(node.stmt)
 
     # Check the type of the core element

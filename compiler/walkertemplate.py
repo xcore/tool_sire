@@ -78,10 +78,7 @@ class TemplateWalker(NodeWalker):
     self.stmt(node.stmt)
 
   def stmt_for(self, node):
-    self.elem(node.var)
-    self.expr(node.init)
-    self.expr(node.bound)
-    self.expr(node.step)
+    self.elem(node.index)
     self.stmt(node.stmt)
 
   def stmt_rep(self, node):
@@ -89,7 +86,8 @@ class TemplateWalker(NodeWalker):
     self.stmt(node.stmt)
     
   def stmt_on(self, node):
-    self.elem(node.stmt)
+    self.expr(node.expr)
+    self.stmt(node.stmt)
 
   def stmt_return(self, node):
     self.expr(node.expr)
