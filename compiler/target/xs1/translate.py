@@ -390,7 +390,7 @@ class TranslateXS1(NodeWalker):
     self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
 
     self.blocker.end()
-
+  
   def stmt_skip(self, node):
     pass
 
