@@ -59,6 +59,9 @@ xs1_feature_thread = [
   Test('thread_basic_8'),
   Test('thread_repeat_2'),
   Test('thread_repeat_8'),
+  Test('thread_arguments_2'),
+  Test('thread_arguments_4'),
+  Test('thread_arguments_8'),
   ]
 
 xs1_feature_on = [

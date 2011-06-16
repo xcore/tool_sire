@@ -68,4 +68,6 @@
 
 #define SWITCH_SCRATCH_REG       3
 
+#define NUM_PARAM_REGS           4
+
 #endif

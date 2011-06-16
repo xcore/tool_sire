@@ -13,6 +13,8 @@ from walker import NodeWalker
 from typedefs import *
 from blocker import Blocker
 from blocker import INDENT
+from target.xs1.on import gen_on
+from target.xs1.par import gen_par
 
 op_conversion = {
   '+'   : '+',
@@ -196,7 +198,7 @@ class TranslateXS1(NodeWalker):
     if len(node.decls) > 0:
       self.out('')
      
-    # Definitions
+    # Prototypes and definitions
     [self.prototype(p) for p in node.defs]
     self.out('')
     [self.definition(p) for p in node.defs]
@@ -267,130 +269,15 @@ class TranslateXS1(NodeWalker):
 
   # Statements ==========================================
 
+  def stmt_par(self, node):
+    gen_par(self, node) 
+
   def stmt_seq(self, node):
     self.blocker.begin()
     for x in node.children(): 
       self.stmt(x)
     self.blocker.end()
 
-  def thread_set(self):
-    """ 
-    Generate the initialisation for a slave thread, in the body of a for
-    loop with _i indexing the thread number.
-    """
-
-    # Get a synchronised thread
-    self.out('unsigned _t;')
-    self.out('unsigned _spnew;')
-    self.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
-
-    # Setup pc = &setupthread (from jump table)
-    self.asm('ldw r11, cp[{}] ; init t[%0]:pc, r11'
-        .format(defs.JUMPI_INIT_THREAD), 
-        inops=['_t'], clobber=['r11'])
-
-    # Move sp away: sp -= THREAD_STACK_SPACE and save it
-    self.out('_spnew = _sp - (((_t>>8)&0xFF) * THREAD_STACK_SPACE);')
-    self.asm('init t[%0]:sp, %1', inops=['_t', '_spnew'])
-
-    # Setup dp, cp
-    self.asm('ldaw r11, dp[0x0] ; init t[%0]:dp, r11', 
-         inops=['_t'], clobber=['r11'])
-    self.asm('ldaw r11, cp[0x0] ; init t[%0]:cp, r11', 
-         inops=['_t'], clobber=['r11'])
-
-    # Copy register values
-    self.comment('Copy thread registers')
-    for i in range(12):
-      self.asm('set t[%0]:r{0}, r{0}'.format(i), inops=['_t'])
-    
-    self.comment('Copy thread stack')
-    self.out('for(int _j=0; _j<_frametab[{}]; _j++)'.format(
-      defs.JUMP_INDEX_OFFSET + self.sig.mobile_proc_names.index(self.parent)))
-    self.blocker.begin()
-    self.asm('ldw r11, %0[%1] ; stw r11, %2[%1]',
-        inops=['_spbase', '_j', '_spnew'], clobber=['r11']) 
-    self.blocker.end()
-
-    # Copy thread id to the array
-    self.out('_threads[_i] = _t;')
-
-  def stmt_par(self, node):
-    """
-    Generate a parallel block.
-    """
-    self.blocker.begin()
-    num_slaves = len(node.children()) - 1
-    exit_label = self.get_label()
-
-    self.comment('Parallel block')
-
-    # Declare sync variable and array to store thread identifiers
-    self.out('unsigned _sync;')
-    self.out('unsigned _spbase;')
-    self.out('unsigned _threads[{}];'.format(num_slaves))
-
-    # Get a label for each thread
-    thread_labels = [self.get_label() for i in range(num_slaves + 1)]
-
-    self.comment('Get a sync, sp base, _spLock and claim num threads')
-    
-    # Get a thread synchroniser
-    #self.out('_sync = GETR_SYNC();')
-    self.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
-     
-    # Load the address of sp
-    self.asm('ldaw %0, sp[0x0]', outop='_spbase')
-
-    # Claim thread count
-    self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-    self.out('_numThreads = _numThreads - {};'.format(num_slaves))
-    self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
-
-    # Setup each slave thread
-    self.comment('Initialise slave threads')
-    self.out('for(int _i=0; _i<{}; _i++)'.format(num_slaves))
-    self.blocker.begin()
-    self.thread_set()
-    self.blocker.end()
-     
-    # Set lr = &instruction label
-    self.comment('Initialise slave link registers')
-    for (i, x) in enumerate(node.children()):
-      if not i == 0:
-        self.asm('ldap r11, '+thread_labels[i]+' ; init t[%0]:lr, r11',
-          inops=['_threads[{}]'.format(i-1)], clobber=['r11'])
-
-    # Master synchronise
-    self.comment('Master synchronise')
-    self.asm('msync res[%0]', inops=['_sync'])
-
-    # Output each thread's instructions followed by a slave synchronise or
-    # for the master, a master join and branch out of the block.
-    for (i, x) in enumerate(node.children()):
-      self.comment('Thread {}'.format(i))
-      self.asm(thread_labels[i]+':')
-      self.stmt(x)
-      if i == 0:
-        self.asm('mjoin res[%0]', inops=['_sync'])
-        self.asm('bu '+exit_label)
-      else:
-        self.asm('ssync')
-
-    # Ouput exit label 
-    self.comment('Exit, free _sync, restore _sp and _numThreads')
-    self.asm(exit_label+':')
-    
-    # Free synchroniser resource
-    self.asm('freer res[%0]', inops=['_sync'])
-
-    # Release thread count
-    self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-    self.out('_numThreads = _numThreads + {};'.format(num_slaves))
-    self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
-
-    self.blocker.end()
-  
   def stmt_skip(self, node):
     pass
 
@@ -464,115 +351,7 @@ class TranslateXS1(NodeWalker):
     self.comment('<replicator statement>')
 
   def stmt_on(self, node):
-    """
-    Generate an on statement. We expect the form::
-
-      on <core> do <stmt-pcall>
-    """
-    assert isinstance(node.stmt, ast.StmtPcall)
-    pcall = node.stmt
-    proc_name = node.stmt.name
-    num_args = len(pcall.args) 
-    num_procs = len(self.child.children[proc_name]) + 1
-    
-    # Calculate closure size 
-    closure_size = 2 + num_procs;
-    for (i, x) in enumerate(pcall.args):
-      t = self.sig.lookup_param_type(proc_name, i)
-      if t.form == 'array': closure_size = closure_size + 3
-      elif t.form == 'single': closure_size = closure_size + 2 
-
-    # If the destination is the current processor, then we just evaluate the
-    # statement locally.
-    self.comment('On')
-    self.out('if ({} == _procid())'.format(self.expr(node.core.expr)))
-
-    # Local evaluation
-    self.blocker.begin()
-    self.stmt(node.stmt)
-    self.blocker.end()
-
-    self.out('else')
-
-    # Remote evaluation
-    self.blocker.begin()
-    self.out('unsigned _closure[{}];'.format(closure_size))
-    n = 0
-
-    # Output an element of the closure
-    def celem(i, e):
-      self.out('_closure[{}] = {};'.format(i, e))
-      return n + 1
-
-    # Header: (#args, #procs)
-    self.comment('Header: (#args, #procs)')
-    n = celem(n, num_args)
-    n = celem(n, num_procs)
-
-    # Arguments: 
-    #   Array: (0, length, address)
-    #   Var:   (1, address)
-    #   Val:   (2, value)
-    if pcall.args:
-      for (i, (x, y)) in enumerate(
-          zip(pcall.args, self.sig.get_params(pcall.name))):
-        t = self.sig.lookup_param_type(proc_name, i)
-
-        # If the parameter type is an array reference
-        if t == T_REF_ARRAY:
-
-          # Output the length of the array. Either it's a variable in the list
-          # of the parameters or it's a constant value.
-          n = celem(n, 't_arg_ALIAS')
-          if y.symbol.value == None:
-            q = self.sig.lookup_array_qualifier(proc_name, i)
-            n = celem(n, self.expr(pcall.args[q]))
-          else:
-            n = celem(n, self.expr(y.expr))
-           
-          # If the elem is a proper array, load the address
-          if x.elem.symbol.type == T_VAR_ARRAY:
-            self.comment('Array')
-            tmp = self.blocker.get_tmp()
-            self.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
-            n = celem(n, tmp)
-          # Otherwise, just assign
-          if x.elem.symbol.type == T_REF_ARRAY:
-            self.comment('Array reference')
-            n = celem(n, self.expr(x))
-        
-        # Otherwise, a single
-        elif t.form == 'single':
-
-          # Variable reference
-          if t.specifier == 'ref':
-            self.comment('Variable reference')
-            n = celem(n, 't_arg_VAR')
-            tmp = self.blocker.get_tmp()
-            self.asm('mov %0, %1', outop=tmp,
-                inops=['('+x.elem.name+', unsigned[])'])
-            n = celem(n, tmp)
-
-          # Value
-          elif t.specifier == 'val':
-            self.comment('Value')
-            n = celem(n, 't_arg_VAL')
-            n = celem(n, self.expr(x))
-
-    # Procedures: (jumpindex)*
-    self.comment('Proc: parent '+proc_name)
-    n = celem(n, defs.JUMP_INDEX_OFFSET
-        +self.sig.mobile_proc_names.index(proc_name))
-    for x in self.child.children[proc_name]:
-      self.comment('Proc: child '+x)
-      n = celem(n, defs.JUMP_INDEX_OFFSET
-          +self.sig.mobile_proc_names.index(x))
-
-    # Call runtime TODO: length argument?
-    self.out('{}({}, _closure);'.format(defs.LABEL_CREATE_PROCESS, 
-      self.expr(node.core.expr)))
-
-    self.blocker.end()
+    gen_on(self, node)
 
   def stmt_return(self, node):
     self.out('return {};'.format(self.expr(node.expr)))
