@@ -9,7 +9,7 @@ proc h(var v) is g(v)
 
 proc main() is
   var v;
-{ on core[NUM_CORES-1] do h(v)
+{ on NUM_CORES-1 do h(v)
 ; printhexln(v)
 }
 

@@ -3,8 +3,7 @@ val N := 10;
 proc main() is
  var a[N];
 { a[N-1] := 0x00000000
-; on core[NUM_CORES-1] do
-    a[N-1] := 0xDEADBEEF
+; on NUM_CORES-1 do a[N-1] := 0xDEADBEEF
 ; printhexln(a[N-1])
 }
 

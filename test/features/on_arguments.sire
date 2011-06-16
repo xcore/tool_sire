@@ -37,23 +37,23 @@ proc main() is
   var d[4*N];
 { 
   % All 8 arguments with a referenced var
-  on core[NUM_CORES-1] do foo(1, 2, 3, 4, 5, 6, 7, r)
+  on NUM_CORES-1 do foo(1, 2, 3, 4, 5, 6, 7, r)
 ; printvalln(r)
 
   % An array onto the stack with a referenced var
 ; for i in [0 for N]   do a[i] := 5+i
-; on core[NUM_CORES-1] do bar(1, 2, 3, 4, a, N, r)
+; on NUM_CORES-1 do bar(1, 2, 3, 4, a, N, r)
 ; printvalln(r)
 
  % Two arrays onto the stack
 ; for i in [0 for N]   do a[i] := 4+i
 ; for i in [0 for 2*N] do b[i] := a[N-1]+i
-; on core[NUM_CORES-1] do baz(1, 2, 3, r, a, N, b, 2*N)
+; on NUM_CORES-1 do baz(1, 2, 3, r, a, N, b, 2*N)
 ; printvalln(r)
 
  % Four arrays onto the stack
 ; for i in [0 for 3*N] do c[i] := i 
 ; for i in [0 for 4*N] do d[i] := i 
-; on core[NUM_CORES-1] do cat(a, b, c, d, N, N*2, N*3, N*4)
+; on NUM_CORES-1 do cat(a, b, c, d, N, N*2, N*3, N*4)
 }
 

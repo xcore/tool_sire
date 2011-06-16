@@ -1,7 +1,6 @@
 proc main() is
   var a;
-{ on core[NUM_CORES-1] do
-    a := 0xDEADBEEF
+{ on NUM_CORES-1 do a := 0xDEADBEEF
 ; printhexln(a)
 }
 

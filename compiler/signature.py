@@ -62,11 +62,11 @@ class SignatureTable(object):
     else:
       return False
 
-  def lookup_param_type(self, name, i):
-    """
-    Given a procedure name and an index, return the formal type.
-    """
-    return self.tab[name].params[i].type
+  #def lookup_param_type(self, name, i):
+  #  """
+  #  Given a procedure name and an index, return the formal type.
+  #  """
+  #  return self.tab[name].params[i].type
 
   def lookup_array_qualifier(self, name, i):
     """ 

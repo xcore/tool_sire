@@ -1,7 +1,7 @@
 proc foo(val i) is
   if i ~= NUM_CORES-1 
-  then on core[i+1] do foo(i+1)
+  then on i+1 do foo(i+1)
   else skip
 
 proc main() is
-    foo(0)
+  foo(0)

@@ -549,10 +549,6 @@ class Semantics(NodeWalker):
     self.expr(node.expr)
     self.stmt(node.stmt)
 
-    # Check the type of the core element
-    if not self.check_elem_types(node.core, [T_CORE_SUB]):
-      self.type_error('on target', node.core, node.coord)
-
   def stmt_return(self, node):
     
     # Children

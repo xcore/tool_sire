@@ -3,6 +3,80 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import ast
+import definitions as defs
+from typedefs import *
+
+def calc_closure_size(num_procs, params):
+  """
+  Calculate the size of a process closure
+  """
+  closure_size = 2 + num_procs;
+  for (i, x) in enumerate(params):
+
+    if x.symbol.type == T_REF_ARRAY:
+      closure_size = closure_size + 3
+
+    elif x.symbol.type == T_REF_SINGLE:
+      closure_size = closure_size + 2
+
+    elif x.symbol.type == T_VAL_SINGLE: 
+      closure_size = closure_size + 2
+
+    else:
+      assert 0
+
+  return closure_size
+
+def argument(t, n, celem, proc_name, args, index, arg, param):
+  """
+  Generate a closure entry for an argument
+    Array: (0, length, address)
+    Var:   (1, address)
+    Val:   (2, value)
+  """
+  # If the parameter type is an array reference
+  if param.symbol.type == T_REF_ARRAY:
+
+    # Output the length of the array. Either it's a variable in the list
+    # of the parameters or it's a constant value.
+    t.comment('Array')
+    n = celem(n, 't_arg_ALIAS')
+    if param.symbol.value == None:
+      q = t.sig.lookup_array_qualifier(proc_name, index)
+      n = celem(n, t.expr(args[q]))
+    else:
+      n = celem(n, t.expr(param.expr))
+     
+    # If the elem is a proper array, load the address
+    if arg.elem.symbol.type == T_VAR_ARRAY:
+      tmp = t.blocker.get_tmp()
+      t.asm('mov %0, %1', outop=tmp, inops=[arg.elem.name])
+      n = celem(n, tmp)
+    # Otherwise, just assign
+    if arg.elem.symbol.type == T_REF_ARRAY:
+      n = celem(n, t.expr(arg))
+  
+  # Variable reference
+  elif param.symbol.type == T_REF_SINGLE:
+    t.comment('Variable reference')
+    n = celem(n, 't_arg_VAR')
+    tmp = t.blocker.get_tmp()
+    t.asm('mov %0, %1', outop=tmp,
+        inops=['('+arg.elem.name+', unsigned[])'])
+    n = celem(n, tmp)
+
+  # Value
+  elif param.symbol.type == T_VAL_SINGLE:
+    t.comment('Value')
+    n = celem(n, 't_arg_VAL')
+    n = celem(n, t.expr(arg))
+
+  else:
+    assert 0
+
+  return n
+
 def gen_on(t, node):
     """
     Generate an on statement, given the translation object t and the AST node.
@@ -15,13 +89,10 @@ def gen_on(t, node):
     proc_name = node.stmt.name
     num_args = len(pcall.args) 
     num_procs = len(t.child.children[proc_name]) + 1
-    
+    params = t.sig.get_params(pcall.name)
+
     # Calculate closure size 
-    closure_size = 2 + num_procs;
-    for (i, x) in enumerate(pcall.args):
-      t = t.sig.lookup_param_type(proc_name, i)
-      if t.form == 'array': closure_size = closure_size + 3
-      elif t.form == 'single': closure_size = closure_size + 2 
+    closure_size = calc_closure_size(num_procs, params)
 
     # If the destination is the current processor, then we just evaluate the
     # statement locally.
@@ -41,8 +112,8 @@ def gen_on(t, node):
     n = 0
 
     # Output an element of the closure
-    def celem(i, e):
-      t.out('_closure[{}] = {};'.format(i, e))
+    def celem(n, e):
+      t.out('_closure[{}] = {};'.format(n, e))
       return n + 1
 
     # Header: (#args, #procs)
@@ -51,54 +122,8 @@ def gen_on(t, node):
     n = celem(n, num_procs)
 
     # Arguments: 
-    #   Array: (0, length, address)
-    #   Var:   (1, address)
-    #   Val:   (2, value)
-    if pcall.args:
-      for (i, (x, y)) in enumerate(
-          zip(pcall.args, t.sig.get_params(pcall.name))):
-        t = t.sig.lookup_param_type(proc_name, i)
-
-        # If the parameter type is an array reference
-        if t == T_REF_ARRAY:
-
-          # Output the length of the array. Either it's a variable in the list
-          # of the parameters or it's a constant value.
-          n = celem(n, 't_arg_ALIAS')
-          if y.symbol.value == None:
-            q = t.sig.lookup_array_qualifier(proc_name, i)
-            n = celem(n, t.expr(pcall.args[q]))
-          else:
-            n = celem(n, t.expr(y.expr))
-           
-          # If the elem is a proper array, load the address
-          if x.elem.symbol.type == T_VAR_ARRAY:
-            t.comment('Array')
-            tmp = t.blocker.get_tmp()
-            t.asm('mov %0, %1', outop=tmp, inops=[x.elem.name])
-            n = celem(n, tmp)
-          # Otherwise, just assign
-          if x.elem.symbol.type == T_REF_ARRAY:
-            t.comment('Array reference')
-            n = celem(n, t.expr(x))
-        
-        # Otherwise, a single
-        elif t.form == 'single':
-
-          # Variable reference
-          if t.specifier == 'ref':
-            t.comment('Variable reference')
-            n = celem(n, 't_arg_VAR')
-            tmp = t.blocker.get_tmp()
-            t.asm('mov %0, %1', outop=tmp,
-                inops=['('+x.elem.name+', unsigned[])'])
-            n = celem(n, tmp)
-
-          # Value
-          elif t.specifier == 'val':
-            t.comment('Value')
-            n = celem(n, 't_arg_VAL')
-            n = celem(n, t.expr(x))
+    for (i, (x, y)) in enumerate(zip(pcall.args, params)):
+      n = argument(t, n, celem, proc_name, pcall.args, i, x, y)
 
     # Procedures: (jumpindex)*
     t.comment('Proc: parent '+proc_name)
