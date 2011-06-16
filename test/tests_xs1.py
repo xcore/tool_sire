@@ -13,7 +13,7 @@ from tests import generate_test_set
 
 COMPILE  = 'sire'
 SIMULATE = 'xsim'
-SIM_FLAGS = []
+SIM_FLAGS = ['--no-warn-registers']
 
 # Examples =====================================================
 
