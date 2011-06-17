@@ -98,17 +98,16 @@ class TransformRep(NodeWalker):
         ast.ExprBinop('>', elem_m, elem_x),
         # then
         ast.StmtPar([
-            # d(t, n/2, n/2)
-            ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
-                + proc_actuals),
             # on ((id()+t+n/2) rem NUM_CORES) / f do 
             #   d(t+n/2, n/2, m-n/2, ...)
-            ast.StmtOn(ast.ElemSub('core', d),
+            ast.StmtOn(d,
                 ast.StmtPcall(name,
                     [ast.ExprBinop('+', elem_t, elem_x), 
                     expr_x, ast.ExprBinop('-', elem_m, elem_x),
-                    expr_b] + proc_actuals)
-                )
+                    expr_b] + proc_actuals)),
+            # d(t, n/2, n/2)
+            ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
+                + proc_actuals),
             ]),
         # else d(t, n/2, m)
         ast.StmtPcall(name, [expr_t, expr_x, expr_m, expr_b] + proc_actuals))

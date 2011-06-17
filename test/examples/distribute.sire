@@ -1,10 +1,9 @@
+
 proc d(val t, val n) is
   if n = 1 
   then skip
   else 
-  { d(t, n/2) 
-  || on t+(n/2) do d(t+(n/2), n/2) 
-  }
+  { on t+(n/2) do d(t+(n/2), n/2) || d(t, n/2) }
 
 proc main() is 
   d(0, NUM_CORES)

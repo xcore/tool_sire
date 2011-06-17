@@ -63,7 +63,7 @@ if __name__ == '__main__':
 
     elif sys.argv[1] == 'xs1':
         feature_tests += generate_xs1_feature_tests(TEST_FEATURES_PATH)
-        example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
+        #example_tests += generate_xs1_example_tests(TEST_EXAMPLES_PATH)
     
     else:
         fail(sys.argv)

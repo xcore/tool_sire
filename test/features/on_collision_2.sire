@@ -12,10 +12,9 @@ proc backwards(val n) is
   then work()
   else on n-1 do backwards(n-1)
 
-proc start_backwards(val n) is
-
 proc main() is
 { forwards(0) || forwards(0) || 
   on N do
   { backwards(N) || backwards(N) }
 }
+

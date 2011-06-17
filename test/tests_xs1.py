@@ -75,8 +75,7 @@ xs1_feature_on = [
   Test('on_squash',      [4, 16, 64]),
   Test('on_chain_1',     [4, 16, 64]),
   Test('on_chain_2',     [4, 16, 64]),
-  Test('on_chain_3',     [4, 16, 64]),
-  Test('on_chain_6',     [4, 16, 64]),
+  Test('on_chain_4',     [4, 16, 64]),
   Test('on_chain_8',     [4, 16, 64]),
   Test('on_collision_1', [4, 16, 64]),
   Test('on_collision_2', [4, 16, 64]),
@@ -89,11 +88,11 @@ xs1_feature_replicator = [
   Test('rep_basic_3d',   [4, 16, 32, 64]),
   ]
 
-xs1_feature_tests =\
-  xs1_feature_general\
-  + xs1_feature_builtins\
-  + xs1_feature_thread\
-  + xs1_feature_on 
+xs1_feature_tests = xs1_feature_replicator
+    #  xs1_feature_general\
+    #+ xs1_feature_builtins\
+    #+ xs1_feature_thread\
+    #+ xs1_feature_on 
   #+ xs1_feature_replicator
 
 def run_test(self, name, path, num_cores, args=[]):

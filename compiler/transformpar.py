@@ -183,9 +183,12 @@ class TransformPar(NodeWalker):
 
   # Parallel composition
   def stmt_par(self, node):
+    """
+    We only need to transform statements [1:].
+    """
     p = []
     [p.extend(self.stmt(x)) for x in node.stmt]
-    for (i, x) in enumerate(node.stmt):
+    for (i, x) in enumerate(node.stmt[1:]):
       if not isinstance(x, ast.StmtPcall):
         if(self.debug):
           print('Transforming par {}'.format(i))
