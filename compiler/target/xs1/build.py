@@ -374,7 +374,7 @@ def rewrite_calls(sig, lines, v):
 
 def build_jumptab(sig, buf, v):
 
-    assert len(sig.mobile_proc_names) <= defs.JUMP_TABLE_SIZE
+    assert (len(sig.mobile_proc_names) + defs.JUMP_INDEX_OFFSET) <= defs.JUMP_TABLE_SIZE
     vmsg(v, 'Building master jump table ({}/{})'.format(
         len(sig.mobile_proc_names), defs.JUMP_TABLE_SIZE))
 

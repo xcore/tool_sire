@@ -131,10 +131,12 @@ def thread_unset(t, index, pcall):
   assert isinstance(pcall, ast.StmtPcall)
   t.comment('Master unset slave {}'.format(index))
   params = t.sig.get_params(pcall.name)
-  n_stack_args = num_stack_args(pcall) 
+  n_stack_args = num_stack_args(pcall)
+  j = 0
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     if y.symbol.type == T_REF_SINGLE:
-      ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+i)
+      ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+      j = j + 1
 
 def gen_par(t, node):
   """

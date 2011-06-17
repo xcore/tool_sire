@@ -1,0 +1,24 @@
+val L := 1;
+val R := NUM_CORES-1;
+val M := NUM_CORES/2; 
+
+proc foo(var a, var b, var c, var d) is
+  var i;
+  var v;
+  on M do for i in [0 for 100] do v := a+b+c+d
+
+proc main() is
+  var a;
+  var b;
+  var c;
+  var d;
+{
+  on L do foo(a, b, c, d) ||
+  on L do foo(a, b, c, d) ||
+  on L do foo(a, b, c, d) ||
+  on L do foo(a, b, c, d) ||
+  on R do foo(a, b, c, d) ||
+  on R do foo(a, b, c, d) ||
+  on R do foo(a, b, c, d) ||
+  on R do foo(a, b, c, d)
+}

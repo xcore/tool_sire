@@ -2,7 +2,7 @@ proc main() is
   var v;
   var i;
 { for i in [0 for NUM_CORES] do
-  { on core[i] do v := procid()
+  { on i do v := procid()
   ; printvalln(v)
   }
 }

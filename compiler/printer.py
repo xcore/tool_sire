@@ -223,7 +223,7 @@ class Printer(NodeWalker):
     self.indent.pop()
 
   def stmt_on(self, node):
-    self.out('on {} do\n'.format(self.elem(node.core)))
+    self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
     self.stmt(node.stmt)
     self.indent.pop()

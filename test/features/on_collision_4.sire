@@ -1,3 +1,5 @@
+val N := NUM_CORES-1;
+
 proc work() is skip
 
 proc forwards(val n) is
@@ -10,16 +12,9 @@ proc backwards(val n) is
   then work()
   else on n-1 do backwards(n-1)
 
-proc start_backwards(val n) is
-{ backwards(n)
-|| backwards(n)
-|| backwards(n)
-|| backwards(n)
-}
-
 proc main() is
-{ forwards(0)
-|| forwards(0)
-|| forwards(0)
-|| on NUM_CORES-1 do start_backwards(NUM_CORES-1)
+{ forwards(0) || forwards(0) || forwards(0) || 
+  on N do
+  { backwards(N) || backwards(N) || backwards(N) || backwards(N) 
+  }
 }

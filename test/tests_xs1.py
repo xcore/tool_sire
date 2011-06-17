@@ -72,6 +72,7 @@ xs1_feature_on = [
   Test('on_repeat_1',    [4, 16]),
   Test('on_repeat_loop', [4, 16]),
   Test('on_array',       [4, 16, 32, 64]),
+  Test('on_squash',      [4, 16, 64]),
   Test('on_chain_1',     [4, 16, 64]),
   Test('on_chain_2',     [4, 16, 64]),
   Test('on_chain_3',     [4, 16, 64]),
