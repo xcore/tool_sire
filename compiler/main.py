@@ -26,6 +26,7 @@ from semantics import Semantics
 from buildcfg import BuildCFG
 from liveness import Liveness
 from display import Display
+from labelprocesses import LabelProcesses
 from transformpar import TransformPar
 from transformrep import TransformRep
 from flattencalls import FlattenCalls
@@ -203,19 +204,12 @@ def semantic_analysis(sym, sig, ast, device, errorlog):
 
 def transform_ast(sem, sig, ast, errorlog, device):
   """
-  Perform transformations on AST.
+  Perform transformations on the AST.
   """
 
-  def print_livesets(stmt):
-    print(stmt)
-    print('Use: {}'.format(stmt.use))
-    print('Def: {}'.format(stmt.defs))
-    print('In:  {}'.format(stmt.inp))
-    print('Out: {}'.format(stmt.out))
-    #print('Live:  {}'.format(node.inp))
-    print('')
-
-  # 1. Perform channel analysis
+  # 1. Label processes
+  vmsg(v, "Labeling process locations")
+  LabelProcesses(device).walk_program(ast)
 
   # 2. Insert channel connections
 
@@ -223,7 +217,6 @@ def transform_ast(sem, sig, ast, errorlog, device):
   vmsg(v, "Performing liveness analysis")
   BuildCFG().run(ast)
   Liveness().run(ast)
-  #ast.accept(Display(print_livesets))
 
   # 4. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
@@ -239,7 +232,6 @@ def transform_ast(sem, sig, ast, errorlog, device):
    
   # 7. Perform child analysis
   child = child_analysis(sig, ast)
-  #child.display()
 
   # Check for any errors
   if errorlog.any():
@@ -257,10 +249,10 @@ def child_analysis(sig, ast):
   Determine children.
   """
   vmsg(v, "Performing child analysis")
-  
   child = Children(sig)
   ast.accept(child)
   child.build()
+  #child.display()
   return child
 
 def main(args):

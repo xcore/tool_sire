@@ -13,13 +13,15 @@ proc main() is
     }
   }
 
-% Add connections
+% Add connections and base value
 
 proc main() is
   chan c[N+1];
   var i;
   var v;
-  { { connect c[0] to core[x]
+  var _b;
+{ _b := procid()
+; { { connect c[0] to core[f(_b)]
     ; connect c[N]
     ; { c[0] ! 0
       ; c[N] ? v
@@ -27,12 +29,13 @@ proc main() is
     }
   || par i in [1 for N] do
     { connect c[i-1]
-    ; connect c[i] to core[x]
+    ; connect c[i] to core[f(_b)]
     ; { c[i-1] ? v
       ; c[i] ! v + 1
       }
     }
   }
+}
 
 % Rename connections
 

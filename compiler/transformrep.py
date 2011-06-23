@@ -7,6 +7,7 @@ import copy
 from math import floor
 from functools import reduce
 import util
+import definitions as defs
 import ast
 from ast import NodeVisitor
 from walker import NodeWalker
@@ -39,7 +40,7 @@ class TransformRep(NodeWalker):
       else if m > n/2
       then 
       { _d(t, n/2, n/2, _b, ...)
-      | on (_b+((t+n/2)/F)) rem NUM_CORES) / f do
+      | on (_b+((t+n/2)/F)) rem NUM_CORES) do
           _d(t+n/2, n/2, m-n/2, _b, ...)
       }
       else _d(t, n/2, m, _b, ...)
@@ -90,7 +91,7 @@ class TransformRep(NodeWalker):
       d = ast.ExprBinop('/', ast.ElemGroup(d), ast.ElemNumber(f))
     d = ast.ExprBinop('rem', 
         ast.ElemGroup(ast.ExprBinop('+', elem_b, ast.ElemGroup(d))),
-          ast.ElemId('NUM_CORES'))
+          ast.ElemId(defs.SYS_NUM_CORES_CONST))
 
     # Conditionally recurse {d()|d()} or d()
     s1 = ast.StmtIf(
@@ -140,14 +141,9 @@ class TransformRep(NodeWalker):
     # set of arguments.
     context = FreeVars().allvars(pcall)
     
-    # Calculate total # processes (m) and the next power of two of this (n)
-    m = reduce(lambda x, y: x * y.count_value, stmt.indicies, 1)
-    n = util.next_power_of_2(m)
- 
-    # Calculate the compression factor f of the replicator
-    f = 1
-    while m/f > self.device.num_cores():
-      f = f + 1
+    assert not stmt.m == None
+    assert not stmt.f == None
+    n = util.next_power_of_2(stmt.m)
 
     # Create new variables
     formals = []       # Formals for the new distribution process
@@ -165,7 +161,7 @@ class TransformRep(NodeWalker):
     formals.append(ast.Param('_b', T_VAL_SINGLE, None))
     actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
     actuals.append(ast.ExprSingle(ast.ElemNumber(n)))
-    actuals.append(ast.ExprSingle(ast.ElemNumber(m)))
+    actuals.append(ast.ExprSingle(ast.ElemNumber(stmt.m)))
     actuals.append(ast.ExprSingle(ast.ElemFcall('procid', [])))
    
     # For each non-index free-variable of the process call
@@ -188,7 +184,7 @@ class TransformRep(NodeWalker):
 
     # Create the process definition and perform semantic analysis to 
     # update symbol bindings. 
-    d = self.distribute_stmt(m, f, elem_t, elem_n, elem_m, elem_b,
+    d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, elem_b,
                 stmt.indicies, proc_actuals, formals, pcall)
     #Printer().defn(d, 0)
     self.sem.defn(d)

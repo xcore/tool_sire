@@ -1,4 +1,4 @@
-# Copyright (c) 2011, James Hanlon, All rights reserved
+# Copyright (c) 2010, James Hanlon, All rights reserved
 # This software is freely distributable under a derivative of the
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
@@ -16,9 +16,10 @@ class Printer(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, buf=sys.stdout):
+  def __init__(self, buf=sys.stdout, labels=True):
     super(Printer, self).__init__()
     self.buf = buf
+    self.labels = labels
     self.indent = []
 
   def indt(self):
@@ -39,6 +40,10 @@ class Printer(NodeWalker):
     Write an indented line.
     """
     self.buf.write(self.indt()+s)
+
+  def display_labels(self, stmt):
+    if self.labels and hasattr(stmt, 'location') and not stmt.location==None:
+      self.out('<<{}>>\n'.format(self.expr(stmt.location)))
 
   def arg_list(self, args):
     return ', '.join([self.expr(x) for x in args])
@@ -141,7 +146,7 @@ class Printer(NodeWalker):
       { 
       stmt1;
       stmt2;
-      { stmt3|
+      { stmt3||
         stmt4
       };
       stmt5
@@ -157,42 +162,52 @@ class Printer(NodeWalker):
     self.out('}')
 
   def stmt_seq(self, node):
+    self.display_labels(node)
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
+    self.display_labels(node)
     self.stmt_block(node, '||')
 
   def stmt_skip(self, node):
+    self.display_labels(node)
     self.out('skip')
 
   def stmt_pcall(self, node):
+    self.display_labels(node)
     self.out('{}({})'.format(
       node.name, self.arg_list(node.args)))
 
   def stmt_ass(self, node):
+    self.display_labels(node)
     self.out('{} := {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_in(self, node):
+    self.display_labels(node)
     self.out('{} ? {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_out(self, node):
+    self.display_labels(node)
     self.out('{} ! {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_alias(self, node):
+    self.display_labels(node)
     self.out('{} aliases {}'.format(
       self.elem(node.left), self.elem(node.slice)))
 
   def stmt_connect(self, node):
+    self.display_labels(node)
     if node.core:
       self.out('connect {} to {}'.format(
-          self.elem(node.chan), self.elem(node.core)))
+          self.elem(node.chan), self.expr(node.core)))
     else:
       self.out('connect {}'.format(self.elem(node.chan)))
 
   def stmt_if(self, node):
+    self.display_labels(node)
     self.out('if {}\n'.format(self.expr(node.cond)))
     self.out('then\n')
     self.indent.append(INDENT)
@@ -204,18 +219,22 @@ class Printer(NodeWalker):
     self.indent.pop()
 
   def stmt_while(self, node):
+    self.display_labels(node)
+    self.display_labels(node)
     self.out('while {} do\n'.format(self.expr(node.cond)))
     self.indent.append(INDENT)
     self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_for(self, node):
+    self.display_labels(node)
     self.out('for {} do\n'.format(self.elem(node.index)))
     self.indent.append(INDENT)
     self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_rep(self, node):
+    self.display_labels(node)
     self.out('par {} do\n'.format(
       ', '.join([self.elem(x) for x in node.indicies]))) 
     self.indent.append(INDENT)
@@ -223,12 +242,14 @@ class Printer(NodeWalker):
     self.indent.pop()
 
   def stmt_on(self, node):
+    self.display_labels(node)
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
     self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_return(self, node):
+    self.display_labels(node)
     self.out('return {}'.format(self.expr(node.expr)))
 
   # Expressions =========================================

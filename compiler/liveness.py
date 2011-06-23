@@ -4,6 +4,7 @@
 ## LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
+import ast
 from walker import NodeWalker
 
 class Liveness(NodeWalker):
@@ -26,13 +27,25 @@ class Liveness(NodeWalker):
     [stmt.out.update(x.inp) for x in stmt.succ]
     return len(inp^stmt.inp)>0 or len(out^stmt.out)>0
 
-  def run(self, node):
+  def print_livesets(stmt):
+    print(stmt)
+    print('Use: {}'.format(stmt.use))
+    print('Def: {}'.format(stmt.defs))
+    print('In:  {}'.format(stmt.inp))
+    print('Out: {}'.format(stmt.out))
+    #print('Live:  {}'.format(node.inp))
+    print('')
+
+  def run(self, node, debug=False):
     """
     Iteratively perform liveness analysis until there is no change in the in
     and out sets.
     """
     while any([self.stmt(x.stmt) if x.stmt else False for x in node.defs]):
       pass
+
+    if debug:
+      ast.accept(Display(print_livesets))
   
   # Statements ==========================================
 
