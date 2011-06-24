@@ -8,7 +8,7 @@ import definitions as defs
 import ast
 from walker import NodeWalker
 
-class LabelProcesses(NodeWalker):
+class LabelProcs(NodeWalker):
   """
   A template recursive descent AST NodeWalker.
   """
@@ -24,9 +24,9 @@ class LabelProcesses(NodeWalker):
 
   def defn(self, node):
     if node.name == 'main':
-      self.stmt(node.stmt, None)
+      self.stmt(node.stmt, ast.ElemNumber(0))
     else:
-      self.stmt(node.stmt, None)
+      self.stmt(node.stmt, ast.ElemNumber(0))
   
   # Statements ==========================================
 
@@ -71,7 +71,7 @@ class LabelProcesses(NodeWalker):
     node.location = l
     [self.stmt(x, l) for x in node.stmt]
 
-  def stmt_par(self, node):
+  def stmt_par(self, node, l):
     node.location = l
     [self.stmt(x, l) for x in node.stmt]
 
@@ -108,13 +108,13 @@ class LabelProcesses(NodeWalker):
   def stmt_alias(self, node, l):
     node.location = l
 
-  def stmt_connect(self, node, l):
-    node.location = l
-
   def stmt_return(self, node, l):
     node.location = l
   
   # Prohibited
+
+  def stmt_connect(self, node, l):
+    assert 0
 
   def stmt_on(self, node, l):
     assert 0

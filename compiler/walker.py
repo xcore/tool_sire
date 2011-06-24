@@ -13,26 +13,26 @@ class NodeWalker(object):
     return util.camel_to_under(node.__class__.__name__)
 
   def decl(self, node, *args):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node, *args) if args else f(node)
   
   def defn(self, node, *args):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node, *args) if args else f(node)
   
   def param(self, node):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node)
   
   def stmt(self, node, *args):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node, *args) if args else f(node)
   
   def expr(self, node):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node)
 
   def elem(self, node):
-    f = getattr(self, '{}'.format(self.name(node)))
+    f = getattr(self, self.name(node))
     return f(node)
 

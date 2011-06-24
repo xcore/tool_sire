@@ -13,7 +13,7 @@ import ast
 from walker import NodeWalker
 from builtin import builtins
 from typedefs import *
-from evalexpr import EvaluateExpr
+from evalexpr import EvalExpr
 
 elem_types = {
   'elem_sub'     : None,
@@ -47,6 +47,13 @@ param_conversions = {
   T_REF_ARRAY : [
     T_VAR_ARRAY, 
     T_REF_ARRAY, 
+  ],
+
+  T_CHANEND_SINGLE : [
+    T_CHANEND_SINGLE,
+    T_CHANEND_SUB,
+    T_CHAN_SINGLE,
+    T_CHAN_SUB,
   ],
 }
 
@@ -88,7 +95,6 @@ class Semantics(NodeWalker):
     
     # Add system variables core, chan
     self.sym.begin_scope('system')
-    self.sym.insert(defs.SYS_CORE_ARRAY, T_CORE_ARRAY)
     s = self.sym.insert(defs.SYS_NUM_CORES_CONST, T_VAL_SINGLE)
     s.set_value(device.num_cores())
 
@@ -213,7 +219,7 @@ class Semantics(NodeWalker):
     """
     Evaluate a constant expession, cause an error if this is not possible.
     """
-    v = EvaluateExpr().expr(expr)
+    v = EvalExpr().expr(expr)
     if v == None:
       self.non_const_error()
     else:

@@ -7,9 +7,9 @@ import error
 import ast
 from walker import NodeWalker
 
-class EvaluateExpr(NodeWalker):
+class EvalExpr(NodeWalker):
   """
-  Evaluate a constant-valued expression.
+  Evaluate a constant-valued expression. Return None if this is not possible.
   """
   def __init__(self):
     pass
@@ -20,57 +20,41 @@ class EvaluateExpr(NodeWalker):
     return self.elem(node.elem)
 
   def expr_unary(self, node):
+    
     a = self.elem(node.elem)
     
-    if not a:
+    if a == None:
       return None
 
-    if node.op == '-':
-      return -a
-    elif node.op == '~':
-      return ~a
+    if   node.op == '-': return -a
+    elif node.op == '~': return ~a
     else:
       assert 0
 
   def expr_binop(self, node):
+    
     a = self.elem(node.elem)
     b = self.expr(node.right)
   
-    if not (a and b):
+    if a == None or b == None:
       return None
     
-    if node.op == '+':
-      return a + b
-    elif node.op == '-':
-      return a - b 
-    elif node.op == '*':
-      return a * b
-    elif node.op == '/':
-      return a / b
-    elif node.op == '%':
-      return a % b
-    elif node.op == 'or':
-      return a | b
-    elif node.op == 'and':
-      return a & b
-    elif node.op == 'xor':
-      return a ^ b
-    elif node.op == '<<':
-      return a << b
-    elif node.op == '>>':
-      return a >> b
-    elif node.op == '<':
-      return a < b
-    elif node.op == '>':
-      return a > b
-    elif node.op == '<=':
-      return a <= b
-    elif node.op == '>=':
-      return a >= b
-    elif node.op == '=':
-      return a == b
-    elif node.op == '~=':
-      return a != b
+    if   node.op == '+':   return a + b
+    elif node.op == '-':   return a - b 
+    elif node.op == '*':   return a * b
+    elif node.op == '/':   return a / b
+    elif node.op == '%':   return a % b
+    elif node.op == 'or':  return a | b
+    elif node.op == 'and': return a & b
+    elif node.op == 'xor': return a ^ b
+    elif node.op == '<<':  return a << b
+    elif node.op == '>>':  return a >> b
+    elif node.op == '<':   return a < b
+    elif node.op == '>':   return a > b
+    elif node.op == '<=':  return a <= b
+    elif node.op == '>=':  return a >= b
+    elif node.op == '=':   return a == b
+    elif node.op == '~=':  return a != b
     else:
       assert 0
   

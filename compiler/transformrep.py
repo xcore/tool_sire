@@ -15,8 +15,8 @@ from freevars import FreeVars
 from semantics import rep_var_to_param
 from typedefs import *
 from symbol import Symbol
-from replaceelem import ReplaceElemInExpr
-from evalexpr import EvaluateExpr
+from subelem import SubElem
+from evalexpr import EvalExpr
 
 from printer import Printer
 
@@ -82,7 +82,7 @@ class TransformRep(NodeWalker):
         if x.base_value > 0:
           e = ast.ExprBinop('+', ast.ElemNumber(x.base_value), ast.ElemGroup(e))
         # Then replace it for each ocurrance of i
-        y.accept(ReplaceElemInExpr(ast.ElemId(x.name), 
+        y.accept(SubElem(ast.ElemId(x.name), 
             ast.ElemGroup(e)))
  
     # (((b + ((t+n/2)/f)) rem NUM_CORES

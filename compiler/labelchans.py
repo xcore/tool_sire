@@ -4,126 +4,122 @@
 ## LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
+import copy
 import collections
+from itertools import product
 
-from ast import NodeVisitor
+import ast
+from walker import NodeWalker
+from typedefs import *
+from subelem import SubElem
+from evalexpr import EvalExpr
 
-class AnalyseChans(NodeVisitor):
-  """ 
-  An AST visitor class to display the tree.
+from printer import Printer
+
+class LabelChans(NodeWalker):
+  """
+  A template recursive descent AST NodeWalker.
   """
   def __init__(self):
-
-  def down(self, tag):
     pass
 
-  def up(self, tag):
-    pass
+  def expand_channel(self, i, elemsub):
+    """
+    Expand the use of a channel subscript over a set of iterators.
+    """
+    #print(Printer().expr(elemsub.expr))
+    ranges = [range(x.base_value, x.base_value+x.count_value) for x in i]
+    for x in product(*ranges):
+      expr = copy.deepcopy(elemsub.expr)
+      for (y, z) in zip(i, x):
+        expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
+      value = EvalExpr().expr(expr)
+      print('  {}[{}]'.format(elemsub.name, value))
 
   # Program ============================================
 
-  def visit_program(self, node):
-    self.out(node)
-
+  def walk_program(self, node):
+    [self.decl(x) for x in node.decls]
+    [self.defn(x) for x in node.defs]
+  
   # Variable declarations ===============================
 
-  def visit_decls(self, node):
-    self.out(node)
+  def decl(self, node):
+    #self.expr(node.expr)
+    pass
 
-  def visit_decl(self, node):
-    self.out(node)
+  # Procedure definitions ===============================
 
-  # Procedure declarations ==============================
-
-  def visit_defs(self, node):
-    self.out(node)
-      
-  def visit_def(self, node):
-    self.out(node)
+  def defn(self, node):
+    #[self.decl(x) for x in node.decls]
+    self.stmt(node.stmt, [])
   
-  # Formals =============================================
-  
-  def visit_formals(self, node):
-    self.out(node)
-    
-  def visit_param(self, node):
-    self.out(node)
-
   # Statements ==========================================
 
-  def visit_stmt_seq(self, node):
-    self.out(node)
+  # Statements containing uses of channels
 
-  def visit_stmt_par(self, node):
-    self.out(node)
+  def stmt_in(self, node, i):
+    print('? channel {}:'.format(node.left.name))
+    if isinstance(node.left, ast.ElemSub):
+      self.expand_channel(i, node.left)
+    elif isinstance(node.left, ast.ElemId):
+      assert 0
 
-  def visit_stmt_skip(self, node):
-    self.out(node)
+  def stmt_out(self, node, i):
+    print('! channel {}:'.format(node.left.name))
+    if isinstance(node.left, ast.ElemSub):
+      self.expand_channel(i, node.left)
+    elif isinstance(node.left, ast.ElemId):
+      assert 0
 
-  def visit_stmt_pcall(self, node):
-    self.out(node)
+  def stmt_pcall(self, node, i):
+    for x in node.args:
+      if (isinstance(x, ast.ExprSingle) 
+          and isinstance(x.elem, ast.ElemSub)
+          and x.elem.symbol.type == T_CHAN_ARRAY):
+        print('arg channel {}:'.format(x.elem.name))
+        self.expand_channel(i, x.elem)
+    
+  # Statements containing processes
 
-  def visit_stmt_ass(self, node):
-    self.out(node)
-
-  def visit_stmt_if(self, node):
-    self.out(node)
-
-  def visit_stmt_while(self, node):
-    self.out(node)
-
-  def visit_stmt_for(self, node):
-    self.out(node)
-
-  def visit_stmt_rep(self, node):
-    self.out(node)
-
-  def visit_stmt_on(self, node):
-    self.out(node)
-
-  def visit_stmt_alias(self, node):
-    self.out(node)
-
-  def visit_stmt_return(self, node):
-    self.out(node)
-
-  # Expressions =========================================
-
-  def visit_expr_list(self, node):
-    self.out(node)
-
-  def visit_expr_single(self, node):
-    self.out(node)
-
-  def visit_expr_unary(self, node):
-    self.out(node)
-
-  def visit_expr_binop(self, node):
-    self.out(node)
+  def stmt_rep(self, node, i):
+    self.stmt(node.stmt, i + node.indicies)
   
-  # Elements= ===========================================
+  def stmt_seq(self, node, i):
+    [self.stmt(x, i) for x in node.stmt]
 
-  def visit_elem_group(self, node):
-    self.out(node)
+  def stmt_par(self, node, i):
+    [self.stmt(x, i) for x in node.stmt]
 
-  def visit_elem_sub(self, node):
-    self.out(node)
+  def stmt_if(self, node, i):
+    self.stmt(node.thenstmt, i)
+    self.stmt(node.elsestmt, i)
 
-  def visit_elem_fcall(self, node):
-    self.out(node)
+  def stmt_while(self, node, i):
+    self.stmt(node.stmt, i)
 
-  def visit_elem_number(self, node):
-    self.out(node)
+  def stmt_for(self, node, i):
+    self.stmt(node.stmt, i)
 
-  def visit_elem_boolean(self, node):
-    self.out(node)
+  # Statements not containing processes or channels uses
 
-  def visit_elem_string(self, node):
-    self.out(node)
+  def stmt_ass(self, node, i):
+    pass
 
-  def visit_elem_char(self, node):
-    self.out(node)
+  def stmt_alias(self, node, i):
+    pass
 
-  def visit_elem_id(self, node):
-    self.out(node)
+  def stmt_skip(self, node, i):
+    pass
+
+  def stmt_return(self, node, i):
+    pass
+
+  # Prohibited statements
+
+  def stmt_on(self, node, i):
+    assert 0
+
+  def stmt_connect(self, node, i):
+    assert 0
 

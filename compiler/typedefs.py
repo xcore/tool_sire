@@ -53,10 +53,6 @@ T_CHAN_ARRAY     = Type('chan', 'array')
 T_PROC           = Type('proc', 'procedure')
 T_FUNC           = Type('func', 'procedure')
 
-# System variables
-T_CORE_ARRAY     = Type('core', 'array')
-T_CORE_SUB       = Type('core', 'sub')
-
 # Tag
 T_TAG            = Type('tag')
 

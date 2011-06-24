@@ -1,16 +1,16 @@
-val N := 10;
+val N := 3;
 
 proc main() is
   var i;
   var j;
   var v;
   var w;
-  chan x[N];
-  chan y[N];
+  chan x[N*N];
+  chan y[N*N];
   par i in [0 for N], j in [1 for N] do
-  { x[i-1] ? v
-  ; x[i]   ! v + 1
-  ; y[j-1] ? w
-  ; y[j]   ! w + v
+  { x[(i*N)+(j-1)] ? v
+  ; x[(i*N)+j]     ! v + 1
+  ; y[(i*N)+(j-1)] ? w
+  ; y[(i*N)+j]     ! w + v
   }
   

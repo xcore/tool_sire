@@ -26,7 +26,8 @@ from semantics import Semantics
 from buildcfg import BuildCFG
 from liveness import Liveness
 from display import Display
-from labelprocesses import LabelProcesses
+from labelprocs import LabelProcs
+from labelchans import LabelChans
 from transformpar import TransformPar
 from transformrep import TransformRep
 from flattencalls import FlattenCalls
@@ -208,10 +209,12 @@ def transform_ast(sem, sig, ast, errorlog, device):
   """
 
   # 1. Label processes
-  vmsg(v, "Labeling process locations")
-  LabelProcesses(device).walk_program(ast)
+  vmsg(v, "Labeling processes")
+  LabelProcs(device).walk_program(ast)
 
-  # 2. Insert channel connections
+  # 2. Label channels
+  vmsg(v, "Labeling channels")
+  LabelChans().walk_program(ast)
 
   # 3. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
@@ -220,11 +223,11 @@ def transform_ast(sem, sig, ast, errorlog, device):
 
   # 4. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  TransformPar(sem, sig).walk_program(ast)
+  #TransformPar(sem, sig).walk_program(ast)
   
   # 5. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  TransformRep(sem, sig, device).walk_program(ast)
+  #TransformRep(sem, sig, device).walk_program(ast)
   
   # 6. Flatten nested calls
   vmsg(v, "Flattening nested calls")

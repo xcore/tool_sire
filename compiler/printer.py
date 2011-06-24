@@ -54,6 +54,10 @@ class Printer(NodeWalker):
         [self.decl(x) for x in decls]))
     if len(decls)>0: self.buf.write(';\n')
   
+  def process(self, stmt):
+    self.display_labels(stmt)
+    self.stmt(stmt)
+
   # Program ============================================
 
   def walk_program(self, node):
@@ -119,10 +123,10 @@ class Printer(NodeWalker):
       if (isinstance(node.stmt, ast.StmtPar) 
           or isinstance(node.stmt, ast.StmtSeq)):
         self.indent.pop()
-        self.stmt(node.stmt)
+        self.process(node.stmt)
         self.buf.write('\n\n')
       else:
-        self.stmt(node.stmt)
+        self.process(node.stmt)
         self.buf.write('\n\n')
         self.indent.pop()
   
@@ -133,8 +137,12 @@ class Printer(NodeWalker):
       return 'val '+node.name
     elif node.type == T_REF_SINGLE:
       return 'var '+node.name
-    elif (node.type == T_REF_ARRAY or node.type == T_VAL_ARRAY):
+    elif node.type == T_REF_ARRAY:
       return 'var {}[{}]'.format(node.name, self.expr(node.expr))
+    elif node.type == T_CHANEND_SINGLE:
+      return 'chanend {}'.format(node.name)
+    elif node.type == T_CHANEND_ARRAY:
+      return 'chanend {}[{}]'.format(node.name, self.expr(node.expr))
     else:
       assert 0
 
@@ -155,51 +163,45 @@ class Printer(NodeWalker):
     self.out('{\n')
     self.indent.append(INDENT)
     for (i, x) in enumerate(node.stmt): 
-      self.stmt(x)
+      if sep=='||':
+        self.process(x)
+      else:
+        self.stmt(x)
       self.buf.write(sep if i<(len(node.stmt)-1) else '')
       self.buf.write('\n')
     self.indent.pop()
     self.out('}')
 
   def stmt_seq(self, node):
-    self.display_labels(node)
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
-    self.display_labels(node)
     self.stmt_block(node, '||')
 
   def stmt_skip(self, node):
-    self.display_labels(node)
     self.out('skip')
 
   def stmt_pcall(self, node):
-    self.display_labels(node)
     self.out('{}({})'.format(
       node.name, self.arg_list(node.args)))
 
   def stmt_ass(self, node):
-    self.display_labels(node)
     self.out('{} := {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_in(self, node):
-    self.display_labels(node)
     self.out('{} ? {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_out(self, node):
-    self.display_labels(node)
     self.out('{} ! {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_alias(self, node):
-    self.display_labels(node)
     self.out('{} aliases {}'.format(
       self.elem(node.left), self.elem(node.slice)))
 
   def stmt_connect(self, node):
-    self.display_labels(node)
     if node.core:
       self.out('connect {} to {}'.format(
           self.elem(node.chan), self.expr(node.core)))
@@ -207,49 +209,42 @@ class Printer(NodeWalker):
       self.out('connect {}'.format(self.elem(node.chan)))
 
   def stmt_if(self, node):
-    self.display_labels(node)
     self.out('if {}\n'.format(self.expr(node.cond)))
     self.out('then\n')
     self.indent.append(INDENT)
-    self.stmt(node.thenstmt) ; self.buf.write('\n')
+    self.process(node.thenstmt) ; self.buf.write('\n')
     self.indent.pop()
     self.out('else\n')
     self.indent.append(INDENT)
-    self.stmt(node.elsestmt)
+    self.process(node.elsestmt)
     self.indent.pop()
 
   def stmt_while(self, node):
-    self.display_labels(node)
-    self.display_labels(node)
     self.out('while {} do\n'.format(self.expr(node.cond)))
     self.indent.append(INDENT)
-    self.stmt(node.stmt)
+    self.process(node.stmt)
     self.indent.pop()
 
   def stmt_for(self, node):
-    self.display_labels(node)
     self.out('for {} do\n'.format(self.elem(node.index)))
     self.indent.append(INDENT)
-    self.stmt(node.stmt)
+    self.process(node.stmt)
     self.indent.pop()
 
   def stmt_rep(self, node):
-    self.display_labels(node)
     self.out('par {} do\n'.format(
       ', '.join([self.elem(x) for x in node.indicies]))) 
     self.indent.append(INDENT)
-    self.stmt(node.stmt)
+    self.process(node.stmt)
     self.indent.pop()
 
   def stmt_on(self, node):
-    self.display_labels(node)
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
-    self.stmt(node.stmt)
+    self.process(node.stmt)
     self.indent.pop()
 
   def stmt_return(self, node):
-    self.display_labels(node)
     self.out('return {}'.format(self.expr(node.expr)))
 
   # Expressions =========================================

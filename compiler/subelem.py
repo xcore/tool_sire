@@ -5,7 +5,7 @@
 
 from ast import NodeVisitor
 
-class ReplaceElemInExpr(NodeVisitor):
+class SubElem(NodeVisitor):
   """
   Am AST walker to replace a particular element. Replace all instances of
   'old' element with 'new' element in the list of arguments. Elements are
@@ -13,10 +13,11 @@ class ReplaceElemInExpr(NodeVisitor):
   """
   def __init__(self, old, new):
     """
-    Elements old and new.
+    Elements old (name) and new (element).
     """
     self.old = old
     self.new = new
+    #print('Replacing: {}, with {}'.format(old, new))
 
   def visit_expr_single(self, node):
     if isinstance(node.elem, type(self.old)):
