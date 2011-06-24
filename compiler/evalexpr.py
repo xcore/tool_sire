@@ -3,6 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+from math import floor
 import error
 import ast
 from walker import NodeWalker
@@ -42,8 +43,8 @@ class EvalExpr(NodeWalker):
     if   node.op == '+':   return a + b
     elif node.op == '-':   return a - b 
     elif node.op == '*':   return a * b
-    elif node.op == '/':   return a / b
-    elif node.op == '%':   return a % b
+    elif node.op == '/':   return floor(a / b)
+    elif node.op == 'rem': return floor(a % b)
     elif node.op == 'or':  return a | b
     elif node.op == 'and': return a & b
     elif node.op == 'xor': return a ^ b

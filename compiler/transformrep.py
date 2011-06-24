@@ -78,33 +78,37 @@ class TransformRep(NodeWalker):
       for y in pcall.args:
         # Calculate the index i as a function of _t and the dimensions.
         e = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('/', elem_t,
-              ast.ElemNumber(divisor))), ast.ElemNumber(x.count_value))
+              ast.ExprSingle(ast.ElemNumber(divisor)))),
+              ast.ExprSingle(ast.ElemNumber(x.count_value)))
         if x.base_value > 0:
-          e = ast.ExprBinop('+', ast.ElemNumber(x.base_value), ast.ElemGroup(e))
+          e = ast.ExprBinop('+', ast.ElemNumber(x.base_value),
+              ast.ExprSingle(ast.ElemGroup(e)))
         # Then replace it for each ocurrance of i
         y.accept(SubElem(ast.ElemId(x.name), 
             ast.ElemGroup(e)))
  
     # (((b + ((t+n/2)/f)) rem NUM_CORES
-    d = ast.ExprBinop('+', elem_t, elem_x)
+    d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
     if f > 1:
-      d = ast.ExprBinop('/', ast.ElemGroup(d), ast.ElemNumber(f))
+      d = ast.ExprBinop('/', ast.ElemGroup(d),
+          ast.ExprSingle(ast.ElemNumber(f)))
     d = ast.ExprBinop('rem', 
-        ast.ElemGroup(ast.ExprBinop('+', elem_b, ast.ElemGroup(d))),
-          ast.ElemId(defs.SYS_NUM_CORES_CONST))
+        ast.ElemGroup(ast.ExprBinop('+', elem_b,
+          ast.ExprSingle(ast.ElemGroup(d)))),
+          ast.ExprSingle(ast.ElemId(defs.SYS_NUM_CORES_CONST)))
 
     # Conditionally recurse {d()|d()} or d()
     s1 = ast.StmtIf(
         # if m > n/2
-        ast.ExprBinop('>', elem_m, elem_x),
+        ast.ExprBinop('>', elem_m, ast.ExprSingle(elem_x)),
         # then
         ast.StmtPar([
             # on ((id()+t+n/2) rem NUM_CORES) / f do 
             #   d(t+n/2, n/2, m-n/2, ...)
             ast.StmtOn(d,
                 ast.StmtPcall(name,
-                    [ast.ExprBinop('+', elem_t, elem_x), 
-                    expr_x, ast.ExprBinop('-', elem_m, elem_x),
+                    [ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x)), 
+                    expr_x, ast.ExprBinop('-', elem_m, ast.ExprSingle(elem_x)),
                     expr_b] + proc_actuals)),
             # d(t, n/2, n/2)
             ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
@@ -114,11 +118,12 @@ class TransformRep(NodeWalker):
         ast.StmtPcall(name, [expr_t, expr_x, expr_m, expr_b] + proc_actuals))
 
     # _x = n/2 ; s1
-    n_div_2 = ast.ExprBinop('>>', elem_n, ast.ElemNumber(1))
+    n_div_2 = ast.ExprBinop('>>', elem_n, ast.ExprSingle(ast.ElemNumber(1)))
     s2 = ast.StmtSeq([ast.StmtAss(elem_x, n_div_2), s1])
 
     # if n = 0 then process() else s1
-    s3 = ast.StmtIf(ast.ExprBinop('=', elem_n, ast.ElemNumber(0)), pcall, s2)
+    s3 = ast.StmtIf(ast.ExprBinop('=', elem_n,
+      ast.ExprSingle(ast.ElemNumber(0))), pcall, s2)
   
     # Create the local declarations
     decls = [ast.Decl(elem_x.name, T_VAR_SINGLE, None)]

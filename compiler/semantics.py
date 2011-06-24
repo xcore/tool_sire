@@ -307,11 +307,14 @@ class Semantics(NodeWalker):
   # Program ============================================
 
   def walk_program(self, node):
+    """
+    Walk the progrm in a global 'program' scope. Don't close this so that
+    symbols for any declared values remain accessible. 
+    """
     self.sym.begin_scope('program')
     [self.decl(x) for x in node.decls]
     [self.defn(x) for x in node.defs]
-    #self.sym.end_scope()
-  
+    
   # Variable declarations ===============================
 
   def decl(self, node):

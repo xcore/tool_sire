@@ -12,7 +12,8 @@ class LabelProcs(NodeWalker):
   """
   A template recursive descent AST NodeWalker.
   """
-  def __init__(self, device):
+  def __init__(self, sym, device):
+    self.sym = sym
     self.device = device
 
   # Program ============================================
@@ -49,18 +50,23 @@ class LabelProcs(NodeWalker):
     for (i, x) in enumerate(node.indicies):
       c = reduce(lambda x, y: x*y, dims[i+1:], 1)
       e = (ast.ElemGroup(
-            ast.ExprBinop('*', ast.ElemId(x.name), ast.ElemNumber(c))) 
+            ast.ExprBinop('*', ast.ElemId(x.name),
+              ast.ExprSingle(ast.ElemNumber(c)))) 
               if c>1 else ast.ElemId(x.name))
-      k = e if k==None else ast.ExprBinop('+', k, e)
+      k = ast.ExprSingle(e) if k==None else ast.ExprBinop('+', k, ast.ExprSingle(e))
     
     # Apply f
-    k = (ast.ElemGroup(ast.ExprBinop('/', 
-          ast.ElemGroup(k), ast.ElemNumber(node.f))) 
+    k = (ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('/', 
+          ast.ElemGroup(k), ast.ExprSingle(ast.ElemNumber(node.f)))))
             if node.f>1 else k)
-
+    
+    # Create a NUM_CORES constant element with the correct symbol
+    elem_numcores = ast.ElemId(defs.SYS_NUM_CORES_CONST)
+    elem_numcores.symbol = self.sym.lookup(defs.SYS_NUM_CORES_CONST) 
+    
     # Add to base and take modulo
     k = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('+', l, k)), 
-        ast.ElemId(defs.SYS_NUM_CORES_CONST))
+        ast.ExprSingle(elem_numcores))
 
     assert not k==None
     self.stmt(node.stmt, k)

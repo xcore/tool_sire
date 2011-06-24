@@ -23,31 +23,30 @@ class LabelChans(NodeWalker):
   def __init__(self):
     pass
 
-  def expand_channel(self, i, elemsub):
+  def expand_channel(self, i, stmt, elem):
     """
     Expand the use of a channel subscript over a set of iterators.
     """
-    #print(Printer().expr(elemsub.expr))
+    #print(Printer().expr(elem.expr))
+    #print(Printer().expr(stmt.location))
     ranges = [range(x.base_value, x.base_value+x.count_value) for x in i]
     for x in product(*ranges):
-      expr = copy.deepcopy(elemsub.expr)
+      index_expr = copy.deepcopy(elem.expr)
+      locat_expr = copy.deepcopy(stmt.location)
       for (y, z) in zip(i, x):
-        expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
-      value = EvalExpr().expr(expr)
-      print('  {}[{}]'.format(elemsub.name, value))
+        index_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
+        locat_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
+      #print(Printer().expr(locat_expr))
+      index_value = EvalExpr().expr(index_expr)
+      locat_value = EvalExpr().expr(locat_expr)
+      print('  {}[{}] at {}'.format(elem.name, index_value, locat_value))
 
   # Program ============================================
 
   def walk_program(self, node):
-    [self.decl(x) for x in node.decls]
+    #[self.decl(x) for x in node.decls]
     [self.defn(x) for x in node.defs]
   
-  # Variable declarations ===============================
-
-  def decl(self, node):
-    #self.expr(node.expr)
-    pass
-
   # Procedure definitions ===============================
 
   def defn(self, node):
@@ -61,14 +60,14 @@ class LabelChans(NodeWalker):
   def stmt_in(self, node, i):
     print('? channel {}:'.format(node.left.name))
     if isinstance(node.left, ast.ElemSub):
-      self.expand_channel(i, node.left)
+      self.expand_channel(i, node, node.left)
     elif isinstance(node.left, ast.ElemId):
       assert 0
 
   def stmt_out(self, node, i):
     print('! channel {}:'.format(node.left.name))
     if isinstance(node.left, ast.ElemSub):
-      self.expand_channel(i, node.left)
+      self.expand_channel(i, node, node.left)
     elif isinstance(node.left, ast.ElemId):
       assert 0
 
@@ -78,7 +77,7 @@ class LabelChans(NodeWalker):
           and isinstance(x.elem, ast.ElemSub)
           and x.elem.symbol.type == T_CHAN_ARRAY):
         print('arg channel {}:'.format(x.elem.name))
-        self.expand_channel(i, x.elem)
+        self.expand_channel(i, node, x.elem)
     
   # Statements containing processes
 

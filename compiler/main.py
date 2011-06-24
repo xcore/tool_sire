@@ -203,14 +203,14 @@ def semantic_analysis(sym, sig, ast, device, errorlog):
 
   return sem
 
-def transform_ast(sem, sig, ast, errorlog, device):
+def transform_ast(sem, sym, sig, ast, errorlog, device):
   """
   Perform transformations on the AST.
   """
 
   # 1. Label processes
   vmsg(v, "Labeling processes")
-  LabelProcs(device).walk_program(ast)
+  LabelProcs(sym, device).walk_program(ast)
 
   # 2. Label channels
   vmsg(v, "Labeling channels")
@@ -289,7 +289,7 @@ def main(args):
     sem = semantic_analysis(sym, sig, ast, device, errorlog)
     
     # Perform AST transformations
-    child = transform_ast(sem, sig, ast, errorlog, device)
+    child = transform_ast(sem, sym, sig, ast, errorlog, device)
 
     # Generate code
     vhdr(v, 'Generating code for {}'.format(device))

@@ -3,6 +3,7 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import ast
 from ast import NodeVisitor
 
 class SubElem(NodeVisitor):
@@ -30,8 +31,8 @@ class SubElem(NodeVisitor):
         node.elem = self.new
 
   def visit_expr_binop(self, node):
+    assert not isinstance(node.right, ast.Elem)
     if isinstance(node.elem, type(self.old)):
       if node.elem.name == self.old.name:
         node.elem = self.new
-
 
