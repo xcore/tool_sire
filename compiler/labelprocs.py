@@ -64,9 +64,13 @@ class LabelProcs(NodeWalker):
     elem_numcores = ast.ElemId(defs.SYS_NUM_CORES_CONST)
     elem_numcores.symbol = self.sym.lookup(defs.SYS_NUM_CORES_CONST) 
     
-    # Add to base and take modulo
-    k = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('+', l, k)), 
-        ast.ExprSingle(elem_numcores))
+    # Add to base (if non-zero) and take modulo
+    if isinstance(l, ast.ElemNumber) and l.value==0:
+      pass
+    else:
+      k = ast.ExprBinop('+', l, k)
+      #k = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('+', l, k)), 
+      #    ast.ExprSingle(elem_numcores))
 
     assert not k==None
     self.stmt(node.stmt, k)

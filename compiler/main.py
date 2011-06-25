@@ -189,7 +189,6 @@ def semantic_analysis(sym, sig, ast, device, errorlog):
   Perform semantic analysis on an AST.
   """
   vmsg(v, "Performing semantic analysis")
-  
   sem = Semantics(sym, sig, device, errorlog)
   sem.walk_program(ast)
   
@@ -216,24 +215,28 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   vmsg(v, "Labeling channels")
   LabelChans().walk_program(ast)
 
-  # 3. Perform liveness analysis
+  # 3. Insert connections
+  vmsg(v, "Inserting connections")
+  #InsertConns().walk_program(ast)
+
+  # 4. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   BuildCFG().run(ast)
   Liveness().run(ast)
 
-  # 4. Transform parallel composition
+  # 5. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
   #TransformPar(sem, sig).walk_program(ast)
   
-  # 5. Transform parallel replication
+  # 6. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
   #TransformRep(sem, sig, device).walk_program(ast)
   
-  # 6. Flatten nested calls
+  # 7. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
    
-  # 7. Perform child analysis
+  # 8. Perform child analysis
   child = child_analysis(sig, ast)
 
   # Check for any errors

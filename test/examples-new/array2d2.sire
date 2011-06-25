@@ -1,0 +1,17 @@
+val N := 2;
+
+proc main() is
+  var i;
+  var j;
+  var v;
+  var w;
+  chan x[N*N];
+  chan y[N*N];
+  par i in [0 for N] do
+    par j in [0 for N] do
+    { x[(i*N)+j]     ? v
+    ; x[(i*N)+(j+1)] ! v + 1
+    ; y[(i*N)+j]     ? w
+    ; y[(i*N)+(j+1)] ! w + v
+    }
+  

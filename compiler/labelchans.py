@@ -18,28 +18,44 @@ from printer import Printer
 
 class LabelChans(NodeWalker):
   """
-  A template recursive descent AST NodeWalker.
+  Label channel uses. For replicators, expand array subscripts over the range
+  of the iterators and tag each with its offset relative to the declaration of
+  the channel. Then label each channel with the relative offset from the master
+  to the slave.
   """
-  def __init__(self):
-    pass
+  def __init__(self, print_debug=True):
+    self.print_debug = print_debug
 
-  def expand_channel(self, i, stmt, elem):
+  def debug(self, s):
+    if self.print_debug:
+      print(s)
+  
+  def chankey(self, name, index):
+    return '{}{}'.format(name, index)
+
+  def expand_channel(self, iterators, labels, stmt, elem):
     """
     Expand the use of a channel subscript over a set of iterators.
     """
     #print(Printer().expr(elem.expr))
     #print(Printer().expr(stmt.location))
-    ranges = [range(x.base_value, x.base_value+x.count_value) for x in i]
+    ranges = [range(x.base_value, x.base_value+x.count_value) for x in iterators]
     for x in product(*ranges):
       index_expr = copy.deepcopy(elem.expr)
       locat_expr = copy.deepcopy(stmt.location)
-      for (y, z) in zip(i, x):
+      for (y, z) in zip(iterators, x):
         index_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
         locat_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
       #print(Printer().expr(locat_expr))
       index_value = EvalExpr().expr(index_expr)
       locat_value = EvalExpr().expr(locat_expr)
-      print('  {}[{}] at {}'.format(elem.name, index_value, locat_value))
+      self.debug('  {}[{}] at {}'.format(elem.name, index_value, locat_value))
+     
+      # Add the locations to the label table
+      key = self.chankey(elem.name, index_value) 
+      if not key in labels:
+        labels[key] = []
+      labels[key].append(locat_value)
 
   # Program ============================================
 
@@ -51,74 +67,80 @@ class LabelChans(NodeWalker):
 
   def defn(self, node):
     #[self.decl(x) for x in node.decls]
-    self.stmt(node.stmt, [])
+    self.debug('New channel scope: '+node.name)
+    iterators = []
+    labels = {}
+    self.stmt(node.stmt, iterators, labels)
+    self.debug('Channel label table:')
+    for x in labels.keys():
+      self.debug('  {}: {}'.format(x, ', '.join(['{}'.format(y) for y in labels[x]])))
   
   # Statements ==========================================
 
   # Statements containing uses of channels
 
-  def stmt_in(self, node, i):
-    print('? channel {}:'.format(node.left.name))
+  def stmt_in(self, node, iterators, labels):
+    self.debug('out channel {}:'.format(node.left.name))
     if isinstance(node.left, ast.ElemSub):
-      self.expand_channel(i, node, node.left)
+      self.expand_channel(iterators, labels, node, node.left)
     elif isinstance(node.left, ast.ElemId):
       assert 0
 
-  def stmt_out(self, node, i):
-    print('! channel {}:'.format(node.left.name))
+  def stmt_out(self, node, iterators, labels):
+    self.debug('in channel {}:'.format(node.left.name))
     if isinstance(node.left, ast.ElemSub):
-      self.expand_channel(i, node, node.left)
+      self.expand_channel(iterators, labels, node, node.left)
     elif isinstance(node.left, ast.ElemId):
       assert 0
 
-  def stmt_pcall(self, node, i):
+  def stmt_pcall(self, node, iterators, labels):
     for x in node.args:
       if (isinstance(x, ast.ExprSingle) 
           and isinstance(x.elem, ast.ElemSub)
           and x.elem.symbol.type == T_CHAN_ARRAY):
-        print('arg channel {}:'.format(x.elem.name))
-        self.expand_channel(i, node, x.elem)
+        self.debug('arg channel {}:'.format(x.elem.name))
+        self.expand_channel(iterators, labels, node, x.elem)
     
   # Statements containing processes
 
-  def stmt_rep(self, node, i):
-    self.stmt(node.stmt, i + node.indicies)
+  def stmt_rep(self, node, iterators, labels):
+    self.stmt(node.stmt, iterators + node.indicies, labels)
   
-  def stmt_seq(self, node, i):
-    [self.stmt(x, i) for x in node.stmt]
+  def stmt_seq(self, node, iterators, labels):
+    [self.stmt(x, iterators, labels) for x in node.stmt]
 
-  def stmt_par(self, node, i):
-    [self.stmt(x, i) for x in node.stmt]
+  def stmt_par(self, node, iterators, labels):
+    [self.stmt(x, iterators, labels) for x in node.stmt]
 
-  def stmt_if(self, node, i):
-    self.stmt(node.thenstmt, i)
-    self.stmt(node.elsestmt, i)
+  def stmt_if(self, node, iterators, labels):
+    self.stmt(node.thenstmt, iterators, labels)
+    self.stmt(node.elsestmt, iterators, labels)
 
-  def stmt_while(self, node, i):
-    self.stmt(node.stmt, i)
+  def stmt_while(self, node, iterators, labels):
+    self.stmt(node.stmt, iterators, labels)
 
-  def stmt_for(self, node, i):
-    self.stmt(node.stmt, i)
+  def stmt_for(self, node, iterators, labels):
+    self.stmt(node.stmt, iterators, labels)
 
   # Statements not containing processes or channels uses
 
-  def stmt_ass(self, node, i):
+  def stmt_ass(self, node, iterators, labels):
     pass
 
-  def stmt_alias(self, node, i):
+  def stmt_alias(self, node, iterators, labels):
     pass
 
-  def stmt_skip(self, node, i):
+  def stmt_skip(self, node, iterators, labels):
     pass
 
-  def stmt_return(self, node, i):
+  def stmt_return(self, node, iterators, labels):
     pass
 
   # Prohibited statements
 
-  def stmt_on(self, node, i):
+  def stmt_on(self, node, iterators, labels):
     assert 0
 
-  def stmt_connect(self, node, i):
+  def stmt_connect(self, node, iterators, labels):
     assert 0
 
