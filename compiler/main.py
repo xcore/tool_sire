@@ -215,8 +215,8 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   vmsg(v, "Labeling channels")
   LabelChans().walk_program(ast)
 
-  # 3. Insert connections
-  vmsg(v, "Inserting connections")
+  # 3. Insert channel ends
+  vmsg(v, "Inserting channel ends")
   #InsertConns().walk_program(ast)
 
   # 4. Perform liveness analysis

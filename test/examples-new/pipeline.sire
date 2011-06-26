@@ -21,6 +21,6 @@ proc main() is
   var query;
   var result;
 { { c ! query ; c ? result } ||
-  tree(c)
+  pipeline(c)
 }
 
