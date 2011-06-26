@@ -28,6 +28,7 @@ from liveness import Liveness
 from display import Display
 from labelprocs import LabelProcs
 from labelchans import LabelChans
+from insertconns import InsertConns
 from transformpar import TransformPar
 from transformrep import TransformRep
 from flattencalls import FlattenCalls
@@ -217,7 +218,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
 
   # 3. Insert channel ends
   vmsg(v, "Inserting channel ends")
-  #InsertConns().walk_program(ast)
+  InsertConns().walk_program(ast)
 
   # 4. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")

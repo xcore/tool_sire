@@ -18,13 +18,14 @@ from printer import Printer
 
 class LabelChans(NodeWalker):
   """
-  Label channel uses. For replicators, expand array subscripts over the range
-  of the iters and tag each with its offset relative to the declaration of
-  the channel. Then label each channel with the relative offset from the master
-  to the slave. Propagate the expanded channel uses up to replicator or
-  composition level and insert the corresponding connections.
+  For each procedure definition, construct a table which records for each use
+  of a channel the offsets of the master and slave processes (relative to the
+  base). For replicators, expand array subscripts over the range of the
+  iterators and tag each with its offset relative to the declaration of the
+  channel. Then label each channel with the relative offset from the master to
+  the slave.
   """
-  def __init__(self, print_debug=True):
+  def __init__(self, print_debug=False):
     self.print_debug = print_debug
 
   def debug(self, s):
@@ -94,18 +95,6 @@ class LabelChans(NodeWalker):
     
     return uses
 
-  def insert_connections(self, process, uses):
-    """
-    Insert connections for a process from a list of channel uses (name, index)
-    by composing them in sequence, prior to the process. If there are no
-    connecitons to be made, just return the process.
-    """
-    if len(uses) > 0:
-      conns = [ast.StmtSkip() for x in uses]
-      return ast.StmtSeq(conns + [process])
-    else:
-      return process
-
   # Program ============================================
 
   def walk_program(self, node):
@@ -119,7 +108,6 @@ class LabelChans(NodeWalker):
     self.debug('New channel scope: '+node.name)
     tab = {}
     uses = self.stmt(node.stmt, [], tab)
-    node.stmt = self.insert_connections(node.stmt, uses) 
     self.debug('Channel label table:')
     for x in tab.keys():
       self.debug('  {}: {}'.format(x, ', '.join(['{}'.format(y) for y in tab[x]])))
@@ -132,10 +120,10 @@ class LabelChans(NodeWalker):
     self.debug('out channel {}:'.format(node.left.name))
     
     if isinstance(node.left, ast.ElemId):
-      return self.single_channel(tab, node, node.left)
+      node.uses = self.single_channel(tab, node, node.left)
     
     elif isinstance(node.left, ast.ElemSub):
-      return self.subscript_channel(iters, tab, node, node.left)
+      node.uses = self.subscript_channel(iters, tab, node, node.left)
     
     else:
       assert 0
@@ -144,75 +132,66 @@ class LabelChans(NodeWalker):
     self.debug('in channel {}:'.format(node.left.name))
 
     if isinstance(node.left, ast.ElemId):
-      return self.single_channel(tab, node, node.left)
+      node.uses = self.single_channel(tab, node, node.left)
     
     elif isinstance(node.left, ast.ElemSub):
-      return self.subscript_channel(iters, tab, node, node.left)
+      node.uses = self.subscript_channel(iters, tab, node, node.left)
     
     else:
       assert 0
 
   def stmt_pcall(self, node, iters, tab):
-    uses = []
+    node.uses = []
     for x in node.args:
       if isinstance(x, ast.ExprSingle):
 
         if (isinstance(x.elem, ast.ElemId)
             and x.elem.symbol.type == T_CHAN_SINGLE):
           self.debug('single arg channel {}:'.format(x.elem.name))
-          uses += self.single_channel(tab, node, x.elem)
+          node.uses += self.single_channel(tab, node, x.elem)
 
         elif (isinstance(x.elem, ast.ElemSub)
             and x.elem.symbol.type == T_CHAN_ARRAY):
           self.debug('subscript arg channel {}:'.format(x.elem.name))
-          uses += self.subscript_channel(iters, tab, node, x.elem)
-        
-    return uses
+          node.uses += self.subscript_channel(iters, tab, node, x.elem)
     
   # Top-level statements where connections are inserted
 
   def stmt_rep(self, node, iters, tab):
-    uses = self.stmt(node.stmt, iters + node.indicies, tab)
-    node.stmt = self.insert_connections(node.stmt, uses)
-    return []
+    self.stmt(node.stmt, iters + node.indicies, tab)
   
   def stmt_par(self, node, iters, tab):
     for (i, x) in enumerate(node.stmt):
-      uses = self.stmt(x, iters, tab)
-      node.stmt[i] = self.insert_connections(node.stmt[i], uses) 
-    return []
+      self.stmt(x, iters, tab)
  
   # Other statements containing processes
 
   def stmt_seq(self, node, iters, tab):
-    uses = []
-    [uses.extend(self.stmt(x, iters, tab)) for x in node.stmt]
-    return uses
+    [self.stmt(x, iters, tab) for x in node.stmt]
 
   def stmt_if(self, node, iters, tab):
-    uses = self.stmt(node.thenstmt, iters, tab)
-    uses += self.stmt(node.elsestmt, iters, tab)
-    return uses
+    self.stmt(node.thenstmt, iters, tab)
+    self.stmt(node.elsestmt, iters, tab)
 
   def stmt_while(self, node, iters, tab):
-    return self.stmt(node.stmt, iters, tab)
+    self.stmt(node.stmt, iters, tab)
 
   def stmt_for(self, node, iters, tab):
-    return self.stmt(node.stmt, iters, tab)
+    self.stmt(node.stmt, iters, tab)
 
   # Statements not containing processes or channels uses
 
   def stmt_ass(self, node, iters, tab):
-    return []
+    pass
 
   def stmt_alias(self, node, iters, tab):
-    return []
+    pass
 
   def stmt_skip(self, node, iters, tab):
-    return []
+    pass
 
   def stmt_return(self, node, iters, tab):
-    return []
+    pass
 
   # Prohibited statements
 
