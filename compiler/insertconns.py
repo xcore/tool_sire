@@ -41,6 +41,16 @@ class InsertConns(NodeWalker):
     else:
       return process
 
+  def display_uses(self, uses):
+    for x in uses:
+      if x[2]:
+        print('  connect {} to {}'.format(
+          '{}[{}]'.format(x[0], x[1]) if x[1] else x[0], 0))
+      else:
+        print('  connect {}'.format(
+          '{}[{}]'.format(x[0], x[1]) if x[1] else x[0], 0))
+
+
   # Program ============================================
 
   def walk_program(self, node):
@@ -49,81 +59,74 @@ class InsertConns(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    self.debug('New channel scope: '+node.name)
+    self.debug('Inserting connections for: '+node.name)
     decls = set()
-    uses = self.stmt(node.stmt, decls)
-    node.stmt = self.insert_connections(node.stmt, uses)
+    self.stmt(node.stmt, decls)
+    #node.stmt = self.insert_connections(node.stmt, uses)
 
     # Insert any new channel end declarations
-    for x in decls:
-      pass
+    self.display_uses(node.uses)
   
   # Statements ==========================================
 
   # Statements containing uses of channels
 
   def stmt_in(self, node, decls):
-    self.debug('out channel {}:'.format(node.left.name))
-    return set(node.uses)
+    #self.debug('out channel {}:'.format(node.left.name))
+    pass
 
   def stmt_out(self, node, decls):
-    self.debug('in channel {}:'.format(node.left.name))
-    return set(node.uses)
+    #self.debug('in channel {}:'.format(node.left.name))
+    pass
 
   def stmt_pcall(self, node, decls):
-    self.debug('pcall: '.format(node.name))
-    return set(node.uses)
+    #self.debug('pcall: '.format(node.name))
+    pass
     
   # Top-level statements where connections are inserted
 
   def stmt_rep(self, node, decls):
+    print('rep connections:')
+    self.display_uses(node.uses)
     uses = self.stmt(node.stmt, decls)
-    node.stmt = self.insert_connections(node.stmt, uses)
+    #node.stmt = self.insert_connections(node.stmt, uses)
 
-    # Add channel end declarations
-
-    return set()
-  
   def stmt_par(self, node, decls):
-    for (i, x) in enumerate(node.stmt):
-      uses = self.stmt(x, decls)
-      node.stmt[i] = self.insert_connections(node.stmt[i], uses) 
-    
-    # Add channel end declarations
-    
-    return set()
+    print('par connections:')
+    for x in node.uses:
+      print('par stmt: ')
+      self.display_uses(x)
+
+    [self.stmt(x, decls) for x in node.stmt]
  
   # Other statements containing processes
 
   def stmt_seq(self, node, decls):
-    uses = set()
-    [uses.update(self.stmt(x, decls)) for x in node.stmt]
-    return uses
+    [self.stmt(x, decls) for x in node.stmt]
 
   def stmt_if(self, node, decls):
-    uses = self.stmt(node.thenstmt, decls)
-    uses |= self.stmt(node.elsestmt, decls)
-    return uses
+    self.stmt(node.thenstmt, decls)
+    self.stmt(node.elsestmt, decls)
 
   def stmt_while(self, node, decls):
-    return self.stmt(node.stmt, decls)
+    self.stmt(node.stmt, decls)
 
   def stmt_for(self, node, decls):
-    return self.stmt(node.stmt, decls)
+    self.stmt(node.stmt, decls)
 
   # Statements not containing processes or channels uses
 
   def stmt_ass(self, node, decls):
-    return set()
+    pass
 
   def stmt_alias(self, node, decls):
-    return set()
+    pass
 
   def stmt_skip(self, node, decls):
-    return set()
+    pass
 
   def stmt_return(self, node, decls):
-    return set()
+    pass
 
   # Prohibited statements
 

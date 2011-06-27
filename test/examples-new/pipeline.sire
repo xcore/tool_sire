@@ -1,4 +1,4 @@
-val N := 10;
+val N := 4;
 
 func f(val v) is
   return v
@@ -7,10 +7,12 @@ proc pipeline(chanend input) is
   chan c[N+1];
   var i;
   var v;
-{ { input ? v ; c[0] ! v 
-  ; c[N] ? v ; input ! v
+{ { input ? v
+  ; c[0] ! v 
+  ; c[N] ? v 
+  ; input ! v
   } || 
-  par i in [0 for N] do
+  par i in [1 for N] do
   { c[i-1] ? v
   ; c[i] ! f(v)
   }

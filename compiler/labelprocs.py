@@ -8,6 +8,8 @@ import definitions as defs
 import ast
 from walker import NodeWalker
 
+from printer import Printer
+
 class LabelProcs(NodeWalker):
   """
   A template recursive descent AST NodeWalker.
@@ -31,10 +33,10 @@ class LabelProcs(NodeWalker):
   
   # Statements ==========================================
 
-  # Contain processes with new locations
+  # Contain processes with new offsets
 
   def stmt_rep(self, node, l):
-    node.location = l
+    node.offset = l
     
     # Calculate total # processes (m) and the next power of two of this (n)
     node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
@@ -78,48 +80,48 @@ class LabelProcs(NodeWalker):
   # Contain local processes
 
   def stmt_seq(self, node, l):
-    node.location = l
+    node.offset = l
     [self.stmt(x, l) for x in node.stmt]
 
   def stmt_par(self, node, l):
-    node.location = l
+    node.offset = l
     [self.stmt(x, l) for x in node.stmt]
 
   def stmt_if(self, node, l):
-    node.location = l
+    node.offset = l
     self.stmt(node.thenstmt, l)
     self.stmt(node.elsestmt, l)
 
   def stmt_while(self, node, l):
-    node.location = l
+    node.offset = l
     self.stmt(node.stmt, l)
 
   def stmt_for(self, node, l):
-    node.location = l
+    node.offset = l
     self.stmt(node.stmt, l)
 
   # Statements
   
   def stmt_skip(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_pcall(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_ass(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_in(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_out(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_alias(self, node, l):
-    node.location = l
+    node.offset = l
 
   def stmt_return(self, node, l):
-    node.location = l
+    node.offset = l
   
   # Prohibited
 

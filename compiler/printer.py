@@ -41,10 +41,6 @@ class Printer(NodeWalker):
     """
     self.buf.write(self.indt()+s)
 
-  def display_labels(self, stmt):
-    if self.labels and hasattr(stmt, 'location') and not stmt.location==None:
-      self.out('<<{}>>\n'.format(self.expr(stmt.location)))
-
   def arg_list(self, args):
     return ', '.join([self.expr(x) for x in args])
 
@@ -54,8 +50,12 @@ class Printer(NodeWalker):
         [self.decl(x) for x in decls]))
     if len(decls)>0: self.buf.write(';\n')
   
+  def display_offset(self, stmt):
+    if self.labels and hasattr(stmt, 'offset') and not stmt.offset==None:
+        self.out('<<{}>>\n'.format(self.expr(stmt.offset)))
+  
   def process(self, stmt):
-    self.display_labels(stmt)
+    self.display_offset(stmt)
     self.stmt(stmt)
 
   # Program ============================================
@@ -173,6 +173,7 @@ class Printer(NodeWalker):
     self.out('}')
 
   def stmt_seq(self, node):
+    #self.display_offset(node)
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
