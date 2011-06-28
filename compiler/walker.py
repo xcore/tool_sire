@@ -20,19 +20,19 @@ class NodeWalker(object):
     f = getattr(self, self.name(node))
     return f(node, *args) if args else f(node)
   
-  def param(self, node):
+  def param(self, node, *args):
     f = getattr(self, self.name(node))
-    return f(node)
+    return f(node, *args) if args else f(node)
   
   def stmt(self, node, *args):
     f = getattr(self, self.name(node))
     return f(node, *args) if args else f(node)
   
-  def expr(self, node):
+  def expr(self, node, *args):
     f = getattr(self, self.name(node))
-    return f(node)
+    return f(node, *args) if args else f(node)
 
-  def elem(self, node):
+  def elem(self, node, *args):
     f = getattr(self, self.name(node))
-    return f(node)
+    return f(node, *args) if args else f(node)
 

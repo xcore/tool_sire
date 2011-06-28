@@ -6,6 +6,7 @@
 import ast
 from walker import NodeWalker
 from typedefs import *
+#from LabelChans import ChanElem, ChanExpansion
 
 from printer import Printer
 
@@ -16,19 +17,13 @@ class InsertConns(NodeWalker):
   channel or subscripted array) allocate a new channel end which is declared in
   the procedure scope.
   """
-  def __init__(self, print_debug=True):
+  def __init__(self, print_debug=False):
     self.print_debug = print_debug
 
   def debug(self, s):
     if self.print_debug:
       print(s)
   
-  def chankey(self, name, index):
-    """
-    Given a channel name and its index return a key concatenating these.
-    """
-    return '{}{}'.format(name, '' if index==None else index)
-
   def insert_connections(self, process, uses):
     """
     Insert connections for a process from a list of channel uses (name, index)
@@ -41,14 +36,19 @@ class InsertConns(NodeWalker):
     else:
       return process
 
-  def display_uses(self, uses):
-    for x in uses:
-      if x[2]:
-        print('  connect {} to {}'.format(
-          '{}[{}]'.format(x[0], x[1]) if x[1] else x[0], 0))
+  def display_chans(self, chans):
+    for x in chans:
+      if x.expr:
+        print('  {}[{}]'.format(x.name, Printer().expr(x.expr)))
       else:
-        print('  connect {}'.format(
-          '{}[{}]'.format(x[0], x[1]) if x[1] else x[0], 0))
+        print('  {}'.format(x.name))
+      for y in x.elems:
+        if y.master:
+          print('    connect {} to {}'.format(
+            '{}[{}]'.format(x.name, y.index) if x.expr!=None else x.name, '?'))
+        else:
+          print('    connect {}'.format(
+            '{}[{}]'.format(x.name, y.index) if x.expr!=None else x.name, '?'))
 
 
   # Program ============================================
@@ -64,38 +64,27 @@ class InsertConns(NodeWalker):
     self.stmt(node.stmt, decls)
     #node.stmt = self.insert_connections(node.stmt, uses)
 
-    # Insert any new channel end declarations
-    self.display_uses(node.uses)
+    self.debug('[def connections]:')
+    if self.print_debug:
+      self.self.display_chans(node.chans)
   
   # Statements ==========================================
 
-  # Statements containing uses of channels
-
-  def stmt_in(self, node, decls):
-    #self.debug('out channel {}:'.format(node.left.name))
-    pass
-
-  def stmt_out(self, node, decls):
-    #self.debug('in channel {}:'.format(node.left.name))
-    pass
-
-  def stmt_pcall(self, node, decls):
-    #self.debug('pcall: '.format(node.name))
-    pass
-    
   # Top-level statements where connections are inserted
 
   def stmt_rep(self, node, decls):
-    print('rep connections:')
-    self.display_uses(node.uses)
-    uses = self.stmt(node.stmt, decls)
+    self.debug('[rep connections]:')
+    if self.print_debug:
+      self.display_chans(node.chans)
+    self.stmt(node.stmt, decls)
     #node.stmt = self.insert_connections(node.stmt, uses)
 
   def stmt_par(self, node, decls):
-    print('par connections:')
-    for x in node.uses:
-      print('par stmt: ')
-      self.display_uses(x)
+    self.debug('[par connections]:')
+    for x in node.chans:
+        self.debug('[par stmt]: ')
+        if self.print_debug:
+          self.display_chans(x)
 
     [self.stmt(x, decls) for x in node.stmt]
  
@@ -114,8 +103,17 @@ class InsertConns(NodeWalker):
   def stmt_for(self, node, decls):
     self.stmt(node.stmt, decls)
 
-  # Statements not containing processes or channels uses
+  # Other statements
 
+  def stmt_in(self, node, decls):
+    pass
+
+  def stmt_out(self, node, decls):
+    pass
+
+  def stmt_pcall(self, node, decls):
+    pass
+    
   def stmt_ass(self, node, decls):
     pass
 

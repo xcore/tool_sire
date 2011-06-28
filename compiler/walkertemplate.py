@@ -116,12 +116,11 @@ class TemplateWalker(NodeWalker):
     self.expr(node.expr)
 
   def elem_slice(self, node):
-    self.expr(node.begin)
-    self.expr(node.end)
+    self.expr(node.base)
+    self.expr(node.count)
 
-  def elem_index(self, node):
-    self.elem(node.var)
-    self.expr(node.init)
+  def elem_index_range(self, node):
+    self.expr(node.base)
     self.expr(node.count)
 
   def elem_pcall(self, node):

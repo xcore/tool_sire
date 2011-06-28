@@ -54,10 +54,6 @@ class Printer(NodeWalker):
     if self.labels and hasattr(stmt, 'offset') and not stmt.offset==None:
         self.out('<<{}>>\n'.format(self.expr(stmt.offset)))
   
-  def process(self, stmt):
-    self.display_offset(stmt)
-    self.stmt(stmt)
-
   # Program ============================================
 
   def walk_program(self, node):
@@ -123,10 +119,12 @@ class Printer(NodeWalker):
       if (isinstance(node.stmt, ast.StmtPar) 
           or isinstance(node.stmt, ast.StmtSeq)):
         self.indent.pop()
-        self.process(node.stmt)
+        self.display_offset(node.stmt)
+        self.stmt(node.stmt)
         self.buf.write('\n\n')
       else:
-        self.process(node.stmt)
+        self.display_offset(node.stmt)
+        self.stmt(node.stmt)
         self.buf.write('\n\n')
         self.indent.pop()
   
@@ -164,7 +162,7 @@ class Printer(NodeWalker):
     self.indent.append(INDENT)
     for (i, x) in enumerate(node.stmt): 
       if sep=='||':
-        self.process(x)
+        self.stmt(x)
       else:
         self.stmt(x)
       self.buf.write(sep if i<(len(node.stmt)-1) else '')
@@ -173,7 +171,6 @@ class Printer(NodeWalker):
     self.out('}')
 
   def stmt_seq(self, node):
-    #self.display_offset(node)
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
@@ -213,36 +210,37 @@ class Printer(NodeWalker):
     self.out('if {}\n'.format(self.expr(node.cond)))
     self.out('then\n')
     self.indent.append(INDENT)
-    self.process(node.thenstmt) ; self.buf.write('\n')
+    self.stmt(node.thenstmt) ; self.buf.write('\n')
     self.indent.pop()
     self.out('else\n')
     self.indent.append(INDENT)
-    self.process(node.elsestmt)
+    self.stmt(node.elsestmt)
     self.indent.pop()
 
   def stmt_while(self, node):
     self.out('while {} do\n'.format(self.expr(node.cond)))
     self.indent.append(INDENT)
-    self.process(node.stmt)
+    self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_for(self, node):
     self.out('for {} do\n'.format(self.elem(node.index)))
     self.indent.append(INDENT)
-    self.process(node.stmt)
+    self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_rep(self, node):
     self.out('par {} do\n'.format(
       ', '.join([self.elem(x) for x in node.indicies]))) 
     self.indent.append(INDENT)
-    self.process(node.stmt)
+    self.display_offset(node.stmt)
+    self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_on(self, node):
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
-    self.process(node.stmt)
+    self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_return(self, node):

@@ -6,9 +6,13 @@ proc main() is
   var v;
   { { c[0] ! 0
     ; c[N] ? v
+    ; c[0] ! 0
+    ; c[N] ? v
     }
   || par i in [0 for N] do
     { c[i-1] ? v
+    ; c[i] ! v + 1
+    ; c[i-1] ? v
     ; c[i] ! v + 1
     }
   }
