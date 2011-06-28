@@ -12,7 +12,7 @@ from printer import Printer
 
 class LabelProcs(NodeWalker):
   """
-  A template recursive descent AST NodeWalker.
+  Label each statement with its offset relative to the location of the scope.
   """
   def __init__(self, sym, device):
     self.sym = sym

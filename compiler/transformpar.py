@@ -140,7 +140,8 @@ class TransformPar(NodeWalker):
     # Create the local declarations (excluding values)
     for x in local_decls:
       if not x.symbol.type == T_VAL_SINGLE:
-        assert x.symbol.type == T_VAR_SINGLE
+        assert (x.symbol.type == T_VAR_SINGLE 
+            or x.symbol.type == T_CHANEND_SINGLE)
         decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
     
     # Create the new process definition

@@ -5,8 +5,9 @@
 
 import ast
 from walker import NodeWalker
+from definitions import PROC_ID_VAR
 from typedefs import *
-#from LabelChans import ChanElem, ChanExpansion
+from symbol import Symbol
 
 from printer import Printer
 
@@ -24,17 +25,48 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       print(s)
   
-  def insert_connections(self, process, uses):
+  def insert_connections(self, tab, stmt, chans):
     """
     Insert connections for a process from a list of channel uses (name, index)
     by composing them in sequence, prior to the process. If there are no
     connecitons to be made, just return the process.
     """
-    if len(uses) > 0:
-      conns = [ast.StmtSkip() for x in uses]
-      return ast.StmtSeq(conns + [process])
+    if len(chans) > 0:
+      pid = ast.ElemId(PROC_ID_VAR)
+      pid.symbol = Symbol(pid.name, T_VAR_SINGLE, scope=T_SCOPE_PROC)
+      conns = []
+      for x in chans:
+        
+        # If the expansion is of size one (single or constant subscript)
+        if len(x.elems) == 1:
+          elem = x.elems[0]
+          loc = ast.ExprBinop('+', pid, ast.ExprSingle(
+                ast.ElemNumber(tab.slave_offset(x.name, elem.index))))
+          chanend = ast.ElemId(x.chanend)
+          chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
+              None, scope=T_SCOPE_PROC)
+          conns.append(ast.StmtConnect(chanend, loc if elem.master else None))
+
+        # Otherwise we must analyse the subscript
+        else:
+          s = ast.StmtSkip()
+          for y in reversed(x.elems):
+            cond = ast.ExprBinop('=', ast.ElemGroup(x.expr),
+                ast.ElemNumber(y.index))
+            loc = ast.ExprBinop('+', pid, ast.ExprSingle(
+                  ast.ElemNumber(tab.slave_offset(x.name, y.index)))) 
+            chanend = ast.ElemId(x.chanend)
+            chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
+                None, scope=T_SCOPE_PROC)
+            conn = ast.StmtConnect(chanend, loc if y.master else None)
+            s = ast.StmtIf(cond, conn, s)
+          conns.append(s)
+
+      s = ast.StmtSeq(conns + [stmt])
+      s.offset = stmt.offset
+      return s
     else:
-      return process
+      return stmt
 
   def display_chans(self, chans):
     for x in chans:
@@ -50,7 +82,6 @@ class InsertConns(NodeWalker):
           print('    connect {}'.format(
             '{}[{}]'.format(x.name, y.index) if x.expr!=None else x.name, '?'))
 
-
   # Program ============================================
 
   def walk_program(self, node):
@@ -60,9 +91,16 @@ class InsertConns(NodeWalker):
 
   def defn(self, node):
     self.debug('Inserting connections for: '+node.name)
-    decls = set()
-    self.stmt(node.stmt, decls)
-    #node.stmt = self.insert_connections(node.stmt, uses)
+    decls = []
+    decls.extend([x.chanend for x in node.chans])
+    self.stmt(node.stmt, node.chantab, decls)
+    node.stmt = self.insert_connections(node.chantab, node.stmt, node.chans)
+
+    # Insert the channel end declarations
+    for x in decls:
+      d = ast.Decl(x, T_CHANEND_SINGLE, None)
+      d.symbol = Symbol(x, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+      node.decls.append(d)
 
     self.debug('[def connections]:')
     if self.print_debug:
@@ -72,65 +110,67 @@ class InsertConns(NodeWalker):
 
   # Top-level statements where connections are inserted
 
-  def stmt_rep(self, node, decls):
+  def stmt_rep(self, node, tab, decls):
     self.debug('[rep connections]:')
     if self.print_debug:
       self.display_chans(node.chans)
-    self.stmt(node.stmt, decls)
-    #node.stmt = self.insert_connections(node.stmt, uses)
+    self.stmt(node.stmt, tab, decls)
+    node.stmt = self.insert_connections(tab, node.stmt, node.chans)
+    decls.extend([x.chanend for x in node.chans])
 
-  def stmt_par(self, node, decls):
+  def stmt_par(self, node, tab, decls):
     self.debug('[par connections]:')
-    for x in node.chans:
+    for (i, (x, y)) in enumerate(zip(node.stmt, node.chans)):
         self.debug('[par stmt]: ')
+        self.stmt(x, tab, decls) 
+        node.stmt[i] = self.insert_connections(tab, node.stmt[i], y)
+        decls.extend([z.chanend for z in y])
         if self.print_debug:
-          self.display_chans(x)
-
-    [self.stmt(x, decls) for x in node.stmt]
+          self.display_chans(y)
  
   # Other statements containing processes
 
-  def stmt_seq(self, node, decls):
-    [self.stmt(x, decls) for x in node.stmt]
+  def stmt_seq(self, node, tab, decls):
+    [self.stmt(x, tab, decls) for x in node.stmt]
 
-  def stmt_if(self, node, decls):
-    self.stmt(node.thenstmt, decls)
-    self.stmt(node.elsestmt, decls)
+  def stmt_if(self, node, tab, decls):
+    self.stmt(node.thenstmt, tab, decls)
+    self.stmt(node.elsestmt, tab, decls)
 
-  def stmt_while(self, node, decls):
-    self.stmt(node.stmt, decls)
+  def stmt_while(self, node, tab, decls):
+    self.stmt(node.stmt, tab, decls)
 
-  def stmt_for(self, node, decls):
-    self.stmt(node.stmt, decls)
+  def stmt_for(self, node, tab, decls):
+    self.stmt(node.stmt, tab, decls)
 
   # Other statements
 
-  def stmt_in(self, node, decls):
+  def stmt_in(self, node, tab, decls):
     pass
 
-  def stmt_out(self, node, decls):
+  def stmt_out(self, node, tab, decls):
     pass
 
-  def stmt_pcall(self, node, decls):
+  def stmt_pcall(self, node, tab, decls):
     pass
     
-  def stmt_ass(self, node, decls):
+  def stmt_ass(self, node, tab, decls):
     pass
 
-  def stmt_alias(self, node, decls):
+  def stmt_alias(self, node, tab, decls):
     pass
 
-  def stmt_skip(self, node, decls):
+  def stmt_skip(self, node, tab, decls):
     pass
 
-  def stmt_return(self, node, decls):
+  def stmt_return(self, node, tab, decls):
     pass
 
   # Prohibited statements
 
-  def stmt_on(self, node):
+  def stmt_on(self, node, tab, decls):
     assert 0
 
-  def stmt_connect(self, node):
+  def stmt_connect(self, node, tab, decls):
     assert 0
 

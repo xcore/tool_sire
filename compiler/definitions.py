@@ -16,6 +16,7 @@ SYS_CORE_ARRAY = 'core'
 SYS_NUM_CORES_CONST = 'NUM_CORES'
 MAX_PROC_PARAMETERS = 10
 LABEL_MAIN = '_main'
+PROC_ID_VAR = '_pid'
 
 def convert_value(s):
   """

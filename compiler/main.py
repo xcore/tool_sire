@@ -28,7 +28,9 @@ from liveness import Liveness
 from display import Display
 from labelprocs import LabelProcs
 from labelchans import LabelChans
+from insertids import InsertIds
 from insertconns import InsertConns
+from renamechans import RenameChans
 from transformpar import TransformPar
 from transformrep import TransformRep
 from flattencalls import FlattenCalls
@@ -216,28 +218,36 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   vmsg(v, "Labeling channels")
   LabelChans().walk_program(ast)
 
-  # 3. Insert channel ends
+  # 3. Insert procid()s
+  vmsg(v, "Inserting process ids")
+  InsertIds().walk_program(ast)
+
+  # 4. Insert channel ends
   vmsg(v, "Inserting channel ends")
   InsertConns().walk_program(ast)
 
-  # 4. Perform liveness analysis
+  # 5. Rename channel uses
+  vmsg(v, "Renaming channel uses")
+  RenameChans().walk_program(ast)
+
+  # 6. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   BuildCFG().run(ast)
   Liveness().run(ast)
 
-  # 5. Transform parallel composition
+  # 7. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
   #TransformPar(sem, sig).walk_program(ast)
   
-  # 6. Transform parallel replication
+  # 8. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
   #TransformRep(sem, sig, device).walk_program(ast)
   
-  # 7. Flatten nested calls
+  # 9. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
    
-  # 8. Perform child analysis
+  # 10. Perform child analysis
   child = child_analysis(sig, ast)
 
   # Check for any errors

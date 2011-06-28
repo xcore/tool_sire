@@ -14,7 +14,6 @@ from walker import NodeWalker
 from freevars import FreeVars
 from semantics import rep_var_to_param
 from typedefs import *
-from symbol import Symbol
 from subelem import SubElem
 from evalexpr import EvalExpr
 

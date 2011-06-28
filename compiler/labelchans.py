@@ -24,6 +24,7 @@ class ChanTable(object):
   def __init__(self, name):
     self.name = name
     self.tab = {}
+    self.chanend_count = 0
     
   def key(self, name, index):
     """
@@ -42,6 +43,16 @@ class ChanTable(object):
       master = True
     self.tab[key].append(offset)
     return master
+
+  def slave_offset(self, name, index):
+    key = self.key(name, index)
+    assert key in self.tab and len(self.tab[key])==2
+    return self.tab[key][1]
+
+  def new_chanend(self):
+    name = '_c{}'.format(self.chanend_count)
+    self.chanend_count += 1
+    return name
 
   def display(self):
     print('Channel table for procedure '+self.name+':')
@@ -95,10 +106,11 @@ class ChanElemSet(object):
   """
   An expanded channel array.
   """
-  def __init__(self, name, expr, elems):
+  def __init__(self, name, expr, elems, chanend):
     self.name = name
     self.expr = expr
     self.elems = elems
+    self.chanend = chanend
 
 
 class LabelChans(NodeWalker):
@@ -181,12 +193,14 @@ class LabelChans(NodeWalker):
     for x in chan_uses.uses:
       if x.expr == None:
         elems = [self.single_channel(tab, node.stmt, x.name)]
-        node.chans.append(ChanElemSet(x.name, x.expr, elems))
+        chanend = tab.new_chanend()
+        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
       else:
         elems = self.subscript_channel(iters, tab, node.stmt, x.name, x.expr)
-        node.chans.append(ChanElemSet(x.name, x.expr, elems))
+        chanend = tab.new_chanend()
+        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
 
-    #node.chantab.display()
+    node.chantab.display()
   
   # Statements ==========================================
 
@@ -202,10 +216,12 @@ class LabelChans(NodeWalker):
     for x in chan_uses.uses:
       if x.expr == None:
         elems = [self.single_channel(tab, node.stmt, x.name)]
-        node.chans.append(ChanElemSet(x.name, x.expr, elems))
+        chanend = tab.new_chanend()
+        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
       else:
         elems = self.subscript_channel(iters, tab, node.stmt, x.name, x.expr)
-        node.chans.append(ChanElemSet(x.name, x.expr, elems))
+        chanend = tab.new_chanend()
+        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
 
     # Return no uses 
     return ChanUseSet()
@@ -221,10 +237,12 @@ class LabelChans(NodeWalker):
       for x in chan_uses.uses:
         if x.expr == None:
           elems = [self.single_channel(tab, node, x.name)]
-          chans.append(ChanElemSet(x.name, x.expr, elems))
+          chanend = tab.new_chanend()
+          chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
         else:
           elems = self.subscript_channel(iters, tab, node, x.name, x.expr)
-          chans.append(ChanElemSet(x.name, x.expr, elems))
+          chanend = tab.new_chanend()
+          chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
       
       node.chans.append(chans)
     
@@ -234,28 +252,37 @@ class LabelChans(NodeWalker):
   # Statements containing uses of channels.
 
   def stmt_in(self, node, iters, tab):
-    self.debug('out channel {}:'.format(node.left.name))
+    c = node.left
+    t = c.symbol.type
+    self.debug('out channel {}:'.format(c.name))
     
-    if isinstance(node.left, ast.ElemId):
-      return ChanUseSet([ChanUse(node.left.name, None)])
+    if (isinstance(c, ast.ElemId) 
+        and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+      return ChanUseSet([ChanUse(c.name, None)])
     
-    elif isinstance(node.left, ast.ElemSub):
-      return ChanUseSet([ChanUse(node.left.name, node.left.expr)])
+    elif (isinstance(c, ast.ElemSub)
+       and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+        return ChanUseSet([ChanUse(c.name, c.expr)])
     
     else:
-      assert 0
+        return ChanUseSet()
 
   def stmt_out(self, node, iters, tab):
-    self.debug('in channel {}:'.format(node.left.name))
+    c = node.left
+    t = c.symbol.type
+    self.debug('in channel {}:'.format(c.name))
 
-    if isinstance(node.left, ast.ElemId):
-      return ChanUseSet([ChanUse(node.left.name, None)])
+    if (isinstance(c, ast.ElemId) 
+        and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+
+      return ChanUseSet([ChanUse(c.name, None)])
     
-    elif isinstance(node.left, ast.ElemSub):
-      return ChanUseSet([ChanUse(node.left.name, node.left.expr)])
+    elif (isinstance(c, ast.ElemSub)
+       and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+        return ChanUseSet([ChanUse(c.name, c.expr)])
     
     else:
-      assert 0
+        return ChanUseSet()
 
   def stmt_pcall(self, node, iters, tab):
     uses = ChanUseSet()

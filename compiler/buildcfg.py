@@ -94,8 +94,9 @@ class BuildCFG(NodeWalker):
 
   def stmt_connect(self, node, pred, succ):
     self.init_sets(node, pred, succ)
-    node.use |= self.elem(node.core.expr)
-    node.defs |= set([node.chan])
+    if not node.expr == None: 
+      node.use |= self.expr(node.expr)
+    node.defs |= set([node.left])
 
   def stmt_if(self, node, pred, succ):
     self.init_sets(node, pred, [node.thenstmt, node.elsestmt])

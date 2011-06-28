@@ -8,7 +8,12 @@ import sys
 import definitions as defs
 from typedefs import *
 
-scopes = ['system', 'module', 'proc', 'func']
+scopes = [
+  T_SCOPE_SYSTEM, 
+  T_SCOPE_MODULE,
+  T_SCOPE_PROC,
+  T_SCOPE_FUNC,
+  ]
 
 class SymbolTable(object):
   """ 
@@ -166,7 +171,8 @@ class Symbol(object):
 
 
 class ScopeTag(Symbol):
-  """ A scope tag symbol.
+  """
+  A scope tag symbol.
   """
   def __init__(self, name):
     super(ScopeTag, self).__init__(name, T_TAG, None, None, '')

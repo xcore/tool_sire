@@ -54,7 +54,9 @@ class FreeVars(NodeWalker):
     return c
 
   def stmt_alias(self, node):
-    return self.elem(node.slice)
+    c = self.elem(node.left)
+    c |= self.elem(node.slice)
+    return c
 
   def stmt_pcall(self, node):
     c = set()
@@ -83,8 +85,16 @@ class FreeVars(NodeWalker):
     c |= self.stmt(node.stmt)
     return c
 
+  def stmt_connect(self, node):
+    c = self.elem(node.left)
+    if node.expr:
+      c |= self.expr(node.expr)
+    return c
+
   def stmt_on(self, node):
-    return self.stmt(node.stmt)
+    c = self.expr(node.expr)
+    c |= self.stmt(node.stmt)
+    return
 
   def stmt_return(self, node):
     return self.expr(node.expr)
