@@ -12,6 +12,11 @@ class BuildCFG(NodeWalker):
    - For statements: set predecessor and successor lists and populate the use,
      def, in and out sets for liveness analysis.
    - For expressions return a set of used variable elements.
+
+  Each statement returns a list of statements which exit it. For non-compound
+  statements this is just the statement itself, for compound statements such as
+  if, this is the 'then' and 'else' statements. These lists are then given as
+  the predecessors to the next statement.
   """
   def __init__(self):
     pass
@@ -37,27 +42,69 @@ class BuildCFG(NodeWalker):
     is the entire procedure.
     """
     if node.stmt:
-      self.stmt(node.stmt, [], [])
+      node.pred = self.stmt(node.stmt, [], [])
 
   # Statements ==========================================
 
+  # Statements containing statements
+
   def stmt_seq(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt[0]])
+    p = pred
     for (i, x) in enumerate(node.stmt):
-      p = [node.stmt[i-1]] if i>0 else pred
       s = [node.stmt[i+1]] if i<len(node.stmt)-1 else succ
-      self.stmt(x, p, s) 
+      p = self.stmt(x, p, s)
+      #p = [node.stmt[i-1]] if i>0 else pred
+      #s = [node.stmt[i+1]] if i<len(node.stmt)-1 else succ
+    return p
 
   def stmt_par(self, node, pred, succ):
     self.init_sets(node, pred, succ)
-    [self.stmt(x, pred, succ) for x in node.stmt]
+    p = []
+    [p.extend(self.stmt(x, pred, succ)) for x in node.stmt]
+    return p
 
-  def stmt_skip(self, node, pred, succ):
-    self.init_sets(node, pred, succ)
+  def stmt_rep(self, node, pred, succ):
+    self.init_sets(node, pred, [node.stmt])
+    node.defs |= set([x for x in node.indicies])
+    [node.use.update(self.expr(x.base)) for x in node.indicies]
+    [node.use.update(self.expr(x.count)) for x in node.indicies]
+    p = self.stmt(node.stmt, [node], succ)
+    return p
+
+  def stmt_on(self, node, pred, succ):
+    self.init_sets(node, pred, [node.stmt])
+    node.use |= self.expr(node.expr)
+    p = self.stmt(node.stmt, [node], succ)
+    return p
+
+  def stmt_if(self, node, pred, succ):
+    self.init_sets(node, pred, [node.thenstmt, node.elsestmt])
+    node.use |= self.expr(node.cond)
+    p = self.stmt(node.thenstmt, [node], succ)
+    p += self.stmt(node.elsestmt, [node], succ)
+    return p
+
+  def stmt_while(self, node, pred, succ):
+    self.init_sets(node, pred, [node.stmt])
+    node.use |= self.expr(node.cond)
+    p = self.stmt(node.stmt, [node], [node]+succ)
+    return [node] + p
+
+  def stmt_for(self, node, pred, succ):
+    self.init_sets(node, pred, [node.stmt])
+    node.defs |= set([node.index])
+    node.use |= self.expr(node.index.base)
+    node.use |= self.expr(node.index.count)
+    p = self.stmt(node.stmt, [node], [node]+succ)
+    return [node] + p
+
+  # Statements not containing statements
 
   def stmt_pcall(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     [node.use.update(self.expr(x)) for x in node.args]
+    return [node]
 
   def stmt_ass(self, node, pred, succ):
     self.init_sets(node, pred, succ)
@@ -68,11 +115,13 @@ class BuildCFG(NodeWalker):
     # point.
     if isinstance(node.left, ast.ElemSub):
       node.use |= node.defs
+    return [node]
 
   def stmt_in(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     node.defs |= self.expr(node.expr)
     node.use |= set([node.left])
+    return [node]
 
   def stmt_out(self, node, pred, succ):
     self.init_sets(node, pred, succ)
@@ -83,6 +132,7 @@ class BuildCFG(NodeWalker):
     # point.
     if isinstance(node.left, ast.ElemSub):
       node.use |= node.defs
+    return [node]
 
   def stmt_alias(self, node, pred, succ):
     self.init_sets(node, pred, succ)
@@ -91,46 +141,23 @@ class BuildCFG(NodeWalker):
 
     # Add alias targets to use set to they are live until this point.
     node.use |= node.defs 
+    return [node]
 
   def stmt_connect(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     if not node.expr == None: 
       node.use |= self.expr(node.expr)
     node.defs |= set([node.left])
+    return [node]
 
-  def stmt_if(self, node, pred, succ):
-    self.init_sets(node, pred, [node.thenstmt, node.elsestmt])
-    self.stmt(node.thenstmt, [node], succ)
-    self.stmt(node.elsestmt, [node], succ)
-    node.use |= self.expr(node.cond)
-
-  def stmt_while(self, node, pred, succ):
-    self.init_sets(node, pred, [node.stmt])
-    self.stmt(node.stmt, [node], [node]+succ)
-    node.use |= self.expr(node.cond)
-
-  def stmt_for(self, node, pred, succ):
-    self.init_sets(node, pred, [node.stmt])
-    self.stmt(node.stmt, [node], [node]+succ)
-    node.defs |= set([node.index])
-    node.use |= self.expr(node.index.base)
-    node.use |= self.expr(node.index.count)
-
-  def stmt_rep(self, node, pred, succ):
-    self.init_sets(node, pred, [node.stmt])
-    self.stmt(node.stmt, [node], succ)
-    node.defs |= set([x for x in node.indicies])
-    [node.use.update(self.expr(x.base)) for x in node.indicies]
-    [node.use.update(self.expr(x.count)) for x in node.indicies]
-
-  def stmt_on(self, node, pred, succ):
-    self.init_sets(node, pred, [node.stmt])
-    node.use |= self.expr(node.expr)
-    self.stmt(node.stmt, [node], succ)
+  def stmt_skip(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    return [node]
 
   def stmt_return(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     node.use |= self.expr(node.expr)
+    return [node]
   
   # Expressions =========================================
 

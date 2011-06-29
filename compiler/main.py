@@ -25,7 +25,6 @@ from signature import SignatureTable
 from semantics import Semantics
 from buildcfg import BuildCFG
 from liveness import Liveness
-from display import Display
 from labelprocs import LabelProcs
 from labelchans import LabelChans
 from insertids import InsertIds
@@ -237,11 +236,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
 
   # 7. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  #TransformPar(sem, sig).walk_program(ast)
+  TransformPar(sem, sig).walk_program(ast)
   
   # 8. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  #TransformRep(sem, sig, device).walk_program(ast)
+  TransformRep(sem, sig, device).walk_program(ast)
   
   # 9. Flatten nested calls
   vmsg(v, "Flattening nested calls")

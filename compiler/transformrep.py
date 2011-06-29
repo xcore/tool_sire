@@ -190,7 +190,7 @@ class TransformRep(NodeWalker):
     # update symbol bindings. 
     d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, elem_b,
                 stmt.indicies, proc_actuals, formals, pcall)
-    #Printer().defn(d, 0)
+    Printer().defn(d, 0)
     self.sem.defn(d)
     
     # Create the corresponding call.

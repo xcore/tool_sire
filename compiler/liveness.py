@@ -6,6 +6,7 @@
 import sys
 import ast
 from walker import NodeWalker
+from display import Display
 
 class Liveness(NodeWalker):
   """ 
@@ -27,7 +28,7 @@ class Liveness(NodeWalker):
     [stmt.out.update(x.inp) for x in stmt.succ]
     return len(inp^stmt.inp)>0 or len(out^stmt.out)>0
 
-  def print_livesets(stmt):
+  def print_livesets(self, stmt):
     print(stmt)
     print('Use: {}'.format(stmt.use))
     print('Def: {}'.format(stmt.defs))
@@ -44,8 +45,8 @@ class Liveness(NodeWalker):
     while any([self.stmt(x.stmt) if x.stmt else False for x in node.defs]):
       pass
 
-    if debug:
-      ast.accept(Display(print_livesets))
+    #if debug:
+    #node.accept(Display(self.print_livesets))
   
   # Statements ==========================================
 

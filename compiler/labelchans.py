@@ -200,7 +200,7 @@ class LabelChans(NodeWalker):
         chanend = tab.new_chanend()
         node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
 
-    node.chantab.display()
+    #node.chantab.display()
   
   # Statements ==========================================
 
