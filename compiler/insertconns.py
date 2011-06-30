@@ -1,13 +1,14 @@
 # Copyright (c) 2011, James Hanlon, All rights reserved
-## This software is freely distributable under a derivative of the
-## University of Illinois/NCSA Open Source License posted in
-## LICENSE.txt and at <http://github.xcore.com/>
+# This software is freely distributable under a derivative of the
+# University of Illinois/NCSA Open Source License posted in
+# LICENSE.txt and at <http://github.xcore.com/>
 
 import ast
 from walker import NodeWalker
 from definitions import PROC_ID_VAR
 from typedefs import *
 from symbol import Symbol
+from formlocation import form_location
 
 from printer import Printer
 
@@ -18,18 +19,22 @@ class InsertConns(NodeWalker):
   channel or subscripted array) allocate a new channel end which is declared in
   the procedure scope.
   """
-  def __init__(self, print_debug=False):
+  def __init__(self, sym, print_debug=False):
+    self.sym = sym
     self.print_debug = print_debug
 
   def debug(self, s):
     if self.print_debug:
       print(s)
-  
+
   def insert_connections(self, tab, stmt, chans):
     """
     Insert connections for a process from a list of channel uses (name, index)
     by composing them in sequence, prior to the process. If there are no
     connecitons to be made, just return the process.
+
+    The location expression is formed with a compression factor of 1 because we
+    have already applied this when we evaluated the offset.
     """
     if len(chans) > 0:
       pid = ast.ElemId(PROC_ID_VAR)
@@ -40,12 +45,13 @@ class InsertConns(NodeWalker):
         # If the expansion is of size one (single or constant subscript)
         if len(x.elems) == 1:
           elem = x.elems[0]
-          loc = ast.ExprBinop('+', pid, ast.ExprSingle(
-                ast.ElemNumber(tab.slave_offset(x.name, elem.index))))
+          off = ast.ExprSingle(ast.ElemNumber(
+              tab.slave_offset(x.name, elem.index)))
+          loc = form_location(self.sym, pid, off, 1) if elem.master else None
           chanend = ast.ElemId(x.chanend)
           chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
               None, scope=T_SCOPE_PROC)
-          conns.append(ast.StmtConnect(chanend, loc if elem.master else None))
+          conns.append(ast.StmtConnect(chanend, loc))
 
         # Otherwise we must analyse the subscript
         else:
@@ -53,12 +59,13 @@ class InsertConns(NodeWalker):
           for y in reversed(x.elems):
             cond = ast.ExprBinop('=', ast.ElemGroup(x.expr),
                 ast.ElemNumber(y.index))
-            loc = ast.ExprBinop('+', pid, ast.ExprSingle(
-                  ast.ElemNumber(tab.slave_offset(x.name, y.index)))) 
+            off = ast.ExprSingle(ast.ElemNumber(
+                tab.slave_offset(x.name, y.index)))
+            loc = form_location(self.sym, pid, off, 1) if y.master else None
             chanend = ast.ElemId(x.chanend)
             chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
                 None, scope=T_SCOPE_PROC)
-            conn = ast.StmtConnect(chanend, loc if y.master else None)
+            conn = ast.StmtConnect(chanend, loc)
             s = ast.StmtIf(cond, conn, s)
           conns.append(s)
 

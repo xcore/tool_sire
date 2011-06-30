@@ -11,6 +11,7 @@ import definitions as defs
 import ast
 from ast import NodeVisitor
 from walker import NodeWalker
+from formlocation import form_location
 from freevars import FreeVars
 from semantics import rep_var_to_param
 from typedefs import *
@@ -49,7 +50,8 @@ class TransformRep(NodeWalker):
       _d(0, next-pow-2(N*M), N*M, procid(), ...) 
       ...
   """
-  def __init__(self, sem, sig, device, debug=False):
+  def __init__(self, sym, sem, sig, device, debug=False):
+    self.sym = sym
     self.sem = sem
     self.sig = sig
     self.device = device
@@ -87,14 +89,16 @@ class TransformRep(NodeWalker):
             ast.ElemGroup(e)))
  
     # (((b + ((t+n/2)/f)) rem NUM_CORES
+    #d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
+    #if f > 1:
+    #  d = ast.ExprBinop('/', ast.ElemGroup(d),
+    #      ast.ExprSingle(ast.ElemNumber(f)))
+    #d = ast.ExprBinop('rem', 
+    #    ast.ElemGroup(ast.ExprBinop('+', elem_b,
+    #      ast.ExprSingle(ast.ElemGroup(d)))),
+    #      ast.ExprSingle(ast.ElemId(defs.SYS_NUM_CORES_CONST)))
     d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
-    if f > 1:
-      d = ast.ExprBinop('/', ast.ElemGroup(d),
-          ast.ExprSingle(ast.ElemNumber(f)))
-    d = ast.ExprBinop('rem', 
-        ast.ElemGroup(ast.ExprBinop('+', elem_b,
-          ast.ExprSingle(ast.ElemGroup(d)))),
-          ast.ExprSingle(ast.ElemId(defs.SYS_NUM_CORES_CONST)))
+    d = form_location(self.sym, elem_b, d, f)
 
     # Conditionally recurse {d()|d()} or d()
     s1 = ast.StmtIf(
@@ -190,7 +194,7 @@ class TransformRep(NodeWalker):
     # update symbol bindings. 
     d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, elem_b,
                 stmt.indicies, proc_actuals, formals, pcall)
-    Printer().defn(d, 0)
+    #Printer().defn(d, 0)
     self.sem.defn(d)
     
     # Create the corresponding call.

@@ -444,7 +444,7 @@ loop with _i indexing the thread number.
         self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
   def stmt_connect(self, node):
-    if node.core:
+    if node.expr:
       self.out('connect master')
     else:
       self.out('connect slave')

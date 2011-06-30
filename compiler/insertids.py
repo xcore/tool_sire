@@ -5,7 +5,8 @@
 
 from walker import NodeWalker
 from definitions import PROC_ID_VAR
-from typedefs import T_VAR_SINGLE
+from typedefs import T_VAR_SINGLE, T_SCOPE_PROC
+from symbol import Symbol
 import ast
 
 class InsertIds(NodeWalker):
@@ -29,8 +30,9 @@ class InsertIds(NodeWalker):
       node.decls.append(ast.Decl(PROC_ID_VAR, T_VAR_SINGLE, None))
 
       # Create the assignment
-      s = ast.StmtAss(ast.ElemId(PROC_ID_VAR),
-          ast.ExprSingle(ast.ElemFcall('procid', [])))
+      e = ast.ElemId(PROC_ID_VAR)
+      e.symbol = Symbol(PROC_ID_VAR, T_VAR_SINGLE, None, T_SCOPE_PROC)
+      s = ast.StmtAss(e, ast.ExprSingle(ast.ElemFcall('procid', [])))
 
       # Add the assignent in sequence with the existing body process
       if isinstance(node.stmt, ast.StmtSeq):

@@ -63,8 +63,8 @@ class LabelProcs(NodeWalker):
             if node.f>1 else k)
     
     # Create a NUM_CORES constant element with the correct symbol
-    elem_numcores = ast.ElemId(defs.SYS_NUM_CORES_CONST)
-    elem_numcores.symbol = self.sym.lookup(defs.SYS_NUM_CORES_CONST) 
+    #elem_numcores = ast.ElemId(defs.SYS_NUM_CORES_CONST)
+    #elem_numcores.symbol = self.sym.lookup(defs.SYS_NUM_CORES_CONST) 
     
     # Add to base (if non-zero) and take modulo
     if isinstance(l, ast.ElemNumber) and l.value==0:

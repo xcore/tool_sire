@@ -334,7 +334,8 @@ class Semantics(NodeWalker):
 
     # If it's a value or array, then determine the value of the expr 
     if (node.type == T_VAL_SINGLE 
-        or node.type == T_VAR_ARRAY):
+        or node.type == T_VAR_ARRAY
+        or node.type == T_CHAN_ARRAY):
       node.symbol.value = self.eval_expr(node.expr)
 
   # Procedure definitions ===============================

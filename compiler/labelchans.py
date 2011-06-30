@@ -17,102 +17,6 @@ from cmpexpr import CmpExpr
 
 from printer import Printer
 
-class ChanTable(object):
-  """
-  A table to record the location of channel ends and their names.
-  """
-  def __init__(self, name):
-    self.name = name
-    self.tab = {}
-    self.chanend_count = 0
-    
-  def key(self, name, index):
-    """
-    Given a channel name and its index return a key concatenating these.
-    """
-    return '{}{}'.format(name, '' if index==None else index)
-
-  def insert(self, name, index, offset):
-    """
-    Add a channel element with an index and location offset to the table.
-    """
-    key = self.key(name, index)
-    master = False
-    if not key in self.tab:
-      self.tab[key] = []
-      master = True
-    self.tab[key].append(offset)
-    return master
-
-  def slave_offset(self, name, index):
-    key = self.key(name, index)
-    assert key in self.tab and len(self.tab[key])==2
-    return self.tab[key][1]
-
-  def new_chanend(self):
-    name = '_c{}'.format(self.chanend_count)
-    self.chanend_count += 1
-    return name
-
-  def display(self):
-    print('Channel table for procedure '+self.name+':')
-    for x in self.tab.keys():
-      print('  {}: {}'.format(x, ', '.join(
-        ['{}'.format(y) for y in self.tab[x]])))
-
-class ChanUse(object):
-  """
-  A channel use.
-  """
-  def __init__(self, name, expr):
-    self.name = name
-    self.expr = expr
-
-  def __eq__(self, x):
-    if not self.expr:
-      return self.name == x.name
-    else:
-      return (self.name == x.name and 
-          CmpExpr().expr(self.expr, x.expr))
-
-  def __ne__(self, x):
-    return not self.__eq__(x)
-
-class ChanUseSet(object):
-  """
-  A set of unique channel uses.
-  """
-  def __init__(self, init=[]):
-    self.uses = []
-    [self.add(x) for x in init]
-
-  def add(self, use):
-    if not any(x == use for x in self.uses):
-      self.uses.append(use)
-
-  def update(self, useset):
-    [self.add(x) for x in useset.uses]
-
- 
-class ChanElem(object):
-  """
-  An element of a channel expansion.
-  """  
-  def __init__(self, index, master):
-    self.index = index
-    self.master = master
-
-class ChanElemSet(object):
-  """
-  An expanded channel array.
-  """
-  def __init__(self, name, expr, elems, chanend):
-    self.name = name
-    self.expr = expr
-    self.elems = elems
-    self.chanend = chanend
-
-
 class LabelChans(NodeWalker):
   """
   For each procedure definition, construct a table which records for each use
@@ -122,7 +26,8 @@ class LabelChans(NodeWalker):
   channel. Then label each channel with the relative offset from the master to
   the slave.
   """
-  def __init__(self, print_debug=False):
+  def __init__(self, errorlog, print_debug=False):
+    self.errorlog = errorlog
     self.print_debug = print_debug
 
   def debug(self, s):
@@ -177,30 +82,61 @@ class LabelChans(NodeWalker):
     
     return chan_elems
 
+  def expand_uses(self, tab, iters, chan_uses, stmt):
+    """
+    For each channel use, expand it into a set of elements.
+    """
+    chans = []
+    for x in chan_uses.uses:
+      if x.expr == None:
+        elems = [self.single_channel(tab, stmt, x.name)]
+        chanend = tab.new_chanend()
+        chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
+      else:
+        elems = self.subscript_channel(iters, tab, stmt, x.name, x.expr)
+        chanend = tab.new_chanend()
+        chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
+    return chans
+  
+  def check_chan(self, name, index, offsets):
+    """
+    Check each entry in the table is valid: contains both master and one slave
+    offset.
+    """
+    #print('Checking chan '+name+' {}'.format(index))
+    c = '{}{}'.format(name, '' if index==None else '[{}]'.format(index) )
+    if not offsets:
+      self.errorlog.report_warning('channel '+c+' is not used')
+    elif len(offsets) == 1:
+      self.errorlog.report_error('channel '+c+' has no slave connection')
+    elif len(offsets) > 2:
+      self.errorlog.report_error('channel '+c+' has multiple slaves') 
+
   # Program ============================================
 
   def walk_program(self, node):
     [self.defn(x) for x in node.defs]
   
   # Procedure definitions ===============================
-
+  
   def defn(self, node):
     self.debug('New channel scope: '+node.name)
     node.chantab = ChanTable(node.name)
     chan_uses = self.stmt(node.stmt, [], node.chantab)
-
-    node.chans = []
-    for x in chan_uses.uses:
-      if x.expr == None:
-        elems = [self.single_channel(tab, node.stmt, x.name)]
-        chanend = tab.new_chanend()
-        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
-      else:
-        elems = self.subscript_channel(iters, tab, node.stmt, x.name, x.expr)
-        chanend = tab.new_chanend()
-        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
-
+    node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
+    
+    # Display the channel table
     #node.chantab.display()
+  
+    # Check each channel is used correctly
+    for x in node.decls:
+      if x.type == T_CHAN_SINGLE:
+        self.check_chan(x.name, None, node.chantab.lookup(x.name, None))
+      elif x.type == T_CHAN_ARRAY:
+        for y in range(x.symbol.value):
+          self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
+      else:
+        pass
   
   # Statements ==========================================
 
@@ -211,40 +147,18 @@ class LabelChans(NodeWalker):
   def stmt_rep(self, node, iters, tab):
     iters = iters + node.indicies
     chan_uses = self.stmt(node.stmt, iters, tab)
-    
-    node.chans = []
-    for x in chan_uses.uses:
-      if x.expr == None:
-        elems = [self.single_channel(tab, node.stmt, x.name)]
-        chanend = tab.new_chanend()
-        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
-      else:
-        elems = self.subscript_channel(iters, tab, node.stmt, x.name, x.expr)
-        chanend = tab.new_chanend()
-        node.chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
+    node.chans = self.expand_uses(tab, iters, chan_uses, node.stmt)
 
     # Return no uses 
     return ChanUseSet()
-  
+      
   def stmt_par(self, node, iters, tab):
     
     # For each statement in the par, group the expansions
     node.chans = []
     for x in node.stmt:
       chan_uses = self.stmt(x, iters, tab)
-      chans = []
-      
-      for x in chan_uses.uses:
-        if x.expr == None:
-          elems = [self.single_channel(tab, node, x.name)]
-          chanend = tab.new_chanend()
-          chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
-        else:
-          elems = self.subscript_channel(iters, tab, node, x.name, x.expr)
-          chanend = tab.new_chanend()
-          chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
-      
-      node.chans.append(chans)
+      chans.append(self.expand_uses(tab, iters, chan_uses, node))
     
     # Return no uses 
     return ChanUseSet()
@@ -343,4 +257,117 @@ class LabelChans(NodeWalker):
 
   def stmt_connect(self, node, iters, tab):
     assert 0
+
+
+class ChanTable(object):
+  """
+  A table to record the location of channel ends and their names.
+  """
+  def __init__(self, name):
+    self.name = name
+    self.tab = {}
+    self.chanend_count = 0
+    
+  def key(self, name, index):
+    """
+    Given a channel name and its index return a key concatenating these.
+    """
+    return '{}{}'.format(name, '' if index==None else index)
+
+  def insert(self, name, index, offset):
+    """
+    Add a channel element with an index and location offset to the table.
+    """
+    key = self.key(name, index)
+    master = False
+    if not key in self.tab:
+      self.tab[key] = []
+      master = True
+    self.tab[key].append(offset)
+    return master
+
+  def lookup(self, name, index):
+    """
+    Lookup a channel's master and slave offsets.
+    """
+    key = self.key(name, index)
+    if not key in self.tab:
+      return None
+    return self.tab[key]
+
+  def slave_offset(self, name, index):
+    key = self.key(name, index)
+    assert key in self.tab and len(self.tab[key])==2
+    return self.tab[key][1]
+
+  def new_chanend(self):
+    name = '_c{}'.format(self.chanend_count)
+    self.chanend_count += 1
+    return name
+
+  def display(self):
+    print('Channel table for procedure '+self.name+':')
+    for x in self.tab.keys():
+      print('  {}: {}'.format(x, ', '.join(
+        ['{}'.format(y) for y in self.tab[x]])))
+
+# These classes represent uses of channels as they occur in the program
+
+class ChanUse(object):
+  """
+  A channel use.
+  """
+  def __init__(self, name, expr):
+    self.name = name
+    self.expr = expr
+
+  def __eq__(self, x):
+    if not self.expr:
+      return self.name == x.name
+    else:
+      return (self.name == x.name and 
+          CmpExpr().expr(self.expr, x.expr))
+
+  def __ne__(self, x):
+    return not self.__eq__(x)
+
+
+class ChanUseSet(object):
+  """
+  A set of unique channel uses.
+  """
+  def __init__(self, init=[]):
+    self.uses = []
+    [self.add(x) for x in init]
+
+  def add(self, use):
+    if not any(x == use for x in self.uses):
+      self.uses.append(use)
+
+  def update(self, useset):
+    [self.add(x) for x in useset.uses]
+
+# These classes represent expanded uses of channels that occur in a program,
+# i.e. for a channel subscript c[f(i, j)] all of the channels accessed by the
+# index f over the index ranges referenced by i and j. For single channels,
+# i.e. c, this set has one element.
+
+class ChanElem(object):
+  """
+  An element of a channel expansion.
+  """  
+  def __init__(self, index, master):
+    self.index = index
+    self.master = master
+
+
+class ChanElemSet(object):
+  """
+  An expanded channel array.
+  """
+  def __init__(self, name, expr, elems, chanend):
+    self.name = name
+    self.expr = expr
+    self.elems = elems
+    self.chanend = chanend
 

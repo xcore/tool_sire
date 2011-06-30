@@ -210,12 +210,13 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   """
 
   # 1. Label processes
-  vmsg(v, "Labeling processes")
+  vmsg(v, "Labelling processes")
   LabelProcs(sym, device).walk_program(ast)
 
   # 2. Label channels
-  vmsg(v, "Labeling channels")
-  LabelChans().walk_program(ast)
+  vmsg(v, "Labelling channels")
+  LabelChans(errorlog).walk_program(ast)
+  if errorlog.any(): raise Error('in channel labelling')
 
   # 3. Insert procid()s
   vmsg(v, "Inserting process ids")
@@ -223,36 +224,35 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
 
   # 4. Insert channel ends
   vmsg(v, "Inserting channel ends")
-  InsertConns().walk_program(ast)
+  InsertConns(sym).walk_program(ast)
 
   # 5. Rename channel uses
   vmsg(v, "Renaming channel uses")
   RenameChans().walk_program(ast)
-
-  # 6. Perform liveness analysis
-  vmsg(v, "Performing liveness analysis")
+  
+  # 6. Build the control-flow graph and initialise sets for liveness analysis
+  vmsg(v, "Building the control flow graph")
   BuildCFG().run(ast)
+
+  # 7. Perform liveness analysis
+  vmsg(v, "Performing liveness analysis")
   Liveness().run(ast)
 
-  # 7. Transform parallel composition
+  # 8. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
   TransformPar(sem, sig).walk_program(ast)
   
-  # 8. Transform parallel replication
+  # 9. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  TransformRep(sem, sig, device).walk_program(ast)
+  TransformRep(sym, sem, sig, device).walk_program(ast)
   
-  # 9. Flatten nested calls
+  # 10. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
    
-  # 10. Perform child analysis
+  # 11. Perform child analysis
   child = child_analysis(sig, ast)
 
-  # Check for any errors
-  if errorlog.any():
-    raise Error()
-  
   # Display (pretty-print) the transformed AST
   if pprint_trans_ast: 
     Printer().walk_program(ast)
