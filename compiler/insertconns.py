@@ -55,7 +55,7 @@ class InsertConns(NodeWalker):
 
         # Otherwise we must analyse the subscript
         else:
-          s = ast.StmtSkip()
+          s = None
           for y in reversed(x.elems):
             cond = ast.ExprBinop('=', ast.ElemGroup(x.expr),
                 ast.ElemNumber(y.index))
@@ -66,7 +66,7 @@ class InsertConns(NodeWalker):
             chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
                 None, scope=T_SCOPE_PROC)
             conn = ast.StmtConnect(chanend, loc)
-            s = ast.StmtIf(cond, conn, s)
+            s = ast.StmtIf(cond, conn, s) if s else conn
           conns.append(s)
 
       s = ast.StmtSeq(conns + [stmt])

@@ -34,7 +34,6 @@ class Liveness(NodeWalker):
     print('Def: {}'.format(stmt.defs))
     print('In:  {}'.format(stmt.inp))
     print('Out: {}'.format(stmt.out))
-    #print('Live:  {}'.format(node.inp))
     print('')
 
   def run(self, node, debug=False):
@@ -42,7 +41,12 @@ class Liveness(NodeWalker):
     Iteratively perform liveness analysis until there is no change in the in
     and out sets.
     """
+    #node.accept(Display(self.print_livesets))
+    
     while any([self.stmt(x.stmt) if x.stmt else False for x in node.defs]):
+      #print('=========================================================')
+      #node.accept(Display(self.print_livesets))
+      #print('=========================================================')
       pass
 
     #if debug:

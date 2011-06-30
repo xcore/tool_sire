@@ -5,6 +5,7 @@
 
 import ast
 from walker import NodeWalker
+from display import Display
 
 class BuildCFG(NodeWalker):
   """
@@ -29,12 +30,18 @@ class BuildCFG(NodeWalker):
     node.inp = set()
     node.out = set()
 
+  def print_successors(self, stmt):
+    print('{}:'.format(stmt))
+    for y in stmt.succ:
+      print('  {}'.format(y))
+    print('')
+   
   def run(self, node):
     """
     Walk each procedure definition.
     """
     [self.defn(x) for x in node.defs]
-   
+    
   def defn(self, node):
     """
     Before traversing the body statement we add arrays to an implicit uses
@@ -44,15 +51,18 @@ class BuildCFG(NodeWalker):
     if node.stmt:
       node.pred = self.stmt(node.stmt, [], [])
 
+    # Display the successors of each node
+    #node.accept(Display(self.print_successors))
+
   # Statements ==========================================
 
   # Statements containing statements
 
   def stmt_seq(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt[0]])
-    p = pred
+    p = [node]
     for (i, x) in enumerate(node.stmt):
-      s = [node.stmt[i+1]] if i<len(node.stmt)-1 else succ
+      s = [node.stmt[i+1]] if i<(len(node.stmt)-1) else succ
       p = self.stmt(x, p, s)
       #p = [node.stmt[i-1]] if i>0 else pred
       #s = [node.stmt[i+1]] if i<len(node.stmt)-1 else succ

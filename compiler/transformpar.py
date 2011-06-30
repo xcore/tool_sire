@@ -107,9 +107,7 @@ class TransformPar(NodeWalker):
     
     # For each variable in the live-in set add accordingly to formals and actuals.
     for x in live:
-      #if x.symbol.type==T_CHAN_ARRAY:
-      #  continue
-
+      
       # Don't include constant values.
       if x.symbol.type == T_VAL_SINGLE and x.symbol.scope == 'program':
           continue
@@ -147,10 +145,17 @@ class TransformPar(NodeWalker):
 
     # Create the local declarations (excluding values)
     for x in local_decls:
-      if not x.symbol.type == T_VAL_SINGLE:
-        assert (x.symbol.type == T_VAR_SINGLE 
-            or x.symbol.type == T_CHANEND_SINGLE)
+      if x.symbol.type == T_VAL_SINGLE:
+        pass
+        
+      elif x.symbol.type == T_VAR_SINGLE:
         decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
+      
+      elif x.symbol.type == T_CHANEND_SINGLE:
+        decls.append(ast.Decl(x.name, T_CHANEND_SINGLE, None))
+
+      else:
+        assert 0
     
     # Create the new process definition
     d = ast.Def(name, T_PROC, formals, decls, stmt)

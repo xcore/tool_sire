@@ -8,9 +8,9 @@ proc main() is
   chan x[N*N];
   chan y[N*N];
   par i in [0 for N], j in [0 for N] do
-  { x[(i*N)+j]     ? v
+  { x[(i*N)+j] ? v
   ; x[(i*N)+((j+1) rem N)] ! v + 1
-  ; y[(i*N)+j]     ? w
+  ; y[(i*N)+j] ? w
   ; y[(i*N)+((j+1) rem N)] ! w + v
   }
   

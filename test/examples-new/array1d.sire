@@ -1,0 +1,11 @@
+val N := 2;
+
+proc main() is
+  var i;
+  var v;
+  chan x[N];
+  par i in [0 for N] do
+  { x[i] ? v
+  ; x[(i+1) rem N] ! v + 1
+  }
+

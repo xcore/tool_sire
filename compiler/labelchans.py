@@ -158,7 +158,7 @@ class LabelChans(NodeWalker):
     node.chans = []
     for x in node.stmt:
       chan_uses = self.stmt(x, iters, tab)
-      chans.append(self.expand_uses(tab, iters, chan_uses, node))
+      node.chans.append(self.expand_uses(tab, iters, chan_uses, node))
     
     # Return no uses 
     return ChanUseSet()
