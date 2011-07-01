@@ -30,7 +30,7 @@ class RenameChans(NodeWalker):
           s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
           e = ast.ElemId(x.chanend)
           e.symbol = s
-          return e
+          return ast.ExprSingle(e)
 
     elif isinstance(elem, ast.ElemSub) and elem.symbol.type == T_CHAN_ARRAY:
       for x in chans:
@@ -38,7 +38,7 @@ class RenameChans(NodeWalker):
           s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
           e = ast.ElemId(x.chanend)
           e.symbol = s
-          return e
+          return ast.ExprSingle(e)
     else:
       assert 0
 

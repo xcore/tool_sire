@@ -1,6 +1,6 @@
-val D := 4;
-val N := 1 << D;
-val LEN := 100;
+val D := 2;      % Tree depth
+val N := 1 << D; % Number of leaves
+val LEN := 100;  % Number of data items at each leaf.
 
 func f(val v) is
   return v
@@ -13,7 +13,7 @@ proc leaf(chanend c) is
   var enq;
   var found;
   var i;
-{ % initialise the data
+{ % (initialise the data)
   while true do
   { found := false
   ; for i in [0 for LEN] do
@@ -37,7 +37,7 @@ proc branch(chanend c, chanend left, chanend right) is
 }
 
 proc tree(chanend input) is
-  chan c[2*N-1];
+  chan c[(2*N)-1];
   var v;
   var i;
 {
@@ -45,14 +45,12 @@ proc tree(chanend input) is
   par i in [0 for N-1] do
     branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
   par i in [0 for N] do 
-    leaf(c[N-1+i])
+    leaf(c[(N-1) + i])
 }
 
 proc main() is
   chan c;
   var enq;
   var result;
-{ { c ! enq ; c ? result } ||
-  tree(c)
-}
+{ { c ! enq ; c ? result } || tree(c) }
 

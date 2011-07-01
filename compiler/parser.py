@@ -89,8 +89,8 @@ class Parser(object):
     ('nonassoc', 'LT', 'GT', 'LE', 'GE', 'EQ', 'NE'), 
     ('left',   'LSHIFT', 'RSHIFT'),
     ('left',   'AND', 'OR', 'XOR'),
-    ('left',   'PLUS', 'MINUS', 'REM'),
-    ('left',   'MULT', 'DIV'),
+    ('left',   'PLUS', 'MINUS'),
+    ('left',   'MULT', 'DIV', 'REM'),
     ('right',  'UMINUS', 'UNOT')
   )
 

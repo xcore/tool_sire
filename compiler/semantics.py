@@ -190,8 +190,8 @@ class Semantics(NodeWalker):
     for (x, y) in zip(self.sig.get_params(node.name), node.args):
       t = self.get_expr_type(y)
       if self.debug:
-        print('Arg type: {}'.format(t))
-        print('Param type: {}'.format(x.type))
+        print('  Arg type: {}'.format(t))
+        print('  Param type: {}'.format(x.type))
 
       # If argument y has no type, i.e. not defined
       if not t:

@@ -1,11 +1,21 @@
-val N := 2;
+val N := 3;
+  
+proc node(val i, chanend left, chanend right) is
+  var v;
+{ if i = 0
+  then 
+  { left ! 0 
+  ; right ? v 
+  ; printvalln(v)
+  }
+  else
+  { left ? v 
+  ; right ! v + 1
+  }
+}
 
 proc main() is
   var i;
-  var v;
-  chan x[N];
-  par i in [0 for N] do
-  { x[i] ? v
-  ; x[(i+1) rem N] ! v + 1
-  }
+  chan c[N];
+  par i in [0 for N] do node(i, c[i], c[(i+1) rem N])
 
