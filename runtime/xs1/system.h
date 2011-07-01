@@ -6,7 +6,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-extern void _initThread();
+extern void _initthread();
 int _procid();
 
 // Initialisation

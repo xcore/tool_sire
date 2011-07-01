@@ -274,9 +274,11 @@ class TranslateXS1(NodeWalker):
 
   def thread_set(self):
     """
-Generate the initialisation for a slave thread, in the body of a for
-loop with _i indexing the thread number.
-"""
+    Generate the initialisation for a slave thread, in the body of a for
+    loop with _i indexing the thread number.
+
+    NOTE: this is the old version.
+    """
 
     # Get a synchronised thread
     self.out('unsigned _t;')
@@ -421,11 +423,11 @@ loop with _i indexing the thread number.
         self.elem(node.left), self.expr(node.expr)))
 
   def stmt_in(self, node):
-    self.out('{} ? {};'.format(
+    self.out('/*{} ? {};*/'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_out(self, node):
-    self.out('{} ! {};'.format(
+    self.out('/*{} ! {};*/'.format(
       self.elem(node.left), self.expr(node.expr)))
 
   def stmt_alias(self, node):
@@ -445,9 +447,11 @@ loop with _i indexing the thread number.
 
   def stmt_connect(self, node):
     if node.expr:
-      self.out('connect master')
+      self.out('{} = {}({});'.format(self.elem(node.left), 
+        defs.LABEL_CONNECT_MASTER, self.expr(node.expr)))
     else:
-      self.out('connect slave')
+      self.out('{} = {}();'.format(self.elem(node.left), 
+        defs.LABEL_CONNECT_SLAVE))
 
   def stmt_if(self, node):
     self.out('if ({})'.format(self.expr(node.cond)))

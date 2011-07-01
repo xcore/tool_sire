@@ -6,7 +6,7 @@
 #include "system/xs1/definitions.h"
    
   .extern _createprocess
-  .extern _initThread
+  .extern _initthread
   
   .globl _jumptab,  "a(:ui)"
   .globl _sizetab,  "a(:ui)"
@@ -20,8 +20,10 @@
 
 _jumptab:
   .word _createprocess
-  .word _initThread
+  .word _initthread
   .word _procid
+  .word _connectmaster
+  .word _connectslave
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

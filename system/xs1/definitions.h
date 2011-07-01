@@ -18,20 +18,26 @@
 #define LABEL_BEGIN_BSS          "_fdp.bss"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
-#define LABEL_CREATE_PROCESS     "_createprocess"
-#define LABEL_PROC_ID            "_procid"
-#define LABEL_INIT_THREAD        "_initThread"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
 #define LABEL_FRAME_TABLE        "_frametab"
+
+// Labels for jump table builtins
+#define LABEL_CREATE_PROCESS     "_createprocess"
+#define LABEL_INIT_THREAD        "_initthread"
+#define LABEL_PROC_ID            "_procid"
+#define LABEL_CONNECT_MASTER     "_connectmaster"
+#define LABEL_CONNECT_SLAVE      "_connectslave"
 
 // Jump table indicies
 #define JUMPI_CREATE_REMOTE      0
 #define JUMPI_INIT_THREAD        1
 #define JUMPI_PROC_ID            2
+#define JUMPI_CONNECT_MASTER     3
+#define JUMPI_CONNECT_SLAVE      4
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        3 
+#define JUMP_INDEX_OFFSET        5 
 
 // Hardware specs
 #define RAM_BASE                 0x10000

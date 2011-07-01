@@ -22,7 +22,7 @@
   .globl busyHostHandler
   .globl touchRegs
   .globl initPointers
-  .globl _initThread, "f{0}(0)"
+  .globl _initthread, "f{0}(0)"
 
 // Set heap labels
   .globl _bheap
@@ -278,9 +278,9 @@ initPointers:
 // mechanism and by synchronous thread creation with fork-join concurrent
 // composition
 //==========================================================
-  .cc_top _initThread.function, _initThread
+  .cc_top _initthread.function, _initthread
   .align 2
-_initThread:
+_initthread:
    
   entsp 2
   stw r11, sp[0]
@@ -294,7 +294,7 @@ _initThread:
   ldw r11, sp[0]
   retsp 2
   
-  .cc_bottom _initThread.function
+  .cc_bottom _initthread.function
 
 //==========================================================
 // Constants

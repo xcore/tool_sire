@@ -14,7 +14,7 @@
   .extern initMemory
   .extern masterSync
   .extern initMaster
-  .extern _initThread
+  .extern _initthread
 
   .globl main
   .globl _start
@@ -42,7 +42,7 @@ _master:
   bl initPorts
   bl initMemory
   bl __alloc_libc_hwlock
-  bl _initThread
+  bl _initthread
   bl masterSync
  
   // Initialise and run master program

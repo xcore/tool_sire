@@ -14,7 +14,7 @@
   .extern initMemory
   .extern slaveSync
   .extern slaveMasterIdle
-  .extern _initThread
+  .extern _initthread
 
   .globl _start
   .globl _slave, "f{0}(0)"
@@ -45,7 +45,7 @@ _slave:
   bl initPorts
   bl initMemory
   bl __alloc_libc_hwlock
-  bl _initThread
+  bl _initthread
   bl slaveSync
   
   // Idle 

@@ -36,9 +36,21 @@ COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
-RUNTIME_FILES = ['guest.xc', 'host.S', 'host.xc', 'master.S', 'master.xc', 
-        'slave.S', 'slave.xc', 'slavetables.S', 'system.S', 'system.xc', 
-        'util.xc', 'memory.c']
+RUNTIME_FILES = [
+  'guest.xc', 
+  'host.S', 
+  'host.xc', 
+  'connect.xc', 
+  'master.S', 
+  'master.xc', 
+  'slave.S', 
+  'slave.xc', 
+  'slavetables.S', 
+  'system.S', 
+  'system.xc', 
+  'util.xc', 
+  'memory.c'
+  ]
     
 def build_xs1(sig, device, program_buf, outfile, 
         compile_only, show_calls=False, v=False):
@@ -190,9 +202,14 @@ def link_master(device, show_calls, v):
     util.call([XCC, target(device), 
         '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
         '-first', CONST_POOL+'.o',
-        'system.S.o', 'system.xc.o',
-        'guest.xc.o', 'host.xc.o', 'host.S.o',
-        'master.xc.o', 'master.S.o',
+        'system.S.o', 
+        'system.xc.o',
+        'guest.xc.o', 
+        'host.xc.o', 
+        'host.S.o',
+        'connect.xc.o',
+        'master.xc.o', 
+        'master.S.o',
         'program.o',
         'memory.c.o', 
         'util.xc.o', 
@@ -207,9 +224,14 @@ def link_slave(device, show_calls, v):
     util.call([XCC, target(device), 
         '-first', 'slavetables.S.o',
         '-first', CONST_POOL+'.o',
-        'system.S.o', 'system.xc.o',
-        'guest.xc.o', 'host.xc.o', 'host.S.o',
-        'slave.xc.o', 'slave.S.o',
+        'system.S.o', 
+        'system.xc.o',
+        'guest.xc.o', 
+        'host.xc.o', 
+        'host.S.o',
+        'connect.xc.o',
+        'slave.xc.o', 
+        'slave.S.o',
         'memory.c.o', 
         'util.xc.o', 
         '-o', SLAVE_XE] + LINK_FLAGS,
@@ -393,6 +415,8 @@ def build_jumptab(sig, buf, v):
     buf.write('\t.word '+defs.LABEL_CREATE_PROCESS+'\n')
     buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
     buf.write('\t.word '+defs.LABEL_PROC_ID+'\n')
+    buf.write('\t.word '+defs.LABEL_CONNECT_MASTER+'\n')
+    buf.write('\t.word '+defs.LABEL_CONNECT_SLAVE+'\n')
 
     # Program entries
     for x in sig.mobile_proc_names:
