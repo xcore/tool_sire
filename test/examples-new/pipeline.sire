@@ -10,14 +10,10 @@ proc pipeline(chanend input) is
 { { input ? v
   ; c[0] ! v 
   ; c[N] ? v 
-  ; c[0] ! v 
-  ; c[N] ? v 
   ; input ! v
-  } || 
-  par i in [1 for N] do
+  } 
+  || par i in [1 for N] do
   { c[i-1] ? v
-  ; c[i] ! f(v)
-  ; c[i-1] ? v
   ; c[i] ! f(v)
   }
 }
@@ -26,7 +22,10 @@ proc main() is
   chan c;
   var query;
   var result;
-{ { c ! query ; c ? result } ||
-  pipeline(c)
+{ { c ! query 
+  ; c ? result 
+  ; printvalln(result) 
+  } 
+  || pipeline(c)
 }
 
