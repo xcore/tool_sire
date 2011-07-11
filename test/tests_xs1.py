@@ -36,7 +36,7 @@ xs1_example_tests = [
   Test('mergesort-par', [4, 16]),
   Test('distribute', [4, 16, 32, 64]),
   ]
-    
+  
 # Features =====================================================
 
 xs1_feature_general = [
@@ -88,43 +88,42 @@ xs1_feature_replicator = [
   Test('rep_basic_3d',   [4, 16, 32, 64]),
   ]
 
-xs1_feature_tests = xs1_feature_replicator
-    #  xs1_feature_general\
-    #+ xs1_feature_builtins\
-    #+ xs1_feature_thread\
-    #+ xs1_feature_on 
-  #+ xs1_feature_replicator
+xs1_feature_tests = xs1_feature_general\
+  + xs1_feature_builtins\
+  + xs1_feature_thread\
+  + xs1_feature_on\
+  + xs1_feature_replicator
 
 def run_test(self, name, path, num_cores, args=[]):
-    """
-    Run a single test.
-    """
-    try:
+  """
+  Run a single test.
+  """
+  try:
 
-        # Compile the program
-        (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
-                + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + args)
-        self.assertTrue(exit)
+    # Compile the program
+    (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
+        + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + args)
+    self.assertTrue(exit)
 
-        # Simulate execution
-        (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
-        self.assertTrue(exit)
+    # Simulate execution
+    (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
+    self.assertTrue(exit)
 
-        # Check the output against the .output file
-        self.assertEqual(output.strip(), 
-                read_file(path+'/'+name+'.output').strip())
-    
-    except Exception as e:
-        sys.stderr.write('Error: {}\n'.format(e))
-        raise
-    
-    except:
-        sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
-        raise
+    # Check the output against the .output file
+    self.assertEqual(output.strip(), 
+        read_file(path+'/'+name+'.output').strip())
+  
+  except Exception as e:
+    sys.stderr.write('Error: {}\n'.format(e))
+    raise
+  
+  except:
+    sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
+    raise
 
 def generate_xs1_example_tests(path):
-    return generate_test_set('xs1', path, xs1_example_tests, run_test)
-    
+  return generate_test_set('xs1', path, xs1_example_tests, run_test)
+  
 def generate_xs1_feature_tests(path):
-    return generate_test_set('xs1', path, xs1_feature_tests, run_test)
-    
+  return generate_test_set('xs1', path, xs1_feature_tests, run_test)
+  

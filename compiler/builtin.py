@@ -67,5 +67,7 @@ runtime_functions = [
   '_createprocess',
   '_setupthread',
   '_procid',
+  '_connectmaster',
+  '_connectslave',
   ]
 

@@ -403,7 +403,7 @@ class Semantics(NodeWalker):
 
     # Try and determine the array bound (if it's constant valued)
     if node.type == T_REF_ARRAY:
-      node.symbol.value = EvaluateExpr().expr(node.expr)
+      node.symbol.value = EvalExpr().expr(node.expr)
       #print(node.name+' = {}'.format(node.symbol.value))
 
       # If it's not constant-valued, then check it's a single variable.

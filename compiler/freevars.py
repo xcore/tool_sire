@@ -94,7 +94,7 @@ class FreeVars(NodeWalker):
   def stmt_on(self, node):
     c = self.expr(node.expr)
     c |= self.stmt(node.stmt)
-    return
+    return c
 
   def stmt_return(self, node):
     return self.expr(node.expr)

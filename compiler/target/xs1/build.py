@@ -98,6 +98,7 @@ def build_xs1(sig, device, program_buf, outfile,
         # Output and assemble the master jump table
         buf = io.StringIO()
         build_jumptab(sig, buf, v)
+        #print(buf.getvalue())
         assemble_str(MASTER_JUMPTAB, 'S', buf.getvalue(), show_calls, v)
 
         # Output and assemble the master size table
@@ -420,7 +421,7 @@ def build_jumptab(sig, buf, v):
 
     # Program entries
     for x in sig.mobile_proc_names:
-        buf.write('\t.word '+x+'\n')
+      buf.write('\t.word '+x+'\n')
 
     # Pad any unused space
     remaining = defs.JUMP_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+

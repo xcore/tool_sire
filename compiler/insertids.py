@@ -36,7 +36,7 @@ class InsertIds(NodeWalker):
 
       # Add the assignent in sequence with the existing body process
       if isinstance(node.stmt, ast.StmtSeq):
-        node.stmt.insert(0, s)
+        node.stmt.stmt.insert(0, s)
       else:
         node.stmt = ast.StmtSeq([s, node.stmt])
   
