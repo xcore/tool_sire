@@ -3,8 +3,8 @@
 // University of Illinois/NCSA Open Source License posted in
 // LICENSE.txt and at <http://github.xcore.com/>
 
-#ifndef GUEST_H
-#define GUEST_H
+#ifndef SOURCE_H
+#define SOURCE_H
 
 void _createprocess(unsigned, unsigned[]);
 

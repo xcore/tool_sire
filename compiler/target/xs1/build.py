@@ -37,7 +37,7 @@ ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = [
-  'guest.xc', 
+  'source.xc', 
   'host.S', 
   'host.xc', 
   'connect.xc', 
@@ -204,7 +204,7 @@ def link_master(device, show_calls, v):
         '-first', CONST_POOL+'.o',
         'system.S.o', 
         'system.xc.o',
-        'guest.xc.o', 
+        'source.xc.o', 
         'host.xc.o', 
         'host.S.o',
         'connect.xc.o',
@@ -226,7 +226,7 @@ def link_slave(device, show_calls, v):
         '-first', CONST_POOL+'.o',
         'system.S.o', 
         'system.xc.o',
-        'guest.xc.o', 
+        'source.xc.o', 
         'host.xc.o', 
         'host.S.o',
         'connect.xc.o',

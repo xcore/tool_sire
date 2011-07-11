@@ -28,7 +28,7 @@ COMPILE_FLAGS    = ['-S', '-O2']
 ASSEMBLE_FLAGS   = ['-c', '-O2']
 LINK_FLAGS       = []
 
-RUNTIME_FILES = ['main.c', 'slave.c', 'guest.c', 'host.c']
+RUNTIME_FILES = ['main.c', 'slave.c', 'source.c', 'host.c']
 BUILTIN_FILES = ['builtins.c']
 
 def build_mpi(device, buf, outfile, 

@@ -9,7 +9,7 @@
 #include "globals.h"
 #include "system.h"
 #include "util.h"
-#include "guest.h"
+#include "source.h"
 
 void initHostConnection(unsigned, unsigned);
 void sendClosure       (unsigned, unsigned[]);
@@ -95,7 +95,7 @@ void sendHeader(unsigned c, int numArgs, int numProcs) {
   OUTS(c, numProcs);
 }
 
-// Send the guest procedures arguments
+// Send the source procedures arguments
 #pragma unsafe arrays
 int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
 
@@ -143,7 +143,7 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
   return index;
 }
 
-// Send the guest procedure and any children it has
+// Send the source procedure and any children it has
 #pragma unsafe arrays
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   

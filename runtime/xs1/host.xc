@@ -14,7 +14,7 @@
 
 extern void runProcess        (int, unsigned int[], int);
 
-void       initGuestConnection(unsigned, unsigned);
+void       initSourceConnection(unsigned, unsigned);
 {int, int} receiveClosure     (unsigned, t_argument[], unsigned[], int[]);
 {int, int} receiveHeader      (unsigned);
 void       receiveArguments   (unsigned, int, t_argument[], unsigned[], int[]);
@@ -36,7 +36,7 @@ void runThread(unsigned senderId) {
   if(threadId != 0) _initthread();
 
   // Initialise connection with sender
-  initGuestConnection(spawnChan[threadId], senderId);
+  initSourceConnection(spawnChan[threadId], senderId);
   
   // Receive closure data
   {procIndex, numArgs} = receiveClosure(spawnChan[threadId], 
@@ -52,7 +52,7 @@ void runThread(unsigned senderId) {
   sendResults(spawnChan[threadId], numArgs, argTypes, argValues, argLengths);
 }
 
-// Initialise guest connection with this thread 0 as host.
+// Initialise source connection with this thread 0 as host.
 unsigned setHost() {
   
   unsigned senderId;
@@ -91,7 +91,7 @@ void spawnHost() {
 
 // Initialise the conneciton with the sender
 // Communication performed on a slave spawn channel
-void initGuestConnection(unsigned c, unsigned senderId) {
+void initSourceConnection(unsigned c, unsigned senderId) {
   
   // Send the new CRI
   SETD(c, senderId);

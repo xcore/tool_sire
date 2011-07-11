@@ -236,6 +236,9 @@ class LabelChans(NodeWalker):
   def stmt_for(self, node, iters, tab):
     return self.stmt(node.stmt, iters, tab)
 
+  def stmt_on(self, node, iters, tab):
+    return self.stmt(node.stmt, iters, tab)
+
   # Statements not containing processes or channels uses
 
   def stmt_ass(self, node, iters, tab):
@@ -251,9 +254,6 @@ class LabelChans(NodeWalker):
     return ChanUseSet()
 
   # Prohibited statements
-
-  def stmt_on(self, node, iters, tab):
-    assert 0
 
   def stmt_connect(self, node, iters, tab):
     assert 0

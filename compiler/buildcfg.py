@@ -79,14 +79,12 @@ class BuildCFG(NodeWalker):
     node.defs |= set([x for x in node.indicies])
     [node.use.update(self.expr(x.base)) for x in node.indicies]
     [node.use.update(self.expr(x.count)) for x in node.indicies]
-    p = self.stmt(node.stmt, [node], succ)
-    return p
+    return self.stmt(node.stmt, [node], succ)
 
   def stmt_on(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
     node.use |= self.expr(node.expr)
-    p = self.stmt(node.stmt, [node], succ)
-    return p
+    return self.stmt(node.stmt, [node], succ)
 
   def stmt_if(self, node, pred, succ):
     self.init_sets(node, pred, [node.thenstmt, node.elsestmt])

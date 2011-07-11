@@ -138,7 +138,7 @@ class TranslateMPI(NodeWalker):
     self.out('#include <syscall.h>')
     self.out('#include "device.h"')
     self.out('#include "runtime/mpi/system.h"')
-    self.out('#include "runtime/mpi/guest.h"')
+    self.out('#include "runtime/mpi/source.h"')
     self.out('#include "system/definitions.h"')
     self.out('#include "system/mpi/definitions.h"')
     self.out('#include "system/mpi/builtins.h"')

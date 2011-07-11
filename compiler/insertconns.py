@@ -150,6 +150,9 @@ class InsertConns(NodeWalker):
   def stmt_for(self, node, tab, decls):
     self.stmt(node.stmt, tab, decls)
 
+  def stmt_on(self, node, tab, decls):
+    self.stmt(node.stmt, tab, decls)
+
   # Other statements
 
   def stmt_in(self, node, tab, decls):
@@ -174,9 +177,6 @@ class InsertConns(NodeWalker):
     pass
 
   # Prohibited statements
-
-  def stmt_on(self, node, tab, decls):
-    assert 0
 
   def stmt_connect(self, node, tab, decls):
     assert 0

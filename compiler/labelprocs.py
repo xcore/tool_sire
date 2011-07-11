@@ -100,6 +100,11 @@ class LabelProcs(NodeWalker):
     node.offset = l
     self.stmt(node.stmt, l)
 
+  def stmt_on(self, node, l):
+    #assert 0
+    node.offset = l
+    self.stmt(node.stmt, l)
+
   # Statements
   
   def stmt_skip(self, node, l):
@@ -126,8 +131,5 @@ class LabelProcs(NodeWalker):
   # Prohibited
 
   def stmt_connect(self, node, l):
-    assert 0
-
-  def stmt_on(self, node, l):
     assert 0
 

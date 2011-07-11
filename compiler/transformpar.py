@@ -62,9 +62,11 @@ class TransformPar(NodeWalker):
      - Create the corresponding Pcall node.
      - Insert the definition into the signature table.
      - Return the tuple (process-def, process-call)
-   
-    succ is the next statement (or the definiton which has a predecessor list)
-    if there is not.
+  
+    We pass process definitions recursively up the AST.
+
+    succ is the (single) next statement (or the definiton which has a
+    predecessor list) if there is not.
 
     Also, the index varible (rep_var) of replicator statements must be
     treated as a value and not a variable in its use as a parameter
@@ -77,7 +79,8 @@ class TransformPar(NodeWalker):
     # out) and are used in the statement body.
     #print('Successors: {}'.format(' '.join(['{}'.format(x.pred) for x in succ])))
     out = set()
-    [(out.update(y.out) for y in x.pred) for x in succ]
+    #[(out.update(y.out) for y in x.pred) for x in succ]
+    [out.update(y.out) for y in succ.pred]
     
     free = FreeVars().allvars(stmt) 
     live = (stmt.inp | out) & free
@@ -186,7 +189,7 @@ class TransformPar(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    return self.stmt(node.stmt, [node]) if node.stmt else []
+    return self.stmt(node.stmt, node) if node.stmt else None
   
   # Statements ==========================================
 
