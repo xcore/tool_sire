@@ -167,12 +167,13 @@ class TranslateXS1(NodeWalker):
     self.out('#include <print.h>')
     self.out('#include <syscall.h>')
     self.out('#include "device.h"')
+    self.out('#include "system/definitions.h"')
+    self.out('#include "system/xs1/definitions.h"')
     self.out('#include "runtime/xs1/globals.h"')
     self.out('#include "runtime/xs1/util.h"')
     self.out('#include "runtime/xs1/guest.h"')
+    self.out('#include "runtime/xs1/connect.h"')
     self.out('#include "runtime/xs1/system.h"')
-    self.out('#include "system/definitions.h"')
-    self.out('#include "system/xs1/definitions.h"')
     self.out('')
   
   def builtins(self):
@@ -218,11 +219,13 @@ class TranslateXS1(NodeWalker):
     elif node.type == T_VAL_SINGLE:
       return '#define {} {}'.format(node.name, self.expr(node.expr))
     elif node.type == T_CHANEND_SINGLE:
-      return 'chanend'
-    elif node.type == T_CHAN_SINGLE:
-      return 'chan'
-    elif node.type == T_CHAN_ARRAY:
-      return 'chanarray'
+      return 'unsigned '+node.name+';'
+    #elif node.type == T_CHANEND_ARRAY:
+    #  return 'unsigned {}[{}];'.format(node.name, self.expr(node.expr))
+    #elif node.type == T_CHAN_ARRAY:
+    #  return 'chanarray'
+    #elif node.type == T_CHAN_SINGLE:
+    #  return 'chan'
     else:
       assert 0
 

@@ -1,6 +1,3 @@
-#include "system/xs1/definitions.h"
-#include "device.h"
-
 // Printing
 #define _PRINTCHAR(x)   printchar(x)
 #define _PRINTCHARLN(x) printcharln(x) 
