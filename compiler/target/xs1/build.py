@@ -45,7 +45,8 @@ RUNTIME_FILES = [
   'master.xc', 
   'slave.S', 
   'slave.xc', 
-  'slavetables.S', 
+  'slavetables.S',
+  'globals.c',
   'system.S', 
   'system.xc', 
   'util.xc', 
@@ -104,7 +105,7 @@ def build_xs1(sig, device, program_buf, outfile,
         # Output and assemble the master size table
         buf = io.StringIO()
         build_sizetab(sig, buf, v)
-        build_frametab(sig, buf, v)
+        #build_frametab(sig, buf, v)
         #print(buf.getvalue())
         assemble_str(MASTER_TABLES, 'S', buf.getvalue(), show_calls, v)
         
@@ -203,6 +204,7 @@ def link_master(device, show_calls, v):
     util.call([XCC, target(device), 
         '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
         '-first', CONST_POOL+'.o',
+        'globals.c.o',
         'system.S.o', 
         'system.xc.o',
         'source.xc.o', 
@@ -225,6 +227,7 @@ def link_slave(device, show_calls, v):
     util.call([XCC, target(device), 
         '-first', 'slavetables.S.o',
         '-first', CONST_POOL+'.o',
+        'globals.c.o',
         'system.S.o', 
         'system.xc.o',
         'source.xc.o', 
@@ -252,7 +255,7 @@ def modify_assembly(sig, lines, v):
     #print(''.join(lines))
     (lines, cp) = extract_constants(lines, v)
     lines = insert_bottom_labels(sig, lines, v)
-    lines = insert_frame_sizes(sig, lines, v)
+    #lines = insert_frame_sizes(sig, lines, v)
     lines = rewrite_calls(sig, lines, v)
     lines.insert(0, '###### MODIFIED ######\n')
     #print(''.join(lines))
@@ -356,30 +359,30 @@ def insert_bottom_labels(sig, lines, v):
 
     return lines
 
-def insert_frame_sizes(sig, lines, v):
-    """ 
-    Insert labels with the value of the size of funciton frames. These are
-    extracted from 'retsp n' instruction which are always present.
-    """
-    vmsg(v, '  Inserting frame sizes')
-        
-    b = False
-    for x in sig.mobile_proc_names:
-        new = []
-        for (i, y) in enumerate(lines):
-            new.append(y)
-            if b and y.strip()[0:5] == 'retsp':
-                size = int(y.strip().split()[1][2:], 16)
-                new.insert(len(new)-1, '.set {}, {}\n'.format(
-                    function_label_framesize(x), size))
-                b = False
-            if y == x+':\n':
-                new.insert(len(new)-1, '.globl {}\n'.format(
-                    function_label_framesize(x)))
-                b = True          
-        lines = new
-
-    return lines
+#def insert_frame_sizes(sig, lines, v):
+#    """ 
+#    Insert labels with the value of the size of funciton frames. These are
+#    extracted from 'retsp n' instruction which are always present.
+#    """
+#    vmsg(v, '  Inserting frame sizes')
+#        
+#    b = False
+#    for x in sig.mobile_proc_names:
+#        new = []
+#        for (i, y) in enumerate(lines):
+#            new.append(y)
+#            if b and y.strip()[0:5] == 'retsp':
+#                size = int(y.strip().split()[1][2:], 16)
+#                new.insert(len(new)-1, '.set {}, {}\n'.format(
+#                    function_label_framesize(x), size))
+#                b = False
+#            if y == x+':\n':
+#                new.insert(len(new)-1, '.globl {}\n'.format(
+#                    function_label_framesize(x)))
+#                b = True          
+#        lines = new
+#
+#    return lines
 
 def rewrite_calls(sig, lines, v):
     """ 
@@ -458,32 +461,32 @@ def build_sizetab(sig, buf, v):
             len(sig.mobile_proc_names))
     buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
-def build_frametab(sig, buf, v):
-
-    vmsg(v, 'Building master frame table')
-    
-    # Constant section
-    buf.write('\t.section .dp.data, "awd", @progbits\n')
-    buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
-    
-    # Header
-    buf.write('\t.globl '+defs.LABEL_FRAME_TABLE+', "a(:ui)"\n')
-    buf.write('\t.set {}.globound, {}\n'.format(
-        defs.LABEL_FRAME_TABLE, defs.BYTES_PER_WORD*defs.FRAME_TABLE_SIZE))
-    buf.write(defs.LABEL_FRAME_TABLE+':\n')
-    
-    # Pad runtime entries
-    for x in range(defs.JUMP_INDEX_OFFSET):
-        buf.write('\t.word 0\n')
-
-    # Program procedure entries
-    for x in sig.mobile_proc_names:
-        buf.write('\t.word {}\n'.format(function_label_framesize(x)))
-    
-    # Pad any unused space
-    remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
-            len(sig.mobile_proc_names))
-    buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
+#def build_frametab(sig, buf, v):
+#
+#    vmsg(v, 'Building master frame table')
+#    
+#    # Constant section
+#    buf.write('\t.section .dp.data, "awd", @progbits\n')
+#    buf.write('\t.align {}\n'.format(defs.BYTES_PER_WORD))
+#    
+#    # Header
+#    buf.write('\t.globl '+defs.LABEL_FRAME_TABLE+', "a(:ui)"\n')
+#    buf.write('\t.set {}.globound, {}\n'.format(
+#        defs.LABEL_FRAME_TABLE, defs.BYTES_PER_WORD*defs.FRAME_TABLE_SIZE))
+#    buf.write(defs.LABEL_FRAME_TABLE+':\n')
+#    
+#    # Pad runtime entries
+#    for x in range(defs.JUMP_INDEX_OFFSET):
+#        buf.write('\t.word 0\n')
+#
+#    # Program procedure entries
+#    for x in sig.mobile_proc_names:
+#        buf.write('\t.word {}\n'.format(function_label_framesize(x)))
+#    
+#    # Pad any unused space
+#    remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
+#            len(sig.mobile_proc_names))
+#    buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
 
 def cleanup(v):
     """ 
@@ -516,6 +519,6 @@ def function_label_top(name):
 def function_label_bottom(name):
     return '.'+name+'.bottom'
 
-def function_label_framesize( name):
-    return '.'+name+'.framesize'
+#def function_label_framesize( name):
+#    return '.'+name+'.framesize'
 

@@ -17,6 +17,8 @@
   .extern releaseThread
   .extern raiseException
 
+  .extern _sp
+
   .globl excepHandler
   .globl idleHostHandler
   .globl busyHostHandler
@@ -79,9 +81,9 @@ idleHostHandler:
 
   bl getAvailThreads
   eq  r11, r0, 1 
-  bt  r11, .L.idle.run   // if _numThreads == 1 then run
+  bt  r11, .L.idle.run   // if _numthreads == 1 then run
   eq  r11, r0, 0
-  bt  r11, .L.idle.excep // if _numThreads == 0 then error
+  bt  r11, .L.idle.excep // if _numthreads == 0 then error
                          // else spawn
 
 .L.idle.spawn:
@@ -105,9 +107,9 @@ idleHostHandler:
   ldap r11, slaveMasterYeild
   stw r11, sp[4]
 
-  // Set mSpawnChan event vector = &busyHostHandler
+  // Set spawn_master event vector = &busyHostHandler
   ldap r11, busyHostHandler
-  ldw  r10, dp[mSpawnChan]
+  ldw  r10, dp[spawn_master]
   setv res[r10], r11
   
   // Set channel mode to interrupts
@@ -295,58 +297,4 @@ _initthread:
   retsp 2
   
   .cc_bottom _initthread.function
-
-//==========================================================
-// Constants
-//==========================================================
-//	.section .cp.rodata, "ac", @progbits
-//	.align 4
-	
-//==========================================================
-// Data
-//==========================================================
-  .globl mSpawnChan,    "ui"
-  .globl spawnChan,     "a(:ui)"
-  .globl progChan,    "a(:ui)"
-  .globl _numThreadsLock, "ui"
-  .globl _numThreads,   "ui"
-  .globl _sp,       "ui"
-	
-	.section .dp.data, "awd", @progbits
-  .align BYTES_PER_WORD
-
-/* TODO: move these declarations into XC? */
-
-// Master/spawn 
-mSpawnChan:
-  .space BYTES_PER_WORD
-  .globl mSpawnChan.globound
-  .set mSpawnChan.globound, BYTES_PER_WORD
-
-// Channel array storing identifiers for each thread
-spawnChan:
-  .space MAX_THREADS*BYTES_PER_WORD
-  .globl spawnChan.globound
-  .set spawnChan.globound, MAX_THREADS*BYTES_PER_WORD
-
-// Channel array storing identifiers for each thread
-progChan:
-  .space NUM_PROG_CHANS*BYTES_PER_WORD
-  .globl progChan.globound
-  .set progChan.globound, NUM_PROG_CHANS*BYTES_PER_WORD
-
-// _numThreads lock identifier
-_numThreadsLock:
-  .space BYTES_PER_WORD
-  .set _numThreadsLock.globound, BYTES_PER_WORD
-
-// Record the number of available threads. 
-_numThreads:
-  .space BYTES_PER_WORD
-  .set _numThreads.globound, BYTES_PER_WORD
-
-// Record the number of available threads. 
-_sp:
-  .space BYTES_PER_WORD
-  .set _sp.globound, BYTES_PER_WORD
 

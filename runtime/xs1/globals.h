@@ -8,18 +8,29 @@
 
 #include "system/xs1/definitions.h"
 
-// External globals
-extern unsigned mSpawnChan;
-extern unsigned spawnChan[MAX_THREADS];
-extern unsigned progChan[NUM_PROG_CHANS];  
-extern unsigned _numThreads;
-extern unsigned _numThreadsLock;
-extern unsigned _sp;
+// Seperate master and slave versions
 extern unsigned _sizetab[SIZE_TABLE_SIZE];
-extern unsigned _frametab[FRAME_TABLE_SIZE];
 
 // External functions
 extern void excepHandler(void);
 extern void _main(void);
 
+/* These variables are declared in globals.c. */
+
+// Global data
+extern unsigned _numthreads;
+extern unsigned _numthreads_lock;
+extern unsigned _sp;
+
+// Processor allocation
+extern unsigned spawn_master;
+extern unsigned spawn_chans[MAX_THREADS];
+
+// Connection setup and management
+extern unsigned conn_master;
+extern unsigned conn_buffer[CONN_BUFFER_SIZE];
+extern unsigned conn_ids[MAX_THREADS];
+extern unsigned conn_slaves[MAX_THREADS];
+
 #endif
+

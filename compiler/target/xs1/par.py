@@ -167,9 +167,9 @@ def gen_par(t, node):
       outop='_cp', clobber=['r11'])
 
   # Claim thread count
-  t.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-  t.out('_numThreads = _numThreads - {};'.format(num_slaves))
-  t.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
+  t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+  t.out('_numthreads = _numthreads - {};'.format(num_slaves))
+  t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
   # Slave initialisation
   init_slaves(t, sync_label, num_slaves)
@@ -199,16 +199,16 @@ def gen_par(t, node):
   t.asm('ssync')
 
   # Ouput exit label 
-  t.comment('Exit, free _sync, restore _sp and _numThreads')
+  t.comment('Exit, free _sync, restore _sp and _numthreads')
   t.asm(exit_label+':')
   
   # Free synchroniser resource
   t.asm('freer res[%0]', inops=['_sync'])
 
   # Release thread count
-  t.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-  t.out('_numThreads = _numThreads + {};'.format(num_slaves))
-  t.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
+  t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+  t.out('_numthreads = _numthreads + {};'.format(num_slaves))
+  t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
   t.blocker.end()
 

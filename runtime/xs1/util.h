@@ -6,6 +6,7 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+#include <xs1.h>
 #include "system/xs1/definitions.h"
 #include "device.h"
 
@@ -16,7 +17,7 @@
 // Set channel destination
 static inline
 void SETD(unsigned c, unsigned dest) {
-   asm("setd res[%0], %1" :: "r"(c), "r"(dest));
+  asm("setd res[%0], %1" :: "r"(c), "r"(dest));
 }
 
 // OUTCT CT_END
@@ -48,75 +49,65 @@ unsigned IN(unsigned c) {
 // Synchronised out
 static inline
 void OUTS(unsigned c, unsigned v) {
-   asm("outct res[%0], " S(XS1_CT_END) ";"
-     "chkct res[%0], " S(XS1_CT_END) ";"
-     "out   res[%0], %1;" 
-     "outct res[%0], " S(XS1_CT_END) ";"
-     "chkct res[%0], " S(XS1_CT_END) ";"
-     :: "r"(c), "r"(v));
+  asm("outct res[%0], " S(XS1_CT_END) ";"
+      "chkct res[%0], " S(XS1_CT_END) ";"
+      "out   res[%0], %1;" 
+      "outct res[%0], " S(XS1_CT_END) ";"
+      "chkct res[%0], " S(XS1_CT_END) ";"
+      :: "r"(c), "r"(v));
 }
 
 // Synchronised in
 static inline
 unsigned INS(unsigned c) {
   unsigned v;
-  /*
-    asm(
-    "chkct res[%1], " S(XS1_CT_END) ";" 
-    "outct res[%1], " S(XS1_CT_END) ";" 
-    "in  %0, res[%1];"
-    "chkct res[%1], " S(XS1_CT_END) ";"
-    "outct res[%1], " S(XS1_CT_END) ";"
-    : "=&r"(v) : "r"(c));
-  */
-  asm("chkct res[%1], " S(XS1_CT_END) ";" 
-    "outct res[%1], " S(XS1_CT_END) ";" 
-    "in  %0, res[%1];"
-    : "=r"(v) : "r"(c));
-  asm("chkct res[%0], " S(XS1_CT_END) ";"
-    "outct res[%0], " S(XS1_CT_END) ";"
-    :: "r"(c));
+  asm("chkct  res[%1], " S(XS1_CT_END) ";" 
+      "outct  res[%1], " S(XS1_CT_END) ";" 
+      "in %0, res[%1];"
+      "chkct  res[%1], " S(XS1_CT_END) ";"
+      "outct  res[%1], " S(XS1_CT_END) ";"
+      : "=&r"(v) : "r"(c));
   return v;
 }
 
 // Get a chanend
 static inline
 unsigned GETR_CHANEND() {
-   unsigned c;
-   asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-   return c;
+  unsigned c;
+  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+  return c;
 }
 
 // Get a synchroniser
 static inline
 unsigned GETR_SYNC() {
-   unsigned c;
-   asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(c));
-   return c;
+  unsigned c;
+  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(c));
+  return c;
 }
 
 // Get an asynchronous thread
 static inline
 unsigned GET_ASYNC_THREAD() {
-   unsigned t;
-   asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
-   return t;
+  unsigned t;
+  asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
+  return t;
 }
 
 // Get a synchronous thread
 static inline
 unsigned GET_SYNC_THREAD(unsigned sync) {
-   unsigned t;
-   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
-   return t;
+  unsigned t;
+  asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
+  return t;
 }
 
 // Get a lock
 static inline
 unsigned GETR_LOCK() {
-   unsigned c;
-   asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(c));
-   return c;
+  unsigned c;
+  asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(c));
+  return c;
 }
 
 // Acquire lock
@@ -129,6 +120,12 @@ void ACQUIRE_LOCK(unsigned l) {
 static inline 
 void RELEASE_LOCK(unsigned l) {
   asm("out res[%0], r11" :: "r"(l) : "r11");
+}
+
+// Free a resource
+static inline
+void FREER(unsigned r) {
+  asm("freer res[%0]" :: "r"(r));
 }
 
 // Get a thread id from a resource identifier

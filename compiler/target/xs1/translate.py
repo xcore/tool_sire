@@ -347,9 +347,9 @@ class TranslateXS1(NodeWalker):
     self.asm('ldaw %0, sp[0x0]', outop='_spbase')
 
     # Claim thread count
-    self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-    self.out('_numThreads = _numThreads - {};'.format(num_slaves))
-    self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
+    self.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+    self.out('_numthreads = _numthreads - {};'.format(num_slaves))
+    self.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
     # Setup each slave thread
     self.comment('Initialise slave threads')
@@ -382,16 +382,16 @@ class TranslateXS1(NodeWalker):
         self.asm('ssync')
 
     # Ouput exit label
-    self.comment('Exit, free _sync, restore _sp and _numThreads')
+    self.comment('Exit, free _sync, restore _sp and _numthreads')
     self.asm(exit_label+':')
     
     # Free synchroniser resource
     self.asm('freer res[%0]', inops=['_sync'])
 
     # Release thread count
-    self.asm('in r11, res[%0]', inops=['_numThreadsLock'], clobber=['r11'])
-    self.out('_numThreads = _numThreads + {};'.format(num_slaves))
-    self.asm('out res[%0], r11', inops=['_numThreadsLock'], clobber=['r11'])
+    self.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+    self.out('_numthreads = _numthreads + {};'.format(num_slaves))
+    self.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
     self.blocker.end()
    

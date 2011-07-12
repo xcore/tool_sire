@@ -7,8 +7,10 @@
    
   .extern _createprocess
   .extern _initthread
+  .extern _procid
+  .extern _connectmaster
+  .extern _connectslave
   
-  .globl _jumptab,  "a(:ui)"
   .globl _sizetab,  "a(:ui)"
   .globl _frametab, "a(:ui)"
 
@@ -34,11 +36,4 @@ _jumptab:
   
 _sizetab:
   .space BYTES_PER_WORD*SIZE_TABLE_SIZE, 0 
-
-  // Must be initalised to 0
-  .align 4
-  .set _frametab.globound, BYTES_PER_WORD*FRAME_TABLE_SIZE
-
-_frametab:
-  .space BYTES_PER_WORD*FRAME_TABLE_SIZE, 0
 

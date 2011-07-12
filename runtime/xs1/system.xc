@@ -35,7 +35,7 @@ void resetChanends() {
   // Free all channels
   c = c0 & 0xFFFF00FF;
   for(int i=0; i<MAX_CHANNELS; i++) {
-    asm("freer res[%0]" :: "r"(c));
+    FREER(c);
     c += 0x100;
   }
 }
@@ -46,26 +46,25 @@ void initChanends() {
   
   // Get the migration channel and set the event vector
   // ASSERT: channel resource counter must be 0 
-  mSpawnChan = GETR_CHANEND();
-  asm("eeu res[%0]" :: "r"(mSpawnChan));
+  spawn_master = GETR_CHANEND();
+  asm("eeu res[%0]" :: "r"(spawn_master));
 
   // Get channels for each thread
   for(int i=0; i<MAX_THREADS; i++) 
-    spawnChan[i] = GETR_CHANEND();
+    spawn_chans[i] = GETR_CHANEND();
 
-  // Get the remaining channels for program use
-  /*for(int i=0; i<NUM_PROG_CHANS; i++)
-    progChan[i] = GETR_CHANEND();*/
+  // Allocate a channel end for setting up connections
+  conn_master = GETR_CHANEND();
 }
 
 // Initialise system resource counters
 void initCounters() {
 
   // Get locks
-  _numThreadsLock = GETR_LOCK();
+  _numthreads_lock = GETR_LOCK();
 
   // Set available threads
-  _numThreads = MAX_THREADS; 
+  _numthreads = MAX_THREADS; 
 }
 
 // Initialise ports
@@ -102,7 +101,7 @@ void masterSync() {
 
   if (NUM_CORES > 1) {
 
-    /*unsigned coreId = GET_CORE_ID(mSpawnChan);
+    /*unsigned coreId = GET_CORE_ID(spawn_master);
     unsigned switchCRI = GEN_CONFIG_RI(0); 
     unsigned c, v;
     unsigned t;
@@ -128,7 +127,7 @@ void masterSync() {
 // Ensure all cores are in a consistent state before completing initialisation
 void slaveSync() {
 
-  /*unsigned coreId = GET_CORE_ID(mSpawnChan);
+  /*unsigned coreId = GET_CORE_ID(spawn_master);
   unsigned switchCRI = GEN_CONFIG_RI(0); 
   unsigned c, v;
 
@@ -141,7 +140,7 @@ void slaveSync() {
     continue;
   cfgWrite(c, coreId+1);*/
    
-  unsigned coreId = GET_GLOBAL_CORE_ID(mSpawnChan);
+  unsigned coreId = GET_GLOBAL_CORE_ID(spawn_master);
   unsigned v;
   read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   //asm("waiteu");
@@ -155,13 +154,13 @@ void slaveMasterIdle() {
 
   // Disable interrupts and events, switch to event mode
   asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
-  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(mSpawnChan));
+  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(spawn_master));
   
   // Set event vector to idle handler
   asm("ldap r11, " LABEL_IDLE_HOST_HANDLER "\n\t"
-    "setv res[%0], r11" :: "r"(mSpawnChan) : "r11");
+    "setv res[%0], r11" :: "r"(spawn_master) : "r11");
 
-  // Wait for an event on mSpawnChan
+  // Wait for an event on spawn_master
   asm("waiteu");
 }
 
@@ -219,36 +218,36 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 
 unsigned int getAvailThreads() {
   unsigned num;
-  ACQUIRE_LOCK(_numThreadsLock);
-  num = _numThreads;
-  RELEASE_LOCK(_numThreadsLock);
+  ACQUIRE_LOCK(_numthreads_lock);
+  num = _numthreads;
+  RELEASE_LOCK(_numthreads_lock);
   return num;
 }
 
 unsigned claimAsyncThread() {
   unsigned t;
-  ACQUIRE_LOCK(_numThreadsLock);
+  ACQUIRE_LOCK(_numthreads_lock);
   t = GET_ASYNC_THREAD();
   if(t == 0) error();
-  _numThreads = _numThreads - 1;
-  RELEASE_LOCK(_numThreadsLock);
+  _numthreads = _numthreads - 1;
+  RELEASE_LOCK(_numthreads_lock);
   return t;
 }
 
 unsigned claimSyncThread(unsigned sync) {
   unsigned t;
-  ACQUIRE_LOCK(_numThreadsLock);
+  ACQUIRE_LOCK(_numthreads_lock);
   t = GET_SYNC_THREAD(sync);
   if(t == 0) error();
-  _numThreads = _numThreads - 1;
-  RELEASE_LOCK(_numThreadsLock);
+  _numthreads = _numthreads - 1;
+  RELEASE_LOCK(_numthreads_lock);
   return t;
 }
 
 void releaseThread() {
-  ACQUIRE_LOCK(_numThreadsLock);
-  _numThreads = _numThreads + 1;
-  RELEASE_LOCK(_numThreadsLock);
+  ACQUIRE_LOCK(_numthreads_lock);
+  _numthreads = _numthreads + 1;
+  RELEASE_LOCK(_numthreads_lock);
 }
 
 unsigned claimStackSlot(int threadId) {

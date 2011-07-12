@@ -36,20 +36,20 @@ void runThread(unsigned senderId) {
   if(threadId != 0) _initthread();
 
   // Initialise connection with sender
-  initSourceConnection(spawnChan[threadId], senderId);
+  initSourceConnection(spawn_chans[threadId], senderId);
   
   // Receive closure data
-  {procIndex, numArgs} = receiveClosure(spawnChan[threadId], 
+  {procIndex, numArgs} = receiveClosure(spawn_chans[threadId], 
       argTypes, argValues, argLengths);
 
   // Run the process
   runProcess(procIndex, argValues, numArgs);
 
   // Complete the creation by sending back any results
-  informCompleted(spawnChan[threadId], senderId);
+  informCompleted(spawn_chans[threadId], senderId);
   
   // Send any results back
-  sendResults(spawnChan[threadId], numArgs, argTypes, argValues, argLengths);
+  sendResults(spawn_chans[threadId], numArgs, argTypes, argValues, argLengths);
 }
 
 // Initialise source connection with this thread 0 as host.
@@ -58,12 +58,12 @@ unsigned setHost() {
   unsigned senderId;
   
   // Connect to the sender and receive their id 
-  senderId = IN(mSpawnChan);
-  SETD(mSpawnChan, senderId);
+  senderId = IN(spawn_master);
+  SETD(spawn_master, senderId);
   
-  // Close mSpawnChan connection
-  OUTCT_END(mSpawnChan);
-  CHKCT_END(mSpawnChan);
+  // Close spawn_master connection
+  OUTCT_END(spawn_master);
+  CHKCT_END(spawn_master);
 
   return senderId;
 }
@@ -77,12 +77,12 @@ void spawnHost() {
   unsigned pc;
   
   // Connect to the sender and receive their id 
-  senderId = IN(mSpawnChan);
-  SETD(mSpawnChan, senderId);
+  senderId = IN(spawn_master);
+  SETD(spawn_master, senderId);
 
   // Close the connection
-  CHKCT_END(mSpawnChan);
-  OUTCT_END(mSpawnChan);
+  CHKCT_END(spawn_master);
+  OUTCT_END(spawn_master);
 
   // Give the next thread some space and launch it
   asm("ldap r11, runThread ; mov %0, r11" : "=r"(pc) :: "r11");
@@ -187,7 +187,7 @@ int receiveProcedures(unsigned c, int numProcs) {
 
   for(int i=0; i<numProcs; i++) {
     
-    // Jump index, size and frame size
+    // Jump index and size
     int procIndex = INS(c);
     if(i == 0) index = procIndex;
 
@@ -195,12 +195,10 @@ int receiveProcedures(unsigned c, int numProcs) {
     if (_sizetab[procIndex] == 0) {
       
       int procSize;
-      int frameSize;
       unsigned ptr;
       
       OUTS(c, 1);
       procSize = INS(c);
-      frameSize = INS(c);
       ptr = memAlloc(procSize);
 
       // Instructions
@@ -212,9 +210,8 @@ int receiveProcedures(unsigned c, int numProcs) {
       // Patch jump table entry
       asm("stw %0, %1[%2]" :: "r"(ptr), "r"(jumpTable), "r"(procIndex));
 
-      // Update the procSize and frameSize entry
+      // Update the procSize entry
       _sizetab[procIndex] = procSize;
-      _frametab[procIndex] = frameSize;
     }
     else {
       OUTS(c, 0);

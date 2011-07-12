@@ -38,12 +38,12 @@ _slave:
 
   // Initialisation
   bl touchRegs
+  bl initMemory
   bl initPointers
   bl resetChanends
   bl initChanends
   bl initCounters
   bl initPorts
-  bl initMemory
   bl __alloc_libc_hwlock
   bl _initthread
   bl slaveSync

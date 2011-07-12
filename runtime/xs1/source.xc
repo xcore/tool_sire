@@ -32,7 +32,7 @@ unsigned permDest(unsigned d)
 void _createprocess(unsigned dest, unsigned closure[]) 
 {
   unsigned threadId = GET_THREAD_ID();
-  unsigned c = spawnChan[threadId];
+  unsigned c = spawn_chans[threadId];
   unsigned destId = GEN_CHAN_RI_0(dest);
 
   // Initialise the connection with the host
@@ -168,7 +168,6 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
       unsigned procAddr; 
       unsigned procSize  = _sizetab[procIndex];
       OUTS(c, procSize);
-      OUTS(c, _frametab[procIndex]);
     
       // Instructions
       asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));

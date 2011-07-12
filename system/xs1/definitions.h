@@ -48,13 +48,12 @@
                                 
 // Runtime specs                
 #define MAX_PROCS                20
-#define JUMP_TABLE_SIZE          22
-#define SIZE_TABLE_SIZE          22 
-#define FRAME_TABLE_SIZE         22
+#define JUMP_TABLE_SIZE          25
+#define SIZE_TABLE_SIZE          25 
 #define KERNEL_SPACE             0x200
 #define THREAD_STACK_SPACE       0x400
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
-#define NUM_PROG_CHANS           (MAX_CHANNELS-PROG_CHAN_OFF)
+#define CONN_BUFFER_SIZE         10
                                 
 // Closure elements             
 #define CLOSURE_NUM_ARGS         0
