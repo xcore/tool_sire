@@ -27,6 +27,42 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       print(s)
 
+  def gen_single_conn(self, tab, pid, chan):
+    """
+    Generate a connection for a single channel declaration. 'chan' is a
+    ChanElemSet with one element.
+    """
+    elem = chan.elems[0]
+    off = ast.ExprSingle(ast.ElemNumber(
+        tab.lookup_slave_offset(chan.name, elem.index)))
+    loc = form_location(self.sym, pid, off, 1) if elem.master else None
+    chanend = ast.ElemId(chan.chanend)
+    chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
+        None, scope=T_SCOPE_PROC)
+    chanid = ast.ExprSingle(ast.ElemNumber(
+        tab.lookup_id(chan.name, elem.index)))
+    conns.append(ast.StmtConnect(chanend, chanid, loc))
+
+  def gen_array_conn(self, tab, pid, chan):
+    """
+    Generate a conncection for an array channel declaration. We must analyse
+    the subscript by generating nested conditional statements. 'chan' is a
+    ChanElemSet with multiple elements.
+    """
+    s = None
+    for y in reversed(chan.elems):
+      cond = ast.ExprBinop('=', ast.ElemGroup(chan.expr), ast.ElemNumber(y.index))
+      off = ast.ExprSingle(ast.ElemNumber(
+          tab.lookup_slave_offset(chan.name, y.index)))
+      loc = form_location(self.sym, pid, off, 1) if y.master else None
+      chanend = ast.ElemId(chan.chanend)
+      chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+      chanid = ast.ExprSingle(ast.ElemNumber(
+          tab.lookup_id(chan.name, y.index)))
+      conn = ast.StmtConnect(chanend, chanid, loc)
+      s = ast.StmtIf(cond, conn, s) if s else conn
+    return s
+
   def insert_connections(self, tab, stmt, chans):
     """
     Insert connections for a process from a list of channel uses (name, index)
@@ -41,33 +77,10 @@ class InsertConns(NodeWalker):
       pid.symbol = Symbol(pid.name, T_VAR_SINGLE, scope=T_SCOPE_PROC)
       conns = []
       for x in chans:
-        
-        # If the expansion is of size one (single or constant subscript)
         if len(x.elems) == 1:
-          elem = x.elems[0]
-          off = ast.ExprSingle(ast.ElemNumber(
-              tab.slave_offset(x.name, elem.index)))
-          loc = form_location(self.sym, pid, off, 1) if elem.master else None
-          chanend = ast.ElemId(x.chanend)
-          chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
-              None, scope=T_SCOPE_PROC)
-          conns.append(ast.StmtConnect(chanend, loc))
-
-        # Otherwise we must analyse the subscript
+          conns.append(self.gen_single_conn(tab, pid, x))
         else:
-          s = None
-          for y in reversed(x.elems):
-            cond = ast.ExprBinop('=', ast.ElemGroup(x.expr),
-                ast.ElemNumber(y.index))
-            off = ast.ExprSingle(ast.ElemNumber(
-                tab.slave_offset(x.name, y.index)))
-            loc = form_location(self.sym, pid, off, 1) if y.master else None
-            chanend = ast.ElemId(x.chanend)
-            chanend.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, 
-                None, scope=T_SCOPE_PROC)
-            conn = ast.StmtConnect(chanend, loc)
-            s = ast.StmtIf(cond, conn, s) if s else conn
-          conns.append(s)
+          conns.append(self.gen_array_conn(tab, pid, x))
 
       s = ast.StmtSeq(conns + [stmt])
       s.offset = stmt.offset
@@ -128,12 +141,12 @@ class InsertConns(NodeWalker):
   def stmt_par(self, node, tab, decls):
     self.debug('[par connections]:')
     for (i, (x, y)) in enumerate(zip(node.stmt, node.chans)):
-        self.debug('[par stmt]: ')
-        self.stmt(x, tab, decls) 
-        node.stmt[i] = self.insert_connections(tab, node.stmt[i], y)
-        decls.extend([z.chanend for z in y])
-        if self.print_debug:
-          self.display_chans(y)
+      self.debug('[par stmt]: ')
+      self.stmt(x, tab, decls) 
+      node.stmt[i] = self.insert_connections(tab, node.stmt[i], y)
+      decls.extend([z.chanend for z in y])
+      if self.print_debug:
+        self.display_chans(y)
  
   # Other statements containing processes
 

@@ -201,10 +201,10 @@ class Printer(NodeWalker):
 
   def stmt_connect(self, node):
     if node.expr:
-      self.out('connect {} to {}'.format(
-          self.elem(node.left), self.expr(node.expr)))
+      self.out('connect {}:{} to {}'.format(
+          self.elem(node.left), self.expr(node.id), self.expr(node.expr)))
     else:
-      self.out('connect {}'.format(self.elem(node.left)))
+      self.out('connect {}:{}'.format(self.elem(node.left), self.expr(node.id)))
 
   def stmt_if(self, node):
     self.out('if {}\n'.format(self.expr(node.cond)))

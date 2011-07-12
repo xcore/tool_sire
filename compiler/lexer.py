@@ -95,7 +95,7 @@ class Lexer(object):
     # Assignment operators
     'ASS', 'INP', 'OUT',
     # Delimiters
-    'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 
+    'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 'COLON', 
     # Separators
     'SEQSEP','PARSEP',
     # Literals
@@ -107,41 +107,42 @@ class Lexer(object):
   # Operators ================
   
   # Arithmetic
-  t_PLUS   = r'\+'
-  t_MINUS  = r'-'
-  t_MULT   = r'\*'
-  t_DIV    = r'/'
+  t_PLUS     = r'\+'
+  t_MINUS    = r'-'
+  t_MULT     = r'\*'
+  t_DIV      = r'/'
   #t_REM 
   
   # Bitwise ops
   #t_OR 
   #t_AND
   #t_XOR
-  t_NOT    = r'~'
+  t_NOT      = r'~'
   t_LSHIFT   = r'<<'
   t_RSHIFT   = r'>>'
   
   # Relational
-  t_LT     = r'<'
-  t_GT     = r'>'
-  t_LE     = r'<='
-  t_GE     = r'>='
-  t_EQ     = r'='
-  t_NE     = r'~='
+  t_LT       = r'<'
+  t_GT       = r'>'
+  t_LE       = r'<='
+  t_GE       = r'>='
+  t_EQ       = r'='
+  t_NE       = r'~='
 
   # Assignment operators
-  t_ASS    = r':='
-  t_INP    = r'\?'
-  t_OUT    = r'\!'
+  t_ASS      = r':='
+  t_INP      = r'\?'
+  t_OUT      = r'\!'
 
   # Delimeters
   t_LPAREN   = r'\('
   t_RPAREN   = r'\)'
   t_LBRACKET = r'\['
   t_RBRACKET = r'\]'
-  t_START  = r'\{'
-  t_END    = r'\}'
-  t_COMMA  = r','
+  t_START    = r'\{'
+  t_END      = r'\}'
+  t_COMMA    = r','
+  t_COLON    = r':'
 
   # Separators
   t_SEQSEP   = r';'

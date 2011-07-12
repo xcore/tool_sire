@@ -261,11 +261,15 @@ class LabelChans(NodeWalker):
 
 class ChanTable(object):
   """
-  A table to record the location of channel ends and their names.
+  A table to record the location of channel ends and their names. Each key maps
+  to list of offsets (relative to the scope of the channel declarations) where
+  the first offset is that of the master, and a unique identifier for the
+  specific connection instance.
   """
   def __init__(self, name):
     self.name = name
     self.tab = {}
+    self.connection_id_count = 0
     self.chanend_count = 0
     
   def key(self, name, index):
@@ -281,9 +285,9 @@ class ChanTable(object):
     key = self.key(name, index)
     master = False
     if not key in self.tab:
-      self.tab[key] = []
+      self.tab[key] = (self.new_connection_id(), [])
       master = True
-    self.tab[key].append(offset)
+    self.tab[key][1].append(offset)
     return master
 
   def lookup(self, name, index):
@@ -293,12 +297,23 @@ class ChanTable(object):
     key = self.key(name, index)
     if not key in self.tab:
       return None
-    return self.tab[key]
+    return self.tab[key][1]
 
-  def slave_offset(self, name, index):
+  def lookup_id(self, name, index):
+    key = self.key(name, index)
+    if not key in self.tab:
+      return None
+    return self.tab[key][0]
+
+  def lookup_slave_offset(self, name, index):
     key = self.key(name, index)
     assert key in self.tab and len(self.tab[key])==2
-    return self.tab[key][1]
+    return self.tab[key][1][1]
+
+  def new_connection_id(self):
+    count = self.connection_id_count;
+    self.connection_id_count += 1
+    return count
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -308,8 +323,9 @@ class ChanTable(object):
   def display(self):
     print('Channel table for procedure '+self.name+':')
     for x in self.tab.keys():
-      print('  {}: {}'.format(x, ', '.join(
-        ['{}'.format(y) for y in self.tab[x]])))
+      print('  {}:{} has {}'.format(x, self.tab[x][0], ', '.join(
+        ['{}'.format(y) for y in self.tab[x][1]])))
+
 
 # These classes represent uses of channels as they occur in the program
 
@@ -347,6 +363,7 @@ class ChanUseSet(object):
   def update(self, useset):
     [self.add(x) for x in useset.uses]
 
+
 # These classes represent expanded uses of channels that occur in a program,
 # i.e. for a channel subscript c[f(i, j)] all of the channels accessed by the
 # index f over the index ranges referenced by i and j. For single channels,
@@ -354,7 +371,9 @@ class ChanUseSet(object):
 
 class ChanElem(object):
   """
-  An element of a channel expansion.
+  An element of a channel expansion with:
+   - An (integer) index value
+   - If the element is a master end (boolean)
   """  
   def __init__(self, index, master):
     self.index = index
@@ -363,7 +382,11 @@ class ChanElem(object):
 
 class ChanElemSet(object):
   """
-  An expanded channel array.
+  An expanded channel array subscript with the following attributes:
+   - The array name
+   - The subscript expression
+   - A set of elements relating to the expansion, e.g. c[0], c[1], ...
+   - The name of the channel end associated with this subscript
   """
   def __init__(self, name, expr, elems, chanend):
     self.name = name

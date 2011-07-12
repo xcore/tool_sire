@@ -355,14 +355,16 @@ class StmtAlias(Stmt):
 
 
 class StmtConnect(Stmt):
-  def __init__(self, left, expr, coord=None):
+  def __init__(self, left, id, expr, coord=None):
     self.left = left
+    self.id = id
     self.expr = expr
     self.coord = coord
 
   def children(self):
     c = []
     if self.left is not None: c.append(self.left)
+    if self.id is not None: c.append(self.id)
     if self.expr is not None: c.append(self.expr)
     return tuple(c)
 

@@ -335,11 +335,11 @@ class Parser(object):
     p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))
 
   def p_stmt_connect_master(self, p):
-    'stmt : CONNECT left TO expr'
+    'stmt : CONNECT left COLON expr TO expr'
     p[0] = ast.StmtConnect(p[2], p[4], self.coord(p))
 
   def p_stmt_connect_slave(self, p):
-    'stmt : CONNECT left'
+    'stmt : CONNECT left COLON expr'
     p[0] = ast.StmtConnect(p[2], None, self.coord(p))
 
   def p_stmt_if(self, p):
