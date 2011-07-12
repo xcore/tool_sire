@@ -36,20 +36,20 @@ void runThread(unsigned senderId) {
   if(threadId != 0) _initthread();
 
   // Initialise connection with sender
-  initSourceConnection(spawn_chans[threadId], senderId);
+  initSourceConnection(thread_chans[threadId], senderId);
   
   // Receive closure data
-  {procIndex, numArgs} = receiveClosure(spawn_chans[threadId], 
+  {procIndex, numArgs} = receiveClosure(thread_chans[threadId], 
       argTypes, argValues, argLengths);
 
   // Run the process
   runProcess(procIndex, argValues, numArgs);
 
   // Complete the creation by sending back any results
-  informCompleted(spawn_chans[threadId], senderId);
+  informCompleted(thread_chans[threadId], senderId);
   
   // Send any results back
-  sendResults(spawn_chans[threadId], numArgs, argTypes, argValues, argLengths);
+  sendResults(thread_chans[threadId], numArgs, argTypes, argValues, argLengths);
 }
 
 // Initialise source connection with this thread 0 as host.

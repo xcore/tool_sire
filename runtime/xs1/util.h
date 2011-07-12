@@ -143,6 +143,7 @@ unsigned GEN_CHAN_RI_0(unsigned dest) {
   return n | (dest % NUM_CORES_PER_NODE) << 16 | 0x2;
 }
 
+
 // Create a channel resource identifier with a particular count
 static inline
 unsigned GEN_CHAN_RI(unsigned id, int counter) {

@@ -32,7 +32,7 @@ unsigned permDest(unsigned d)
 void _createprocess(unsigned dest, unsigned closure[]) 
 {
   unsigned threadId = GET_THREAD_ID();
-  unsigned c = spawn_chans[threadId];
+  unsigned c = thread_chans[threadId];
   unsigned destId = GEN_CHAN_RI_0(dest);
 
   // Initialise the connection with the host

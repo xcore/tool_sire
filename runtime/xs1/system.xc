@@ -48,13 +48,13 @@ void initChanends() {
   // ASSERT: channel resource counter must be 0 
   spawn_master = GETR_CHANEND();
   asm("eeu res[%0]" :: "r"(spawn_master));
+  
+  // Allocate a channel end for setting up connections
+  conn_master = GETR_CHANEND();
 
   // Get channels for each thread
   for(int i=0; i<MAX_THREADS; i++) 
-    spawn_chans[i] = GETR_CHANEND();
-
-  // Allocate a channel end for setting up connections
-  conn_master = GETR_CHANEND();
+    thread_chans[i] = GETR_CHANEND();
 }
 
 // Initialise system resource counters

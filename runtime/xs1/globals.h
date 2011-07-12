@@ -24,13 +24,18 @@ extern unsigned _sp;
 
 // Processor allocation
 extern unsigned spawn_master;
-extern unsigned spawn_chans[MAX_THREADS];
+extern unsigned thread_chans[MAX_THREADS];
 
 // Connection setup and management
+
+typedef struct
+{ unsigned chanid;
+  unsigned destcri;
+} conn_req;
+
 extern unsigned conn_master;
-extern unsigned conn_buffer[CONN_BUFFER_SIZE];
-extern unsigned conn_ids[MAX_THREADS];
-extern unsigned conn_slaves[MAX_THREADS];
+extern conn_req conn_buffer[CONN_BUFFER_SIZE];
+extern conn_req conn_locals[MAX_THREADS];
 
 #endif
 
