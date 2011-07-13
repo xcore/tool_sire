@@ -128,8 +128,6 @@ class LabelProcs(NodeWalker):
   def stmt_return(self, node, l):
     node.offset = l
   
-  # Prohibited
-
   def stmt_connect(self, node, l):
-    assert 0
+    node.offset = l
 

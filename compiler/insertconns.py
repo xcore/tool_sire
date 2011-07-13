@@ -192,5 +192,5 @@ class InsertConns(NodeWalker):
   # Prohibited statements
 
   def stmt_connect(self, node, tab, decls):
-    assert 0
+    pass
 

@@ -505,8 +505,9 @@ class Semantics(NodeWalker):
 
     # Children
     self.elem(node.left)
+    self.expr(node.id)
     if node.expr:
-      self.elem(node.expr)
+      self.expr(node.expr)
 
     # Check the type of the chan element
     if not self.check_elem_types(node.left, 

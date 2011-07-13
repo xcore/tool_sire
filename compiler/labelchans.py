@@ -253,10 +253,10 @@ class LabelChans(NodeWalker):
   def stmt_return(self, node, iters, tab):
     return ChanUseSet()
 
-  # Prohibited statements
+  # Prohibited
 
   def stmt_connect(self, node, iters, tab):
-    assert 0
+    return ChanUseSet()
 
 
 class ChanTable(object):
