@@ -49,17 +49,17 @@ unsigned _connectslave(int chanid)
  */
 void queue_master_req(int chanid, unsigned destcri)
 { int i = 0;
-  bool b = false;
-  while (i<CONN_BUFFER_SIZE and !b)
+  char b = 0;
+  while (i<CONN_BUFFER_SIZE && !b)
   { if (conn_buffer[i].chanid == EMPTY)
     { conn_buffer[i].chanid = chanid;
       conn_buffer[i].destcri = destcri;
-      b = true;
+      b = 1;
     }
-    i += 1;
+    i = i + 1;
   }
   // Check if the buffer is full
-  if (!b) assert 0;
+  //TODO: if (!b) assert 0;
 }
 
 /*
@@ -68,7 +68,7 @@ void queue_master_req(int chanid, unsigned destcri)
 unsigned dequeue_master_req(int chanid)
 { for (int i=0; i<CONN_BUFFER_SIZE; i++)
   { if (conn_buffer[i].chanid == chanid)
-    { conn_buffer[i] = EMPTY;
+    { conn_buffer[i].chanid = EMPTY;
       return conn_buffer[i].destcri;
     }
   }
@@ -90,7 +90,7 @@ void queue_slave_req(unsigned tid, int chanid, unsigned destcri)
 unsigned dequeue_slave_req(int chanid)
 { for (int i=0; i<MAX_THREADS; i++)
   { if (conn_locals[i].chanid == chanid)
-    { conn_locals[i] = EMPTY;
+    { conn_locals[i].chanid = EMPTY;
       return conn_locals[i].destcri;
     }
   }
@@ -134,7 +134,7 @@ void serve_slave_conn_req()
   // Check if master side is complete, if not, queue it, otherwise complete. 
   unsigned m_destcri = dequeue_master_req(chanid);
   if (m_destcri == NONE)
-    queue_slave_req(chanid, s_destcri);
+    queue_slave_req(tid, chanid, s_destcri);
   else
   { SETD(conn_master, m_destcri);
     OUTS(conn_master, s_destcri);
