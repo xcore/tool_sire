@@ -10,6 +10,8 @@
 #define LABEL_EXCEP_HANDLER      "excepHandler"
 #define LABEL_IDLE_HOST_HANDLER  "idleHostHandler"
 #define LABEL_BUSY_HOST_HANDLER  "busyHostHandler"
+#define LABEL_IDLE_CONN_HANDLER  "idleConnHandler"
+#define LABEL_BUSY_CONN_HANDLER  "busyConnHandler"
 #define LABEL_RUN_THREAD         "runThread"
 #define LABEL_WAIT_HANDLER       "waitHandler"
 #define LABEL_SLAVE_YEILD        "slaveYeild"

@@ -10,17 +10,6 @@
 #include "util.h"
 #include "system.h"
 
-// Return the processor id by allocating a channel end, extracting the node and
-// core id, then deallocating it again.
-int _procid() {
-  unsigned c, v;
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-  asm("bitrev %0, %1" : "=r"(v) : "r"(c));
-  v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
-  asm("freer res[%0]" :: "r"(c));
-  return v;
-}
-
 // Allocate all remaining channel ends then free them to ensure they are all
 // available
 void resetChanends() {
@@ -51,6 +40,7 @@ void initChanends() {
   
   // Allocate a channel end for setting up connections
   conn_master = GETR_CHANEND();
+  asm("eeu res[%0]" :: "r"(conn_master));
 
   // Get channels for each thread
   for(int i=0; i<MAX_THREADS; i++) 
@@ -155,10 +145,13 @@ void slaveMasterIdle() {
   // Disable interrupts and events, switch to event mode
   asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
   asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(spawn_master));
+  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(conn_master));
   
   // Set event vector to idle handler
   asm("ldap r11, " LABEL_IDLE_HOST_HANDLER "\n\t"
     "setv res[%0], r11" :: "r"(spawn_master) : "r11");
+  asm("ldap r11, " LABEL_IDLE_CONN_HANDLER "\n\t"
+    "setv res[%0], r11" :: "r"(conn_master) : "r11");
 
   // Wait for an event on spawn_master
   asm("waiteu");
@@ -214,6 +207,17 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 
   // Start the thread
   asm("start t[%0]" :: "r"(t));
+}
+
+// Return the processor id by allocating a channel end, extracting the node and
+// core id, then deallocating it again.
+int _procid() {
+  unsigned c, v;
+  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+  asm("bitrev %0, %1" : "=r"(v) : "r"(c));
+  v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
+  asm("freer res[%0]" :: "r"(c));
+  return v;
 }
 
 unsigned int getAvailThreads() {
