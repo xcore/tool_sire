@@ -13,7 +13,7 @@
   .extern initPorts
   .extern initMemory
   .extern slaveSync
-  .extern slaveMasterIdle
+  .extern controlIdle
   .extern _initthread
 
   .globl _start
@@ -49,7 +49,7 @@ _slave:
   bl slaveSync
   
   // Idle 
-  bu slaveMasterIdle
+  bu controlIdle
 
   .cc_bottom _slave.function
 

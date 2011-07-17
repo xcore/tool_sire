@@ -4,6 +4,8 @@
 
 #define EMPTY (-1)
 #define NONE  (0)
+#define MASTER 1
+#define SLAVE  0
 
 /*
  * Master connection protocol:
@@ -16,8 +18,11 @@ unsigned _connectmaster(int chanid, unsigned dest)
 { unsigned c = GETR_CHANEND();
   unsigned destcri = GEN_CHAN_RI(dest, 1);
   SETD(c, destcri);
+  OUT(c, c);
+  OUTCT_END(c);
+  CHKCT_END(c);
+  OUTS(c, MASTER);
   OUTS(c, chanid);
-  OUTS(c, c);
   destcri = INS(c);
   SETD(c, destcri);
   return c;
@@ -35,9 +40,12 @@ unsigned _connectslave(int chanid)
 { unsigned c = GETR_CHANEND();
   unsigned destcri = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
   SETD(c, destcri);
+  OUT(c, c);
+  OUTCT_END(c);
+  CHKCT_END(c);
+  OUTS(c, SLAVE);
   OUTS(c, GET_THREAD_ID());
   OUTS(c, chanid);
-  OUTS(c, c);
   destcri = INS(c);
   SETD(c, destcri);
   return c;
@@ -47,7 +55,7 @@ unsigned _connectslave(int chanid)
  * Queue a master connection request: insert it in the next available slot in
  * the buffer.
  */
-void queue_master_req(int chanid, unsigned destcri)
+void queueMasterReq(int chanid, unsigned destcri)
 { int i = 0;
   char b = 0;
   while (i<CONN_BUFFER_SIZE && !b)
@@ -65,7 +73,7 @@ void queue_master_req(int chanid, unsigned destcri)
 /*
  * Dequeue a master connection request matching the channel id.
  */
-unsigned dequeue_master_req(int chanid)
+unsigned dequeueMasterReq(int chanid)
 { for (int i=0; i<CONN_BUFFER_SIZE; i++)
   { if (conn_buffer[i].chanid == chanid)
     { conn_buffer[i].chanid = EMPTY;
@@ -79,7 +87,7 @@ unsigned dequeue_master_req(int chanid)
  * Queue a slave connection request: insert it in the slot given by the thread
  * id.
  */
-void queue_slave_req(unsigned tid, int chanid, unsigned destcri)
+void queueSlaveReq(unsigned tid, int chanid, unsigned destcri)
 { conn_locals[tid].chanid = chanid;
   conn_locals[tid].destcri = destcri;
 }
@@ -87,7 +95,7 @@ void queue_slave_req(unsigned tid, int chanid, unsigned destcri)
 /*
  * Dequeue a slave connection request.
  */
-unsigned dequeue_slave_req(int chanid)
+unsigned dequeueSlaveReq(int chanid)
 { for (int i=0; i<MAX_THREADS; i++)
   { if (conn_locals[i].chanid == chanid)
     { conn_locals[i].chanid = EMPTY;
@@ -103,14 +111,13 @@ unsigned dequeue_slave_req(int chanid)
  *  2. Receive master CRI
  *  [queue or complete]
  */
-void serve_master_conn_req()
-{ int      chanid    = INS(conn_master);
-  unsigned m_destcri = INS(conn_master);
+void serveMasterConnReq(unsigned m_destcri)
+{ int chanid = INS(conn_master);
 
   // Check if slave side is complete, if not, queue it, otherwise complete.
-  unsigned s_destcri = dequeue_slave_req(chanid);
+  unsigned s_destcri = dequeueSlaveReq(chanid);
   if (s_destcri == NONE) 
-    queue_master_req(chanid, m_destcri);
+    queueMasterReq(chanid, m_destcri);
   else
   { SETD(conn_master, m_destcri);
     OUTS(conn_master, s_destcri);
@@ -126,20 +133,33 @@ void serve_master_conn_req()
  *  3. Receive slave CRI
  *  [queue or complete]
  */
-void serve_slave_conn_req()
-{ unsigned tid       = INS(conn_master);
-  int      chanid    = INS(conn_master);
-  unsigned s_destcri = INS(conn_master);
+void serveSlaveConnReq(unsigned s_destcri)
+{ unsigned tid    = INS(conn_master);
+  int      chanid = INS(conn_master);
 
   // Check if master side is complete, if not, queue it, otherwise complete. 
-  unsigned m_destcri = dequeue_master_req(chanid);
+  unsigned m_destcri = dequeueMasterReq(chanid);
   if (m_destcri == NONE)
-    queue_slave_req(tid, chanid, s_destcri);
+    queueSlaveReq(tid, chanid, s_destcri);
   else
   { SETD(conn_master, m_destcri);
     OUTS(conn_master, s_destcri);
     SETD(conn_master, s_destcri);
     OUTS(conn_master, m_destcri);
   }
+}
+
+void connHandler()
+{ unsigned srcCri = IN(conn_master);
+  CHKCT_END(conn_master);
+  SETD(conn_master, srcCri);
+  OUTCT_END(conn_master);
+ 
+  //asm("waiteu");
+
+  if(INS(conn_master) == MASTER)
+    serveMasterConnReq(srcCri);
+  else
+    serveSlaveConnReq(srcCri);
 }
 

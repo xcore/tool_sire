@@ -6,6 +6,7 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+// Builtins
 extern void _initthread();
 int _procid();
 
@@ -20,19 +21,15 @@ void initMemory();
 void masterSync();
 void slaveSync();
 
-// Yeild and idling
-void slaveMasterIdle();
-void slaveMasterYeild();
-void slaveYeild();
-
 // Resource usage
-void newAsyncThread(unsigned pc, unsigned arg1, 
-    unsigned arg2, unsigned arg3, unsigned arg4);
-unsigned int getAvailThreads();
+void newAsyncThread(unsigned pc, unsigned arg1, unsigned arg2, 
+    unsigned arg3, unsigned arg4);
+int      getAvailThreads();
 unsigned claimAsyncThread();
 unsigned claimSyncThread(unsigned);
-void releaseThread();
+void     releaseThread();
 unsigned claimStackSlot(int);
-void releaseStackSlot(int);
+void     releaseStackSlot(int);
 
 #endif
+

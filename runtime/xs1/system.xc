@@ -8,6 +8,7 @@
 #include "device.h"
 #include "globals.h"
 #include "util.h"
+#include "worker.h"
 #include "system.h"
 
 // Allocate all remaining channel ends then free them to ensure they are all
@@ -82,9 +83,6 @@ void initMemory() {
   }
 }
 
-//int read_sswitch_reg(unsigned coreid, unsigned reg, unsigned &data);
-//int write_sswitch_reg(unsigned coreid, unsigned reg, unsigned data);
-
 // Ensure all cores are in a consistent state before completing initialisation
 // Assume that master is always core 0
 void masterSync() {
@@ -108,7 +106,6 @@ void masterSync() {
     unsigned v;
     write_sswitch_reg(0, SWITCH_SCRATCH_REG, 1);
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-     // asm("waiteu");
     while (v != NUM_CORES)
       read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   }
@@ -133,80 +130,9 @@ void slaveSync() {
   unsigned coreId = GET_GLOBAL_CORE_ID(spawn_master);
   unsigned v;
   read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-  //asm("waiteu");
   while (v != coreId)
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
-}
-
-// Idle (thread 0 only) for the next event to occur
-void slaveMasterIdle() {
-
-  // Disable interrupts and events, switch to event mode
-  asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
-  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(spawn_master));
-  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(conn_master));
-  
-  // Set event vector to idle handler
-  asm("ldap r11, " LABEL_IDLE_HOST_HANDLER "\n\t"
-    "setv res[%0], r11" :: "r"(spawn_master) : "r11");
-  asm("ldap r11, " LABEL_IDLE_CONN_HANDLER "\n\t"
-    "setv res[%0], r11" :: "r"(conn_master) : "r11");
-
-  // Wait for an event on spawn_master
-  asm("waiteu");
-}
-
-// Yeild execution of the master thread (of a slave node), and enter idle state.
-void slaveMasterYeild() {
-  releaseThread();
-  slaveMasterIdle();
-}
-
-// Yeild execution of a slave thread (only 1-7)
-void slaveYeild() {
-  releaseStackSlot(GET_THREAD_ID());
-  releaseThread();
-  asm("freet");
-}
-
-// Spawn a new asynchronous thread
-void newAsyncThread(unsigned pc, unsigned arg1, 
-    unsigned arg2, unsigned arg3, unsigned arg4) {
-  
-  // Claim a thread
-  unsigned t = claimAsyncThread();
-  
-  // Claim a stack slot
-  unsigned sp = claimStackSlot(THREAD_ID(t));
-  
-  // Initialise cp, dp, sp, pc, lr
-  asm("ldaw r11, cp[0] "
-    "; init t[%0]:cp, r11" ::"r"(t) : "r11");
-  asm("ldaw r11, dp[0] "
-    "; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
-  asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
-  asm("ldap r11, slaveYeild" 
-    " ; init t[%0]:lr, r11" :: "r"(t) : "r11");
-               
-  // Set register arguments
-  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(arg1));
-  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(arg2));
-  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(arg3));
-  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(arg4));
-
-  // Touch remaining GPRs
-  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
-
-  // Start the thread
-  asm("start t[%0]" :: "r"(t));
 }
 
 // Return the processor id by allocating a channel end, extracting the node and
@@ -220,7 +146,7 @@ int _procid() {
   return v;
 }
 
-unsigned int getAvailThreads() {
+int getAvailThreads() {
   unsigned num;
   ACQUIRE_LOCK(_numthreads_lock);
   num = _numthreads;
@@ -259,5 +185,44 @@ unsigned claimStackSlot(int threadId) {
 }
 
 void releaseStackSlot(int threadId) {
+}
+
+// Spawn a new asynchronous thread
+void newAsyncThread(unsigned pc, unsigned arg1, 
+    unsigned arg2, unsigned arg3, unsigned arg4) {
+  
+  // Claim a thread
+  unsigned t = claimAsyncThread();
+  
+  // Claim a stack slot
+  unsigned sp = claimStackSlot(THREAD_ID(t));
+  
+  // Initialise cp, dp, sp, pc, lr
+  asm("ldaw r11, cp[0] "
+    "; init t[%0]:cp, r11" ::"r"(t) : "r11");
+  asm("ldaw r11, dp[0] "
+    "; init t[%0]:dp, r11" :: "r"(t) : "r11");
+  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
+  asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
+  asm("ldap r11, workerYeild" 
+    "; init t[%0]:lr, r11" :: "r"(t) : "r11");
+               
+  // Set register arguments
+  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(arg1));
+  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(arg2));
+  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(arg3));
+  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(arg4));
+
+  // Touch remaining GPRs
+  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
+
+  // Start the thread
+  asm("start t[%0]" :: "r"(t));
 }
 

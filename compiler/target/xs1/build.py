@@ -49,6 +49,8 @@ RUNTIME_FILES = [
   'globals.S',
   'system.S', 
   'system.xc', 
+  'control.xc',
+  'worker.xc',
   'util.xc', 
   'memory.c'
   ]
@@ -207,6 +209,8 @@ def link_master(device, show_calls, v):
         'globals.S.o',
         'system.S.o', 
         'system.xc.o',
+        'control.xc.o',
+        'worker.xc.o',
         'source.xc.o', 
         'host.xc.o', 
         'host.S.o',
@@ -230,6 +234,8 @@ def link_slave(device, show_calls, v):
         'globals.S.o',
         'system.S.o', 
         'system.xc.o',
+        'control.xc.o',
+        'worker.xc.o',
         'source.xc.o', 
         'host.xc.o', 
         'host.S.o',

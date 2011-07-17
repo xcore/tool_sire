@@ -11,12 +11,15 @@
   .extern setHost
   .extern spawnHost
   .extern runThread
-  .extern slaveMasterIdle
-  .extern slaveMasterYeild
+  .extern controlIdle
+  .extern controlYeild
   .extern getAvailThreads
   .extern releaseThread
   .extern raiseException
+  .extern connHandler
 
+  .extern spawn_master
+  .extern conn_master
   .extern _sp
 
   .globl excepHandler
@@ -36,14 +39,10 @@
 
   .text
 
-/* 
- * NOTE: THIS MUST BE LINKED AT THE BEGINNING OF THE BINARY.
- */
-
 /*============================================================================
  * Exception/interrupt handler (KEP)
+ * NOTE: THIS MUST BE LINKED AT THE BEGINNING OF THE BINARY.
  *==========================================================================*/
-  
   .cc_top excepHandler.function, excepHandler
   
   /* Force the KEP to align on byte 64 */
@@ -90,14 +89,15 @@ idleHostHandler:
   bt  r11, .L.idle.excep /* if _numthreads == 0 then error
                             else spawn */
 
+/* Spawn a new host thread and return to being idle (explicitly as this was
+   an event - not saving the pc) */
 .L.idle.spawn:
-  /* Spawn a new host thread and return to being idle (explicitly as this was
-     an event - not saving the pc)*/
-  bl   spawnHost
-  ldap r11, slaveMasterIdle
+  bl spawnHost
+  ldap r11, controlIdle
   stw r11, sp[1] // spc = &idle
-  bu   .L.idle.exit
+  bu .L.idle.exit
 
+/* Run the process on (this) thead 0 and move to 'busy' state. */
 .L.idle.run:
   /* Set the host connection up with this thread */
   bl setHost
@@ -107,8 +107,8 @@ idleHostHandler:
   ldap r11, runThread
   stw r11, sp[1]
 
-  /* Set lr = &slaveMasterYeild */
-  ldap r11, slaveMasterYeild
+  /* Set lr = &controlYeild */
+  ldap r11, controlYeild
   stw r11, sp[4]
 
   /* Set spawn_master event vector = &busyHostHandler */
@@ -132,8 +132,8 @@ idleHostHandler:
   ldc r10, SR_IEBLE
   or  r11, r11, r10
   stw r11, sp[2]
-   
-  bl   releaseThread
+
+  //bl   releaseThread /* <-- need this? */
   bu   .L.idle.exit
   
 .L.idle.excep:
@@ -148,7 +148,7 @@ idleHostHandler:
   ldw lr,  sp[4]
   ldw r0,  sp[5]
 
-  // Return
+  /* Return from the kernel */
   krestsp 6
   kret
 
@@ -180,15 +180,6 @@ busyHostHandler:
   stw r11, sp[15]
   stw lr,  sp[16]
    
-  /*// Initate connection and spawn a thread
-  bl spawnHost
-   
-  // Renable interrupts
-  ldw r11, sp[2]
-  ldc r10, SR_IEBLE
-  or  r11, r11, r10
-  stw r11, sp[2]*/
-  
   /* If we get to this point: all threads are busy! */
   bl error
 
@@ -229,7 +220,7 @@ idleConnHandler:
   stw sed, sp[3]
   stw lr,  sp[4]
 
-  waiteu
+  bl connHandler
 
   ldw spc, sp[1]
   ldw ssr, sp[2]
@@ -244,9 +235,8 @@ idleConnHandler:
   .cc_bottom idleConnHandler.function
 
 /*============================================================================
- * Busy conn handler
+ * Busy connection handler
  *==========================================================================*/
-
   .cc_top busyConnHandler.function, busyConnHandler
   .align 2
 busyConnHandler:
@@ -270,7 +260,7 @@ busyConnHandler:
   stw r11, sp[15]
   stw lr,  sp[16]
   
-  waiteu
+  bl connHandler
 
   ldw spc, sp[1]
   ldw ssr, sp[2]

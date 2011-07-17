@@ -15,3 +15,4 @@ int main(void)
   { on stdcore[i] : _slave();
   }
 }
+
