@@ -220,8 +220,13 @@ idleConnHandler:
   stw sed, sp[3]
   stw lr,  sp[4]
 
+  /* Run the connection handler */
   bl connHandler
-
+  
+  /* Set spc = &controlIdle */
+  ldap r11, controlIdle
+  stw r11, sp[1] // spc = &idle
+  
   ldw spc, sp[1]
   ldw ssr, sp[2]
   ldw sed, sp[3]
@@ -260,7 +265,14 @@ busyConnHandler:
   stw r11, sp[15]
   stw lr,  sp[16]
   
+  /* Run the connection handler */
   bl connHandler
+  
+  /* Reenable interrupts */
+  ldw r11, sp[2]
+  ldc r10, SR_IEBLE
+  or  r11, r11, r10
+  stw r11, sp[2]
 
   ldw spc, sp[1]
   ldw ssr, sp[2]

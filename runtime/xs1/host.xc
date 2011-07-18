@@ -69,8 +69,8 @@ unsigned setHost() {
 }
 
 // Host an incoming procedure when thread 0 is BUSY. During this time, events
-// and interrupts are disabled and more requests may arrive. get_requests deals
-// with this.
+// and interrupts are disabled and more requests may be made but they will not
+// arrive until the spawn_master channel connection is closed.
 void spawnHost() {
 
   unsigned senderId;
