@@ -6,12 +6,13 @@
 #include "system/xs1/definitions.h"
 
   .extern touchRegs
+  .extern initMemory
   .extern initPointers
   .extern resetChanends
   .extern initChanends
   .extern initCounters
   .extern initPorts
-  .extern initMemory
+  .extern initConnections
   .extern slaveSync
   .extern controlIdle
   .extern _initthread
@@ -44,6 +45,7 @@ _slave:
   bl initChanends
   bl initCounters
   bl initPorts
+  bl initConnections
   bl __alloc_libc_hwlock
   bl _initthread
   bl slaveSync

@@ -13,8 +13,8 @@
   .globl thread_chans, "a(:ui)"
 
   .globl conn_master,  "ui"
-  .globl conn_buffer, "a(:s(){m(chanid){ui},m(destcri){ui}})"
-  .globl conn_locals, "a(:s(){m(chanid){ui},m(destcri){ui}})"
+  .globl conn_buffer, "a(:s(){m(conn_id){ui},m(thread_cri){ui},m(chan_cri){ui}})"
+  .globl conn_locals, "a(:s(){m(conn_id){ui},m(thread_cri){ui},m(chan_cri){ui}})"
 
 .section .dp.data, "awd", @progbits
   .align BYTES_PER_WORD
@@ -59,12 +59,12 @@ conn_master:
   .set conn_master.globound, BYTES_PER_WORD
 
 conn_buffer:
-  .space CONN_BUFFER_SIZE*BYTES_PER_WORD
+  .space 3*CONN_BUFFER_SIZE*BYTES_PER_WORD
   .globl conn_buffer.globound
-  .set conn_buffer.globound, 2*CONN_BUFFER_SIZE*BYTES_PER_WORD
+  .set conn_buffer.globound, 3*CONN_BUFFER_SIZE*BYTES_PER_WORD
 
 conn_locals:
-  .space MAX_THREADS*BYTES_PER_WORD
+  .space 3*MAX_THREADS*BYTES_PER_WORD
   .globl conn_locals.globound
-  .set conn_locals.globound, 2*MAX_THREADS*BYTES_PER_WORD
+  .set conn_locals.globound, 3*MAX_THREADS*BYTES_PER_WORD
 

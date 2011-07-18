@@ -3,5 +3,6 @@
 
 unsigned _connectmaster(int chanid, unsigned dest);
 unsigned _connectslave(int chanid);
+void initConnections();
 
 #endif

@@ -426,12 +426,22 @@ class TranslateXS1(NodeWalker):
         self.elem(node.left), self.expr(node.expr)))
 
   def stmt_in(self, node):
-    self.out('/*{} ? {};*/'.format(
-      self.elem(node.left), self.expr(node.expr)))
-
+    self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
+    self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
+    self.out('    "in    %0, res[%1];"')
+    self.out('    "chkct res[%1]," S(XS1_CT_END) ";"')
+    self.out('    "outct res[%1]," S(XS1_CT_END)')
+    self.out('    : "=&r"({}) : "r"({}));'
+        .format(self.expr(node.expr), self.elem(node.left)))
+    
   def stmt_out(self, node):
-    self.out('/*{} ! {};*/'.format(
-      self.elem(node.left), self.expr(node.expr)))
+    self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
+    self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
+    self.out('    "out   res[%0], %1;"')
+    self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
+    self.out('    "chkct res[%0]," S(XS1_CT_END)')
+    self.out('    :: "r"({}), "r"({}));'
+        .format(self.elem(node.left), self.expr(node.expr)))
 
   def stmt_alias(self, node):
     """ 

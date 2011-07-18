@@ -10,6 +10,10 @@
 #include "system/xs1/definitions.h"
 #include "device.h"
 
+typedef char bool;
+#define true (1)
+#define false (0)
+
 // String wrapper
 #define S_(x) #x
 #define S(x) S_(x)
