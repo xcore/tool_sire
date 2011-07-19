@@ -74,27 +74,25 @@ setInterrupts:
   stw r11, sp[0]
   stw r10, sp[1]
 
-  /* Set spawn_master event vector = &busyHostHandler */
+  /* Set spawn_master event vector = &busyHostHandler
+  and Set spawn_master channel mode to interrupts. */
   ldap r11, busyHostHandler
   ldw  r10, dp[spawn_master]
   setv res[r10], r11
-  
-  /* Set spawn_master channel mode to interrupts */
   setc res[r10], XS1_SETC_IE_MODE_INTERRUPT
   
-  /* Set conn_master event vector = &busyConnHandler */
+  /* Set conn_master event vector = &busyConnHandler
+  and Set conn_master channel mode to interrupts. */
   ldap r11, busyConnHandler
   ldw  r10, dp[conn_master]
   setv res[r10], r11
-  
-  /* Set conn_master channel mode to interrupts */
   setc res[r10], XS1_SETC_IE_MODE_INTERRUPT
   
   /* Enable interrupts */
   setsr SR_IEBLE
   
-  ldw r10, sp[1]
   ldw r11, sp[0]
+  ldw r10, sp[1]
   retsp 2
 
   .cc_bottom setInterrupts.function

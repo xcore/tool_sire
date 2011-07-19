@@ -20,12 +20,14 @@ unsigned _connectmaster(int conn_id, unsigned dest)
   unsigned target_cri = GEN_CHAN_RI(dest, 1);
   SETD(t, target_cri);
   OUT(t, t);
+  OUT(t, MASTER);
+  OUT(t, c);
+  OUT(t, conn_id);
   OUTCT_END(t);
+  
+  target_cri = IN(t);
   CHKCT_END(t);
-  OUTS(t, MASTER);
-  OUTS(t, c);
-  OUTS(t, conn_id);
-  target_cri = INS(t);
+  
   SETD(c, target_cri);
   return c;
 }
@@ -46,13 +48,15 @@ unsigned _connectslave(int conn_id)
   unsigned target_cri = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
   SETD(t, target_cri);
   OUT(t, t);
+  OUT(t, SLAVE);
+  OUT(t, tid);
+  OUT(t, c);
+  OUT(t, conn_id);
   OUTCT_END(t);
+  
+  target_cri = IN(t);
   CHKCT_END(t);
-  OUTS(t, SLAVE);
-  OUTS(t, tid);
-  OUTS(t, c);
-  OUTS(t, conn_id);
-  target_cri = INS(t);
+  
   SETD(c, target_cri);
   return c;
 }
@@ -136,18 +140,23 @@ void queueSlaveReq(unsigned tid, int conn_id,
  *  [queue or complete]
  */
 void serveMasterConnReq(unsigned m_thread_cri)
-{ unsigned m_chan_cri = INS(conn_master);
-  int conn_id = INS(conn_master);
+{ unsigned m_chan_cri = IN(conn_master);
+  int conn_id = IN(conn_master);
   conn_req s_req;
+  
+  CHKCT_END(conn_master);
 
   // Check if slave side is complete, if not, queue it, otherwise complete.
   if (!dequeueSlaveReq(s_req, conn_id)) 
     queueMasterReq(conn_id, m_thread_cri, m_chan_cri);
   else
   { SETD(conn_master, m_thread_cri);
-    OUTS(conn_master, s_req.chan_cri);
+    OUT(conn_master, s_req.chan_cri);
+    OUTCT_END(conn_master);
+    
     SETD(conn_master, s_req.thread_cri);
-    OUTS(conn_master, m_chan_cri);
+    OUT(conn_master, m_chan_cri);
+    OUTCT_END(conn_master);
   }
 }
 
@@ -159,19 +168,24 @@ void serveMasterConnReq(unsigned m_thread_cri)
  *  [queue or complete]
  */
 void serveSlaveConnReq(unsigned s_thread_cri)
-{ unsigned tid = INS(conn_master);
-  unsigned s_chan_cri = INS(conn_master);
-  int conn_id = INS(conn_master);
+{ unsigned tid = IN(conn_master);
+  unsigned s_chan_cri = IN(conn_master);
+  int conn_id = IN(conn_master);
   conn_req m_req;
+    
+  CHKCT_END(conn_master);
 
   // Check if master side is complete, if not, queue it, otherwise complete. 
   if (!dequeueMasterReq(m_req, conn_id))
     queueSlaveReq(tid, conn_id, s_thread_cri, s_chan_cri);
   else
   { SETD(conn_master, m_req.thread_cri);
-    OUTS(conn_master, s_chan_cri);
+    OUT(conn_master, s_chan_cri);
+    OUTCT_END(conn_master);
+    
     SETD(conn_master, s_thread_cri);
-    OUTS(conn_master, m_req.chan_cri);
+    OUT(conn_master, m_req.chan_cri);
+    OUTCT_END(conn_master);
   }
 }
 
@@ -180,13 +194,15 @@ void serveSlaveConnReq(unsigned s_thread_cri)
  */
 void connHandler()
 { unsigned thread_cri = IN(conn_master);
-  CHKCT_END(conn_master);
   SETD(conn_master, thread_cri);
-  OUTCT_END(conn_master);
  
-  if(INS(conn_master) == MASTER)
+  if(IN(conn_master) == MASTER)
+  {
     serveMasterConnReq(thread_cri);
+  }
   else
+  {
     serveSlaveConnReq(thread_cri);
+  }
 }
 
