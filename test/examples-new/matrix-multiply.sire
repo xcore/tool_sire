@@ -1,31 +1,26 @@
 val N = 3;
 
+% North row: source x values
 proc produce_xj(val j, chanend south) is
-% north row: source x values
-  while true do
-    south ! ANY
+  while true do south ! ANY
 
+% West column: sink y values
 proc consume_yi(val i, chanend east) is
-% west column: sink y values
-  while true do
-    east ? ANY
+  while true do east ? ANY
 
+% East column: source k offsets
 proc offset(val ki, chanend west) is
-% east column: source k offsets
-  while true do
-    west ! ki
+  while true do west ! ki
 
 proc multiplier(val aij, chanend north, chanend south, 
     chanend west, chanend east) is
   var xj;
-  var aij_times_xj;
   var yi; % responsible for a values
 { north ? xj
 ; while true do
   { south ! xj
-  ; aij_times_xj := aij * xj
   ; east ? yi
-  ; west ! yi + aij_times_xj
+  ; west ! yi + (aij * xj)
   ; north ? xj
   }
 }
@@ -39,30 +34,22 @@ proc sink(chanend north) is
 proc main() is
   var a[N*N];
   var k[N];
-  chan north_south[N * (N+1)];
-  chan east_west[N * (N+1)] :
+  var i;
+  var j;
+  chan north_south[N*(N+1)];
+  chan east_west[N*(N+1)];
 {
   % initialize a and k
   skip
   
-; { par j in [0 for N] do
-     produce.xj(j, north.south[j]) ||
-
-    par i in [0 for N] do
-     offset(k[i], east.west[(N*N) + i]) ||
-    
-    par i in [0 FOR N], j in [0 for N] do
-      multiplier(a[(n * i) + j],
-                 north_south[(N*i) + j],
-                 north_south[(N * (i+1)) + j],
-                 east_west[i + (N*j)],  
-                 east_west[i + (N * (j+1))]) ||
-
-    par j in [0 FOR N] do
-      sink(north_south[(N*N) + j]) ||
-
-    par i in [0 FOR N] do
-      consume.yi(i, east_west[i])
+; { par j in [0 for N] do produce_xj(j, north_south[j]) ||
+    par i in [0 for N] do offset(k[i], east_west[(N*N) + i]) ||
+    par i in [0 for N], j in [0 for N] do 
+        multiplier(a[(n * i) + j],
+          north_south[(N*i) + j], north_south[(N * (i+1)) + j],
+          east_west[i + (N*j)], east_west[i + (N * (j+1))]) ||
+    par j in [0 for N] do sink(north_south[(N*N) + j]) ||
+    par i in [0 for N] do consume_yi(i, east_west[i])
   }
 }
 

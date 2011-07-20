@@ -41,7 +41,7 @@ class InsertConns(NodeWalker):
         None, scope=T_SCOPE_PROC)
     chanid = ast.ExprSingle(ast.ElemNumber(
         tab.lookup_id(chan.name, elem.index)))
-    conns.append(ast.StmtConnect(chanend, chanid, loc))
+    return ast.StmtConnect(chanend, chanid, loc)
 
   def gen_array_conn(self, tab, pid, chan):
     """

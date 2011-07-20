@@ -1,4 +1,4 @@
-val N := 3;
+val N := 2;
   
 proc node(val i, chanend left, chanend right) is
   var v;
