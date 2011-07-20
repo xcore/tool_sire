@@ -8,25 +8,12 @@ proc leaf(chanend c) is
 proc branch(chanend c, chanend left, chanend right) is
   skip
 
-proc tree(chanend input) is
-  chan c[(2*N)-1];
-  var v;
-  var i;
-{
-  { input ? v ; c[0] ! v } ||
-  par i in [0 for N-1] do
-    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
-  par i in [0 for N] do 
-    leaf(c[(N-1) + i])
-}
-
 proc main() is
   chan c[(2*N)-1];
   var enq;
   var result;
-  var v;
   var i;
-{ { c[0] ! enq ; c[1] ? result } ||
+{ { c[0] ! enq ; c[0] ? result } ||
   par i in [0 for N-1] do
     branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
   par i in [0 for N] do 
