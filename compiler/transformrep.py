@@ -124,9 +124,9 @@ class TransformRep(NodeWalker):
     n_div_2 = ast.ExprBinop('>>', elem_n, ast.ExprSingle(ast.ElemNumber(1)))
     s2 = ast.StmtSeq([ast.StmtAss(elem_x, n_div_2), s1])
 
-    # if n = 0 then process() else s1
+    # if n = 1 then process() else s1
     s3 = ast.StmtIf(ast.ExprBinop('=', elem_n,
-      ast.ExprSingle(ast.ElemNumber(0))), pcall, s2)
+      ast.ExprSingle(ast.ElemNumber(1))), pcall, s2)
   
     # Create the local declarations
     decls = [ast.Decl(elem_x.name, T_VAR_SINGLE, None)]

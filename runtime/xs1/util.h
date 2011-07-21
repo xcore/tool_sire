@@ -188,6 +188,16 @@ unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
   return (GET_NODE_ID(resId) * NUM_CORES_PER_NODE) + GET_CORE_ID(resId);
 }
 
+static inline
+void DISABLE_INTERRUPTS()
+{ asm("clrsr SR_IEBLE");
+}
+
+static inline
+void ENABLE_INTERRUPTS()
+{ asm("setsr SR_IEBLE");
+}
+
 void raiseException();
 void error();
 

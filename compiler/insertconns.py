@@ -19,7 +19,7 @@ class InsertConns(NodeWalker):
   channel or subscripted array) allocate a new channel end which is declared in
   the procedure scope.
   """
-  def __init__(self, sym, print_debug=False):
+  def __init__(self, sym, print_debug=True):
     self.sym = sym
     self.print_debug = print_debug
 
@@ -124,7 +124,7 @@ class InsertConns(NodeWalker):
 
     self.debug('[def connections]:')
     if self.print_debug:
-      self.self.display_chans(node.chans)
+      self.display_chans(node.chans)
   
   # Statements ==========================================
 

@@ -29,9 +29,9 @@ extern unsigned thread_chans[MAX_THREADS];
 // Connection setup and management
 
 typedef struct
-{ unsigned conn_id;
-  unsigned thread_cri;
-  unsigned chan_cri;
+{ unsigned connId;
+  unsigned threadCRI;
+  unsigned chanCRI;
 } conn_req;
 
 extern unsigned conn_master;

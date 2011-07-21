@@ -6,6 +6,22 @@
 #define MASTER 1
 #define SLAVE  0
 
+bool dequeueMasterReq(conn_req &r, int conn_id);
+bool dequeueSlaveReq(conn_req &r, int conn_id);
+void queueMasterReq(int conn_id, unsigned thread_cri, unsigned chan_cri);
+void queueSlaveReq(unsigned tid, int conn_id, 
+    unsigned thread_cri, unsigned chan_cri);
+
+/*
+ * Complete one side of a connection by sending the CRI of the other party.
+ */
+inline
+COMPLETE_PARTY(unsigned c, unsigned cri, unsigned v)
+{ SETD     (conn_master, cri);
+  OUT      (conn_master, v);
+  OUTCT_END(conn_master);
+}
+
 /*
  * Master connection protocol:
  *  0. Get a new channel c and construct target CRI (conn_master).
@@ -14,22 +30,42 @@
  *  3. Input slave CRI on t.
  *  4. Set local channel destination of c and return it.
  */
-unsigned _connectmaster(int conn_id, unsigned dest)
-{ unsigned t = thread_chans[GET_THREAD_ID()];
+unsigned _connectmaster(int connId, unsigned dest)
+{ int tid = GET_THREAD_ID();
+  unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
-  unsigned target_cri = GEN_CHAN_RI(dest, 1);
-  SETD(t, target_cri);
-  OUT(t, t);
-  OUT(t, MASTER);
-  OUT(t, c);
-  OUT(t, conn_id);
-  OUTCT_END(t);
-  
-  target_cri = IN(t);
-  CHKCT_END(t);
-  
-  SETD(c, target_cri);
-  return c;
+
+  // If the slave end is local and this is executing on thread 0 then we want
+  // to queue or complete the connection without causing an interrupt.
+  if (tid == 0 && dest == GET_GLOBAL_CORE_ID(c))
+  { DISABLE_INTERRUPTS();
+    conn_req sReq;
+    if (!dequeueSlaveReq(sReq, connId))
+    { queueMasterReq(connId, t, c);
+      // Wait for slave request
+      ENABLE_INTERRUPTS();
+    }
+    else
+    { COMPLETE(conn_master, sReq.theadCRI, c);
+      SETD(c, sReq.chanCRI);
+      ENABLE_INTERRUPTS();
+      return c;
+    }
+  }
+  // Otherwise, we proceede over a channel connection
+  else
+  { unsigned destCRI = GEN_CHAN_RI(dest, 1);
+    SETD(t, destCRI);
+    OUT(t, t);
+    OUT(t, MASTER);
+    OUT(t, c);
+    OUT(t, connId);
+    OUTCT_END(t);
+    destCRI = IN(t);
+    CHKCT_END(t);
+    SETD(c, destCRI);
+    return c;
+  }
 }
 
 /*
@@ -41,24 +77,87 @@ unsigned _connectmaster(int conn_id, unsigned dest)
  *  4. Input master CRI on t.
  *  5. Set local channel destination of c and return it.
  */
-unsigned _connectslave(int conn_id)
+unsigned _connectslave(int connId)
 { int tid = GET_THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
-  unsigned target_cri = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
-  SETD(t, target_cri);
-  OUT(t, t);
-  OUT(t, SLAVE);
-  OUT(t, tid);
-  OUT(t, c);
-  OUT(t, conn_id);
-  OUTCT_END(t);
-  
-  target_cri = IN(t);
+
+  // If executing on thread 0, we don't want to interrupt ourselves.
+  if (tid == 0)
+  { DISABLE_INTERRUPTS();
+    conn_req mReq;
+    if (!dequeueMasterReq(mReq, connId))
+    { queueSlaveReq(connId, t, c);
+      ENABLE_INTERRUPTS();
+    }
+    else
+    { COMPLETE(conn_master, mReq.threadCRI, c);
+      SETD(c, mReq.chanCRI);
+      ENABLE_INTERRUPTS();
+      return c;
+    }
+  }
+  else
+  { unsigned destCRI = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
+    SETD(t, destCRI);
+    OUT(t, t);
+    OUT(t, SLAVE);
+    OUT(t, tid);
+    OUT(t, c);
+    OUT(t, connId);
+    OUTCT_END(t);
+  }
+  destCRI = IN(t);
   CHKCT_END(t);
-  
-  SETD(c, target_cri);
+  SETD(c, destCRI);
   return c;
+}
+
+/*
+ * Handle an incoming master or slave connection request.
+ *
+ * Thread 0 serve master connection request.
+ *  1. Receive channel id
+ *  2. Receive master CRI
+ *  [queue or complete]
+ *
+ * Thread 0 serve slave connection request.
+ *  1. Receive slave thread id
+ *  2. Receive channel id
+ *  3. Receive slave CRI
+ *  [queue or complete]
+ */
+void connHandler()
+{ unsigned threadCRI = IN(conn_master);
+  SETD(conn_master, threadCRI);
+
+  // Master request
+  if(IN(conn_master) == MASTER)
+  { unsigned mChanCRI = IN(conn_master);
+    int connId = IN(conn_master);
+    conn_req sReq;
+    CHKCT_END(conn_master);
+    if (!dequeueSlaveReq(sReq, connId))
+      queueMasterReq(connId, mThreadCRI, mChanCRI);
+    else
+    { COMPLETE(threadCRI, sReq.chanCRI);
+      COMPLETE(sReq.threadCRI, mChanCRI);
+    }
+  }
+  // Slave request
+  else
+  { unsigned tid = IN(conn_master);
+    unsigned sChanCRI = IN(conn_master);
+    int connId = IN(conn_master);
+    conn_req mReq;
+    CHKCT_END(conn_master);
+    if (!dequeueMasterReq(mReq, connId))
+      queueSlaveReq(tid, connId, sThreadCRI, sChanCRI);
+    else
+    { COMPLETE(mReq.threadCRI, sChanCRI);
+      COMPLETE(threadCRI, mReq.chanCRI);
+    }
+  }
 }
 
 /*
@@ -131,78 +230,5 @@ void queueSlaveReq(unsigned tid, int conn_id,
 { conn_locals[tid].conn_id = conn_id;
   conn_locals[tid].thread_cri = thread_cri;
   conn_locals[tid].chan_cri = chan_cri;
-}
-
-/*
- * Thread 0 serve master connection request.
- *  1. Receive channel id
- *  2. Receive master CRI
- *  [queue or complete]
- */
-void serveMasterConnReq(unsigned m_thread_cri)
-{ unsigned m_chan_cri = IN(conn_master);
-  int conn_id = IN(conn_master);
-  conn_req s_req;
-  
-  CHKCT_END(conn_master);
-
-  // Check if slave side is complete, if not, queue it, otherwise complete.
-  if (!dequeueSlaveReq(s_req, conn_id)) 
-    queueMasterReq(conn_id, m_thread_cri, m_chan_cri);
-  else
-  { SETD(conn_master, m_thread_cri);
-    OUT(conn_master, s_req.chan_cri);
-    OUTCT_END(conn_master);
-    
-    SETD(conn_master, s_req.thread_cri);
-    OUT(conn_master, m_chan_cri);
-    OUTCT_END(conn_master);
-  }
-}
-
-/*
- * Thread 0 serve slave connection request.
- *  1. Receive slave thread id
- *  2. Receive channel id
- *  3. Receive slave CRI
- *  [queue or complete]
- */
-void serveSlaveConnReq(unsigned s_thread_cri)
-{ unsigned tid = IN(conn_master);
-  unsigned s_chan_cri = IN(conn_master);
-  int conn_id = IN(conn_master);
-  conn_req m_req;
-    
-  CHKCT_END(conn_master);
-
-  // Check if master side is complete, if not, queue it, otherwise complete. 
-  if (!dequeueMasterReq(m_req, conn_id))
-    queueSlaveReq(tid, conn_id, s_thread_cri, s_chan_cri);
-  else
-  { SETD(conn_master, m_req.thread_cri);
-    OUT(conn_master, s_chan_cri);
-    OUTCT_END(conn_master);
-    
-    SETD(conn_master, s_thread_cri);
-    OUT(conn_master, m_req.chan_cri);
-    OUTCT_END(conn_master);
-  }
-}
-
-/*
- * Handle an incoming master or slave connection request.
- */
-void connHandler()
-{ unsigned thread_cri = IN(conn_master);
-  SETD(conn_master, thread_cri);
- 
-  if(IN(conn_master) == MASTER)
-  {
-    serveMasterConnReq(thread_cri);
-  }
-  else
-  {
-    serveSlaveConnReq(thread_cri);
-  }
 }
 

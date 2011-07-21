@@ -224,8 +224,8 @@ idleConnHandler:
   bl connHandler
   
   /* Set spc = &controlIdle */
-  //ldap r11, controlIdle
-  //stw r11, sp[1] // spc = &idle
+  ldap r11, controlIdle
+  stw r11, sp[1] // spc = &idle
   
   ldw spc, sp[1]
   ldw ssr, sp[2]

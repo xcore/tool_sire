@@ -13,8 +13,8 @@
   .globl thread_chans, "a(:ui)"
 
   .globl conn_master,  "ui"
-  .globl conn_buffer, "a(:s(){m(conn_id){ui},m(thread_cri){ui},m(chan_cri){ui}})"
-  .globl conn_locals, "a(:s(){m(conn_id){ui},m(thread_cri){ui},m(chan_cri){ui}})"
+  .globl conn_buffer, "a(:s(){m(connId){ui},m(threadCRI){ui},m(chanCRI){ui}})"
+  .globl conn_locals, "a(:s(){m(connId){ui},m(threadCRI){ui},m(chanCRI){ui}})"
 
 .section .dp.data, "awd", @progbits
   .align BYTES_PER_WORD
