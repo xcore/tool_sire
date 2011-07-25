@@ -101,8 +101,8 @@ void connHandler()
     if (!dequeueSlaveReq(sReq, connId))
       queueMasterReq(connId, threadCRI, mChanCRI);
     else
-    { COMPLETE(threadCRI, sReq.threadCRI, sReq.chanCRI);
-      COMPLETE(sReq.threadCRI, threadCRI, mChanCRI);
+    { COMPLETE(conn_master, threadCRI, sReq.chanCRI);
+      COMPLETE(conn_master, sReq.threadCRI, mChanCRI);
     }
   }
   // Slave request
@@ -115,8 +115,8 @@ void connHandler()
     if (!dequeueMasterReq(mReq, connId))
       queueSlaveReq(tid, connId, threadCRI, sChanCRI);
     else
-    { COMPLETE(mReq.threadCRI, threadCRI, sChanCRI);
-      COMPLETE(threadCRI, mReq.threadCRI, mReq.chanCRI);
+    { COMPLETE(conn_master, mReq.threadCRI, sChanCRI);
+      COMPLETE(conn_master, threadCRI, mReq.chanCRI);
     }
   }
 }
