@@ -3,6 +3,8 @@
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
 
+import math
+
 import ast
 from walker import NodeWalker
 from definitions import PROC_ID_VAR
@@ -49,18 +51,93 @@ class InsertConns(NodeWalker):
     the subscript by generating nested conditional statements. 'chan' is a
     ChanElemSet with multiple elements.
     """
-    s = None
-    for y in reversed(chan.elems):
-      cond = ast.ExprBinop('=', ast.ElemGroup(chan.expr), ast.ElemNumber(y.index))
-      off = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_slave_offset(chan.name, y.index)))
-      loc = form_location(self.sym, pid, off, 1) if y.master else None
+    
+    def create_single_connection(s, chan, index, master):
+      print('New connection for index {}'.format(index))
+      if master:
+        offset_expr = ast.ExprSingle(ast.ElemNumber(
+            tab.lookup_slave_offset(chan.name, index)))
+        location = form_location(self.sym, pid, offset_expr, 1)
+      else:
+        location = None
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
-      chanid = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_id(chan.name, y.index)))
-      conn = ast.StmtConnect(chanend, chanid, loc)
-      s = ast.StmtIf(cond, conn, s) if s else conn
+      chanid = ast.ExprSingle(ast.ElemNumber(tab.lookup_id(chan.name, index)))
+      cond = ast.ExprBinop('=', ast.ElemGroup(chan.expr), ast.ElemNumber(index))
+      conn = ast.StmtConnect(chanend, chanid, location)
+      return ast.StmtIf(cond, conn, s) if s else conn
+
+    def create_range_connection(s, chan, r_begin, r_end, master, inclusive=False):
+      print('New connection over range {} to {}'.format(r_begin, r_end))
+      if master:
+        offset_expr = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(difference))))
+        offset_expr = ast.ExprUnary('-', offset_expr) if difference<0 else offset_expr
+        offset_expr = ast.ExprBinop('+', ast.ElemGroup(chan.expr), offset_expr)
+        location = form_location(self.sym, pid, offset_expr, 1)
+      else:
+        location = None
+      chanend = ast.ElemId(chan.chanend)
+      chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+      chanid = ast.ExprSingle(ast.ElemNumber(tab.lookup_id(chan.name, r_begin)))
+      cond = ast.ExprBinop('and', 
+          ast.ElemGroup(ast.ExprBinop('>=' if inclusive else '>', 
+            ast.ElemGroup(chan.expr),
+            ast.ExprSingle(ast.ElemNumber(min(r_begin, r_end))))),
+          ast.ExprBinop('<=', ast.ElemGroup(chan.expr),
+            ast.ExprSingle(ast.ElemNumber(max(r_begin, r_end)))))
+      conn = ast.StmtConnect(chanend, chanid, location)
+      return ast.StmtIf(cond, conn, s) if s else conn
+
+    s = ast.StmtSkip()
+    difference = None
+    range_begin = None
+    range_end = None
+    looking = False
+    master = False
+
+    for (i, y) in enumerate(reversed(chan.elems)):
+      index = y.index
+      offset = tab.lookup_slave_offset(chan.name, y.index) 
+
+      if not looking:
+        range_begin = index
+        looking = True
+        difference = offset - index if y.master else None
+        master = y.master
+        print('Looking for new range from index {} with difference {}'
+            .format(index, difference))
+      else:
+
+        # Inside a connection range
+        if (master and offset - index == difference) or (not master and not y.master):
+          print('Connection with index {} in range'.format(index))
+          pass
+
+        # End of a connection range
+        else:
+          print('End of range at index {}'.format(index))
+          range_end = index
+          if math.fabs(range_end-range_begin) < 1:
+            s = create_single_connection(s, chan, range_begin, master)
+          else:
+            s = create_range_connection(s, chan, range_begin, range_end, master)
+
+          # Start the new range
+          range_begin = range_end
+          difference = offset - index if y.master else None
+          master = y.master
+          print('Looking for new range from index {} with difference {}'
+              .format(index, difference))
+
+    # Close the last range (NOTE: we want to include the last index for ranges)
+    range_end = chan.elems[0].index 
+    if math.fabs(range_end-range_begin) <= 1:
+      s = create_single_connection(s, chan, range_begin, master)
+    else:
+      s = create_range_connection(s, chan, range_begin, range_end, master,
+          inclusive=True)
+
+    print('====')
     return s
 
   def insert_connections(self, tab, stmt, chans):

@@ -1,21 +1,16 @@
-val N := 4;
+val N := NUM_CORES;
   
-proc node(val i, chanend left, chanend right) is
+proc node(chanend left, chanend right) is
   var v;
-{ if i = 0
-  then 
-  { left ! 0 
-  ; right ? v 
-  ; printvalln(v)
-  }
-  else
-  { left ? v 
-  ; right ! v + 1
-  }
-}
+{ left ? v ; right ! v + 1 }
 
 proc main() is
   var i;
-  chan c[N];
-  par i in [0 for N] do node(i, c[i], c[(i+1) rem N])
-
+  var v;
+  chan c[N+1];
+{ { c[0] ! 0 
+  ; c[N] ? v 
+  ; printvalln(v)
+  }
+|| par i in [0 for N] do node(c[i], c[i+1])
+}

@@ -32,10 +32,10 @@ def form_location(sym, base, offset, compression):
   elem_numcores.symbol = sym.lookup(SYS_NUM_CORES_CONST) 
 
   # Apply 'rem NUM_CORES' to base + (off/comp)
-  loc = ast.ExprBinop('rem',
-      ast.ElemGroup(ast.ExprBinop('+', base,
-        ast.ExprSingle(ast.ElemGroup(loc)))),
-        ast.ExprSingle(elem_numcores))
+  loc = ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('+', base,
+        ast.ExprSingle(ast.ElemGroup(loc)))))
+      #ast.ExprBinop('rem',
+      #  ast.ExprSingle(elem_numcores))
 
   return loc
 

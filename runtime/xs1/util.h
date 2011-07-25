@@ -68,9 +68,10 @@ unsigned INS(unsigned c) {
   asm("chkct  res[%1], " S(XS1_CT_END) ";" 
       "outct  res[%1], " S(XS1_CT_END) ";" 
       "in %0, res[%1];"
-      "chkct  res[%1], " S(XS1_CT_END) ";"
-      "outct  res[%1], " S(XS1_CT_END) ";"
-      : "=&r"(v) : "r"(c));
+      : "=r"(v) : "r"(c));
+  asm("chkct  res[%0], " S(XS1_CT_END) ";"
+      "outct  res[%0], " S(XS1_CT_END) ";"
+      :: "r"(c));
   return v;
 }
 
