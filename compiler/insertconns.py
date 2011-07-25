@@ -88,6 +88,24 @@ class InsertConns(NodeWalker):
       conn = ast.StmtConnect(chanend, chanid, location)
       return ast.StmtIf(cond, conn, s) if s else conn
 
+    
+    first = chan.elems[0]
+    difference = (tab.lookup_slave_offset(chan.name, first.index) - index 
+        if first.master else None)
+    master = first.master
+    begin = first.index
+    end = None
+  
+    for (i, x) in enumerate(chan.elems):
+      index = x.index
+      offset = tab.lookup_slave_offset(chan.name, y.index) 
+    
+      if (master and offset-index == difference):
+        print('  {} in master range'.format(index))
+      elif (not master and not y.master):
+        print('  {} in slave range'.format(index))
+
+"""
     s = ast.StmtSkip()
     difference = None
     range_begin = None
@@ -138,6 +156,7 @@ class InsertConns(NodeWalker):
           inclusive=True)
 
     print('====')
+"""
     return s
 
   def insert_connections(self, tab, stmt, chans):
