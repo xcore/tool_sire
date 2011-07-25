@@ -29,7 +29,7 @@
   .globl busyConnHandler
   .globl touchRegs
   .globl initPointers
-  .globl _initthread, "f{0}(0)"
+  .globl _initThread, "f{0}(0)"
 
   /* Set heap labels */
   .globl _bheap
@@ -87,6 +87,11 @@ idleHostHandler:
 
 /* Run the process on (this) thead 0 and move to 'busy' state. */
 .L.idle.run:
+  /* NOTE: the control thread (0) is reserved so we cannot run any workers on
+   * it. Raise an exception. */
+  ldc r0, et_INSUFFICIENT_THREADS
+  bl exception
+  
   /* Set the host connection up with this thread */
   bl setHost
   stw r0, sp[5]  // r0 = senderId 
@@ -362,9 +367,9 @@ initPointers:
  * hosting mechanism and by synchronous thread creation with fork-join 
  * concurrent composition.
  *==========================================================================*/
-  .cc_top _initthread.function, _initthread
+  .cc_top _initThread.function, _initThread
   .align 2
-_initthread:
+_initThread:
    
   entsp 2
   stw r11, sp[0]
@@ -378,5 +383,5 @@ _initthread:
   ldw r11, sp[0]
   retsp 2
   
-  .cc_bottom _initthread.function
+  .cc_bottom _initThread.function
 

@@ -51,7 +51,7 @@ builtin_conversion = {
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',
   # System
-  'procid'     : '_procid',
+  'procid'     : '_procId',
 }
 
 class TranslateXS1(NodeWalker):

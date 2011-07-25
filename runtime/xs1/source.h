@@ -6,6 +6,6 @@
 #ifndef SOURCE_H
 #define SOURCE_H
 
-void _createprocess(unsigned, unsigned[]);
+void _createProcess(unsigned, unsigned[]);
 
 #endif

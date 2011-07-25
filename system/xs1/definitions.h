@@ -25,11 +25,11 @@
 #define LABEL_FRAME_TABLE        "_frametab"
 
 // Labels for jump table builtins
-#define LABEL_CREATE_PROCESS     "_createprocess"
-#define LABEL_INIT_THREAD        "_initthread"
-#define LABEL_PROC_ID            "_procid"
-#define LABEL_CONNECT_MASTER     "_connectmaster"
-#define LABEL_CONNECT_SLAVE      "_connectslave"
+#define LABEL_CREATE_PROCESS     "_createProcess"
+#define LABEL_INIT_THREAD        "_initThread"
+#define LABEL_PROC_ID            "_procId"
+#define LABEL_CONNECT_MASTER     "_connectMaster"
+#define LABEL_CONNECT_SLAVE      "_connectSlave"
 
 // Jump table indicies
 #define JUMPI_CREATE_REMOTE      0
@@ -41,12 +41,14 @@
 // Index offset of program jump indicies
 #define JUMP_INDEX_OFFSET        5 
 
-// Hardware specs
+// Hardware parameters
 #define RAM_BASE                 0x10000
 #define RAM_SIZE                 0x10000
 #define BYTES_PER_WORD           4
 #define MAX_THREADS              8
 #define MAX_CHANNELS             32
+#define SWITCH_SCRATCH_REG       3
+#define NUM_PARAM_REGS           4
                                 
 // Runtime specs                
 #define MAX_PROCS                20
@@ -73,8 +75,9 @@
 // Control tokens
 #define CT_COMPLETED             0x5
 
-#define SWITCH_SCRATCH_REG       3
-
-#define NUM_PARAM_REGS           4
+// Runtime exception types
+#define et_INSUFFICIENT_THREADS  0
+#define et_INSUFFICIENT_CHANNELS 1
 
 #endif
+

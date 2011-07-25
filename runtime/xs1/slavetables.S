@@ -5,11 +5,11 @@
 
 #include "system/xs1/definitions.h"
    
-  .extern _createprocess
-  .extern _initthread
-  .extern _procid
-  .extern _connectmaster
-  .extern _connectslave
+  .extern _createProcess
+  .extern _initThread
+  .extern _procId
+  .extern _connectMaster
+  .extern _connectSlave
   
   .globl _sizetab,  "a(:ui)"
   .globl _frametab, "a(:ui)"
@@ -21,11 +21,11 @@
   .set _jumptab.globound, BYTES_PER_WORD*JUMP_TABLE_SIZE
 
 _jumptab:
-  .word _createprocess
-  .word _initthread
-  .word _procid
-  .word _connectmaster
-  .word _connectslave
+  .word _createProcess
+  .word _initThread
+  .word _procId
+  .word _connectMaster
+  .word _connectSlave
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

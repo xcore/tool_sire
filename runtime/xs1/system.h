@@ -6,15 +6,11 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
-// Runtime exception types
-typedef enum
-{ et_INSUFFICIENT_THREADS,
-  et_INSUFFICIENT_CHANNELS
-} t_exception;
+#include "system/xs1/definitions.h"
 
 // Builtins
-extern void _initthread();
-int _procid();
+extern void _initThread();
+int _procId();
 
 // Initialisation
 void resetChanends();
@@ -27,7 +23,7 @@ void initMemory();
 void masterSync();
 void slaveSync();
 
-// Resource usage
+// Resource access
 void newAsyncThread(unsigned pc, unsigned arg1, unsigned arg2, 
     unsigned arg3, unsigned arg4);
 int      getAvailThreads();
@@ -38,7 +34,7 @@ unsigned claimStackSlot(int);
 void     releaseStackSlot(int);
 
 // Exceptions
-void exception(t_exception);
+void exception(int);
 
 #endif
 

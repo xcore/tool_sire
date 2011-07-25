@@ -7,13 +7,13 @@
 #include "system/xs1/definitions.h"
 #include "device.h"
 #include "globals.h"
+#include "util.h"
 #include "system.h"
 #include "control.h"
 
 #define RUNS 1
 
-//extern void _master();
-void runMain(unsigned main); 
+//void runMain(unsigned main); 
 
 // Master initialisation (thread0, core0, node0)
 /* NOTE: This is the 'normal' master procedure
@@ -26,12 +26,47 @@ void initMaster() {
   idle();
 }*/
 
-// Master procedure with timing.
-// Start the main function on a new asynchronous thread
+/* 
+ * Start the main function on a new asynchronous thread with the link regiser
+ * set to yeildMaster which will halt execution.
+ */
 void initMain() {
   unsigned pc;
+  unsigned t;
+  unsigned sp;
+  
+  // Load the address of '_main'
   asm("ldap r11, " LABEL_MAIN "; mov %0, r11" : "=r"(pc) :: "r11");
-  newAsyncThread(pc, 0, 0, 0, 0);
+  
+  // Claim a thread
+  t = claimAsyncThread();
+  
+  // Claim a stack slot
+  sp = claimStackSlot(THREAD_ID(t));
+  
+  // Initialise cp, dp, sp, pc, lr
+  asm("ldaw r11, cp[0] ; init t[%0]:cp, r11" :: "r"(t) : "r11");
+  asm("ldaw r11, dp[0] ; init t[%0]:dp, r11" :: "r"(t) : "r11");
+  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
+  asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
+  asm("ldap r11, masterYeild ; init t[%0]:lr, r11" :: "r"(t) : "r11");
+  
+  // Touch GPRs
+  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
+  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
+  asm("set t[%0]:r11, %1" :: "r"(t), "r"(0));
+  
+  // Start the thread
+  asm("start t[%0]" :: "r"(t));
 
   /*
   timer tmr;
@@ -50,5 +85,13 @@ void initMain() {
   //idle();
   _exit(0);
   */
+}
+
+/*
+ * This is called when the (original) master program thread has finished
+ * executing indicating the program has halted.
+ */
+void masterYeild() {
+  _exit(0);
 }
 

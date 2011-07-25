@@ -119,7 +119,7 @@ void slaveSync() {
 
 // Return the processor id by allocating a channel end, extracting the node and
 // core id, then deallocating it again.
-int _procid() {
+int _procId() {
   unsigned c, v;
   asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
   asm("bitrev %0, %1" : "=r"(v) : "r"(c));
@@ -209,7 +209,7 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 }
 
 // Raise a runtime exception
-void exception(t_exception e) {
+void exception(int e) {
   asm("waiteu");
   asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }

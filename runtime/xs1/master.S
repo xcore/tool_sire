@@ -16,7 +16,7 @@
   .extern initConnections
   .extern masterSync
   .extern initMaster
-  .extern _initthread
+  .extern _initThread
   .extern busyHostHandler
   .extern busyConnHandler
   .extern controlIdle
@@ -52,7 +52,7 @@ _master:
   bl initPorts
   bl initConnections
   bl __alloc_libc_hwlock
-  bl _initthread
+  bl _initThread
   bl masterSync
  
   // Initialise and run master program

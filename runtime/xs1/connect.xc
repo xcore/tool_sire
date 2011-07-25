@@ -30,7 +30,7 @@ COMPLETE(unsigned c, unsigned cri, unsigned v)
  *  3. Input slave CRI on t.
  *  4. Set local channel destination of c and return it.
  */
-unsigned _connectmaster(int connId, unsigned dest)
+unsigned _connectMaster(int connId, unsigned dest)
 { int tid = GET_THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
@@ -56,7 +56,7 @@ unsigned _connectmaster(int connId, unsigned dest)
  *  4. Input master CRI on t.
  *  5. Set local channel destination of c and return it.
  */
-unsigned _connectslave(int connId)
+unsigned _connectSlave(int connId)
 { int tid = GET_THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();

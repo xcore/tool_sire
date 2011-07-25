@@ -106,7 +106,7 @@ def gen_on(t, node):
     # If the destination is the current processor, then we just evaluate the
     # statement locally.
     t.comment('On')
-    t.out('if ({} == _procid())'.format(t.expr(node.expr)))
+    t.out('if ({} == _procId())'.format(t.expr(node.expr)))
 
     # Local evaluation
     t.blocker.begin()

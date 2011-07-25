@@ -29,7 +29,7 @@ unsigned permDest(unsigned d)
 }
 
 // Create a new remote process
-void _createprocess(unsigned dest, unsigned closure[]) 
+void _createProcess(unsigned dest, unsigned closure[]) 
 {
   unsigned threadId = GET_THREAD_ID();
   unsigned c = thread_chans[threadId];
