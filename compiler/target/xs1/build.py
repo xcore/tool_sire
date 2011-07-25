@@ -32,8 +32,14 @@ SLAVE_XE         = 'slave.xe'
 XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O2', '-fverbose-asm', '-Wno-timing']
-ASSEMBLE_FLAGS   = ['-c', '-O2']
+COMPILE_FLAGS    = ['-S', '-O2', 
+  '-fverbose-asm', '-Wno-timing', 
+  '-Winline', '-finline-functions',
+  '-Wunreachable-code', '-Wunused-value']
+ASSEMBLE_FLAGS   = ['-c', '-O2',
+  '-fverbose-asm', '-Wno-timing', 
+  '-Winline', '-finline-functions',
+  '-Wunreachable-code', '-Wunused-value']
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = [

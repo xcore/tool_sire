@@ -6,6 +6,12 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+// Runtime exception types
+typedef enum
+{ et_INSUFFICIENT_THREADS,
+  et_INSUFFICIENT_CHANNELS
+} t_exception;
+
 // Builtins
 extern void _initthread();
 int _procid();
@@ -30,6 +36,9 @@ unsigned claimSyncThread(unsigned);
 void     releaseThread();
 unsigned claimStackSlot(int);
 void     releaseStackSlot(int);
+
+// Exceptions
+void exception(t_exception);
 
 #endif
 

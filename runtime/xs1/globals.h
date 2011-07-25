@@ -12,7 +12,7 @@
 extern unsigned _sizetab[SIZE_TABLE_SIZE];
 
 // External functions
-extern void excepHandler(void);
+extern void exceptionHandler();
 extern void _main(void);
 
 /* These variables are declared in globals.c. */

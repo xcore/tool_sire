@@ -6,7 +6,7 @@
 #include <xs1.h>
 #include "system/xs1/definitions.h"
 
-  .extern error
+  .extern exception
   .extern host
   .extern setHost
   .extern spawnHost
@@ -22,7 +22,7 @@
   .extern conn_master
   .extern _sp
 
-  .globl excepHandler
+  .globl exceptionHandler
   .globl idleHostHandler
   .globl busyHostHandler
   .globl idleConnHandler
@@ -43,29 +43,17 @@
  * Exception/interrupt handler (KEP)
  * NOTE: THIS MUST BE LINKED AT THE BEGINNING OF THE BINARY.
  *==========================================================================*/
-  .cc_top excepHandler.function, excepHandler
+  .cc_top exceptionHandler.function, exceptionHandler
   
   /* Force the KEP to align on byte 64 */
   //nop 
   .align 128
-excepHandler:
-
-/*  entsp 4
-  
-  stw spc, sp[1]
-  stw ssr, sp[2]
-  stw sed, sp[3]
-  stw lr,  sp[4]
-
-  ldw r11, sp[3]
-  testct r10, res[r11]
-  in r10, res[r11]
-*/
+exceptionHandler:
 
   clre
   waiteu
 
-  .cc_bottom excepHandler.function
+  .cc_bottom exceptionHandler.function
 
 /*============================================================================
  * Idle host handler: receives an event on master spawn channel, sets the host
@@ -86,7 +74,7 @@ idleHostHandler:
   eq  r11, r0, 1 
   bt  r11, .L.idle.run   /* if _numthreads == 1 then run */
   eq  r11, r0, 0
-  bt  r11, .L.idle.excep /* if _numthreads == 0 then error
+  bt  r11, .L.idle.excep /* if _numthreads == 0 then exception
                             else spawn */
 
 /* Spawn a new host thread and return to being idle (explicitly as this was
@@ -139,7 +127,8 @@ idleHostHandler:
 .L.idle.excep:
   /* We shouldn't be able to reach here as the busy handler will be invoked
      when all threads are busy. */
-  bl error
+  ldc r0, et_INSUFFICIENT_THREADS
+  bl exception
 
 .L.idle.exit:
   ldw spc, sp[1]
@@ -181,7 +170,8 @@ busyHostHandler:
   stw lr,  sp[16]
    
   /* If we get to this point: all threads are busy! */
-  bl error
+  ldc r0, et_INSUFFICIENT_THREADS
+  bl exception
 
   ldw spc, sp[1]
   ldw ssr, sp[2]
@@ -300,11 +290,12 @@ busyConnHandler:
 /*============================================================================
  * Error handler
  *==========================================================================*/
-  .cc_top errHandler.function, errHandler
+/*  .cc_top exceptionHandler.function, exceptionHandler
   .align 2 
-errHandler:
-  bl error
-  .cc_bottom errHandler.function
+exceptionHandler:
+  waiteu
+  .cc_bottom exceptionHandler.function
+*/
 
 /*============================================================================
  * Touch registers
@@ -380,7 +371,7 @@ _initthread:
   stw r10, sp[1]
 
   /* Initialise kep for exceptions */
-  ldap r11, excepHandler
+  ldap r11, exceptionHandler
   set kep, r11
 
   ldw r10, sp[1]

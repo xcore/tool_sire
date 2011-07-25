@@ -7,50 +7,13 @@
 #include "system/xs1/definitions.h"
 #include "util.h"
 
-// Raise an exception in the event of an error
-//static inline
-void raiseException() {
-  asm("ldc r11, 0\n\tecallf r11" ::: "r11");
-}
-
-// Exception error
-//static inline
-void error() {
-  asm("waiteu");
-}
-
-// Write a switch configuration register
-void cfgWrite(unsigned c, unsigned value) {
-
-  unsigned v;
-
-  // WRITEC token
-  asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_WRITEC));
-
-  // NodeId, CoreId, ChanId
-  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 24));
-  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 16));
-  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 8));
-
-  // Switch address (register 3)
-  asm("outt  res[%0], %1" :: "r"(c), "r"(0));
-  asm("outt  res[%0], %1" :: "r"(c), "r"(3));
-
-  // Data to write
-  asm("out res[%0], %1" :: "r"(c), "r"(value));
-
-  // End of message
-  asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-
-  // Receive acknowledgement
-  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-  asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-}
-
 // Read a switch configuration register
-unsigned cfgRead(unsigned c) {
+void readSSwitchReg(int coreId, int reg, unsigned &data) {
 
-  unsigned value, v;
+  // Get and set a chanend
+  unsigned switchCRI = GEN_CONFIG_RI(coreId); 
+  unsigned c = GETR_CHANEND();
+  asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
 
   // READC
   asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_READC));
@@ -60,18 +23,53 @@ unsigned cfgRead(unsigned c) {
   asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 16));
   asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 8));
 
-  // Switch address (register 3)
-  asm("outt  res[%0], %1" :: "r"(c), "r"(0));
-  asm("outt  res[%0], %1" :: "r"(c), "r"(3));
+  // Switch address (register)
+  asm("outt  res[%0], %1" :: "r"(c), "r"(reg >> 8));
+  asm("outt  res[%0], %1" :: "r"(c), "r"(reg));
 
   // End of message
   asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
 
   // Receive ACK and data
   asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-  asm("in %0, res[%1]" : "=r"(value) : "r"(c));
+  asm("in %0, res[%1]" : "=r"(data) : "r"(c));
   asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
 
-  return value;
+  // Free the channel end
+  asm("freer res[%0]" :: "r"(c));
+}
+
+// Write a switch configuration register
+void writeSSwitchReg(int coreId, int reg, unsigned data) {
+
+  // Get and set a chanend
+  unsigned switchCRI = GEN_CONFIG_RI(coreId); 
+  unsigned c = GETR_CHANEND();
+  asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
+
+  // WRITEC token
+  asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_WRITEC));
+
+  // NodeId, CoreId, ChanId
+  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 24));
+  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 16));
+  asm("outt  res[%0], %1" :: "r"(c), "r"(c >> 8));
+
+  // Switch address (register)
+  asm("outt  res[%0], %1" :: "r"(c), "r"(reg >> 8));
+  asm("outt  res[%0], %1" :: "r"(c), "r"(reg));
+
+  // Data to write
+  asm("out res[%0], %1" :: "r"(c), "r"(data));
+
+  // End of message
+  asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
+
+  // Receive acknowledgement
+  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
+  asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
+
+  // Free the channel end
+  asm("freer res[%0]" :: "r"(c));
 }
 

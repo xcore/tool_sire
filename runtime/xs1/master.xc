@@ -8,6 +8,7 @@
 #include "device.h"
 #include "globals.h"
 #include "system.h"
+#include "control.h"
 
 #define RUNS 1
 
@@ -26,14 +27,15 @@ void initMaster() {
 }*/
 
 // Master procedure with timing.
-void initMaster() {
+// Start the main function on a new asynchronous thread
+void initMain() {
+  unsigned pc;
+  asm("ldap r11, " LABEL_MAIN "; mov %0, r11" : "=r"(pc) :: "r11");
+  newAsyncThread(pc, 0, 0, 0, 0);
 
+  /*
   timer tmr;
-  unsigned main, begin, end, elapsed, result;
-  
-  asm("ldap r11, " LABEL_MAIN "\n\t"
-      "mov %0, r11" : "=r"(main) :: "r11");
-   
+  unsigned begin, end, elapsed, result;
   tmr :> begin;
   runMain(main);
   tmr :> end;
@@ -44,8 +46,9 @@ void initMaster() {
   // Move the elapsed time to r11 and pause
   asm("mov r11, %0" :: "r"(elapsed));
   //asm("waiteu");
-
+  
   //idle();
   _exit(0);
+  */
 }
 

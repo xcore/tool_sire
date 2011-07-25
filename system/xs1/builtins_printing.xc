@@ -1,0 +1,10 @@
+// Printing
+#define _PRINTCHAR(x)   printchar(x)
+#define _PRINTCHARLN(x) printcharln(x) 
+#define _PRINTVAL(x)    printint(x) 
+#define _PRINTVALLN(x)  printintln(x) 
+#define _PRINTHEX(x)    printhex(x) 
+#define _PRINTHEXLN(x)  printhexln(x) 
+#define _PRINTSTR(x)    printstr(x) 
+#define _PRINTSTRLN(x)  printstrln(x) 
+#define _PRINTLN()      printstrln("") 

@@ -7,7 +7,7 @@
 #define XS1_DEFINITIONS_H
 
 // Labels
-#define LABEL_EXCEP_HANDLER      "excepHandler"
+#define LABEL_EXCEP_HANDLER      "exceptionHandler"
 #define LABEL_IDLE_HOST_HANDLER  "idleHostHandler"
 #define LABEL_BUSY_HOST_HANDLER  "busyHostHandler"
 #define LABEL_IDLE_CONN_HANDLER  "idleConnHandler"

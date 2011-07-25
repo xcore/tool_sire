@@ -126,7 +126,7 @@ class LabelChans(NodeWalker):
     node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
     
     # Display the channel table
-    node.chantab.display()
+    #node.chantab.display()
   
     # Check each channel is used correctly
     for x in node.decls:

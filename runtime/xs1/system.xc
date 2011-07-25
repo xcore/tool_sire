@@ -44,7 +44,7 @@ void initChanends() {
   asm("eeu res[%0]" :: "r"(conn_master));
 
   // Get channels for each thread
-  for(int i=0; i<MAX_THREADS; i++) 
+  for(int i=0; i<MAX_THREADS; i++)
     thread_chans[i] = GETR_CHANEND();
 }
 
@@ -78,61 +78,43 @@ void initMemory() {
     "\n\tmov %0, r11" : "=r"(end) :: "r11");
   size = (end - begin) / BYTES_PER_WORD;
 
-  for (int i=0; i<size; i++) {
+  for (int i=0; i<size; i++)
     asm("stw %0, %1[%2]" :: "r"(0), "r"(begin), "r"(i));
-  }
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
 // Assume that master is always core 0
 void masterSync() {
-
   if (NUM_CORES > 1) {
-
-    /*unsigned coreId = GET_CORE_ID(spawn_master);
-    unsigned switchCRI = GEN_CONFIG_RI(0); 
-    unsigned c, v;
-    unsigned t;
-
-    // Get and set a chanend
-    c = progChan[0];
-    asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
-
-    // If core 0 set scratch reg to 1 and wait untill it reaches NUM_CORES
-    cfgWrite(c, 1);
-    while(cfgRead(c) != NUM_CORES)
-      continue;*/
-
-    unsigned v;
+    /*unsigned v;
     write_sswitch_reg(0, SWITCH_SCRATCH_REG, 1);
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-    while (v != NUM_CORES)
+    do {
       read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+    } while (v != NUM_CORES);*/
+    unsigned v;
+    writeSSwitchReg(0, SWITCH_SCRATCH_REG, 1);
+    readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
+    do {
+      readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
+    } while (v != NUM_CORES);
   }
 }
 
 // Ensure all cores are in a consistent state before completing initialisation
 void slaveSync() {
-
-  /*unsigned coreId = GET_CORE_ID(spawn_master);
-  unsigned switchCRI = GEN_CONFIG_RI(0); 
-  unsigned c, v;
-
-  // Get and set a chanend
-  c = progChan[0];
-  asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
-
-  // Otherwise wait until the value reaches coreId and write coreId+1
-  while(cfgRead(c) != coreId)
-    continue;
-  cfgWrite(c, coreId+1);*/
-   
   unsigned coreId = GET_GLOBAL_CORE_ID(spawn_master);
   unsigned v;
-  read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-  while (v != coreId)
+  /*read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+  do {
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-  write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
+  } while (v != coreId);
+  write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);*/
+  readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
+  do {
+    readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
+  } while (v != coreId);
+  writeSSwitchReg(0, SWITCH_SCRATCH_REG, coreId+1);
 }
 
 // Return the processor id by allocating a channel end, extracting the node and
@@ -158,7 +140,7 @@ unsigned claimAsyncThread() {
   unsigned t;
   ACQUIRE_LOCK(_numthreads_lock);
   t = GET_ASYNC_THREAD();
-  if(t == 0) error();
+  if(t == 0) exception(et_INSUFFICIENT_THREADS);
   _numthreads = _numthreads - 1;
   RELEASE_LOCK(_numthreads_lock);
   return t;
@@ -168,7 +150,7 @@ unsigned claimSyncThread(unsigned sync) {
   unsigned t;
   ACQUIRE_LOCK(_numthreads_lock);
   t = GET_SYNC_THREAD(sync);
-  if(t == 0) error();
+  if(t == 0) exception(et_INSUFFICIENT_THREADS);
   _numthreads = _numthreads - 1;
   RELEASE_LOCK(_numthreads_lock);
   return t;
@@ -224,5 +206,11 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 
   // Start the thread
   asm("start t[%0]" :: "r"(t));
+}
+
+// Raise a runtime exception
+void exception(t_exception e) {
+  asm("waiteu");
+  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 

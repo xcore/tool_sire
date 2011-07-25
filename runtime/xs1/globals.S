@@ -12,7 +12,7 @@
   .globl spawn_master, "ui"
   .globl thread_chans, "a(:ui)"
 
-  .globl conn_master,  "ui"
+  .globl conn_master, "ui"
   .globl conn_buffer, "a(:s(){m(connId){ui},m(threadCRI){ui},m(chanCRI){ui}})"
   .globl conn_locals, "a(:s(){m(connId){ui},m(threadCRI){ui},m(chanCRI){ui}})"
 

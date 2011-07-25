@@ -183,8 +183,8 @@ class TranslateXS1(NodeWalker):
     contrast with the MPI implementation where there is only a single
     binary.
     """
-    s = read_file(config.XS1_SYSTEM_PATH+'/builtins.xc')
-    self.out(s)
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
   
   # Program ============================================
 

@@ -1,25 +1,25 @@
-#include "globals.h"
 #include "util.h"
+#include "globals.h"
 #include "connect.h"
 
 #define NONE (-1)
 #define MASTER 1
 #define SLAVE  0
 
-bool dequeueMasterReq(conn_req &r, int conn_id);
-bool dequeueSlaveReq(conn_req &r, int conn_id);
-void queueMasterReq(int conn_id, unsigned thread_cri, unsigned chan_cri);
-void queueSlaveReq(unsigned tid, int conn_id, 
-    unsigned thread_cri, unsigned chan_cri);
+bool dequeueMasterReq(conn_req &r, int connId);
+bool dequeueSlaveReq(conn_req &r, int connId);
+void queueMasterReq(int connId, unsigned threadCRI, unsigned chanCRI);
+void queueSlaveReq(unsigned tid, int connId, 
+    unsigned threadCRI, unsigned chanCRI);
 
 /*
  * Complete one side of a connection by sending the CRI of the other party.
  */
 inline
-COMPLETE_PARTY(unsigned c, unsigned cri, unsigned v)
-{ SETD     (conn_master, cri);
-  OUT      (conn_master, v);
-  OUTCT_END(conn_master);
+COMPLETE(unsigned c, unsigned cri, unsigned v)
+{ SETD(c, cri);
+  OUT(c, v);
+  OUTCT_END(c);
 }
 
 /*
@@ -34,38 +34,17 @@ unsigned _connectmaster(int connId, unsigned dest)
 { int tid = GET_THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
-
-  // If the slave end is local and this is executing on thread 0 then we want
-  // to queue or complete the connection without causing an interrupt.
-  if (tid == 0 && dest == GET_GLOBAL_CORE_ID(c))
-  { DISABLE_INTERRUPTS();
-    conn_req sReq;
-    if (!dequeueSlaveReq(sReq, connId))
-    { queueMasterReq(connId, t, c);
-      // Wait for slave request
-      ENABLE_INTERRUPTS();
-    }
-    else
-    { COMPLETE(conn_master, sReq.theadCRI, c);
-      SETD(c, sReq.chanCRI);
-      ENABLE_INTERRUPTS();
-      return c;
-    }
-  }
-  // Otherwise, we proceede over a channel connection
-  else
-  { unsigned destCRI = GEN_CHAN_RI(dest, 1);
-    SETD(t, destCRI);
-    OUT(t, t);
-    OUT(t, MASTER);
-    OUT(t, c);
-    OUT(t, connId);
-    OUTCT_END(t);
-    destCRI = IN(t);
-    CHKCT_END(t);
-    SETD(c, destCRI);
-    return c;
-  }
+  unsigned destCRI = GEN_CHAN_RI(dest, 1);
+  SETD(t, destCRI);
+  OUT(t, t);
+  OUT(t, MASTER);
+  OUT(t, c);
+  OUT(t, connId);
+  OUTCT_END(t);
+  destCRI = IN(t);
+  CHKCT_END(t);
+  SETD(c, destCRI);
+  return c;
 }
 
 /*
@@ -81,32 +60,14 @@ unsigned _connectslave(int connId)
 { int tid = GET_THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
-
-  // If executing on thread 0, we don't want to interrupt ourselves.
-  if (tid == 0)
-  { DISABLE_INTERRUPTS();
-    conn_req mReq;
-    if (!dequeueMasterReq(mReq, connId))
-    { queueSlaveReq(connId, t, c);
-      ENABLE_INTERRUPTS();
-    }
-    else
-    { COMPLETE(conn_master, mReq.threadCRI, c);
-      SETD(c, mReq.chanCRI);
-      ENABLE_INTERRUPTS();
-      return c;
-    }
-  }
-  else
-  { unsigned destCRI = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
-    SETD(t, destCRI);
-    OUT(t, t);
-    OUT(t, SLAVE);
-    OUT(t, tid);
-    OUT(t, c);
-    OUT(t, connId);
-    OUTCT_END(t);
-  }
+  unsigned destCRI = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
+  SETD(t, destCRI);
+  OUT(t, t);
+  OUT(t, SLAVE);
+  OUT(t, tid);
+  OUT(t, c);
+  OUT(t, connId);
+  OUTCT_END(t);
   destCRI = IN(t);
   CHKCT_END(t);
   SETD(c, destCRI);
@@ -138,10 +99,10 @@ void connHandler()
     conn_req sReq;
     CHKCT_END(conn_master);
     if (!dequeueSlaveReq(sReq, connId))
-      queueMasterReq(connId, mThreadCRI, mChanCRI);
+      queueMasterReq(connId, threadCRI, mChanCRI);
     else
-    { COMPLETE(threadCRI, sReq.chanCRI);
-      COMPLETE(sReq.threadCRI, mChanCRI);
+    { COMPLETE(threadCRI, sReq.threadCRI, sReq.chanCRI);
+      COMPLETE(sReq.threadCRI, threadCRI, mChanCRI);
     }
   }
   // Slave request
@@ -152,10 +113,10 @@ void connHandler()
     conn_req mReq;
     CHKCT_END(conn_master);
     if (!dequeueMasterReq(mReq, connId))
-      queueSlaveReq(tid, connId, sThreadCRI, sChanCRI);
+      queueSlaveReq(tid, connId, threadCRI, sChanCRI);
     else
-    { COMPLETE(mReq.threadCRI, sChanCRI);
-      COMPLETE(threadCRI, mReq.chanCRI);
+    { COMPLETE(mReq.threadCRI, threadCRI, sChanCRI);
+      COMPLETE(threadCRI, mReq.threadCRI, mReq.chanCRI);
     }
   }
 }
@@ -166,20 +127,20 @@ void connHandler()
 #pragma unsafe arrays
 void initConnections()
 { for (int i=0; i<CONN_BUFFER_SIZE; i++)
-    conn_buffer[i].conn_id = NONE;
+    conn_buffer[i].connId = NONE;
   for (int i=0; i<MAX_THREADS; i++)
-    conn_locals[i].conn_id = NONE;
+    conn_locals[i].connId = NONE;
 }
 
 /*
  * Dequeue a master connection request matching the channel id.
  */
-bool dequeueMasterReq(conn_req &r, int conn_id)
+bool dequeueMasterReq(conn_req &r, int connId)
 { for (int i=0; i<CONN_BUFFER_SIZE; i++)
-  { if (conn_buffer[i].conn_id == conn_id)
-    { conn_buffer[i].conn_id = NONE;
-      r.thread_cri = conn_buffer[i].thread_cri;
-      r.chan_cri = conn_buffer[i].chan_cri;
+  { if (conn_buffer[i].connId == connId)
+    { conn_buffer[i].connId = NONE;
+      r.threadCRI = conn_buffer[i].threadCRI;
+      r.chanCRI = conn_buffer[i].chanCRI;
       return true;
     }
   }
@@ -189,12 +150,12 @@ bool dequeueMasterReq(conn_req &r, int conn_id)
 /*
  * Dequeue a slave connection request.
  */
-bool dequeueSlaveReq(conn_req &r, int conn_id)
+bool dequeueSlaveReq(conn_req &r, int connId)
 { for (int i=0; i<MAX_THREADS; i++)
-  { if (conn_locals[i].conn_id == conn_id)
-    { conn_locals[i].conn_id = NONE;
-      r.thread_cri = conn_locals[i].thread_cri;
-      r.chan_cri = conn_locals[i].chan_cri;
+  { if (conn_locals[i].connId == connId)
+    { conn_locals[i].connId = NONE;
+      r.threadCRI = conn_locals[i].threadCRI;
+      r.chanCRI = conn_locals[i].chanCRI;
       return true;
     }
   }
@@ -205,14 +166,14 @@ bool dequeueSlaveReq(conn_req &r, int conn_id)
  * Queue a master connection request: insert it in the next available slot in
  * the buffer.
  */
-void queueMasterReq(int conn_id, unsigned thread_cri, unsigned chan_cri)
+void queueMasterReq(int connId, unsigned threadCRI, unsigned chanCRI)
 { int i = 0;
   char b = 0;
   while (i<CONN_BUFFER_SIZE && !b)
-  { if (conn_buffer[i].conn_id == NONE)
-    { conn_buffer[i].conn_id = conn_id;
-      conn_buffer[i].thread_cri = thread_cri;
-      conn_buffer[i].chan_cri = chan_cri;
+  { if (conn_buffer[i].connId == NONE)
+    { conn_buffer[i].connId = connId;
+      conn_buffer[i].threadCRI = threadCRI;
+      conn_buffer[i].chanCRI = chanCRI;
       b = 1;
     }
     i = i + 1;
@@ -225,10 +186,10 @@ void queueMasterReq(int conn_id, unsigned thread_cri, unsigned chan_cri)
  * Queue a slave connection request: insert it in the slot given by the thread
  * id.
  */
-void queueSlaveReq(unsigned tid, int conn_id, 
-    unsigned thread_cri, unsigned chan_cri)
-{ conn_locals[tid].conn_id = conn_id;
-  conn_locals[tid].thread_cri = thread_cri;
-  conn_locals[tid].chan_cri = chan_cri;
+void queueSlaveReq(unsigned tid, int connId, 
+    unsigned threadCRI, unsigned chanCRI)
+{ conn_locals[tid].connId = connId;
+  conn_locals[tid].threadCRI = threadCRI;
+  conn_locals[tid].chanCRI = chanCRI;
 }
 

@@ -1,15 +1,3 @@
-// Printing
-#define _PRINTCHAR(x)   printchar(x)
-#define _PRINTCHARLN(x) printcharln(x) 
-#define _PRINTVAL(x)    printint(x) 
-#define _PRINTVALLN(x)  printintln(x) 
-#define _PRINTHEX(x)    printhex(x) 
-#define _PRINTHEXLN(x)  printhexln(x) 
-#define _PRINTSTR(x)    printstr(x) 
-#define _PRINTSTRLN(x)  printstrln(x) 
-#define _PRINTLN()      printstrln("") 
-
-// Fixed point
 #define _FBITS 24
 #define ldivu(a,b,c,d,e) asm("ldivu %0,%1,%2,%3,%4" : "=r"(a), "=r"(b) : "r"(c), "r"(d), "r"(e))
 
@@ -38,4 +26,3 @@ int divf8_24(int x, int y) {
   r = d << _FBITS | (d2 + (1<<(31-_FBITS))) >> (32-_FBITS);
   return r * sgn;
 }
-

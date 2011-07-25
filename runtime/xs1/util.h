@@ -190,15 +190,15 @@ unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
 
 static inline
 void DISABLE_INTERRUPTS()
-{ asm("clrsr SR_IEBLE");
+{ asm("clrsr " S(SR_IEBLE));
 }
 
 static inline
 void ENABLE_INTERRUPTS()
-{ asm("setsr SR_IEBLE");
+{ asm("setsr " S(SR_IEBLE));
 }
 
-void raiseException();
-void error();
+void readSSwitchReg(int coreId, int reg, unsigned &data);
+void writeSSwitchReg(int coreId, int reg, unsigned data);
 
 #endif

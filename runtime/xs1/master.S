@@ -19,6 +19,7 @@
   .extern _initthread
   .extern busyHostHandler
   .extern busyConnHandler
+  .extern controlIdle
   
   .extern spawn_master
   .extern conn_master
@@ -56,7 +57,8 @@ _master:
  
   // Initialise and run master program
   bl setInterrupts
-  bu initMaster
+  bl initMain
+  bu controlIdle
 
   .cc_bottom _master.function
 
