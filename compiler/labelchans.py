@@ -124,17 +124,24 @@ class LabelChans(NodeWalker):
     node.chantab = ChanTable(node.name)
     chan_uses = self.stmt(node.stmt, [], node.chantab)
     node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
+    node.chanids = {}
+    id_count = 0
     
     # Display the channel table
     #node.chantab.display()
   
-    # Check each channel is used correctly
+    # Check each channel is used correctly by inspecting the entries in the
+    # channel table and label channel variables with unique identifiers.
     for x in node.decls:
       if x.type == T_CHAN_SINGLE:
         self.check_chan(x.name, None, node.chantab.lookup(x.name, None))
+        node.chanids[x.name] = id_count
+        id_count += 1
       elif x.type == T_CHAN_ARRAY:
         for y in range(x.symbol.value):
           self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
+        node.chanids[x.name] = id_count
+        id_count += 1
       else:
         pass
   
@@ -269,7 +276,6 @@ class ChanTable(object):
   def __init__(self, name):
     self.name = name
     self.tab = {}
-    self.connection_id_count = 0
     self.chanend_count = 0
     
   def key(self, name, index):
@@ -285,9 +291,9 @@ class ChanTable(object):
     key = self.key(name, index)
     master = False
     if not key in self.tab:
-      self.tab[key] = (self.new_connection_id(), [])
+      self.tab[key] = []
       master = True
-    self.tab[key][1].append(offset)
+    self.tab[key].append(offset)
     return master
 
   def lookup(self, name, index):
@@ -297,23 +303,12 @@ class ChanTable(object):
     key = self.key(name, index)
     if not key in self.tab:
       return None
-    return self.tab[key][1]
-
-  def lookup_id(self, name, index):
-    key = self.key(name, index)
-    if not key in self.tab:
-      return None
-    return self.tab[key][0]
+    return self.tab[key]
 
   def lookup_slave_offset(self, name, index):
     key = self.key(name, index)
     assert key in self.tab and len(self.tab[key])==2
-    return self.tab[key][1][1]
-
-  def new_connection_id(self):
-    count = self.connection_id_count;
-    self.connection_id_count += 1
-    return count
+    return self.tab[key][1]
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -323,7 +318,7 @@ class ChanTable(object):
   def display(self):
     print('Channel table for procedure '+self.name+':')
     for x in self.tab.keys():
-      print('  {}:{} has {}'.format(x, self.tab[x][0], ', '.join(
+      print('  {} has {}'.format(x, ', '.join(
         ['{}'.format(y) for y in self.tab[x][1]])))
 
 
