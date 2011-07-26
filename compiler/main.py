@@ -228,7 +228,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   InsertIds().walk_program(ast)
 
   # 5. Insert channel ends
-  vmsg(v, "Inserting channel ends")
+  vmsg(v, "Inserting connections")
   InsertConns(sym).walk_program(ast)
 
   # 6. Rename channel uses

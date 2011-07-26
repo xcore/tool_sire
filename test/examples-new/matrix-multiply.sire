@@ -1,17 +1,19 @@
-val N = 3;
+val N := 4;
 
 % North row: source x values
 proc produce_xj(val j, chanend south) is
-  while true do south ! ANY
+  while true do south ! 1
 
-% West column: sink y values
+% West column: sink output values
 proc consume_yi(val i, chanend east) is
-  while true do east ? ANY
+  var vi;
+  while true do east ? vi
 
 % East column: source k offsets
 proc offset(val ki, chanend west) is
   while true do west ! ki
 
+% Multiplier cell
 proc multiplier(val aij, chanend north, chanend south, 
     chanend west, chanend east) is
   var xj;
@@ -25,31 +27,38 @@ proc multiplier(val aij, chanend north, chanend south,
   }
 }
 
+% South row sink for unused outputs
 proc sink(chanend north) is
-% south row
-  while true do                           
-  % sink for unused outputs
-    north ? ANY
+  var v;
+  while true do north ? v
 
 proc main() is
-  var a[N*N];
+  var A[N*N];
   var k[N];
+  chan x[N*(N+1)];
+  chan y[N*(N+1)];
   var i;
   var j;
-  chan north_south[N*(N+1)];
-  chan east_west[N*(N+1)];
 {
-  % initialize a and k
+  % initialize A and k
   skip
   
-; { par j in [0 for N] do produce_xj(j, north_south[j]) ||
-    par i in [0 for N] do offset(k[i], east_west[(N*N) + i]) ||
+; { par j in [0 for N] do 
+      produce_xj(j, y[j]) ||
+    
+    par i in [0 for N] do 
+      offset(k[i], x[(N*N) + i]) ||
+
     par i in [0 for N], j in [0 for N] do 
-        multiplier(a[(n * i) + j],
-          north_south[(N*i) + j], north_south[(N * (i+1)) + j],
-          east_west[i + (N*j)], east_west[i + (N * (j+1))]) ||
-    par j in [0 for N] do sink(north_south[(N*N) + j]) ||
-    par i in [0 for N] do consume_yi(i, east_west[i])
+        multiplier(A[(N*i) + j],
+          y[(N*i) + j], y[(N * (i+1)) + j],
+          x[i + (N*j)], x[i + (N * (j+1))]) ||
+
+    par j in [0 for N] do 
+      sink(y[(N*N) + j]) ||
+
+    par i in [0 for N] do 
+      consume_yi(i, x[i])
   }
 }
 

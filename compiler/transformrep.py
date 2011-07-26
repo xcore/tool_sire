@@ -100,6 +100,14 @@ class TransformRep(NodeWalker):
     d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
     d = form_location(self.sym, elem_b, d, f)
 
+    # Create on the on statement
+    on_stmt = ast.StmtOn(d,
+        ast.StmtPcall(name,
+          [ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x)), 
+            expr_x, ast.ExprBinop('-', elem_m, ast.ExprSingle(elem_x)),
+              expr_b] + proc_actuals))
+    on_stmt.offset = None
+
     # Conditionally recurse {d()|d()} or d()
     s1 = ast.StmtIf(
         # if m > n/2
@@ -108,11 +116,7 @@ class TransformRep(NodeWalker):
         ast.StmtPar([
             # on ((id()+t+n/2) rem NUM_CORES) / f do 
             #   d(t+n/2, n/2, m-n/2, ...)
-            ast.StmtOn(d,
-                ast.StmtPcall(name,
-                    [ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x)), 
-                    expr_x, ast.ExprBinop('-', elem_m, ast.ExprSingle(elem_x)),
-                    expr_b] + proc_actuals)),
+            on_stmt,
             # d(t, n/2, n/2)
             ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
                 + proc_actuals),

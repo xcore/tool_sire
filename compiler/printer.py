@@ -16,7 +16,7 @@ class Printer(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, buf=sys.stdout, labels=True):
+  def __init__(self, buf=sys.stdout, labels=False):
     super(Printer, self).__init__()
     self.buf = buf
     self.labels = labels
@@ -240,6 +240,8 @@ class Printer(NodeWalker):
   def stmt_on(self, node):
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
+    # NOTE: This offset won't show where we have made substitutions in 
+    # transform par and rep and we hav'nt updated the location labels.
     self.display_offset(node.stmt)
     self.stmt(node.stmt)
     self.indent.pop()

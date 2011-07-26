@@ -89,7 +89,10 @@ class InsertConns(NodeWalker):
     def index_offset_diff(name, index, master):
       return (tab.lookup_slave_offset(name, index) - index if master else None)
 
-    # Build a list of channel index ranges 
+    # Sort the channel elements into increasing index
+    chan.elems = sorted(chan.elems, key=lambda x: x.index)
+
+    # Build a list of channel index ranges
     x = chan.elems[0] 
     l = [[x, x]]
     diff = index_offset_diff(chan.name, x.index, x.master)
