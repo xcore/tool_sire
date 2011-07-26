@@ -27,9 +27,9 @@ class LabelProcs(NodeWalker):
 
   def defn(self, node):
     if node.name == 'main':
-      self.stmt(node.stmt, ast.ElemNumber(0))
+      self.stmt(node.stmt, ast.ExprSingle(ast.ElemNumber(0)))
     else:
-      self.stmt(node.stmt, ast.ElemNumber(0))
+      self.stmt(node.stmt, ast.ExprSingle(ast.ElemNumber(0)))
   
   # Statements ==========================================
 
@@ -77,6 +77,11 @@ class LabelProcs(NodeWalker):
     assert not k==None
     self.stmt(node.stmt, k)
     
+  def stmt_on(self, node, l):
+    node.offset = l
+    k = ast.ExprBinop('+', ast.ElemGroup(l), node.expr)
+    self.stmt(node.stmt, k)
+
   # Contain local processes
 
   def stmt_seq(self, node, l):
@@ -97,11 +102,6 @@ class LabelProcs(NodeWalker):
     self.stmt(node.stmt, l)
 
   def stmt_for(self, node, l):
-    node.offset = l
-    self.stmt(node.stmt, l)
-
-  def stmt_on(self, node, l):
-    #assert 0
     node.offset = l
     self.stmt(node.stmt, l)
 

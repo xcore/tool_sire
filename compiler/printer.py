@@ -16,7 +16,7 @@ class Printer(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, buf=sys.stdout, labels=False):
+  def __init__(self, buf=sys.stdout, labels=True):
     super(Printer, self).__init__()
     self.buf = buf
     self.labels = labels
@@ -52,7 +52,7 @@ class Printer(NodeWalker):
   
   def display_offset(self, stmt):
     if self.labels and hasattr(stmt, 'offset') and not stmt.offset==None:
-        self.out('<<{}>>\n'.format(self.expr(stmt.offset)))
+        self.out('@({})\n'.format(self.expr(stmt.offset)))
   
   # Program ============================================
 
@@ -240,6 +240,7 @@ class Printer(NodeWalker):
   def stmt_on(self, node):
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
+    self.display_offset(node.stmt)
     self.stmt(node.stmt)
     self.indent.pop()
 

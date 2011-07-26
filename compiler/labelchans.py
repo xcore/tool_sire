@@ -319,7 +319,7 @@ class ChanTable(object):
     print('Channel table for procedure '+self.name+':')
     for x in self.tab.keys():
       print('  {} has {}'.format(x, ', '.join(
-        ['{}'.format(y) for y in self.tab[x][1]])))
+        ['{}'.format(y) for y in self.tab[x]])))
 
 
 # These classes represent uses of channels as they occur in the program

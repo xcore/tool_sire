@@ -34,9 +34,9 @@ class Children(NodeVisitor):
     """
     if ((not name in self.children[self.parent]) and name != self.parent
         and not name in filter(lambda x: not builtins[x].mobile, builtins.keys())):
-            self.children[self.parent].append(name)
-            if(self.debug):
-              print('  added child '+name+' to '+self.parent)
+      self.children[self.parent].append(name)
+      if(self.debug):
+        print('  added child '+name+' to '+self.parent)
 
   def build(self):
     """ 

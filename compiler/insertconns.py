@@ -79,7 +79,7 @@ class InsertConns(NodeWalker):
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
       cond = ast.ExprBinop('and', 
-          ast.ElemGroup(ast.ExprBinop('>', ast.ElemGroup(chan.expr),
+          ast.ElemGroup(ast.ExprBinop('>=', ast.ElemGroup(chan.expr),
             ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
           ast.ExprBinop('<=', ast.ElemGroup(chan.expr),
             ast.ExprSingle(ast.ElemNumber(max(begin, end)))))

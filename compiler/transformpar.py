@@ -181,8 +181,7 @@ class TransformPar(NodeWalker):
     defs = []
     for x in node.defs:
       d = self.defn(x)
-      if len(d)>0:
-        defs.extend(reversed(d))
+      defs.extend(reversed(d))
       defs.append(x)
     node.defs = defs
   
@@ -212,8 +211,8 @@ class TransformPar(NodeWalker):
         if(self.debug):
           print('Transforming par {}'.format(i))
         (proc, node.stmt[i+1]) = self.stmt_to_process(x, succ)
-        p.append(proc)
-        p.extend(self.defn(proc))
+        p.insert(0, proc)
+        self.defn(proc).extend(p)
     return p
 
   # Parallel replication
@@ -223,8 +222,8 @@ class TransformPar(NodeWalker):
       if(self.debug):
         print('Transforming rep')
       (proc, node.stmt) = self.stmt_to_process(node.stmt, succ, node.indicies)
-      p.append(proc)
-      p.extend(self.defn(proc))
+      p.insert(0, proc)
+      self.defn(proc).extend(p)
     return p
 
   # On
@@ -234,8 +233,8 @@ class TransformPar(NodeWalker):
       if(self.debug):
         print('Transforming on')
       (proc, node.stmt) = self.stmt_to_process(node.stmt, succ)
-      p.append(proc)
-      p.extend(self.defn(proc))
+      p.insert(0, proc)
+      self.defn(proc).extend(p)
     return p
 
   def stmt_if(self, node, succ):
