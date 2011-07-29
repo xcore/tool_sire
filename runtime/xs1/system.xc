@@ -11,16 +11,18 @@
 #include "worker.h"
 #include "system.h"
 
-// Allocate all remaining channel ends then free them to ensure they are all
-// available
+/* 
+ * Allocate all remaining channel ends then free them to ensure they are all
+ * available
+ */
 void resetChanends() {
-  
   unsigned c = 1;
   unsigned c0 = GETR_CHANEND();
 
   // Get all remaining channels
-  while(c)
+  while(c) {
     c = GETR_CHANEND();
+  }
    
   // Free all channels
   c = c0 & 0xFFFF00FF;
@@ -50,6 +52,10 @@ void initThreads() {
   FREER(sync);
 }
 
+/*
+ * Initialise master spawning and conneciton channels, and request channels
+ * for each thread.
+ */
 #pragma unsafe arrays 
 void initChanends() {
   
@@ -67,30 +73,30 @@ void initChanends() {
     thread_chans[i] = GETR_CHANEND();
 }
 
-// Initialise system resource counters
+/*
+ * Initialise system resource counter: get a lock for thread allocation and set
+ * available threads.
+ */
 void initCounters() {
-
-  // Get locks
   _numthreads_lock = GETR_LOCK();
-
-  // Set available threads
   _numthreads = MAX_THREADS; 
 }
 
-// Initialise ports
+/*
+ * Initialise ports: setup XMP-64 led port.
+ */
 void initPorts() {
-  // Setup XMP-64 led port
   asm("setc res[%0], 8 ; setclk res[%0], %1" :: "r"(LED_PORT), "r"(6));
 }
 
-// Initialise memory
+/*
+ * Initialise memory: zero-initialise .bss section
+ */
 void initMemory() {
-
   unsigned begin;
   unsigned end;
   int size;
 
-  // Zero-initialise .bss section
   asm("ldap r11, " LABEL_BEGIN_BSS
     "\n\tmov %0, r11" : "=r"(begin) :: "r11");
   asm("ldap r11, " LABEL_END_BSS
@@ -101,43 +107,49 @@ void initMemory() {
     asm("stw %0, %1[%2]" :: "r"(0), "r"(begin), "r"(i));
 }
 
-// Ensure all cores are in a consistent state before completing initialisation
-// Assume that master is always core 0
+/* 
+ * Ensure all cores are in a consistent state before completing initialisation
+ * Assume that master is always core 0.
+ */
 void masterSync() {
   if (NUM_CORES > 1) {
-    /*unsigned v;
+    unsigned v;
     write_sswitch_reg(0, SWITCH_SCRATCH_REG, 1);
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
     do {
       read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
-    } while (v != NUM_CORES);*/
-    unsigned v;
+    } while (v != NUM_CORES);
+    /*unsigned v;
     writeSSwitchReg(0, SWITCH_SCRATCH_REG, 1);
     readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
     do {
       readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
-    } while (v != NUM_CORES);
+    } while (v != NUM_CORES);*/
   }
 }
 
-// Ensure all cores are in a consistent state before completing initialisation
+/*
+ * Ensure all cores are in a consistent state before completing initialisation.
+ */
 void slaveSync() {
   unsigned coreId = GET_GLOBAL_CORE_ID(spawn_master);
   unsigned v;
-  /*read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
+  read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   do {
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   } while (v != coreId);
-  write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);*/
-  readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
+  write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
+  /*readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
   do {
     readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
   } while (v != coreId);
-  writeSSwitchReg(0, SWITCH_SCRATCH_REG, coreId+1);
+  writeSSwitchReg(0, SWITCH_SCRATCH_REG, coreId+1);*/
 }
 
-// Return the processor id by allocating a channel end, extracting the node and
-// core id, then deallocating it again.
+/*
+ * Return the processor id by allocating a channel end, extracting the node and
+ * core id, then deallocating it again.
+ */
 int _procId() {
   unsigned c, v;
   asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
@@ -188,7 +200,9 @@ unsigned claimStackSlot(int threadId) {
 void releaseStackSlot(int threadId) {
 }
 
-// Spawn a new asynchronous thread
+/*
+ * Spawn a new asynchronous thread with 4 specified arguments.
+ */
 void newAsyncThread(unsigned pc, unsigned arg1, 
     unsigned arg2, unsigned arg3, unsigned arg4) {
   

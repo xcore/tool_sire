@@ -54,9 +54,9 @@ xs1_feature_tests = [
 
   Test('thread_basic_2'),
   Test('thread_basic_4'),
-  Test('thread_basic_8'),
+  Test('thread_basic_7'),
   Test('thread_repeat_2'),
-  Test('thread_repeat_8'),
+  Test('thread_repeat_7'),
   Test('thread_arguments_2'),
   Test('thread_arguments_4'),
   Test('thread_arguments_7'),

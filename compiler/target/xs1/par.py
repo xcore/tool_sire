@@ -8,6 +8,8 @@ import definitions as defs
 from typedefs import *
 import ast
 
+# TODO: tidy up commented lines
+
 def init_slaves(t, sync_label, num_slaves):
   """ 
   Generate the initialisation for a slave thread, in the body of a for
@@ -21,8 +23,6 @@ def init_slaves(t, sync_label, num_slaves):
   t.blocker.begin()
   
   # Get a synchronised thread
-  #t.out('unsigned _t')
-  #t.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
   t.out('unsigned _t = GETR_SYNC_THREAD(_sync);')
 
   # Set lr = slave_exit_label
@@ -93,10 +93,10 @@ def thread_set(t, index, pcall, slave_exit_labels):
   ext = n_ref_singles + n_stack_args
   
   # Load sp address and extend it if we need space for refd vars
-  t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE){};'
+  if ext > 0:
+    t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE){};'
       .format(index, tid, '' if ext == 0 else 
         ' - ({}*{})'.format(ext, defs.BYTES_PER_WORD)))
-  if ext > 0:
     t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
   # Write the value of referenced variables to the stack
