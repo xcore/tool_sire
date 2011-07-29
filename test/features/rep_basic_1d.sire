@@ -1,4 +1,4 @@
-val X := 3;
+val X := NUM_CORES;
 
 proc main() is
   var i;

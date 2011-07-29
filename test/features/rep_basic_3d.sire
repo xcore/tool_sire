@@ -1,6 +1,6 @@
-val X := 3;
-val Y := 3;
-val Z := 3;
+val X := NUM_CORES/4;
+val Y := 2;
+val Z := 2;
 
 proc main() is
   var i;
