@@ -1,0 +1,19 @@
+val N := 2;
+
+proc node(chanend w, chanend e, chanend n, chanend s) is
+  skip
+
+proc main() is
+  var i;
+  var j;
+  var v;
+  var w;
+  chan x[N*N];
+  chan y[N*N];
+  par i in [0 for N], j in [0 for N] do
+    node(
+    x[(i*N)+j], 
+    x[(i*N)+(j+1)], 
+    y[(i*N)+j], 
+    y[(i*N)+(j+1)])
+  

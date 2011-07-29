@@ -1,6 +1,0 @@
-val D := NUM_CORES >> ;
-
-proc main() is
-  var i;
-{ par i in [0 for N] do
-}

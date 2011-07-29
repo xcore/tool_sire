@@ -32,10 +32,9 @@
 
 // Jump table indicies
 #define JUMPI_CREATE_REMOTE      0
-#define JUMPI_INIT_THREAD        1
-#define JUMPI_PROC_ID            2
-#define JUMPI_CONNECT_MASTER     3
-#define JUMPI_CONNECT_SLAVE      4
+#define JUMPI_PROC_ID            1
+#define JUMPI_CONNECT_MASTER     2
+#define JUMPI_CONNECT_SLAVE      3
 
 // Index offset of program jump indicies
 #define JUMP_INDEX_OFFSET        4 

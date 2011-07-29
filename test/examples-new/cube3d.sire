@@ -1,0 +1,15 @@
+val D := 3;
+val N := 1 << D;
+
+proc node(chanend c1, chanend c2, chanend c3) is
+  skip
+
+proc main() is
+  var i;
+  chan c[N*D];
+{ par i in [0 for N] do
+    node(
+      c[i^(1<<0)+0], 
+      c[i^(1<<1)+1], 
+      c[i^(1<<2)+2])
+}

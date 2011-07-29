@@ -65,7 +65,6 @@ builtins = {
 # Runtime functions available to programs. Ordering matches jump and size tables.
 runtime_functions = [ 
   '_createProcess',
-  '_setupThread',
   '_procId',
   '_connectMaster',
   '_connectSlave',

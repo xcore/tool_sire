@@ -23,18 +23,16 @@ def init_slaves(t, sync_label, num_slaves):
   t.blocker.begin()
   
   # Get a synchronised thread
-  t.out('unsigned _t = GETR_SYNC_THREAD(_sync);')
+  t.out('_threads[_i] = GETR_SYNC_THREAD(_sync);')
 
   # Set lr = slave_exit_label
   t.asm('ldap r11, '+sync_label+' ; init t[%0]:lr, r11',
-      inops=['_t'], clobber=['r11'])
+      inops=['_threads[_i]'], clobber=['r11'])
 
   # Setup dp, cp
   #t.asm('init t[%0]:dp, %1', inops=['_t', '_dp'])
   #t.asm('init t[%0]:cp, %1', inops=['_t', '_cp'])
 
-  # Copy thread id to the array
-  t.out('_threads[_i] = _t;')
   t.blocker.end()
   
 def num_ref_singles(params):
@@ -142,12 +140,12 @@ def thread_unset(t, index, pcall):
       ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       j = j + 1
   
-  # Move extended sp back
-  tid = '_threads[{}]'.format(index)
-  if j > 0:
-    t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE);'
-        .format(index, tid)) 
-    t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
+  # TODO: Move extended sp back
+  #tid = '_threads[{}]'.format(index)
+  #if j > 0:
+  #  t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE);'
+  #      .format(index, tid)) 
+  #  t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
 def gen_par(t, node):
   """

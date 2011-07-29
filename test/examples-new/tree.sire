@@ -1,6 +1,5 @@
 val D := 4;      % Tree depth
 val N := 1 << D; % Number of leaves
-val LEN := 100;  % Number of data items at each leaf.
 
 proc leaf(chanend c) is
   skip
