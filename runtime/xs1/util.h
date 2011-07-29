@@ -93,7 +93,7 @@ unsigned GETR_SYNC() {
 
 // Get an asynchronous thread
 static inline
-unsigned GET_ASYNC_THREAD() {
+unsigned GETR_ASYNC_THREAD() {
   unsigned t;
   asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
   return t;
@@ -101,7 +101,7 @@ unsigned GET_ASYNC_THREAD() {
 
 // Get a synchronous thread
 static inline
-unsigned GET_SYNC_THREAD(unsigned sync) {
+unsigned GETR_SYNC_THREAD(unsigned sync) {
   unsigned t;
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   return t;
@@ -197,6 +197,12 @@ void DISABLE_INTERRUPTS()
 static inline
 void ENABLE_INTERRUPTS()
 { asm("setsr " S(SR_IEBLE));
+}
+
+// Raise a runtime exception
+static inline
+void EXCEPTION(int e) {
+  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 
 void readSSwitchReg(int coreId, int reg, unsigned &data);

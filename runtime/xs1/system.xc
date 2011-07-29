@@ -30,7 +30,26 @@ void resetChanends() {
   }
 }
 
-// Initialse the system: executed once by thread 0, for all threads
+/*
+ * Initialise all threads with: dp, cp, sp, zero-valued registers and TRAP
+ * handler (kep).
+ */
+void initThreads() {
+  unsigned sync = GETR_SYNC();
+  unsigned t = GETR_SYNC_THREAD(sync);
+  while (t) {
+    unsigned tsp = _sp - ((t>>8)&0xFF) * THREAD_STACK_SPACE;
+    asm("init t[%0]:sp, %1"::"r"(t), "r"(tsp));
+    asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
+    asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
+    asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
+    t = GETR_SYNC_THREAD(sync);
+  }
+  asm("msync res[%0]" :: "r"(sync));
+  asm("mjoin res[%0]" :: "r"(sync));
+  FREER(sync);
+}
+
 #pragma unsafe arrays 
 void initChanends() {
   
@@ -139,8 +158,8 @@ int getAvailThreads() {
 unsigned claimAsyncThread() {
   unsigned t;
   ACQUIRE_LOCK(_numthreads_lock);
-  t = GET_ASYNC_THREAD();
-  if(t == 0) exception(et_INSUFFICIENT_THREADS);
+  t = GETR_ASYNC_THREAD();
+  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   _numthreads = _numthreads - 1;
   RELEASE_LOCK(_numthreads_lock);
   return t;
@@ -149,8 +168,8 @@ unsigned claimAsyncThread() {
 unsigned claimSyncThread(unsigned sync) {
   unsigned t;
   ACQUIRE_LOCK(_numthreads_lock);
-  t = GET_SYNC_THREAD(sync);
-  if(t == 0) exception(et_INSUFFICIENT_THREADS);
+  t = GETR_SYNC_THREAD(sync);
+  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   _numthreads = _numthreads - 1;
   RELEASE_LOCK(_numthreads_lock);
   return t;
@@ -206,10 +225,5 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 
   // Start the thread
   asm("start t[%0]" :: "r"(t));
-}
-
-// Raise a runtime exception
-void exception(int e) {
-  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 

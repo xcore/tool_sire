@@ -33,7 +33,7 @@ void runThread(unsigned senderId) {
   unsigned threadId = GET_THREAD_ID();
   
   // Initialis1e this (new) thread
-  if(threadId != 0) _initThread();
+  //if(threadId != 0) _initThread();
 
   // Initialise connection with sender
   initSourceConnection(thread_chans[threadId], senderId);

@@ -10,13 +10,13 @@
   .extern initMemory
   .extern initPointers
   .extern resetChanends
+  .extern initThreads
   .extern initChanends
   .extern initCounters
   .extern initPorts
   .extern initConnections
   .extern masterSync
   .extern initMaster
-  .extern _initThread
   .extern busyHostHandler
   .extern busyConnHandler
   .extern controlIdle
@@ -47,12 +47,12 @@ _master:
   bl initMemory
   bl initPointers
   bl resetChanends
+  bl initThreads
   bl initChanends
   bl initCounters
   bl initPorts
   bl initConnections
   bl __alloc_libc_hwlock
-  bl _initThread
   bl masterSync
  
   // Initialise and run master program

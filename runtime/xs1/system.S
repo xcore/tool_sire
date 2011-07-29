@@ -6,7 +6,6 @@
 #include <xs1.h>
 #include "system/xs1/definitions.h"
 
-  .extern exception
   .extern host
   .extern setHost
   .extern spawnHost
@@ -27,9 +26,10 @@
   .globl busyHostHandler
   .globl idleConnHandler
   .globl busyConnHandler
-  .globl touchRegs
   .globl initPointers
-  .globl _initThread, "f{0}(0)"
+  .globl touchRegs
+  .globl setupTraps
+  .globl initThread
 
   /* Set heap labels */
   .globl _bheap
@@ -90,7 +90,8 @@ idleHostHandler:
   /* NOTE: the control thread (0) is reserved so we cannot run any workers on
    * it. Raise an exception. */
   ldc r0, et_INSUFFICIENT_THREADS
-  bl exception
+  ldc r11, 0
+  ecallf r11
   
   /* Set the host connection up with this thread */
   bl setHost
@@ -133,7 +134,8 @@ idleHostHandler:
   /* We shouldn't be able to reach here as the busy handler will be invoked
      when all threads are busy. */
   ldc r0, et_INSUFFICIENT_THREADS
-  bl exception
+  ldc r11, 0
+  ecallf r11
 
 .L.idle.exit:
   ldw spc, sp[1]
@@ -176,7 +178,8 @@ busyHostHandler:
    
   /* If we get to this point: all threads are busy! */
   ldc r0, et_INSUFFICIENT_THREADS
-  bl exception
+  ldc r11, 0
+  ecallf r11
 
   ldw spc, sp[1]
   ldw ssr, sp[2]
@@ -303,26 +306,6 @@ exceptionHandler:
 */
 
 /*============================================================================
- * Touch registers
- *==========================================================================*/
-  .cc_top touchRegs.function, touchRegs
-  .align 2
-touchRegs:
-  ldc r0,  0
-  ldc r1,  0
-  ldc r2,  0
-  ldc r3,  0
-  ldc r4,  0
-  ldc r5,  0
-  ldc r6,  0
-  ldc r7,  0
-  ldc r8,  0
-  ldc r9,  0
-  ldc r10, 0
-  retsp 0
-  .cc_bottom touchRegs.function
-
-/*============================================================================
  * Init pointers: cp, dp, ksp, sp
  * Written in assembly to ensure no use is made of the stack 
  * before sp has been properly set
@@ -362,26 +345,47 @@ initPointers:
   .cc_bottom initPointers.function
 
 /*============================================================================
+ * Touch registers
+ *==========================================================================*/
+  .cc_top touchRegs.function, touchRegs
+  .align 2
+touchRegs:
+  ldc r0,  0
+  ldc r1,  0
+  ldc r2,  0
+  ldc r3,  0
+  ldc r4,  0
+  ldc r5,  0
+  ldc r6,  0
+  ldc r7,  0
+  ldc r8,  0
+  ldc r9,  0
+  ldc r10, 0
+  retsp 0
+  .cc_bottom touchRegs.function
+
+/*============================================================================
+ * Initialise kep for exceptions
+ *==========================================================================*/
+  .cc_top setupTraps.function, setupTraps
+  .align 2
+setupTraps:
+  ldap r11, exceptionHandler
+  set kep, r11
+  retsp 0
+  .cc_bottom setupTraps.function
+
+/*============================================================================
  * Init thread. Written in assembly to ensure registers are preserved 
  * properly. Gets called per thread both with asynchronous thread creation by 
  * hosting mechanism and by synchronous thread creation with fork-join 
  * concurrent composition.
  *==========================================================================*/
-  .cc_top _initThread.function, _initThread
+  .cc_top initThread.function, initThread
   .align 2
-_initThread:
-   
-  entsp 2
-  stw r11, sp[0]
-  stw r10, sp[1]
-
-  /* Initialise kep for exceptions */
-  ldap r11, exceptionHandler
-  set kep, r11
-
-  ldw r10, sp[1]
-  ldw r11, sp[0]
-  retsp 2
-  
-  .cc_bottom _initThread.function
+initThread:
+  bl touchRegs
+  bl setupTraps
+  ssync
+  .cc_bottom initThread.function
 

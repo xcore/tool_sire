@@ -429,7 +429,6 @@ def build_jumptab(sig, buf, v):
     
     # Runtime entries
     buf.write('\t.word '+defs.LABEL_CREATE_PROCESS+'\n')
-    buf.write('\t.word '+defs.LABEL_INIT_THREAD+'\n')
     buf.write('\t.word '+defs.LABEL_PROC_ID+'\n')
     buf.write('\t.word '+defs.LABEL_CONNECT_MASTER+'\n')
     buf.write('\t.word '+defs.LABEL_CONNECT_SLAVE+'\n')

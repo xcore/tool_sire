@@ -6,7 +6,6 @@
 #include "system/xs1/definitions.h"
    
   .extern _createProcess
-  .extern _initThread
   .extern _procId
   .extern _connectMaster
   .extern _connectSlave
@@ -22,7 +21,6 @@
 
 _jumptab:
   .word _createProcess
-  .word _initThread
   .word _procId
   .word _connectMaster
   .word _connectSlave

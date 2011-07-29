@@ -52,6 +52,7 @@ class InsertOns(NodeWalker):
     """
     For replicated parallel statements, compute the offset as the product of
     index count values.
+    TODO: but this will also break thread tests
     """
     offset = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
     self.stmt(node.stmt, d)

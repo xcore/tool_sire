@@ -1,3 +1,5 @@
+val N := NUM_CORES-1;
+
 proc work() is skip
 
 proc forwards(val n) is

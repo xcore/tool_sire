@@ -81,10 +81,10 @@ xs1_feature_tests = [
   Test('rep_basic_2d',   [4, 16, 32, 64]),
   Test('rep_basic_3d',   [4, 16, 32, 64]),
 
-  Test('rep_connect_basic_a',      [4, 16]),
-  Test('rep_connect_basic_b',      [4, 16]),
-  Test('rep_connect_reciprocal_a', [4, 16]),
-  Test('rep_connect_reciprocal_b', [4, 16]),
+  Test('connect_basic_a',      [4, 16]),
+  Test('connect_basic_b',      [4, 16]),
+  Test('connect_reciprocal_a', [4, 16]),
+  Test('connect_reciprocal_b', [4, 16]),
   ]
 
 def run_test(self, name, path, num_cores, args=[]):

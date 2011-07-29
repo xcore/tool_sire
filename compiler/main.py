@@ -212,7 +212,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
 
   # 1. Move processes
   vmsg(v, "Inserting on statements")
-  InsertOns().walk_program(ast)
+  #InsertOns().walk_program(ast)
 
   # 2. Label processes
   vmsg(v, "Labelling processes")

@@ -9,7 +9,7 @@
 #include "system/xs1/definitions.h"
 
 // Builtins
-extern void _initThread();
+//extern void _initThread();
 int _procId();
 
 // Initialisation
@@ -32,9 +32,6 @@ unsigned claimSyncThread(unsigned);
 void     releaseThread();
 unsigned claimStackSlot(int);
 void     releaseStackSlot(int);
-
-// Exceptions
-void exception(int);
 
 #endif
 

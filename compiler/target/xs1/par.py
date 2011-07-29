@@ -21,16 +21,17 @@ def init_slaves(t, sync_label, num_slaves):
   t.blocker.begin()
   
   # Get a synchronised thread
-  t.out('unsigned _t;')
-  t.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
+  #t.out('unsigned _t')
+  #t.asm('getst %0, res[%1]', outop='_t', inops=['_sync'])
+  t.out('unsigned _t = GETR_SYNC_THREAD(_sync);')
 
   # Set lr = slave_exit_label
   t.asm('ldap r11, '+sync_label+' ; init t[%0]:lr, r11',
       inops=['_t'], clobber=['r11'])
 
   # Setup dp, cp
-  t.asm('init t[%0]:dp, %1', inops=['_t', '_dp'])
-  t.asm('init t[%0]:cp, %1', inops=['_t', '_cp'])
+  #t.asm('init t[%0]:dp, %1', inops=['_t', '_dp'])
+  #t.asm('init t[%0]:cp, %1', inops=['_t', '_cp'])
 
   # Copy thread id to the array
   t.out('_threads[_i] = _t;')
@@ -91,11 +92,12 @@ def thread_set(t, index, pcall, slave_exit_labels):
   n_stack_args = num_stack_args(pcall)
   ext = n_ref_singles + n_stack_args
   
-  # Move sp away: sp -= THREAD_STACK_SPACE and save it
+  # Load sp address and extend it if we need space for refd vars
   t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE){};'
       .format(index, tid, '' if ext == 0 else 
         ' - ({}*{})'.format(ext, defs.BYTES_PER_WORD)))
-  t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
+  if ext > 0:
+    t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
   # Write the value of referenced variables to the stack
   ref_addr_exprs = []
@@ -132,11 +134,20 @@ def thread_unset(t, index, pcall):
   t.comment('Master unset slave {}'.format(index))
   params = t.sig.get_params(pcall.name)
   n_stack_args = num_stack_args(pcall)
+
+  # Load referenced variable values back
   j = 0
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     if y.symbol.type == T_REF_SINGLE:
       ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       j = j + 1
+  
+  # Move extended sp back
+  tid = '_threads[{}]'.format(index)
+  if j > 0:
+    t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE);'
+        .format(index, tid)) 
+    t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
 def gen_par(t, node):
   """
@@ -150,26 +161,33 @@ def gen_par(t, node):
 
   # Declare sync variable and array to store thread identifiers
   t.out('unsigned _sync;')
-  t.out('unsigned _spbase;')
+  #t.out('unsigned _spbase;')
   t.out('unsigned _threads[{}];'.format(num_slaves))
   t.out('unsigned _sps[{}];'.format(num_slaves))
   t.out('unsigned _dp;')
   t.out('unsigned _cp;')
 
+  # Check there are enough available threads
+  t.out('if ({} > _numthreads) EXCEPTION(et_INSUFFICIENT_THREADS);'
+      .format(num_slaves))
+  
+  # Claim thread count
+  #t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+  t.out('ACQUIRE_LOCK(_numthreads_lock);')
+  t.out('_numthreads = _numthreads - {};'.format(num_slaves))
+  t.out('RELEASE_LOCK(_numthreads_lock);')
+  #t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
+
   # Get a thread synchroniser
   t.comment('Get a sync, sp base, _spLock and claim num threads')
-  t.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
+  #t.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
+  t.out('_sync = GETR_SYNC();')
    
   # Load the address of sp
-  t.asm('ldaw %0, sp[0x0]', outop='_spbase')
-  t.asm('ldaw %0, dp[0x0]', outop='_dp', clobber=['r11'])
-  t.asm('ldaw r11, cp[0x0] ; mov %0, r11',
-      outop='_cp', clobber=['r11'])
-
-  # Claim thread count
-  t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
-  t.out('_numthreads = _numthreads - {};'.format(num_slaves))
-  t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
+  #t.asm('ldaw %0, sp[0x0]', outop='_spbase')
+  #t.asm('ldaw %0, dp[0x0]', outop='_dp', clobber=['r11'])
+  #t.asm('ldaw r11, cp[0x0] ; mov %0, r11',
+  #    outop='_cp', clobber=['r11'])
 
   # Slave initialisation
   init_slaves(t, sync_label, num_slaves)
@@ -203,12 +221,15 @@ def gen_par(t, node):
   t.asm(exit_label+':')
   
   # Free synchroniser resource
-  t.asm('freer res[%0]', inops=['_sync'])
+  #t.asm('freer res[%0]', inops=['_sync'])
+  t.out('FREER(_sync);')
 
   # Release thread count
-  t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+  #t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
+  t.out('ACQUIRE_LOCK(_numthreads_lock);')
   t.out('_numthreads = _numthreads + {};'.format(num_slaves))
-  t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
+  t.out('RELEASE_LOCK(_numthreads_lock);')
+  #t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
   t.blocker.end()
 

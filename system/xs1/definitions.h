@@ -26,7 +26,6 @@
 
 // Labels for jump table builtins
 #define LABEL_CREATE_PROCESS     "_createProcess"
-#define LABEL_INIT_THREAD        "_initThread"
 #define LABEL_PROC_ID            "_procId"
 #define LABEL_CONNECT_MASTER     "_connectMaster"
 #define LABEL_CONNECT_SLAVE      "_connectSlave"
@@ -39,7 +38,7 @@
 #define JUMPI_CONNECT_SLAVE      4
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        5 
+#define JUMP_INDEX_OFFSET        4 
 
 // Hardware parameters
 #define RAM_BASE                 0x10000
