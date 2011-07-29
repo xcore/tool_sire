@@ -5,8 +5,6 @@
 
 #include "system/xs1/definitions.h"
 
-  .globl _numthreads,      "ui"
-  .globl _numthreads_lock, "ui"
   .globl _sp,              "ui"
 
   .globl spawn_master, "ui"
@@ -22,14 +20,6 @@
 /*
  * Global data
  */
-
-_numthreads_lock:
-  .space BYTES_PER_WORD
-  .set _numthreads_lock.globound, BYTES_PER_WORD
-
-_numthreads:
-  .space BYTES_PER_WORD
-  .set _numthreads.globound, BYTES_PER_WORD
 
 _sp:
   .space BYTES_PER_WORD

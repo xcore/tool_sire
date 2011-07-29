@@ -15,7 +15,6 @@ int _procId();
 // Initialisation
 void resetChanends();
 void initChanends();
-void initCounters();
 void initPorts();
 void initMemory();
 

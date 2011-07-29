@@ -74,15 +74,6 @@ void initChanends() {
 }
 
 /*
- * Initialise system resource counter: get a lock for thread allocation and set
- * available threads.
- */
-void initCounters() {
-  _numthreads_lock = GETR_LOCK();
-  _numthreads = MAX_THREADS; 
-}
-
-/*
  * Initialise ports: setup XMP-64 led port.
  */
 void initPorts() {
@@ -159,47 +150,6 @@ int _procId() {
   return v;
 }
 
-int getAvailThreads() {
-  unsigned num;
-  ACQUIRE_LOCK(_numthreads_lock);
-  num = _numthreads;
-  RELEASE_LOCK(_numthreads_lock);
-  return num;
-}
-
-unsigned claimAsyncThread() {
-  unsigned t;
-  ACQUIRE_LOCK(_numthreads_lock);
-  t = GETR_ASYNC_THREAD();
-  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
-  _numthreads = _numthreads - 1;
-  RELEASE_LOCK(_numthreads_lock);
-  return t;
-}
-
-unsigned claimSyncThread(unsigned sync) {
-  unsigned t;
-  ACQUIRE_LOCK(_numthreads_lock);
-  t = GETR_SYNC_THREAD(sync);
-  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
-  _numthreads = _numthreads - 1;
-  RELEASE_LOCK(_numthreads_lock);
-  return t;
-}
-
-void releaseThread() {
-  ACQUIRE_LOCK(_numthreads_lock);
-  _numthreads = _numthreads + 1;
-  RELEASE_LOCK(_numthreads_lock);
-}
-
-unsigned claimStackSlot(int threadId) {
-  return _sp - (threadId * THREAD_STACK_SPACE);
-}
-
-void releaseStackSlot(int threadId) {
-}
-
 /*
  * Spawn a new asynchronous thread with 4 specified arguments.
  */
@@ -207,17 +157,18 @@ void newAsyncThread(unsigned pc, unsigned arg1,
     unsigned arg2, unsigned arg3, unsigned arg4) {
   
   // Claim a thread
-  unsigned t = claimAsyncThread();
+  unsigned t = GETR_ASYNC_THREAD();
+  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   
   // Claim a stack slot
-  unsigned sp = claimStackSlot(THREAD_ID(t));
+  //unsigned sp = THREAD_ID(t);
   
   // Initialise cp, dp, sp, pc, lr
-  asm("ldaw r11, cp[0] "
-    "; init t[%0]:cp, r11" ::"r"(t) : "r11");
-  asm("ldaw r11, dp[0] "
-    "; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
+  //asm("ldaw r11, cp[0] "
+  //  "; init t[%0]:cp, r11" ::"r"(t) : "r11");
+  // asm("ldaw r11, dp[0] "
+  //  "; init t[%0]:dp, r11" :: "r"(t) : "r11");
+  //asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
   asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
   asm("ldap r11, workerYeild" 
     "; init t[%0]:lr, r11" :: "r"(t) : "r11");

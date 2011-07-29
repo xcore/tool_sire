@@ -35,20 +35,16 @@ void initMain() {
   unsigned t;
   unsigned sp;
   
-  // Load the address of '_main'
-  asm("ldap r11, " LABEL_MAIN "; mov %0, r11" : "=r"(pc) :: "r11");
-  
   // Claim a thread
-  t = claimAsyncThread();
-  
-  // Claim a stack slot
-  sp = claimStackSlot(THREAD_ID(t));
+  t = GETR_ASYNC_THREAD();
+  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   
   // Initialise cp, dp, sp, pc, lr
-  asm("ldaw r11, cp[0] ; init t[%0]:cp, r11" :: "r"(t) : "r11");
-  asm("ldaw r11, dp[0] ; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
-  asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
+  //asm("ldaw r11, cp[0] ; init t[%0]:cp, r11" :: "r"(t) : "r11");
+  //asm("ldaw r11, dp[0] ; init t[%0]:dp, r11" :: "r"(t) : "r11");
+  //asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
+  // Load the address of '_main'
+  asm("ldap r11, " LABEL_MAIN "; init t[%0]:pc, r11" :: "r"(t) : "r11");
   asm("ldap r11, masterYeild ; init t[%0]:lr, r11" :: "r"(t) : "r11");
   
   // Touch GPRs

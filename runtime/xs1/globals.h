@@ -18,8 +18,6 @@ extern void _main(void);
 /* These variables are declared in globals.c. */
 
 // Global data
-extern unsigned _numthreads;
-extern unsigned _numthreads_lock;
 extern unsigned _sp;
 
 // Processor allocation

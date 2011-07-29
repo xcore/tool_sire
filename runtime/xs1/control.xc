@@ -31,7 +31,6 @@ void controlIdle() {
 
 // Yeild execution of the master thread (of a slave node), and enter idle state.
 void controlYeild() {
-  releaseThread();
   controlIdle();
 }
 

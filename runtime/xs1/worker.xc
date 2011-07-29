@@ -9,8 +9,6 @@
 
 // Yeild execution of a slave thread (only 1-7)
 void workerYeild() {
-  releaseStackSlot(GET_THREAD_ID());
-  releaseThread();
   asm("freet");
 }
 

@@ -12,7 +12,6 @@
   .extern runThread
   .extern controlIdle
   .extern controlYeild
-  .extern getAvailThreads
   .extern releaseThread
   .extern raiseException
   .extern connHandler
@@ -70,16 +69,8 @@ idleHostHandler:
   stw sed, sp[3]
   stw lr,  sp[4]
 
-  bl getAvailThreads
-  eq  r11, r0, 1 
-  bt  r11, .L.idle.run   /* if _numthreads == 1 then run */
-  eq  r11, r0, 0
-  bt  r11, .L.idle.excep /* if _numthreads == 0 then exception
-                            else spawn */
-
 /* Spawn a new host thread and return to being idle (explicitly as this was
    an event - not saving the pc) */
-.L.idle.spawn:
   bl spawnHost
   ldap r11, controlIdle
   stw r11, sp[1] // spc = &idle

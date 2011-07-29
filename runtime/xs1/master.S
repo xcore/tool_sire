@@ -12,7 +12,6 @@
   .extern resetChanends
   .extern initThreads
   .extern initChanends
-  .extern initCounters
   .extern initPorts
   .extern initConnections
   .extern masterSync
@@ -42,21 +41,19 @@ main:
 _start:
 _master:
   
-  // Initialisation
   bl touchRegs
   bl initMemory
   bl initPointers
+  bl setupTraps
   bl resetChanends
   bl initThreads
   bl initChanends
-  bl initCounters
   bl initPorts
   bl initConnections
   bl __alloc_libc_hwlock
-  bl masterSync
- 
-  // Initialise and run master program
   bl setInterrupts
+  bl masterSync
+  
   bl initMain
   bu controlIdle
 

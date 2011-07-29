@@ -8,10 +8,10 @@
   .extern touchRegs
   .extern initMemory
   .extern initPointers
+  .extern setupTraps
   .extern resetChanends
   .extern initThreads
   .extern initChanends
-  .extern initCounters
   .extern initPorts
   .extern initConnections
   .extern slaveSync
@@ -37,20 +37,18 @@
 _start:
 _slave:
 
-  // Initialisation
   bl touchRegs
   bl initMemory
   bl initPointers
+  bl setupTraps
   bl resetChanends
   bl initThreads
   bl initChanends
-  bl initCounters
   bl initPorts
   bl initConnections
   bl __alloc_libc_hwlock
   bl slaveSync
   
-  // Idle 
   bu controlIdle
 
   .cc_bottom _slave.function

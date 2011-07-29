@@ -24,6 +24,7 @@ def init_slaves(t, sync_label, num_slaves):
   
   # Get a synchronised thread
   t.out('_threads[_i] = GETR_SYNC_THREAD(_sync);')
+  t.out('if (_threads[_i] == 0) EXCEPTION(et_INSUFFICIENT_THREADS);')
 
   # Set lr = slave_exit_label
   t.asm('ldap r11, '+sync_label+' ; init t[%0]:lr, r11',
@@ -166,20 +167,21 @@ def gen_par(t, node):
   t.out('unsigned _cp;')
 
   # Check there are enough available threads
-  t.out('if ({} > _numthreads) EXCEPTION(et_INSUFFICIENT_THREADS);'
-      .format(num_slaves))
+  #t.out('if ({} > _numthreads) EXCEPTION(et_INSUFFICIENT_THREADS);'
+  #    .format(num_slaves))
   
   # Claim thread count
   #t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
-  t.out('ACQUIRE_LOCK(_numthreads_lock);')
-  t.out('_numthreads = _numthreads - {};'.format(num_slaves))
-  t.out('RELEASE_LOCK(_numthreads_lock);')
+  #t.out('ACQUIRE_LOCK(_numthreads_lock);')
+  #t.out('_numthreads = _numthreads - {};'.format(num_slaves))
+  #t.out('RELEASE_LOCK(_numthreads_lock);')
   #t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
   # Get a thread synchroniser
   t.comment('Get a sync, sp base, _spLock and claim num threads')
   #t.asm('getr %0, " S(XS1_RES_TYPE_SYNC) "', outop='_sync');
   t.out('_sync = GETR_SYNC();')
+  t.out('if (_sync == 0) EXCEPTION(et_INSUFFICIENT_SYNCS);')
    
   # Load the address of sp
   #t.asm('ldaw %0, sp[0x0]', outop='_spbase')
@@ -224,9 +226,9 @@ def gen_par(t, node):
 
   # Release thread count
   #t.asm('in r11, res[%0]', inops=['_numthreads_lock'], clobber=['r11'])
-  t.out('ACQUIRE_LOCK(_numthreads_lock);')
-  t.out('_numthreads = _numthreads + {};'.format(num_slaves))
-  t.out('RELEASE_LOCK(_numthreads_lock);')
+  #t.out('ACQUIRE_LOCK(_numthreads_lock);')
+  #t.out('_numthreads = _numthreads + {};'.format(num_slaves))
+  #t.out('RELEASE_LOCK(_numthreads_lock);')
   #t.asm('out res[%0], r11', inops=['_numthreads_lock'], clobber=['r11'])
 
   t.blocker.end()
