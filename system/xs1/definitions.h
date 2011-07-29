@@ -7,13 +7,10 @@
 #define XS1_DEFINITIONS_H
 
 // Labels
-#define LABEL_EXCEP_HANDLER      "exceptionHandler"
-#define LABEL_IDLE_HOST_HANDLER  "idleHostHandler"
-#define LABEL_BUSY_HOST_HANDLER  "busyHostHandler"
-#define LABEL_IDLE_CONN_HANDLER  "idleConnHandler"
-#define LABEL_BUSY_CONN_HANDLER  "busyConnHandler"
+#define LABEL_EXEP_HANDLER       "exepHandler"
+#define LABEL_HOST_HANDLER       "hostHandler"
+#define LABEL_CONN_HANDLER       "connHandler"
 #define LABEL_RUN_THREAD         "runThread"
-#define LABEL_WAIT_HANDLER       "waitHandler"
 #define LABEL_SLAVE_YEILD        "slaveYeild"
 #define LABEL_CHAN_ARRAY         "progChan"
 #define LABEL_MAIN               "_main"
@@ -22,7 +19,6 @@
 #define LABEL_START              "_start"
 #define LABEL_JUMP_TABLE         "_jumptab"
 #define LABEL_SIZE_TABLE         "_sizetab"
-#define LABEL_FRAME_TABLE        "_frametab"
 
 // Labels for jump table builtins
 #define LABEL_CREATE_PROCESS     "_createProcess"

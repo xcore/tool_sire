@@ -20,9 +20,9 @@ void controlIdle() {
   asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(conn_master));
   
   // Set event vector to idle handler
-  asm("ldap r11, " LABEL_IDLE_HOST_HANDLER "\n\t"
+  asm("ldap r11, " LABEL_HOST_HANDLER "\n\t"
     "setv res[%0], r11" :: "r"(spawn_master) : "r11");
-  asm("ldap r11, " LABEL_IDLE_CONN_HANDLER "\n\t"
+  asm("ldap r11, " LABEL_CONN_HANDLER "\n\t"
     "setv res[%0], r11" :: "r"(conn_master) : "r11");
 
   // Wait for an event on spawn_master

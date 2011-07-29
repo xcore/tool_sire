@@ -16,8 +16,8 @@
   .extern initConnections
   .extern masterSync
   .extern initMaster
-  .extern busyHostHandler
-  .extern busyConnHandler
+  .extern hostHandler
+  .extern connHandler
   .extern controlIdle
   
   .extern spawn_master
@@ -73,16 +73,16 @@ setInterrupts:
   stw r11, sp[0]
   stw r10, sp[1]
 
-  /* Set spawn_master event vector = &busyHostHandler
+  /* Set spawn_master event vector = &hostHandler
   and Set spawn_master channel mode to interrupts. */
-  ldap r11, busyHostHandler
+  ldap r11, hostHandler
   ldw  r10, dp[spawn_master]
   setv res[r10], r11
   setc res[r10], XS1_SETC_IE_MODE_INTERRUPT
   
-  /* Set conn_master event vector = &busyConnHandler
+  /* Set conn_master event vector = &connHandler
   and Set conn_master channel mode to interrupts. */
-  ldap r11, busyConnHandler
+  ldap r11, connHandler
   ldw  r10, dp[conn_master]
   setv res[r10], r11
   setc res[r10], XS1_SETC_IE_MODE_INTERRUPT

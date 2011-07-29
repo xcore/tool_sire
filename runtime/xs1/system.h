@@ -9,7 +9,6 @@
 #include "system/xs1/definitions.h"
 
 // Builtins
-//extern void _initThread();
 int _procId();
 
 // Initialisation

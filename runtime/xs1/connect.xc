@@ -88,7 +88,7 @@ unsigned _connectSlave(int connId)
  *  3. Receive slave CRI
  *  [queue or complete]
  */
-void connHandler()
+void serveConnReq()
 { unsigned threadCRI = IN(conn_master);
   SETD(conn_master, threadCRI);
 
