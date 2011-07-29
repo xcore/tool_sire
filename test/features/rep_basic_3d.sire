@@ -1,6 +1,6 @@
-val X := 8;
-val Y := 4;
-val Z := 2;
+val X := 3;
+val Y := 3;
+val Z := 3;
 
 proc main() is
   var i;

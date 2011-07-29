@@ -8,7 +8,7 @@ proc main() is
   var c6;
   var c7;
   var c8;
-  var r[8];
+  var r[7];
   var i;
 { c0 := 0
 ; c1 := 1
@@ -25,9 +25,8 @@ proc main() is
     r[3] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
     r[4] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
     r[5] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[6] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[7] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 
+    r[6] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 
   }
-; for i in [0 for 8] do printvalln(r[i])
+; for i in [0 for 7] do printvalln(r[i])
 }
 

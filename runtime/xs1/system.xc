@@ -210,7 +210,6 @@ void newAsyncThread(unsigned pc, unsigned arg1,
 
 // Raise a runtime exception
 void exception(int e) {
-  asm("waiteu");
   asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 

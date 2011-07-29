@@ -1,5 +1,5 @@
-val X := 4;
-val Y := 2;
+val X := 3;
+val Y := 3;
 
 proc main() is
   var i;

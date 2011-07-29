@@ -1,0 +1,9 @@
+proc main() is
+{ skip || 
+  skip || 
+  skip || 
+  skip || 
+  skip || 
+  skip || 
+  skip 
+}

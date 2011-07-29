@@ -12,8 +12,10 @@ from tests import Test
 from tests import generate_test_set
 
 COMPILE  = 'sire'
-SIMULATE = 'xsim'
-SIM_FLAGS = ['--no-warn-registers']
+SIMULATE = 'axe'
+SIM_FLAGS = []
+#SIMULATE = 'xsim'
+#SIM_FLAGS = ['--no-warn-registers']
 
 # Examples =====================================================
 
@@ -39,21 +41,17 @@ xs1_example_tests = [
   
 # Features =====================================================
 
-xs1_feature_general = [
+xs1_feature_tests = [
   Test('for'),
   Test('array_elemref'),
   Test('array_alias'),
   Test('array_slice1'),
   Test('array_slice2'),
-  ]
-
-xs1_feature_builtins = [
+  
   Test('builtin_fixedpoint'),
   Test('builtin_printing'),
   Test('builtin_procid', [16]),
-  ]
 
-xs1_feature_thread = [
   Test('thread_basic_2'),
   Test('thread_basic_4'),
   Test('thread_basic_8'),
@@ -61,10 +59,8 @@ xs1_feature_thread = [
   Test('thread_repeat_8'),
   Test('thread_arguments_2'),
   Test('thread_arguments_4'),
-  Test('thread_arguments_8'),
-  ]
+  Test('thread_arguments_7'),
 
-xs1_feature_on = [
   Test('on_self'),
   Test('on_basic',       [4, 16, 32, 64]),
   Test('on_children',    [4]),
@@ -76,23 +72,20 @@ xs1_feature_on = [
   Test('on_chain_1',     [4, 16, 64]),
   Test('on_chain_2',     [4, 16, 64]),
   Test('on_chain_4',     [4, 16, 64]),
-  Test('on_chain_8',     [4, 16, 64]),
+  Test('on_chain_7',     [4, 16, 64]),
   Test('on_collision_1', [4, 16, 64]),
   Test('on_collision_2', [4, 16, 64]),
   Test('on_collision_4', [4, 16, 64]),
-  ] 
 
-xs1_feature_replicator = [
   Test('rep_basic_1d',   [4, 16, 32, 64]),
   Test('rep_basic_2d',   [4, 16, 32, 64]),
   Test('rep_basic_3d',   [4, 16, 32, 64]),
-  ]
 
-xs1_feature_tests = xs1_feature_general\
-  + xs1_feature_builtins\
-  + xs1_feature_thread\
-  + xs1_feature_on\
-  + xs1_feature_replicator
+  Test('rep_connect_basic_a',      [4, 16]),
+  Test('rep_connect_basic_b',      [4, 16]),
+  Test('rep_connect_reciprocal_a', [4, 16]),
+  Test('rep_connect_reciprocal_b', [4, 16]),
+  ]
 
 def run_test(self, name, path, num_cores, args=[]):
   """

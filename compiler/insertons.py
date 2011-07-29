@@ -11,7 +11,13 @@ import ast
 class InsertOns(NodeWalker):
   """
   Prefix processes with on in parallel composition to distribute them over a
-  system.
+  system. For example the process::
+    
+    { foo() || par i in [0 for N] do bar() || baz() }
+
+  is translated as::
+
+    { foo() || on 1 do par i in [0 for N] do bar() || on N+1 do baz() }
   """
   def __init__(self):
     pass
@@ -30,13 +36,23 @@ class InsertOns(NodeWalker):
     return d + 1
 
   def stmt_par(self, node, d):
+    """
+    For processes in parallel composition, add 'on' prefixes to provide simple
+    compile-time distribution. If any process is already prefixed with an 'on',
+    then do not add any (this is mainly for the test cases).
+    """
     d = self.stmt(node.stmt[0], d)
-    for (i, x) in enumerate(node.stmt[1:]):
-      node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
-      d = self.stmt(x, d)
+    if not any([isinstance(x, ast.StmtOn) for x in node.stmt]):
+      for (i, x) in enumerate(node.stmt[1:]):
+        node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
+        d = self.stmt(x, d)
     return d
 
   def stmt_rep(self, node, d):
+    """
+    For replicated parallel statements, compute the offset as the product of
+    index count values.
+    """
     offset = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
     self.stmt(node.stmt, d)
     return offset

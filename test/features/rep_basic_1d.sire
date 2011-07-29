@@ -1,4 +1,4 @@
-val X := 4;
+val X := 3;
 
 proc main() is
   var i;

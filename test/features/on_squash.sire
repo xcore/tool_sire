@@ -19,6 +19,5 @@ proc main() is
   on L do foo(a, b, c, d) ||
   on R do foo(a, b, c, d) ||
   on R do foo(a, b, c, d) ||
-  on R do foo(a, b, c, d) ||
   on R do foo(a, b, c, d)
 }

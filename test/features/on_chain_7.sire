@@ -4,6 +4,11 @@ proc foo(val i) is
   else skip
 
 proc main() is
-{ foo(0) || foo(0) || foo(0) || foo(0)  
-|| foo(0) || foo(0) || foo(0) || foo(0) }
+{  foo(0) 
+|| foo(0) 
+|| foo(0) 
+|| foo(0)  
+|| foo(0) 
+|| foo(0) 
+|| foo(0) }
 
