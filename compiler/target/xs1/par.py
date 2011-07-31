@@ -142,11 +142,11 @@ def thread_unset(t, index, pcall):
       j = j + 1
   
   # TODO: Move extended sp back
-  #tid = '_threads[{}]'.format(index)
-  #if j > 0:
-  #  t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE);'
-  #      .format(index, tid)) 
-  #  t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
+  tid = '_threads[{}]'.format(index)
+  if j > 0:
+    t.out('_sps[{}] = _sp - ((({}>>8)&0xFF) * THREAD_STACK_SPACE);'
+        .format(index, tid)) 
+    t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
 def gen_par(t, node):
   """
@@ -197,13 +197,14 @@ def gen_par(t, node):
 
   # Master synchronise and run
   t.comment('Master fork')
-  t.asm('msync res[%0]', inops=['_sync'])
+  t.asm('msync res[%0]', inops=['_sync']) # Fork
   t.stmt(node.stmt[0])
-  t.asm('msync res[%0]', inops=['_sync'])
-  
+  t.asm('msync res[%0]', inops=['_sync']) # Stop
+ 
   # Individual slave teardown
   [thread_unset(t, i, x) for (i, x) in enumerate(node.stmt[1:])]
   
+  # Master join
   t.comment('Master join')
   t.asm('mjoin res[%0]', inops=['_sync'])
 
@@ -213,15 +214,14 @@ def gen_par(t, node):
   # Slave synchronise and exit
   t.comment('Slave exit')
   t.asm(sync_label+':')
-  t.asm('ssync')
-  t.asm('ssync')
+  t.asm('ssync') # Stop
+  t.asm('ssync') # Wait for cleanup and join
 
   # Ouput exit label 
   t.comment('Exit, free _sync, restore _sp and _numthreads')
   t.asm(exit_label+':')
   
   # Free synchroniser resource
-  #t.asm('freer res[%0]', inops=['_sync'])
   t.out('FREER(_sync);')
 
   # Release thread count

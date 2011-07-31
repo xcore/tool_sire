@@ -50,8 +50,8 @@ proc p3(val dest, var v) is
 proc main() is
   var v;
 { { on N do p0(0) || p1(N, v) }
-; assert(v = X)
+; assert v = X
 ; { on N do p2(0) || p3(N, v) }
-; assert(v = X)
+; assert v = X
 }
 
