@@ -162,6 +162,11 @@ class BuildCFG(NodeWalker):
     self.init_sets(node, pred, succ)
     return [node]
 
+  def stmt_assert(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    node.use |= self.expr(node.expr)
+    return [node]
+  
   def stmt_return(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     node.use |= self.expr(node.expr)

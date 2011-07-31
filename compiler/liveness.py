@@ -111,6 +111,9 @@ class Liveness(NodeWalker):
   def stmt_connect(self, node):
     return self.compute(node)
 
+  def stmt_assert(self, node):
+    return self.compute(node)
+
   def stmt_return(self, node):
     return self.compute(node)
 

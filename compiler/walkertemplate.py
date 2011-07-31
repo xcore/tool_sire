@@ -89,6 +89,9 @@ class TemplateWalker(NodeWalker):
     self.expr(node.expr)
     self.stmt(node.stmt)
 
+  def stmt_assert(self, node):
+    self.expr(node.expr)
+
   def stmt_return(self, node):
     self.expr(node.expr)
 

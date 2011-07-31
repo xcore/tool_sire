@@ -245,11 +245,12 @@ class InsertConns(NodeWalker):
   def stmt_skip(self, node, tab, chanids, decls):
     pass
 
-  def stmt_return(self, node, tab, chanids, decls):
+  def stmt_connect(self, node, tab, chanids, decls):
     pass
 
-  # Prohibited statements
+  def stmt_assert(self, node, tab, chanids, decls):
+    pass
 
-  def stmt_connect(self, node, tab, chanids, decls):
+  def stmt_return(self, node, tab, chanids, decls):
     pass
 

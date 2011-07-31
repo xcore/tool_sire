@@ -257,12 +257,13 @@ class LabelChans(NodeWalker):
   def stmt_skip(self, node, iters, tab):
     return ChanUseSet()
 
-  def stmt_return(self, node, iters, tab):
+  def stmt_connect(self, node, iters, tab):
     return ChanUseSet()
 
-  # Prohibited
+  def stmt_assert(self, node, iters, tab):
+    return ChanUseSet()
 
-  def stmt_connect(self, node, iters, tab):
+  def stmt_return(self, node, iters, tab):
     return ChanUseSet()
 
 

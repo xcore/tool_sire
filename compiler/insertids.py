@@ -86,4 +86,8 @@ class InsertIds(NodeWalker):
 
   def stmt_connect(self, node):
     return False
+  
+  def stmt_assert(self, node):
+    return False
+  
 

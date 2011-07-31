@@ -45,6 +45,7 @@ class NodeVisitor(object):
   def visit_stmt_if(self, node): pass
   def visit_stmt_on(self, node): pass
   def visit_stmt_pcall(self, node): pass
+  def visit_stmt_assert(self, node): pass
   def visit_stmt_return(self, node): pass
   def visit_stmt_skip(self, node): pass
   def visit_expr(self, node): pass
@@ -536,6 +537,29 @@ class StmtPcall(Stmt):
   def __repr__(self):
     s =  'StmtPcall('
     s += ', '.join('%s' % v for v in [self.name])
+    s += ')'
+    return s
+
+
+class StmtAssert(Stmt):
+  def __init__(self, expr, coord=None):
+    self.expr = expr
+    self.coord = coord
+
+  def children(self):
+    c = []
+    if self.expr is not None: c.append(self.expr)
+    return tuple(c)
+
+  def accept(self, visitor):
+    tag = visitor.visit_stmt_assert(self)
+    visitor.down(tag)
+    for c in self.children():
+      c.accept(visitor)
+    visitor.up(tag)
+
+  def __repr__(self):
+    s =  'StmtAssert('
     s += ')'
     return s
 

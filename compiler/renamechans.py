@@ -127,6 +127,9 @@ class RenameChans(NodeWalker):
   def stmt_connect(self, node, chans):
     pass
 
+  def stmt_assert(self, node, chans):
+    pass
+
   def stmt_return(self, node, chans):
     pass
 

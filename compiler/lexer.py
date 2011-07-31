@@ -58,6 +58,7 @@ class Lexer(object):
   # Reserved tokens
   reserved = {
     'aliases' : 'ALIASES',
+    'assert'  : 'ASSERT',
     'chan'    : 'CHAN',
     'chanend' : 'CHANEND',
     'connect' : 'CONNECT',

@@ -96,6 +96,9 @@ class FreeVars(NodeWalker):
     c |= self.stmt(node.stmt)
     return c
 
+  def stmt_assert(self, node):
+    return self.expr(node.expr)
+  
   def stmt_return(self, node):
     return self.expr(node.expr)
   

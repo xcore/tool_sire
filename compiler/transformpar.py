@@ -269,6 +269,9 @@ class TransformPar(NodeWalker):
   def stmt_connect(self, node, succ):
     return []
 
+  def stmt_assert(self, node, succ):
+    return []
+
   def stmt_return(self, node, succ):
     return []
 

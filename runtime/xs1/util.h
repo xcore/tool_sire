@@ -205,6 +205,12 @@ void EXCEPTION(int e) {
   asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 
+// Assert a value is true (!=0)
+static inline
+void ASSERT(int v) {
+  asm("ecallf %0" :: "r"(v));
+}
+
 void readSSwitchReg(int coreId, int reg, unsigned &data);
 void writeSSwitchReg(int coreId, int reg, unsigned data);
 

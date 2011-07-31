@@ -42,7 +42,9 @@ xs1_example_tests = [
 # Features =====================================================
 
 xs1_feature_tests = [
+  Test('assert'),
   Test('for'),
+  Test('while'),
   Test('array_elemref'),
   Test('array_alias'),
   Test('array_slice1'),
@@ -77,14 +79,12 @@ xs1_feature_tests = [
   Test('on_collision_2', [4, 16, 64]),
   Test('on_collision_4', [4, 16, 64]),
 
-  Test('rep_basic_1d',   [4, 16, 32, 64]),
-  Test('rep_basic_2d',   [4, 16, 32, 64]),
-  Test('rep_basic_3d',   [16, 32, 64]),
+  Test('rep_basic_1d', [4, 16, 32, 64]),
+  Test('rep_basic_2d', [4, 16, 32, 64]),
+  Test('rep_basic_3d', [16, 32, 64]),
 
-  Test('connect_basic_a',      [4, 16]),
-  Test('connect_basic_b',      [4, 16]),
-  Test('connect_reciprocal_a', [4, 16]),
-  Test('connect_reciprocal_b', [4, 16]),
+  Test('connect_basic',      [4, 16]),
+  Test('connect_reciprocal', [4, 16]),
   ]
 
 def run_test(self, name, path, num_cores, args=[]):

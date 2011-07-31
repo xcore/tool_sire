@@ -296,7 +296,7 @@ class TranslateMPI(NodeWalker):
     self.stmt_block(node.stmt)
 
   def stmt_rep(self, node):
-    self.comment('<replicator statement>')
+    pass
 
   def stmt_on(self, node):
     """ 

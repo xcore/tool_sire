@@ -372,6 +372,10 @@ class Parser(object):
     'stmt : ON expr DO stmt'
     p[0] = ast.StmtOn(p[2], p[4], self.coord(p))
 
+  def p_stmt_assert(self, p):
+    'stmt : ASSERT LPAREN expr RPAREN'
+    p[0] = ast.StmtAssert(p[3], self.coord(p))
+
   def p_stmt_return(self, p):
     'stmt : RETURN expr'
     p[0] = ast.StmtReturn(p[2], self.coord(p))

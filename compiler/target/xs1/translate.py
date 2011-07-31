@@ -365,10 +365,13 @@ class TranslateXS1(NodeWalker):
     self.stmt_block(node.stmt)
 
   def stmt_rep(self, node):
-    self.comment('<replicator statement>')
+    pass
 
   def stmt_on(self, node):
     gen_on(self, node)
+
+  def stmt_assert(self, node):
+    self.out('ASSERT({});'.format(self.expr(node.expr)))
 
   def stmt_return(self, node):
     self.out('return {};'.format(self.expr(node.expr)))

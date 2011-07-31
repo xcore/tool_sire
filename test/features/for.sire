@@ -1,13 +1,10 @@
-val N := 64;
+val N := 100;
 
 proc main() is
   var i;
-{ for i in [1 for N]         do printval(i) ; println()
-%; for i in [1 for N] step 1  do printval(i) ; println()
-%; for i in [1 for N] step 2  do printval(i) ; println()
-%; for i in [1 for N] step 4  do printval(i) ; println()
-%; for i in [1 for N] step 8  do printval(i) ; println()
-%; for i in [1 for N] step 16 do printval(i) ; println()
-%; for i in [1 for N] step 32 do printval(i) ; println()
-%; for i in [1 for N] step 64 do printval(i) ; println()
+  var j;
+{ j := 0
+; for i in [1 for N] do j := j + 1
+; assert(j = N)
 }
+

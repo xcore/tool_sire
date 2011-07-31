@@ -1,0 +1,57 @@
+val N := NUM_CORES-1;
+val X := 0xDEADBEEF;
+
+proc p0(val dest) is
+  var v;
+  chanend c1;
+  chanend c2;
+{ connect c1:0 to dest;
+  connect c2:1;
+  c1 ! X;
+  c1 ? v;
+  c2 ? v;
+  c2 ! v
+}
+
+proc p1(val dest, var v) is
+  chanend c1;
+  chanend c2;
+{ connect c1:0;
+  connect c2:1 to dest;
+  c1 ? v;
+  c1 ! v;
+  c2 ! v;
+  c2 ? v
+}
+
+proc p2(val dest) is
+  var v;
+  chanend c1;
+  chanend c2;
+{ connect c1:0;
+  connect c2:1 to dest;
+  c1 ? v;
+  c1 ! v;
+  c2 ! v;
+  c2 ? v
+}
+
+proc p3(val dest, var v) is
+  chanend c1;
+  chanend c2;
+{ connect c1:0 to dest;
+  connect c2:1;
+  c1 ! X;
+  c1 ? v;
+  c2 ? v;
+  c2 ! v
+}
+
+proc main() is
+  var v;
+{ { on N do p0(0) || p1(N, v) }
+; assert(v = X)
+; { on N do p2(0) || p3(N, v) }
+; assert(v = X)
+}
+

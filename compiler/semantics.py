@@ -559,6 +559,11 @@ class Semantics(NodeWalker):
     self.expr(node.expr)
     self.stmt(node.stmt)
 
+  def stmt_assert(self, node):
+    
+    # Children
+    self.expr(node.expr)
+
   def stmt_return(self, node):
     
     # Children

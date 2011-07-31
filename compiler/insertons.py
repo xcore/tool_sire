@@ -92,6 +92,9 @@ class InsertOns(NodeWalker):
   def stmt_connect(self, node, d):
     return d + 1
 
+  def stmt_assert(self, node, d):
+    return d + 1
+  
   def stmt_return(self, node, d):
     return d + 1
   

@@ -125,9 +125,12 @@ class LabelProcs(NodeWalker):
   def stmt_alias(self, node, l):
     node.offset = l
 
-  def stmt_return(self, node, l):
-    node.offset = l
-  
   def stmt_connect(self, node, l):
     node.offset = l
 
+  def stmt_assert(self, node, l):
+    node.offset = l
+  
+  def stmt_return(self, node, l):
+    node.offset = l
+  
