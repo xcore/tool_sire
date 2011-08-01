@@ -69,6 +69,7 @@ xs1_feature_tests = [
   Test('on_consecutive',       [4, 16]),
   Test('on_args_var',          [4, 16, 64]),
   Test('on_args_array',        [4, 16, 64]),
+  Test('on_args_threaded',     [4, 16, 64]),
   Test('on_squash',            [4, 16, 64]),
   Test('on_chain_1',           [4, 16, 64]),
   Test('on_chain_2',           [4, 16, 64]),

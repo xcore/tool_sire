@@ -1,0 +1,76 @@
+% Test there is no inteference between threads when handling arguments with
+% 'on's.
+
+val N := NUM_CORES-1;
+val REPEAT := 1;
+val VAL := 0xDEADBEEF;
+val LEN := 4;
+
+proc check(var a[n], val n, val v) is
+  var i;
+  for i in [0 for n] do 
+    assert a[i] = v
+
+proc set(var a[n], val n, val v) is
+  var i;
+  for i in [0 for n] do 
+    a[i] := v
+
+% a, b, c, d are to push the remaining parameters on and off the stack
+proc p0(val a, val b, val c, val d,
+    val i, var A[n], val n, var v) is
+{ check(A, n, v);
+  assert (a+b+c+d) = 0
+  set(A, n, a+b+c+d+i)
+}
+
+proc main() is
+  var A1[LEN];
+  var A2[LEN];
+  var A3[LEN];
+  var A4[LEN];
+  var A5[LEN];
+  var A6[LEN];
+  var A7[LEN];
+  var v1;
+  var v2;
+  var v3;
+  var v4;
+  var v5;
+  var v6;
+  var v7;
+  var i;
+{
+  v1 := VAL; 
+  v2 := VAL; 
+  v3 := VAL; 
+  v4 := VAL;
+  v5 := VAL; 
+  v6 := VAL; 
+  v7 := VAL; 
+
+  for i in [0 for REPEAT] do
+  { set(A1, LEN, VAL);
+    set(A2, LEN, VAL);
+    set(A3, LEN, VAL);
+    set(A4, LEN, VAL);
+    set(A5, LEN, VAL);
+    set(A6, LEN, VAL);
+    set(A7, LEN, VAL);
+    { on N do p0(0, 0, 0, 0, i,   A1, LEN, v1) ||
+      on N do p0(0, 0, 0, 0, i+1, A2, LEN, v2) ||
+      on N do p0(0, 0, 0, 0, i+2, A3, LEN, v3) ||
+      on N do p0(0, 0, 0, 0, i+3, A4, LEN, v4) ||
+      on N do p0(0, 0, 0, 0, i+4, A5, LEN, v5) ||
+      on N do p0(0, 0, 0, 0, i+5, A6, LEN, v6) ||
+      on N do p0(0, 0, 0, 0, i+6, A7, LEN, v7)
+    };
+    check(A1, LEN, i);
+    check(A2, LEN, i+1);
+    check(A3, LEN, i+2);
+    check(A4, LEN, i+3);
+    check(A5, LEN, i+4);
+    check(A6, LEN, i+5);
+    check(A7, LEN, i+6)
+  }
+}
