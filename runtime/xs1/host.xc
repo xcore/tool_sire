@@ -10,8 +10,8 @@
 #include "system.h"
 #include "util.h"
 #include "host.h"
-#include "memory.h"
 
+// In host.S:
 extern void runProcess(int procIndex, unsigned int args[], int numArgs);
 
 void       initSourceConnection(unsigned, unsigned);
@@ -22,7 +22,9 @@ int        receiveProcedures  (unsigned, int);
 void       informCompleted    (unsigned, unsigned);
 void       sendResults        (unsigned, int, int[], unsigned[], int[]);
 
-// Setup and initialise execution of a new thread
+/*
+ * Setup and initialise execution of a new thread.
+ */
 void runThread(unsigned senderId) {
   
   int procIndex;
@@ -32,9 +34,6 @@ void runThread(unsigned senderId) {
   int      argLengths[MAX_PROC_PARAMETERS];
   unsigned threadId = GET_THREAD_ID();
   
-  // Initialis1e this (new) thread
-  //if(threadId != 0) _initThread();
-
   // Initialise connection with sender
   initSourceConnection(thread_chans[threadId], senderId);
   
@@ -52,7 +51,9 @@ void runThread(unsigned senderId) {
   sendResults(thread_chans[threadId], numArgs, argTypes, argValues, argLengths);
 }
 
-// Initialise source connection with this thread 0 as host.
+/*
+ * Initialise source connection with this thread 0 as host.
+ */
 unsigned setHost() {
   
   unsigned senderId;
@@ -68,9 +69,11 @@ unsigned setHost() {
   return senderId;
 }
 
-// Host an incoming procedure when thread 0 is BUSY. During this time, events
-// and interrupts are disabled and more requests may be made but they will not
-// arrive until the spawn_master channel connection is closed.
+/* 
+ * Host an incoming procedure when thread 0 is BUSY. During this time, events
+ * and interrupts are disabled and more requests may be made but they will not
+ * arrive until the spawn_master channel connection is closed.
+ */
 void spawnHost() {
 
   unsigned senderId;
@@ -89,8 +92,10 @@ void spawnHost() {
   newAsyncThread(pc, senderId, 0, 0, 0);
 }
 
-// Initialise the conneciton with the sender
-// Communication performed on a slave spawn channel
+/*
+ * Initialise the conneciton with the sender. Communication performed on a
+ * slave spawn channel.
+ */
 void initSourceConnection(unsigned c, unsigned senderId) {
   
   // Send the new CRI
@@ -102,7 +107,9 @@ void initSourceConnection(unsigned c, unsigned senderId) {
   CHKCT_END(c);
 }
 
-// Receive a closure
+/*
+ * Receive a closure.
+ */
 {int, int} receiveClosure(unsigned c, 
     int argTypes[], unsigned argValues[], int argLengths[]) {
   
@@ -121,7 +128,9 @@ void initSourceConnection(unsigned c, unsigned senderId) {
   return {index, numArgs};
 }
 
-// Receive the closure header
+/*
+ * Receive the closure header.
+ */
 {int, int} receiveHeader(unsigned c) {
   
   int numArgs = INS(c);
@@ -130,7 +139,9 @@ void initSourceConnection(unsigned c, unsigned senderId) {
   return {numArgs, numProcs};
 }
 
-// Receive the arguments to the new procedure
+/*
+ * Receive the arguments to the new procedure.
+ */
 #pragma unsafe arrays
 void receiveArguments(unsigned c, int numArgs, 
     int argTypes[], unsigned argValues[], int argLengths[]) {
@@ -175,7 +186,9 @@ void receiveArguments(unsigned c, int numArgs,
   }
 }
 
-// Receive the procedure and any children
+/*
+ * Receive the procedure and any children.
+ */
 #pragma unsafe arrays
 int receiveProcedures(unsigned c, int numProcs) {
   
@@ -221,8 +234,10 @@ int receiveProcedures(unsigned c, int numProcs) {
   return index;
 }
 
-// Complete the migration of the procedure by informing the sender and
-// transmitting back any results
+/* 
+ * Complete the migration of the procedure by informing the sender and
+ * transmitting back any results.
+ */
 void informCompleted(unsigned c, unsigned senderId) {
   
   // Set the channel destination (as it may have been set again by a nested on)
@@ -237,8 +252,10 @@ void informCompleted(unsigned c, unsigned senderId) {
   CHKCT_END(c);
 }
 
-// Send back any arrays that may have been updated by the execution of
-// the migrated procedure
+/*
+ * Send back any arrays that may have been updated by the execution of
+ * the migrated procedure.
+ */
 #pragma unsafe arrays
 void sendResults(unsigned c, int numArgs, 
   int argTypes[], unsigned argValues[], int argLengths[]) {
@@ -255,11 +272,13 @@ void sendResults(unsigned c, int numArgs,
         asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(j));
         OUTS(c, value);
       }
+      memFree(argValues[i]);
       break;
     
     case t_arg_VAR:
       asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
       OUTS(c, value);
+      memFree(argValues[i]);
       break;
    
     case t_arg_CHANEND:

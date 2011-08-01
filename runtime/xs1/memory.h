@@ -6,7 +6,7 @@
 #ifndef MEMORY_H
 #define MEMORY_H
 
-unsigned memAlloc(unsigned int size);
-void memFree(unsigned ptr);
+unsigned mallocWrapper(unsigned int size);
+void freeWrapper(unsigned ptr);
 
 #endif

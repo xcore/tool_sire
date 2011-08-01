@@ -5,9 +5,22 @@
 
 #include <xs1.h>
 #include "system/xs1/definitions.h"
+#include "memory.h"
 #include "util.h"
 
-// Read a switch configuration register
+unsigned memAlloc(unsigned int size) {
+  unsigned p = mallocWrapper(size);
+  if (p == 0) {
+    EXCEPTION(et_INSUFFICIENT_MEMORY);
+  } else {
+    return p;
+  }
+}
+
+void memFree(unsigned p) {
+  freeWrapper(p);
+}
+
 void readSSwitchReg(int coreId, int reg, unsigned &data) {
 
   // Get and set a chanend
@@ -39,7 +52,6 @@ void readSSwitchReg(int coreId, int reg, unsigned &data) {
   asm("freer res[%0]" :: "r"(c));
 }
 
-// Write a switch configuration register
 void writeSSwitchReg(int coreId, int reg, unsigned data) {
 
   // Get and set a chanend

@@ -19,16 +19,9 @@ void sendProcedures    (unsigned, int, int, unsigned[]);
 void waitForCompletion (unsigned, int);
 void receiveResults    (unsigned, int, unsigned[]);
 
-// Permute an address.
-unsigned permDest(unsigned d) 
-{ if(d >= 16 && d <= 31)
-    return d + 16;
-  if(d >= 32 && d <= 47)
-    return d - 16;
-  return d;
-}
-
-// Create a new remote process
+/*
+ * Create a new remote process.
+ */
 void _createProcess(unsigned dest, unsigned closure[]) 
 {
   unsigned threadId = GET_THREAD_ID();
@@ -48,7 +41,9 @@ void _createProcess(unsigned dest, unsigned closure[])
   receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
 }
 
-// Initialise the connection with the host thread
+/*
+ * Initialise the connection with the host thread.
+ */
 void initHostConnection(unsigned c, unsigned destId) {
 
   // Connected to: Master spawn channel=======================
@@ -70,9 +65,11 @@ void initHostConnection(unsigned c, unsigned destId) {
   OUTCT_END(c);
 }
 
-// Send a closure
-// NOTE: xcc adds in array bounds checking which assumes array length is an
-// implicit argument
+/* 
+ * Send a closure.
+ * NOTE: xcc adds in array bounds checking which assumes array length is an
+ * implicit argument.
+ */
 void sendClosure(unsigned c, unsigned closure[]) {
    
   unsigned numArgs  = closure[CLOSURE_NUM_ARGS];
@@ -89,13 +86,17 @@ void sendClosure(unsigned c, unsigned closure[]) {
   sendProcedures(c, numProcs, procOffset, closure);
 }
 
-// Send the header
+/*
+ * Send the header.
+ */
 void sendHeader(unsigned c, int numArgs, int numProcs) {
   OUTS(c, numArgs);
   OUTS(c, numProcs);
 }
 
-// Send the source procedures arguments
+/*
+ * Send the source procedures arguments.
+ */
 #pragma unsafe arrays
 int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
 
@@ -141,7 +142,9 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
   return index;
 }
 
-// Send the source procedure and any children it has
+/*
+ * Send the source procedure and any children it has.
+ */
 #pragma unsafe arrays
 void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   
@@ -179,7 +182,9 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   }
 }
 
-// Wait for the completion of the new procedure
+/*
+ * Wait for the completion of the new procedure.
+ */
 void waitForCompletion(unsigned c, int threadId) {
   
   // (wait to) Acknowledge completion
@@ -191,8 +196,10 @@ void waitForCompletion(unsigned c, int threadId) {
   OUTCT_END(c);
 }
 
-// Receive any array arguments that may have been updated by the new
-// procedure 
+/* 
+ * Receive any array arguments that may have been updated by the new
+ * procedure.
+ */
 #pragma unsafe arrays
 void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
 

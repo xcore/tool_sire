@@ -212,6 +212,9 @@ void ASSERT(int v) {
   asm("ecallf %0" :: "r"(v));
 }
 
+unsigned memAlloc(unsigned int size);
+void memFree(unsigned p);
+
 void readSSwitchReg(int coreId, int reg, unsigned &data);
 void writeSSwitchReg(int coreId, int reg, unsigned data);
 

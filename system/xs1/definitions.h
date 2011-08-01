@@ -73,6 +73,7 @@
 #define et_INSUFFICIENT_THREADS  0
 #define et_INSUFFICIENT_CHANNELS 1
 #define et_INSUFFICIENT_SYNCS    2
+#define et_INSUFFICIENT_MEMORY   3
 
 #endif
 
