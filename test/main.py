@@ -9,10 +9,10 @@ import os
 import sys
 import unittest
 
-from tests_mpi import generate_mpi_example_tests
-from tests_mpi import generate_mpi_feature_tests
-from tests_xs1 import generate_xs1_example_tests
-from tests_xs1 import generate_xs1_feature_tests
+from mpi.tests import generate_mpi_example_tests
+from mpi.tests import generate_mpi_feature_tests
+from xs1.tests import generate_xs1_example_tests
+from xs1.tests import generate_xs1_feature_tests
 
 INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
 EXAMPLES_DIR   = '/test/examples' 

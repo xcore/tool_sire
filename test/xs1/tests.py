@@ -8,8 +8,8 @@ import unittest
 
 from util import call
 from util import read_file
-from tests import Test
-from tests import generate_test_set
+from util import generate_test_set
+from test import Test
 
 COMPILE  = 'sire'
 SIMULATE = 'axe'
