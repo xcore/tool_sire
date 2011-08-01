@@ -12,24 +12,24 @@
 #include "host.h"
 #include "memory.h"
 
-extern void runProcess        (int, unsigned int[], int);
+extern void runProcess(int procIndex, unsigned int args[], int numArgs);
 
 void       initSourceConnection(unsigned, unsigned);
-{int, int} receiveClosure     (unsigned, t_argument[], unsigned[], int[]);
+{int, int} receiveClosure     (unsigned, int[], unsigned[], int[]);
 {int, int} receiveHeader      (unsigned);
-void       receiveArguments   (unsigned, int, t_argument[], unsigned[], int[]);
+void       receiveArguments   (unsigned, int, int[], unsigned[], int[]);
 int        receiveProcedures  (unsigned, int);
 void       informCompleted    (unsigned, unsigned);
-void       sendResults        (unsigned, int, t_argument[], unsigned[], int[]);
+void       sendResults        (unsigned, int, int[], unsigned[], int[]);
 
 // Setup and initialise execution of a new thread
 void runThread(unsigned senderId) {
   
   int procIndex;
   int numArgs;
-  t_argument argTypes[MAX_PROC_PARAMETERS];
+  int argTypes[MAX_PROC_PARAMETERS];
   unsigned argValues[MAX_PROC_PARAMETERS];
-  int argLengths[MAX_PROC_PARAMETERS];
+  int      argLengths[MAX_PROC_PARAMETERS];
   unsigned threadId = GET_THREAD_ID();
   
   // Initialis1e this (new) thread
@@ -104,10 +104,10 @@ void initSourceConnection(unsigned c, unsigned senderId) {
 
 // Receive a closure
 {int, int} receiveClosure(unsigned c, 
-    t_argument argTypes[], unsigned argValues[], int argLengths[]) {
+    int argTypes[], unsigned argValues[], int argLengths[]) {
   
   int numArgs, numProcs, index;
-  unsigned inst, jumpTable;
+  unsigned jumpTable;
 
   // Receive the header
   {numArgs, numProcs} = receiveHeader(c);
@@ -133,7 +133,7 @@ void initSourceConnection(unsigned c, unsigned senderId) {
 // Receive the arguments to the new procedure
 #pragma unsafe arrays
 void receiveArguments(unsigned c, int numArgs, 
-    t_argument argTypes[], unsigned argValues[], int argLengths[]) {
+    int argTypes[], unsigned argValues[], int argLengths[]) {
 
   // For each argument
   for(int i=0; i<numArgs; i++) {
@@ -142,9 +142,9 @@ void receiveArguments(unsigned c, int numArgs,
     argTypes[i] = INS(c);
 
     switch(argTypes[i]) {
+    default: break;
     
     case t_arg_ALIAS:
-      // Allocate space for the array
       argLengths[i] = INS(c);
       argValues[i] = memAlloc(argLengths[i]*BYTES_PER_WORD);
       
@@ -156,20 +156,20 @@ void receiveArguments(unsigned c, int numArgs,
       break;
     
     case t_arg_VAR:
-      // Allocate space for the var and store it
-      argValues[i] = memAlloc(BYTES_PER_WORD);
       argLengths[i] = 1;
+      argValues[i] = memAlloc(BYTES_PER_WORD);
       {unsigned value = INS(c);
       asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
       break;
     
-    case t_arg_VAL:
-      // Assign the val value directly
+    case t_arg_CHANEND:
       argLengths[i] = 1;
       argValues[i] = INS(c);
       break;
     
-    default:
+    case t_arg_VAL:
+      argLengths[i] = 1;
+      argValues[i] = INS(c);
       break;
     }
   }
@@ -241,13 +241,14 @@ void informCompleted(unsigned c, unsigned senderId) {
 // the migrated procedure
 #pragma unsafe arrays
 void sendResults(unsigned c, int numArgs, 
-  t_argument argTypes[], unsigned argValues[], int argLengths[]) {
+  int argTypes[], unsigned argValues[], int argLengths[]) {
 
   unsigned value, length, addr;
   
   for(int i=0; i<numArgs; i++) {
     
     switch(argTypes[i]) {
+    default: break;
     
     case t_arg_ALIAS:
       for(int j=0; j<argLengths[i]; j++) {
@@ -260,11 +261,11 @@ void sendResults(unsigned c, int numArgs,
       asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
       OUTS(c, value);
       break;
-    
-    case t_arg_VAL:
+   
+    case t_arg_CHANEND:
       break;
-    
-    default:
+
+    case t_arg_VAL:
       break;
     }
   }

@@ -107,12 +107,10 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
     OUTS(c, closure[index]);
   
     switch(closure[index]) {
+    default: break;
     
     case t_arg_ALIAS:
-      // Send the array length
       OUTS(c, closure[index+1]);
-
-      // Send each element of the array
       for(int j=0; j<closure[index+1]; j++) {
         unsigned value;
         asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+2]), "r"(j));
@@ -122,20 +120,20 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
       break;
     
     case t_arg_VAR:
-      // Send the var value
       {unsigned value;
       asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+1]), "r"(0));
       OUTS(c, value);}
       index += 2;
       break;
     
-    case t_arg_VAL:
-      // Send the val value
+    case t_arg_CHANEND:
       OUTS(c, closure[index+1]);
       index += 2;
       break;
     
-    default:
+    case t_arg_VAL:
+      OUTS(c, closure[index+1]);
+      index += 2;
       break;
     }
   }
@@ -203,6 +201,7 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
   for(int i=0; i<numArgs; i++) {
     
     switch(closure[index]) {
+    default: break;
     
     case t_arg_ALIAS:
       for(int j=0; j<closure[index+1]; j++) {
@@ -218,11 +217,12 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
       index += 2;
       break;
     
-    case t_arg_VAL:
+    case t_arg_CHANEND:
       index += 2;
       break;
-    
-    default:
+
+    case t_arg_VAL:
+      index += 2;
       break;
     }
   }

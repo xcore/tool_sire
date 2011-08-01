@@ -8,9 +8,8 @@
 
 #define MAX_PROC_PARAMETERS 10
 
-typedef enum {
-  t_arg_ALIAS,
-  t_arg_VAL,
-  t_arg_VAR,
-  t_arg_CHANEND
-} t_argument;
+#define t_arg_ALIAS   0
+#define t_arg_VAL     1
+#define t_arg_VAR     2
+#define t_arg_CHANEND 3
+

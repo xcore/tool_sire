@@ -202,6 +202,7 @@ void ENABLE_INTERRUPTS()
 // Raise a runtime exception
 static inline
 void EXCEPTION(int e) {
+  asm("add r0, r0, %0" :: "r"(e));
   asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 
