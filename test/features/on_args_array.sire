@@ -1,0 +1,119 @@
+% Test we can perform many ons in sequence with arguments being written back
+% and forth by checking array values are correct both sides of an on.
+% NOTE restriction: system/definitions: MAX_PROC_ARGS = 10
+
+val N := NUM_CORES-1;
+val REPEAT := 100;
+val VAL := 0xDEADBEEF;
+val L1 := 4;
+val L2 := 13;
+val L3 := 48;
+val L4 := 72;
+val L5 := 100;
+
+proc check(var a[n], val n, val v) is
+  var i;
+  for i in [0 for n] do 
+    assert a[i] = v
+
+proc set(var a[n], val n, val v) is
+  var i;
+  for i in [0 for n] do 
+    a[i] := v
+
+proc p0(val v, 
+    var A1[l1], var A2[l2], var A3[l3], 
+    val l1, val l2, val l3) is
+{ check(A1, l1, VAL);
+  check(A2, l2, VAL);
+  check(A3, l3, VAL);
+  set(A1, l1, v);
+  set(A2, l2, v+1);
+  set(A3, l3, v+2)
+}
+
+proc p1(val v,
+    var A1[l1], var A2[l2], var A3[l3], var A4[l4],
+    val l1, val l2, val l3, val l4) is
+{ check(A1, l1, VAL);
+  check(A2, l2, VAL);
+  check(A3, l3, VAL);
+  check(A4, l3, VAL);
+  set(A1, l1, v);
+  set(A2, l2, v+1);
+  set(A3, l3, v+2);
+  set(A4, l4, v+3)
+}
+
+proc p2(val v,
+    var A1[l1], var A2[l2], var A3[l3], var A4[l4], var A5[l4],
+    val l1, val l2, val l3, val l4) is
+{ check(A1, l1, VAL);
+  check(A2, l2, VAL);
+  check(A3, l3, VAL);
+  check(A4, l4, VAL);
+  check(A5, l4, VAL);
+  set(A1, l1, v);
+  set(A2, l2, v+1);
+  set(A3, l3, v+2);
+  set(A4, l4, v+3);
+  set(A5, l4, v+4)
+}
+
+proc main() is
+  var A1[L1];
+  var A2[L2];
+  var A3[L3];
+  var A4[L4];
+  var A5[L4];
+  var i;
+{ 
+  % 1 value and 1 array
+  for i in [0 for REPEAT] do
+  { set(A4, L4, VAL);
+    on N do 
+    { check(A4, L4, VAL);
+      set(A4, L4, i)
+    };
+    check(A4, L4, i)
+  };
+
+  % 4 values and 3 arrays
+  for i in [0 for REPEAT] do
+  { set(A1, L1, VAL);
+    set(A2, L2, VAL);
+    set(A3, L3, VAL);
+    on N do p0(i, A1, A2, A3, L1, L2, L3);
+    check(A1, L1, i);
+    check(A2, L2, i+1);
+    check(A3, L3, i+2)
+  };
+
+  % 5 values and 4 arrays
+  for i in [0 for REPEAT] do
+  { set(A1, L1, VAL);
+    set(A2, L2, VAL);
+    set(A3, L3, VAL);
+    set(A4, L4, VAL);
+    on N do p1(i, A1, A2, A3, A4, L1, L2, L3, L4);
+    check(A1, L1, i);
+    check(A2, L2, i+1);
+    check(A3, L3, i+2);
+    check(A4, L4, i+3)
+  };
+
+  % 5 values and 5 arrays
+  for i in [0 for REPEAT] do
+  { set(A1, L1, VAL);
+    set(A2, L2, VAL);
+    set(A3, L3, VAL);
+    set(A4, L4, VAL);
+    set(A5, L4, VAL);
+    on N do p2(i, A1, A2, A3, A4, A5, L1, L2, L3, L4);
+    check(A1, L1, i);
+    check(A2, L2, i+1);
+    check(A3, L3, i+2);
+    check(A4, L4, i+3);
+    check(A5, L4, i+4)
+  }
+}

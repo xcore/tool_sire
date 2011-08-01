@@ -1,0 +1,27 @@
+% Test that we can perform multiple ons in sequence and many times.
+
+val N := NUM_CORES-1;
+val M := 100;
+val VAL := 0xDEADBEEF;
+
+proc main() is
+  var v;
+  var i;
+  var b;
+{ b := true
+; for i in [1 for M] do
+  { v := 0
+  ; { on N do v := v or (VAL and 0xF0000000)
+    ; on N do v := v or (VAL and 0x0F000000)
+    ; on N do v := v or (VAL and 0x00F00000)
+    ; on N do v := v or (VAL and 0x000F0000)
+    ; on N do v := v or (VAL and 0x0000F000)
+    ; on N do v := v or (VAL and 0x00000F00)
+    ; on N do v := v or (VAL and 0x000000F0)
+    ; on N do v := v or (VAL and 0x0000000F)
+    }
+  ; b := (v = VAL) and b
+  };
+  assert b
+}
+

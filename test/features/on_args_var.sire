@@ -1,0 +1,63 @@
+% Test variable and value parameters with on statements.
+% NOTE restriction: system/definitions: MAX_PROC_ARGS = 10
+
+val N := NUM_CORES-1;
+val REPEAT := 50;
+val VAL := 0xDEADBEEF;
+
+% All value operands
+proc p0(var r, val v0, val v1, val v2, val v3, val v4, 
+    val v5, val v6, val v7, val v8) is
+  r := v0 and v1 and v2 and v3 and v4 and v5 and v6 and v7 and v8
+
+% All referenced variables
+proc p1(var r, var v0, var v1, var v2, var v3, var v4, 
+    var v5, var v6, var v7, var v8) is
+  r := v0 and v1 and v2 and v3 and v4 and v5 and v6 and v7 and v8
+
+proc main() is
+  var i;
+  var r;
+  var v0;
+  var v1;
+  var v2;
+  var v3;
+  var v4;
+  var v5;
+  var v6;
+  var v7;
+  var v8;
+{
+  v0 := VAL; 
+  v1 := VAL; 
+  v2 := VAL; 
+  v3 := VAL; 
+  v4 := VAL; 
+  v5 := VAL; 
+  v6 := VAL; 
+  v7 := VAL; 
+  v8 := VAL; 
+
+
+  % 10 referenced variable parameters
+  for i in [0 for REPEAT] do
+  { r := 0;
+    on N do p0(r, v0, v1, v2, v3, v4, v5, v6, v7, v8);
+    assert r = VAL
+  };
+  
+  % 10 referenced variable parameters
+  for i in [0 for REPEAT] do
+  { r := 0;
+    on N do p1(r, v0, v1, v2, v3, v4, v5, v6, v7, v8);
+    assert r = VAL
+  };
+  
+  % 1 variable and 9 value paramaters
+  for i in [0 for REPEAT] do
+  { r := 0;
+    on N do r := v0 and v1 and v2 and v3 and v4 and v5 and v6 and v7 and v8;
+    assert r = VAL
+  }
+}
+
