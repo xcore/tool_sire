@@ -32,7 +32,7 @@ void runThread(unsigned senderId) {
   int argTypes[MAX_PROC_PARAMETERS];
   unsigned argValues[MAX_PROC_PARAMETERS];
   int      argLengths[MAX_PROC_PARAMETERS];
-  unsigned threadId = GET_THREAD_ID();
+  unsigned threadId = THREAD_ID();
   
   // Initialise connection with sender
   initSourceConnection(thread_chans[threadId], senderId);

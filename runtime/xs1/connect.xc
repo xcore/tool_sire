@@ -31,7 +31,7 @@ void COMPLETE(unsigned c, unsigned cri, unsigned v)
  *  4. Set local channel destination of c and return it.
  */
 unsigned _connectMaster(int connId, unsigned dest)
-{ int tid = GET_THREAD_ID();
+{ int tid = THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
   unsigned destCRI = GEN_CHAN_RI(dest, 1);
@@ -57,7 +57,7 @@ unsigned _connectMaster(int connId, unsigned dest)
  *  5. Set local channel destination of c and return it.
  */
 unsigned _connectSlave(int connId)
-{ int tid = GET_THREAD_ID();
+{ int tid = THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
   unsigned destCRI = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);

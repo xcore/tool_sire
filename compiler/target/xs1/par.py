@@ -86,8 +86,8 @@ def thread_set(t, index, pcall, slave_exit_labels):
   
   # Load sp address and extend it if we need space for refd vars
   if ext > 0:
-    t.out('_sps[{}] = THREAD_SP({}, _sp){};'
-      .format(index, tid, '' if ext == 0 else 
+    t.out('_sps[{}] = THREAD_SP(THREAD_ID_MASK(_threads[{}])){};'
+      .format(index, index, '' if ext == 0 else 
         ' - ({}*{})'.format(ext, defs.BYTES_PER_WORD)))
     t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
@@ -139,7 +139,7 @@ def slave_unset(t):
   This (is not ideal but) ensures any extended stack pointers are restored.
   TODO: Fix the << 8 
   """
-  t.asm('set sp, %0', inops=['THREAD_SP(GET_THREAD_ID()<<8, _sp)'])
+  t.asm('set sp, %0', inops=['THREAD_SP(THREAD_ID())'])
 
 def gen_par(t, node):
   """

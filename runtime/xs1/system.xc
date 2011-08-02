@@ -46,7 +46,7 @@ void initThreads() {
   unsigned t;
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   while (t) {
-    asm("init t[%0]:sp, %1"::"r"(t), "r"(THREAD_SP(t, _sp)));
+    asm("init t[%0]:sp, %1"::"r"(t), "r"(THREAD_SP(THREAD_ID_MASK(t))));
     asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
     asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");

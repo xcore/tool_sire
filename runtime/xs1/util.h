@@ -138,12 +138,6 @@ void FREER(unsigned r) {
   asm("freer res[%0]" :: "r"(r));
 }
 
-// Get a thread id from a resource identifier
-inline
-unsigned THREAD_ID(unsigned resId) {
-  return (resId >> 8) & 0xFF;
-}
-
 // Create the channel identifier (for channel 0) for a given destination
 // The node bits are written in MSB first, so need to be reversed
 inline
@@ -167,17 +161,25 @@ unsigned GEN_CONFIG_RI(unsigned nodeId) {
 
 // Get the current thread id
 inline
-unsigned GET_THREAD_ID() {
+unsigned THREAD_ID() {
    int id;
    asm("get r11, id ; mov %0, r11" : "=r"(id) :: "r11");
    return id;
 }
 
+// Get a thread id from a resource identifier
+inline
+unsigned THREAD_ID_MASK(unsigned resId) {
+  return (resId >> 8) & 0xFF;
+}
+
 // Return the stack pointer for a specific thread given a thread resource
 // identifier to extract the thread id from and the base stack pointer.
 inline
-unsigned THREAD_SP(int tri, unsigned sp) {
-  return sp - (((tri>>8)&0xFF) * THREAD_STACK_SPACE);
+unsigned THREAD_SP(int tid) {
+  unsigned sp;
+  asm("ldw %0, dp[_sp]" : "=r"(sp)); 
+  return sp - (tid * THREAD_STACK_SPACE);
 }
 
 // Given a resource id, return the node identifer

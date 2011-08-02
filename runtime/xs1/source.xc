@@ -24,7 +24,7 @@ void receiveResults    (unsigned, int, unsigned[]);
  */
 void _createProcess(unsigned dest, unsigned closure[]) 
 {
-  unsigned threadId = GET_THREAD_ID();
+  unsigned threadId = THREAD_ID();
   unsigned c = thread_chans[threadId];
   unsigned destId = GEN_CHAN_RI_0(dest);
 
