@@ -12,7 +12,6 @@
 #define LABEL_CONN_HANDLER       "connHandler"
 #define LABEL_RUN_THREAD         "runThread"
 #define LABEL_SLAVE_YEILD        "slaveYeild"
-#define LABEL_CHAN_ARRAY         "progChan"
 #define LABEL_MAIN               "_main"
 #define LABEL_BEGIN_BSS          "_fdp.bss"
 #define LABEL_END_BSS            "_edp.bss"
@@ -44,12 +43,12 @@
 #define SWITCH_SCRATCH_REG       3
 #define NUM_PARAM_REGS           4
                                 
-// Runtime specs                
+// Runtime specs 
 #define MAX_PROCS                20
 #define JUMP_TABLE_SIZE          25
 #define SIZE_TABLE_SIZE          25 
 #define KERNEL_SPACE             0x200
-#define THREAD_STACK_SPACE       0x400
+#define THREAD_STACK_SPACE       0x1000
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
 #define CONN_BUFFER_SIZE         10
                                 

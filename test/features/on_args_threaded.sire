@@ -4,7 +4,7 @@
 val N := NUM_CORES-1;
 val REPEAT := 1;
 val VAL := 0xDEADBEEF;
-val LEN := 4;
+val LEN := 25; % NOTE: 4*7*25=700 fits in thread stack allocation
 
 proc check(var a[n], val n, val v) is
   var i;
@@ -59,10 +59,10 @@ proc main() is
     set(A7, LEN, VAL);
     { on N do p0(0, 0, 0, 0, i,   A1, LEN, v1) ||
       on N do p0(0, 0, 0, 0, i+1, A2, LEN, v2) ||
-      on N do p0(0, 0, 0, 0, i+2, A3, LEN, v3) ||
-      on N do p0(0, 0, 0, 0, i+3, A4, LEN, v4) ||
-      on N do p0(0, 0, 0, 0, i+4, A5, LEN, v5) ||
-      on N do p0(0, 0, 0, 0, i+5, A6, LEN, v6) ||
+      on N do p0(0, 0, 0, 0, i+2, A3, LEN, v4) ||
+      on N do p0(0, 0, 0, 0, i+3, A4, LEN, v5) ||
+      on N do p0(0, 0, 0, 0, i+4, A5, LEN, v6) ||
+      on N do p0(0, 0, 0, 0, i+5, A6, LEN, v7) ||
       on N do p0(0, 0, 0, 0, i+6, A7, LEN, v7)
     };
     check(A1, LEN, i);
