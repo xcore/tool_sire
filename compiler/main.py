@@ -103,7 +103,13 @@ def setup_argparse():
   p.add_argument('-C', '--compile', action='store_true',
       dest='compile_only',
       help='compile but do not assemble and link')
-  
+ 
+  # Other options
+
+  p.add_argument('-D', '--no-dist', action='store_true',
+      dest='disable_distribution',
+      help='disable compile-time process distribution')
+ 
   return p
 
 def setup_globals(a):
@@ -139,6 +145,10 @@ def setup_globals(a):
   pprint_trans_ast = a.pprint_trans_ast
   translate_only = a.translate_only
   compile_only = a.compile_only
+
+  # Other
+  global disable_distribution
+  disable_distribution = a.disable_distribution
 
   # Input/output targets
   global infile
@@ -211,8 +221,10 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   """
 
   # 1. Move processes
-  vmsg(v, "Inserting on statements")
-  #InsertOns().walk_program(ast)
+  if not disable_distribution:
+    vmsg(v, "Inserting on statements")
+    InsertOns(errorlog).walk_program(ast)
+    if errorlog.any(): raise Error('in process disribution')
 
   # 2. Label processes
   vmsg(v, "Labelling processes")

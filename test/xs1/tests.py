@@ -16,6 +16,7 @@ SIMULATE = 'axe'
 SIM_FLAGS = []
 #SIMULATE = 'xsim'
 #SIM_FLAGS = ['--no-warn-registers']
+NO_DIST = ['-D']
 
 # Examples =====================================================
 
@@ -35,8 +36,8 @@ xs1_example_tests = [
   Test('mandlebrot-seq'),
   Test('nqueens-seq'),
   Test('mergesort-seq'),
-  Test('mergesort-par', [4, 16]),
-  Test('distribute', [4, 16, 32, 64]),
+  Test('mergesort-par', [4, 16],         NO_DIST),
+  Test('distribute',    [4, 16, 32, 64], NO_DIST),
   ]
   
 # Features =====================================================
@@ -54,40 +55,40 @@ xs1_feature_tests = [
   Test('builtin_printing'),
   Test('builtin_procid', [16]),
 
-  Test('thread_basic_2'),
-  Test('thread_basic_4'),
-  Test('thread_basic_7'),
-  Test('thread_repeat_2'),
-  Test('thread_repeat_7'),
-  Test('thread_arguments_2'),
-  Test('thread_arguments_4'),
-  Test('thread_arguments_7'),
+  Test('thread_basic_2',     NO_DIST),
+  Test('thread_basic_4',     NO_DIST),
+  Test('thread_basic_7',     NO_DIST),
+  Test('thread_repeat_2',    NO_DIST),
+  Test('thread_repeat_7',    NO_DIST),
+  Test('thread_arguments_2', NO_DIST),
+  Test('thread_arguments_4', NO_DIST),
+  Test('thread_arguments_7', NO_DIST),
 
   Test('on_self'),
-  Test('on_basic',             [4, 16, 32, 64]),
-  Test('on_children',          [4]),
-  Test('on_consecutive',       [4, 16]),
-  Test('on_args_var',          [4, 16, 64]),
-  Test('on_args_array',        [4, 16, 64]),
-  Test('on_args_threaded',     [4, 16, 64]),
-  Test('on_squash',            [4, 16, 64]),
-  Test('on_chain_1',           [4, 16, 64]),
-  Test('on_chain_2',           [4, 16, 64]),
-  Test('on_chain_4',           [4, 16, 64]),
-  Test('on_chain_7',           [4, 16, 64]),
-  Test('on_collision_1',       [4, 16, 64]),
-  Test('on_collision_2',       [4, 16, 64]),
-  Test('on_collision_4',       [4, 16, 64]),
+  Test('on_basic',         [4, 16, 32, 64]),
+  Test('on_children',      [4]),
+  Test('on_consecutive',   [4, 16]),
+  Test('on_args_var',      [4, 16, 64]),
+  Test('on_args_array',    [4, 16, 64]),
+  Test('on_args_threaded', [4, 16, 64], NO_DIST),
+  Test('on_squash',        [4, 16, 64], NO_DIST),
+  Test('on_chain_1',       [4, 16, 64], NO_DIST),
+  Test('on_chain_2',       [4, 16, 64], NO_DIST),
+  Test('on_chain_4',       [4, 16, 64], NO_DIST),
+  Test('on_chain_7',       [4, 16, 64], NO_DIST),
+  Test('on_collision_1',   [4, 16, 64], NO_DIST),
+  Test('on_collision_2',   [4, 16, 64], NO_DIST),
+  Test('on_collision_4',   [4, 16, 64], NO_DIST),
 
   Test('rep_basic_1d', [4, 16, 32, 64]),
   Test('rep_basic_2d', [4, 16, 32, 64]),
   Test('rep_basic_3d', [16, 32, 64]),
 
-  Test('connect_basic',      [4, 16]),
-  Test('connect_reciprocal', [4, 16]),
+  Test('connect_basic',      [4, 16], NO_DIST),
+  Test('connect_reciprocal', [4, 16], NO_DIST),
   ]
 
-def run_test(self, name, path, num_cores, args=[]):
+def run_test(self, name, path, num_cores, cmp_flags):
   """
   Run a single test.
   """
@@ -95,7 +96,7 @@ def run_test(self, name, path, num_cores, args=[]):
 
     # Compile the program
     (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
-        + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + args)
+        + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + cmp_flags)
     self.assertTrue(exit)
 
     # Simulate execution
@@ -119,4 +120,4 @@ def generate_xs1_example_tests(path):
   
 def generate_xs1_feature_tests(path):
   return generate_test_set('xs1', path, xs1_feature_tests, run_test)
-  
+ 

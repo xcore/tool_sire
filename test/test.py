@@ -9,7 +9,7 @@ class Test(object):
   """ 
   A generic test object with a list (of system sizes) for specific tests.
   """
-  def __init__(self, name, cores=[1]):
+  def __init__(self, name, cores=[1], cmp_flags=[]):
     self.name = name
     self.cores = cores
 

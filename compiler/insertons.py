@@ -19,8 +19,8 @@ class InsertOns(NodeWalker):
 
     { foo() || on 1 do par i in [0 for N] do bar() || on N+1 do baz() }
   """
-  def __init__(self):
-    pass
+  def __init__(self, errorlog):
+    self.errorlog = errorlog
 
   # Program ============================================
 
@@ -42,10 +42,12 @@ class InsertOns(NodeWalker):
     then do not add any (this is mainly for the test cases).
     """
     d = self.stmt(node.stmt[0], d)
-    if not any([isinstance(x, ast.StmtOn) for x in node.stmt]):
-      for (i, x) in enumerate(node.stmt[1:]):
-        node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
-        d = self.stmt(x, d)
+    if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
+      self.errorlog.report_error("parallel composition contains 'on's")
+      return d
+    for (i, x) in enumerate(node.stmt[1:]):
+      node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
+      d = self.stmt(x, d)
     return d
 
   def stmt_rep(self, node, d):

@@ -1,4 +1,4 @@
-val N := NUM_CORES;
+val N := NUM_CORES-1;
   
 proc node(chanend left, chanend right) is
   var v;
