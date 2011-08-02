@@ -31,17 +31,10 @@ void initMaster() {
  * set to yeildMaster which will halt execution.
  */
 void initMain() {
-  unsigned pc;
-  unsigned t;
-  unsigned sp;
   
   // Claim a thread
-  t = GETR_ASYNC_THREAD();
+  unsigned t = GETR_ASYNC_THREAD();
   
-  // Initialise cp, dp, sp, pc, lr
-  //asm("ldaw r11, cp[0] ; init t[%0]:cp, r11" :: "r"(t) : "r11");
-  //asm("ldaw r11, dp[0] ; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  //asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
   // Load the address of '_main'
   asm("ldap r11, " LABEL_MAIN "; init t[%0]:pc, r11" :: "r"(t) : "r11");
   asm("ldap r11, masterYeild ; init t[%0]:lr, r11" :: "r"(t) : "r11");

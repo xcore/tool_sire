@@ -16,7 +16,7 @@ void queueSlaveReq(unsigned tid, int connId,
  * Complete one side of a connection by sending the CRI of the other party.
  */
 inline
-COMPLETE(unsigned c, unsigned cri, unsigned v)
+void COMPLETE(unsigned c, unsigned cri, unsigned v)
 { SETD(c, cri);
   OUT(c, v);
   OUTCT_END(c);

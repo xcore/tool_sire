@@ -255,8 +255,10 @@ def link_slave(device, show_calls, v):
 
 def replace_slaves(show_calls, v):
     vmsg(v, 'Replacing master image in node 0, core 0')
-    util.call([XOBJDUMP, '--split', MASTER_XE], show_calls)
-    util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], show_calls)
+    util.call([XOBJDUMP, '--split', MASTER_XE], 
+        show_calls, display_stdout=False)
+    util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], 
+        show_calls, display_stdout=False)
 
 def modify_assembly(sig, lines, v):
     """ 

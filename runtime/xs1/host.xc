@@ -114,7 +114,6 @@ void initSourceConnection(unsigned c, unsigned senderId) {
     int argTypes[], unsigned argValues[], int argLengths[]) {
   
   int numArgs, numProcs, index;
-  unsigned jumpTable;
 
   // Receive the header
   {numArgs, numProcs} = receiveHeader(c);
@@ -260,7 +259,7 @@ void informCompleted(unsigned c, unsigned senderId) {
 void sendResults(unsigned c, int numArgs, 
   int argTypes[], unsigned argValues[], int argLengths[]) {
 
-  unsigned value, length, addr;
+  unsigned value;
   
   for(int i=0; i<numArgs; i++) {
     

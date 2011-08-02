@@ -14,5 +14,6 @@ int main(void)
 { par(int i=0; i<NUM_CORES; i++)
   { on stdcore[i] : _slave();
   }
+  return 0;
 }
 

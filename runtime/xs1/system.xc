@@ -11,6 +11,10 @@
 #include "worker.h"
 #include "system.h"
 
+extern inline unsigned GETR_CHANEND();
+extern inline unsigned GET_CORE_ID(unsigned resId);
+extern inline unsigned GET_NODE_ID(unsigned resId);
+
 /* 
  * Allocate all remaining channel ends then free them to ensure they are all
  * available.

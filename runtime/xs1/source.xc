@@ -16,7 +16,7 @@ void sendClosure       (unsigned, unsigned[]);
 void sendHeader        (unsigned, int, int);
 int  sendArguments     (unsigned, int, unsigned[]);
 void sendProcedures    (unsigned, int, int, unsigned[]);
-void waitForCompletion (unsigned, int);
+void waitForCompletion (unsigned);
 void receiveResults    (unsigned, int, unsigned[]);
 
 /*
@@ -35,7 +35,7 @@ void _createProcess(unsigned dest, unsigned closure[])
   sendClosure(c, closure);
   
   // Wait for ececution to complete
-  waitForCompletion(c, threadId);
+  waitForCompletion(c);
 
   // Receive any results
   receiveResults(c, closure[CLOSURE_NUM_ARGS], closure);
@@ -112,7 +112,7 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
     
     case t_arg_ALIAS:
       OUTS(c, closure[index+1]);
-      for(int j=0; j<closure[index+1]; j++) {
+      for(int j=0; j<(int) closure[index+1]; j++) {
         unsigned value;
         asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+2]), "r"(j));
         OUTS(c, value);
@@ -167,7 +167,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
     // If the host doesn't have the procedure, send it.
     if(flag) {
       unsigned procAddr; 
-      unsigned procSize  = _sizetab[procIndex];
+      int procSize  = (int) _sizetab[procIndex];
       OUTS(c, procSize);
     
       // Instructions
@@ -185,7 +185,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
 /*
  * Wait for the completion of the new procedure.
  */
-void waitForCompletion(unsigned c, int threadId) {
+void waitForCompletion(unsigned c) {
   
   // (wait to) Acknowledge completion
   asm("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));  
@@ -211,7 +211,7 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
     default: break;
     
     case t_arg_ALIAS:
-      for(int j=0; j<closure[index+1]; j++) {
+      for(int j=0; j<(int) closure[index+1]; j++) {
         unsigned value = INS(c);
         asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
       }

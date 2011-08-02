@@ -19,44 +19,44 @@ typedef char bool;
 #define S(x) S_(x)
 
 // Raise a runtime exception
-static inline
+inline
 void EXCEPTION(int e) {
   asm("add r0, r0, %0" :: "r"(e));
   asm("ldc r11, 0 ; ecallf r11" ::: "r11");
 }
 
 // Assert a value is true (!=0)
-static inline
+inline
 void ASSERT(int v) {
   asm("ecallf %0" :: "r"(v));
 }
 
 // Set channel destination
-static inline
+inline
 void SETD(unsigned c, unsigned dest) {
   asm("setd res[%0], %1" :: "r"(c), "r"(dest));
 }
 
 // OUTCT CT_END
-static inline
+inline
 void OUTCT_END(unsigned c) {
   asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
 }
 
 // CHKCT CT_END
-static inline
+inline
 void CHKCT_END(unsigned c) {
   asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
 }
 
 // Asynchronous out
-static inline
+inline
 void OUT(unsigned c, unsigned v) {
   asm("out res[%0], %1" :: "r"(c), "r"(v));
 }
 
 // Asynchronous in
-static inline
+inline
 unsigned IN(unsigned c) {
   unsigned v;
   asm("in %0, res[%1]" : "=r"(v) : "r"(c));
@@ -64,7 +64,7 @@ unsigned IN(unsigned c) {
 }
 
 // Synchronised out
-static inline
+inline
 void OUTS(unsigned c, unsigned v) {
   asm("outct res[%0], " S(XS1_CT_END) ";"
       "chkct res[%0], " S(XS1_CT_END) ";"
@@ -75,7 +75,7 @@ void OUTS(unsigned c, unsigned v) {
 }
 
 // Synchronised in
-static inline
+inline
 unsigned INS(unsigned c) {
   unsigned v;
   asm("chkct  res[%1], " S(XS1_CT_END) ";" 
@@ -89,7 +89,7 @@ unsigned INS(unsigned c) {
 }
 
 // Get a chanend
-static inline
+inline
 unsigned GETR_CHANEND() {
   unsigned c;
   asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
@@ -100,7 +100,7 @@ unsigned GETR_CHANEND() {
 }
 
 // Get a synchroniser
-static inline
+inline
 unsigned GETR_SYNC() {
   unsigned s;
   asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(s));
@@ -111,7 +111,7 @@ unsigned GETR_SYNC() {
 }
 
 // Get an asynchronous thread
-static inline
+inline
 unsigned GETR_ASYNC_THREAD() {
   unsigned t;
   asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
@@ -122,7 +122,7 @@ unsigned GETR_ASYNC_THREAD() {
 }
 
 // Get a synchronous thread
-static inline
+inline
 unsigned GETR_SYNC_THREAD(unsigned sync) {
   unsigned t;
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
@@ -133,20 +133,20 @@ unsigned GETR_SYNC_THREAD(unsigned sync) {
 }
 
 // Free a resource
-static inline
+inline
 void FREER(unsigned r) {
   asm("freer res[%0]" :: "r"(r));
 }
 
 // Get a thread id from a resource identifier
-static inline
+inline
 unsigned THREAD_ID(unsigned resId) {
   return (resId >> 8) & 0xFF;
 }
 
 // Create the channel identifier (for channel 0) for a given destination
 // The node bits are written in MSB first, so need to be reversed
-static inline
+inline
 unsigned GEN_CHAN_RI_0(unsigned dest) {
   unsigned n = dest / NUM_CORES_PER_NODE;
   asm("bitrev %0, %1" : "=r"(n) : "r"(n));
@@ -154,19 +154,19 @@ unsigned GEN_CHAN_RI_0(unsigned dest) {
 }
 
 // Create a channel resource identifier with a particular count
-static inline
+inline
 unsigned GEN_CHAN_RI(unsigned id, int counter) {
   return GEN_CHAN_RI_0(id) | counter << 8;  
 }
 
 // Generate a configuration resource identifier
-static inline
+inline
 unsigned GEN_CONFIG_RI(unsigned nodeId) {
   return nodeId << 24 | XS1_CT_SSCTRL << 8 | 12;
 }
 
 // Get the current thread id
-static inline
+inline
 unsigned GET_THREAD_ID() {
    int id;
    asm("get r11, id ; mov %0, r11" : "=r"(id) :: "r11");
@@ -175,13 +175,13 @@ unsigned GET_THREAD_ID() {
 
 // Return the stack pointer for a specific thread given a thread resource
 // identifier to extract the thread id from and the base stack pointer.
-static inline
+inline
 unsigned THREAD_SP(int tri, unsigned sp) {
   return sp - (((tri>>8)&0xFF) * THREAD_STACK_SPACE);
 }
 
 // Given a resource id, return the node identifer
-static inline
+inline
 unsigned GET_NODE_ID(unsigned resId) {
   unsigned int n;
   asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
@@ -189,23 +189,23 @@ unsigned GET_NODE_ID(unsigned resId) {
 }
 
 // Given a resource id, return the core identifier
-static inline
+inline
 unsigned GET_CORE_ID(unsigned resId) {
   return (resId >> 16) & 0xFF;
 }
 
 // Given a resource id, return the global core label.
-static inline
+inline
 unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
   return (GET_NODE_ID(resId) * NUM_CORES_PER_NODE) + GET_CORE_ID(resId);
 }
 
-static inline
+inline
 void DISABLE_INTERRUPTS()
 { asm("clrsr " S(SR_IEBLE));
 }
 
-static inline
+inline
 void ENABLE_INTERRUPTS()
 { asm("setsr " S(SR_IEBLE));
 }

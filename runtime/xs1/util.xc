@@ -12,9 +12,8 @@ unsigned memAlloc(unsigned int size) {
   unsigned p = mallocWrapper(size);
   if (p == 0) {
     EXCEPTION(et_INSUFFICIENT_MEMORY);
-  } else {
-    return p;
   }
+  return p;
 }
 
 void memFree(unsigned p) {
