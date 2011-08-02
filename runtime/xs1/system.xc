@@ -13,15 +13,16 @@
 
 /* 
  * Allocate all remaining channel ends then free them to ensure they are all
- * available
+ * available.
  */
 void resetChanends() {
   unsigned c = 1;
-  unsigned c0 = GETR_CHANEND();
+  unsigned c0;
+  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
 
   // Get all remaining channels
   while(c) {
-    c = GETR_CHANEND();
+    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
   }
    
   // Free all channels
@@ -38,14 +39,14 @@ void resetChanends() {
  */
 void initThreads() {
   unsigned sync = GETR_SYNC();
-  unsigned t = GETR_SYNC_THREAD(sync);
+  unsigned t;
+  asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   while (t) {
-    unsigned tsp = _sp - ((t>>8)&0xFF) * THREAD_STACK_SPACE;
-    asm("init t[%0]:sp, %1"::"r"(t), "r"(tsp));
+    asm("init t[%0]:sp, %1"::"r"(t), "r"(THREAD_SP(t, _sp)));
     asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
     asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
-    t = GETR_SYNC_THREAD(sync);
+    asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   }
   asm("msync res[%0]" :: "r"(sync));
   asm("mjoin res[%0]" :: "r"(sync));
@@ -158,17 +159,8 @@ void newAsyncThread(unsigned pc, unsigned arg1,
   
   // Claim a thread
   unsigned t = GETR_ASYNC_THREAD();
-  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   
-  // Claim a stack slot
-  //unsigned sp = THREAD_ID(t);
-  
-  // Initialise cp, dp, sp, pc, lr
-  //asm("ldaw r11, cp[0] "
-  //  "; init t[%0]:cp, r11" ::"r"(t) : "r11");
-  // asm("ldaw r11, dp[0] "
-  //  "; init t[%0]:dp, r11" :: "r"(t) : "r11");
-  //asm("init t[%0]:sp, %1" :: "r"(t), "r"(sp));
+  // Initialise pc, lr
   asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
   asm("ldap r11, workerYeild" 
     "; init t[%0]:lr, r11" :: "r"(t) : "r11");

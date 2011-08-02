@@ -18,6 +18,19 @@ typedef char bool;
 #define S_(x) #x
 #define S(x) S_(x)
 
+// Raise a runtime exception
+static inline
+void EXCEPTION(int e) {
+  asm("add r0, r0, %0" :: "r"(e));
+  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
+}
+
+// Assert a value is true (!=0)
+static inline
+void ASSERT(int v) {
+  asm("ecallf %0" :: "r"(v));
+}
+
 // Set channel destination
 static inline
 void SETD(unsigned c, unsigned dest) {
@@ -80,15 +93,21 @@ static inline
 unsigned GETR_CHANEND() {
   unsigned c;
   asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+  if (c == 0) {
+    EXCEPTION(et_INSUFFICIENT_CHANNELS);
+  }
   return c;
 }
 
 // Get a synchroniser
 static inline
 unsigned GETR_SYNC() {
-  unsigned c;
-  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(c));
-  return c;
+  unsigned s;
+  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(s));
+  if (s == 0) {
+    EXCEPTION(et_INSUFFICIENT_SYNCS);
+  }
+  return s;
 }
 
 // Get an asynchronous thread
@@ -96,6 +115,9 @@ static inline
 unsigned GETR_ASYNC_THREAD() {
   unsigned t;
   asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
+  if (t == 0) {
+    EXCEPTION(et_INSUFFICIENT_THREADS);
+  }
   return t;
 }
 
@@ -104,27 +126,10 @@ static inline
 unsigned GETR_SYNC_THREAD(unsigned sync) {
   unsigned t;
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
+  if (t == 0) {
+    EXCEPTION(et_INSUFFICIENT_THREADS);
+  }
   return t;
-}
-
-// Get a lock
-static inline
-unsigned GETR_LOCK() {
-  unsigned c;
-  asm("getr %0, " S(XS1_RES_TYPE_LOCK) : "=r"(c));
-  return c;
-}
-
-// Acquire lock
-static inline 
-void ACQUIRE_LOCK(unsigned l) {
-  asm("in r11, res[%0]" :: "r"(l) : "r11");
-}
-
-// Release a lock
-static inline 
-void RELEASE_LOCK(unsigned l) {
-  asm("out res[%0], r11" :: "r"(l) : "r11");
 }
 
 // Free a resource
@@ -148,7 +153,6 @@ unsigned GEN_CHAN_RI_0(unsigned dest) {
   return n | (dest % NUM_CORES_PER_NODE) << 16 | 0x2;
 }
 
-
 // Create a channel resource identifier with a particular count
 static inline
 unsigned GEN_CHAN_RI(unsigned id, int counter) {
@@ -167,6 +171,13 @@ unsigned GET_THREAD_ID() {
    int id;
    asm("get r11, id ; mov %0, r11" : "=r"(id) :: "r11");
    return id;
+}
+
+// Return the stack pointer for a specific thread given a thread resource
+// identifier to extract the thread id from and the base stack pointer.
+static inline
+unsigned THREAD_SP(int tri, unsigned sp) {
+  return sp - (((tri>>8)&0xFF) * THREAD_STACK_SPACE);
 }
 
 // Given a resource id, return the node identifer
@@ -197,19 +208,6 @@ void DISABLE_INTERRUPTS()
 static inline
 void ENABLE_INTERRUPTS()
 { asm("setsr " S(SR_IEBLE));
-}
-
-// Raise a runtime exception
-static inline
-void EXCEPTION(int e) {
-  asm("add r0, r0, %0" :: "r"(e));
-  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
-}
-
-// Assert a value is true (!=0)
-static inline
-void ASSERT(int v) {
-  asm("ecallf %0" :: "r"(v));
 }
 
 unsigned memAlloc(unsigned int size);

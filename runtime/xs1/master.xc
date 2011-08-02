@@ -37,7 +37,6 @@ void initMain() {
   
   // Claim a thread
   t = GETR_ASYNC_THREAD();
-  if(t == 0) EXCEPTION(et_INSUFFICIENT_THREADS);
   
   // Initialise cp, dp, sp, pc, lr
   //asm("ldaw r11, cp[0] ; init t[%0]:cp, r11" :: "r"(t) : "r11");

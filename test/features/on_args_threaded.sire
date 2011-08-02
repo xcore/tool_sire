@@ -20,7 +20,7 @@ proc set(var a[n], val n, val v) is
 proc p0(val a, val b, val c, val d,
     val i, var A[n], val n, var v) is
 { check(A, n, v);
-  assert (a+b+c+d) = 0
+  assert (a+b+c+d) = 0;
   set(A, n, a+b+c+d+i)
 }
 

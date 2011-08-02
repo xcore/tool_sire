@@ -33,12 +33,11 @@ XCC              = 'xcc'
 XAS              = 'xas'
 XOBJDUMP         = 'xobjdump'
 COMPILE_FLAGS    = ['-S', '-O2', 
-  '-fverbose-asm', '-Wall', '-Wextra',
-  #'-finline-functions', 
+  '-fverbose-asm', '-Wall', '-Wextra', '-Winline',
   #'-Wno-timing',  '-Winline',  '-Wunreachable-code', '-Wunused-value'
   ]
 ASSEMBLE_FLAGS   = ['-c', '-O2',
-  '-fverbose-asm', '-Wall', '-Wextra',
+  '-fverbose-asm', '-Wall', '-Wextra', '-Winline',
   #'-Wno-timing',  '-Winline', '-finline-functions', '-Wunreachable-code', '-Wunused-value'
   ]
 LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
