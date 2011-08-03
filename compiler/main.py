@@ -59,7 +59,7 @@ def setup_argparse():
   
   p.add_argument('-o', nargs=1, metavar='<file>', 
       dest='outfile', default=None,
-      help="output filename (default: '"+defs.DEFAULT_OUT_FILE+".*')")
+      help="output filename (default: '"+defs.DEFAULT_OUT_FILE+".<ext>')")
    
   # System parameters
 
@@ -73,40 +73,40 @@ def setup_argparse():
   
   # Verbosity
 
-  p.add_argument('-v', '--verbose', action='store_true', dest='verbose', 
+  p.add_argument('-v', action='store_true', dest='verbose', 
       help='display status messages')
   
-  p.add_argument('-c', '--display-calls', action='store_true',
+  p.add_argument('-c', action='store_true',
       dest='show_calls', help='display external commands invoked ')
   
   # Stages
 
-  p.add_argument('-r', '--parse', action='store_true', dest='parse_only', 
+  p.add_argument('-r', action='store_true', dest='parse_only', 
       help='parse the input file and quit')
 
-  p.add_argument('-s', '--sem', action='store_true', dest='sem_only', 
+  p.add_argument('-s', action='store_true', dest='sem_only', 
       help='perform semantic analysis and quit')
   
-  p.add_argument('-p', '--p-ast', action='store_true', dest='print_ast',
+  p.add_argument('-p', action='store_true', dest='print_ast',
       help='display the AST and quit')
     
-  p.add_argument('-P', '--ppr-ast', action='store_true', dest='pprint_raw_ast',
+  p.add_argument('-P', action='store_true', dest='pprint_raw_ast',
       help='pretty-print the raw AST and quit')
   
-  p.add_argument('-Q', '--ppt-ast', action='store_true', dest='pprint_trans_ast',
+  p.add_argument('-Q', action='store_true', dest='pprint_trans_ast',
       help='pretty-print the transformed AST and quit')
   
-  p.add_argument('-T', '--translate', action='store_true',
+  p.add_argument('-T', action='store_true',
       dest='translate_only',
       help='translate but do not compile')
   
-  p.add_argument('-C', '--compile', action='store_true',
+  p.add_argument('-C', action='store_true',
       dest='compile_only',
       help='compile but do not assemble and link')
  
   # Other options
 
-  p.add_argument('-D', '--no-dist', action='store_true',
+  p.add_argument('-D', action='store_true',
       dest='disable_distribution',
       help='disable compile-time process distribution')
  

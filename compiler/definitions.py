@@ -6,7 +6,7 @@
 import util as util
 
 # General constants
-VERSION          = '0.1'
+VERSION          = '0.1.1'
 PARSE_LOG_FILE   = 'parselog.txt'
 DEFAULT_OUT_FILE = 'a'
 
