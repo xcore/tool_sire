@@ -11,7 +11,6 @@ from definitions import PROC_ID_VAR
 from typedefs import *
 from symbol import Symbol
 from formlocation import form_location
-
 from printer import Printer
 
 class InsertConns(NodeWalker):
@@ -29,22 +28,24 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       print(s)
 
-  def gen_single_conn(self, tab, chanids, pid, chan):
+  def gen_single_conn(self, tab, chanids, base, chan):
     """
     Generate a connection for a single channel declaration. 'chan' is a
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    off = ast.ExprSingle(ast.ElemNumber(
-        tab.lookup_slave_offset(chan.name, elem.index)))
-    loc = form_location(self.sym, pid, off, 1) if elem.master else None
+    offset_expr = ast.ExprSingle(ast.ElemNumber(
+        tab.lookup_slave_location(chan.name, elem.index)))
+    location = None
+    if elem.master:
+      location = form_location(self.sym, base, offset_expr, 1) 
     chanend = ast.ElemId(chan.chanend)
     chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
         None, scope=T_SCOPE_PROC)
     chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
-    return ast.StmtConnect(chanend, chanid, loc)
+    return ast.StmtConnect(chanend, chanid, location)
 
-  def gen_array_conn(self, tab, chanids, pid, chan):
+  def gen_array_conn(self, tab, chanids, base, chan):
     """
     Generate a conncection for an array channel declaration. We must analyse
     the subscript by generating nested conditional statements. 'chan' is a
@@ -53,12 +54,11 @@ class InsertConns(NodeWalker):
     
     def create_single_connection(s, chan, index, master):
       self.debug('New connection for index {}'.format(index))
+      location = None
       if master:
-        offset_expr = ast.ExprSingle(ast.ElemNumber(
-            tab.lookup_slave_offset(chan.name, index)))
-        location = form_location(self.sym, pid, offset_expr, 1)
-      else:
-        location = None
+        location_expr = ast.ExprSingle(ast.ElemNumber(
+            tab.lookup_slave_location(chan.name, index)))
+        location = form_location(self.sym, base, location_expr, 1)
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
@@ -72,7 +72,7 @@ class InsertConns(NodeWalker):
         offset_expr = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(difference))))
         offset_expr = ast.ExprUnary('-', offset_expr) if difference<0 else offset_expr
         offset_expr = ast.ExprBinop('+', ast.ElemGroup(chan.expr), offset_expr)
-        location = form_location(self.sym, pid, offset_expr, 1)
+        location = form_location(self.sym, base, offset_expr, 1)
       else:
         location = None
       chanend = ast.ElemId(chan.chanend)
@@ -86,8 +86,8 @@ class InsertConns(NodeWalker):
       conn = ast.StmtConnect(chanend, chanid, location)
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def index_offset_diff(name, index, master):
-      return (tab.lookup_slave_offset(name, index) - index if master else None)
+    def index_offset_diff(name, index, master, location):
+      return (tab.lookup_slave_location(name, index) - location if master else None)
 
     # Sort the channel elements into increasing index
     chan.elems = sorted(chan.elems, key=lambda x: x.index)
@@ -95,9 +95,11 @@ class InsertConns(NodeWalker):
     # Build a list of channel index ranges
     x = chan.elems[0] 
     l = [[x, x]]
-    diff = index_offset_diff(chan.name, x.index, x.master)
+    location = base.elem.value+x.index
+    diff = index_offset_diff(chan.name, x.index, x.master, location)
     for x in chan.elems[1:]:
-      cdiff = index_offset_diff(chan.name, x.index, x.master)
+      location = base.elem.value+x.index
+      cdiff = index_offset_diff(chan.name, x.index, x.master, location)
       if diff == cdiff:
         l[-1][1] = x
       else:
@@ -113,15 +115,16 @@ class InsertConns(NodeWalker):
     # Construct the connection syntax
     s = None
     for x in reversed(l):
+      location = base.elem.value+x[0].index
       if x[0] == x[1]:
         s = create_single_connection(s, chan, x[0].index, x[0].master)
       else:
         s = create_range_connection(s, chan, x[0].index, x[1].index, x[0].master, 
-            index_offset_diff(chan.name, x[0].index, x[0].master))
+            index_offset_diff(chan.name, x[0].index, x[0].master, location))
 
     return s
 
-  def insert_connections(self, tab, chanids, stmt, chans):
+  def insert_connections(self, tab, chanids, stmt, chans, base):
     """
     Insert connections for a process from a list of channel uses (name, index)
     by composing them in sequence, prior to the process. If there are no
@@ -131,17 +134,15 @@ class InsertConns(NodeWalker):
     have already applied this when we evaluated the offset.
     """
     if len(chans) > 0:
-      pid = ast.ElemId(PROC_ID_VAR)
-      pid.symbol = Symbol(pid.name, T_VAR_SINGLE, scope=T_SCOPE_PROC)
       conns = []
       for x in chans:
         if len(x.elems) == 1:
-          conns.append(self.gen_single_conn(tab, chanids, pid, x))
+          conns.append(self.gen_single_conn(tab, chanids, base, x))
         else:
-          conns.append(self.gen_array_conn(tab, chanids, pid, x))
+          conns.append(self.gen_array_conn(tab, chanids, base, x))
 
       s = ast.StmtSeq(conns + [stmt])
-      s.offset = stmt.offset
+      s.location = stmt.location
       return s
     else:
       return stmt
@@ -173,7 +174,7 @@ class InsertConns(NodeWalker):
     decls.extend([x.chanend for x in node.chans])
     self.stmt(node.stmt, node.chantab, node.chanids, decls)
     node.stmt = self.insert_connections(node.chantab, node.chanids, 
-        node.stmt, node.chans)
+        node.stmt, node.chans, node.location)
 
     # Insert the channel end declarations
     for x in decls:
@@ -194,7 +195,8 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       self.display_chans(node.chans)
     self.stmt(node.stmt, tab, chanids, decls)
-    node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans)
+    node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans,
+        node.location)
     decls.extend([x.chanend for x in node.chans])
 
   def stmt_par(self, node, tab, chanids, decls):
@@ -202,7 +204,8 @@ class InsertConns(NodeWalker):
     for (i, (x, y)) in enumerate(zip(node.stmt, node.chans)):
       self.debug('[par stmt]: ')
       self.stmt(x, tab, chanids, decls) 
-      node.stmt[i] = self.insert_connections(tab, chanids, node.stmt[i], y)
+      node.stmt[i] = self.insert_connections(tab, chanids, node.stmt[i], y,
+          node.location)
       decls.extend([z.chanend for z in y])
       if self.print_debug:
         self.display_chans(y)

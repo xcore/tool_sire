@@ -20,11 +20,10 @@ from printer import Printer
 class LabelChans(NodeWalker):
   """
   For each procedure definition, construct a table which records for each use
-  of a channel the offsets of the master and slave processes (relative to the
+  of a channel the locations of the master and slave processes (relative to the
   base). For replicators, expand array subscripts over the range of the
-  iterators and tag each with its offset relative to the declaration of the
-  channel. Then label each channel with the relative offset from the master to
-  the slave.
+  iterators and tag each with its location. Then label each channel with the 
+  relative offset from the master to the slave.
   """
   def __init__(self, errorlog, print_debug=False):
     self.errorlog = errorlog
@@ -36,23 +35,22 @@ class LabelChans(NodeWalker):
   
   def single_channel(self, tab, stmt, name):
     """
-    Process a single (non-subscripted) channel use by evaluating its offset
+    Process a single (non-subscripted) channel use by evaluating its location
     and then adding it to the channel table and returning it as an element. 
-    The offset will not contain any variables.
     """
-    offset_value = EvalExpr().expr(stmt.offset)
-    master = tab.insert(name, None, offset_value)
-    self.debug('  {} at {}'.format(name, offset_value))
+    location_value = EvalExpr().expr(stmt.location)
+    master = tab.insert(name, None, location_value)
+    self.debug('  {} at {}'.format(name, location_value))
     return ChanElem(None, master)
 
   def subscript_channel(self, iters, tab, stmt, name, expr):
     """
     Expand the use of a channel subscript over a set of iterators and determine
-    for each the value of its index and offset, and then add this to the
+    for each the value of its index and location, and then add this to the
     channel table and corresponding expansion.
     """
     #print(Printer().expr(elem.expr))
-    #print(Printer().expr(stmt.offset))
+    #print(Printer().expr(stmt.location))
     chan_elems = []
 
     # Iterate over cartesian product of iterator ranges
@@ -61,24 +59,24 @@ class LabelChans(NodeWalker):
 
       # Deep copy expressions so we can modify them
       index_expr = copy.deepcopy(expr)
-      offset_expr = copy.deepcopy(stmt.offset)
+      location_expr = copy.deepcopy(stmt.location)
 
       # Substitute index variables for values
       for (y, z) in zip(iters, x):
         index_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
-        offset_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
+        location_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
 
       # Evaluate the expressions
       index_value = EvalExpr().expr(index_expr)
-      offset_value = EvalExpr().expr(offset_expr)
+      location_value = EvalExpr().expr(location_expr)
 
       # Add to the table
-      master = tab.insert(name, index_value, offset_value)
+      master = tab.insert(name, index_value, location_value)
 
       # Add the expanded channel use (name, index) to a list
       chan_elems.append(ChanElem(index_value, master))
 
-      self.debug('  {}[{}] at {}'.format(name, index_value, offset_value))
+      self.debug('  {}[{}] at {}'.format(name, index_value, location_value))
     
     return chan_elems
 
@@ -98,18 +96,18 @@ class LabelChans(NodeWalker):
         chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
     return chans
   
-  def check_chan(self, name, index, offsets):
+  def check_chan(self, name, index, locations):
     """
     Check each entry in the table is valid: contains both master and one slave
-    offset.
+    location.
     """
     #print('Checking chan '+name+' {}'.format(index))
     c = '{}{}'.format(name, '' if index==None else '[{}]'.format(index) )
-    if not offsets:
+    if not locations:
       self.errorlog.report_warning('channel '+c+' is not used')
-    elif len(offsets) == 1:
+    elif len(locations) == 1:
       self.errorlog.report_error('channel '+c+' has no slave connection')
-    elif len(offsets) > 2:
+    elif len(locations) > 2:
       self.errorlog.report_error('channel '+c+' has multiple slaves') 
 
   # Program ============================================
@@ -270,9 +268,8 @@ class LabelChans(NodeWalker):
 class ChanTable(object):
   """
   A table to record the location of channel ends and their names. Each key maps
-  to list of offsets (relative to the scope of the channel declarations) where
-  the first offset is that of the master, and a unique identifier for the
-  specific connection instance.
+  to list of locations where the first location is that of the master, and a 
+  unique identifier for the specific connection instance.
   """
   def __init__(self, name):
     self.name = name
@@ -285,28 +282,28 @@ class ChanTable(object):
     """
     return '{}{}'.format(name, '' if index==None else index)
 
-  def insert(self, name, index, offset):
+  def insert(self, name, index, location):
     """
-    Add a channel element with an index and location offset to the table.
+    Add a channel element with an index and location to the table.
     """
     key = self.key(name, index)
     master = False
     if not key in self.tab:
       self.tab[key] = []
       master = True
-    self.tab[key].append(offset)
+    self.tab[key].append(location)
     return master
 
   def lookup(self, name, index):
     """
-    Lookup a channel's master and slave offsets.
+    Lookup a channel's master and slave location.
     """
     key = self.key(name, index)
     if not key in self.tab:
       return None
     return self.tab[key]
 
-  def lookup_slave_offset(self, name, index):
+  def lookup_slave_location(self, name, index):
     key = self.key(name, index)
     assert key in self.tab and len(self.tab[key])==2
     return self.tab[key][1]

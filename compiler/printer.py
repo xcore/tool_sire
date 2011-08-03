@@ -50,9 +50,9 @@ class Printer(NodeWalker):
         [self.decl(x) for x in decls]))
     if len(decls)>0: self.buf.write(';\n')
   
-  def display_offset(self, stmt):
-    if self.labels and hasattr(stmt, 'offset') and not stmt.offset==None:
-        self.out('@({})\n'.format(self.expr(stmt.offset)))
+  def display_location(self, stmt):
+    if self.labels and hasattr(stmt, 'location') and not stmt.location==None:
+        self.out('@({})\n'.format(self.expr(stmt.location)))
   
   # Program ============================================
 
@@ -119,11 +119,11 @@ class Printer(NodeWalker):
       if (isinstance(node.stmt, ast.StmtPar) 
           or isinstance(node.stmt, ast.StmtSeq)):
         self.indent.pop()
-        self.display_offset(node.stmt)
+        self.display_location(node.stmt)
         self.stmt(node.stmt)
         self.buf.write('\n\n')
       else:
-        self.display_offset(node.stmt)
+        self.display_location(node.stmt)
         self.stmt(node.stmt)
         self.buf.write('\n\n')
         self.indent.pop()
@@ -233,16 +233,16 @@ class Printer(NodeWalker):
     self.out('par {} do\n'.format(
       ', '.join([self.elem(x) for x in node.indicies]))) 
     self.indent.append(INDENT)
-    self.display_offset(node.stmt)
+    self.display_location(node.stmt)
     self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_on(self, node):
     self.out('on {} do\n'.format(self.expr(node.expr)))
     self.indent.append(INDENT)
-    # NOTE: This offset won't show where we have made substitutions in 
+    # NOTE: This location won't show where we have made substitutions in 
     # transform par and rep and we hav'nt updated the location labels.
-    self.display_offset(node.stmt)
+    self.display_location(node.stmt)
     self.stmt(node.stmt)
     self.indent.pop()
 

@@ -17,6 +17,7 @@ from semantics import rep_var_to_param
 from typedefs import *
 from subelem import SubElem
 from evalexpr import EvalExpr
+from symbol import Symbol
 
 from printer import Printer
 
@@ -57,7 +58,7 @@ class TransformRep(NodeWalker):
     self.device = device
     self.debug = debug
 
-  def distribute_stmt(self, m, f, elem_t, elem_n, elem_m, elem_b, 
+  def distribute_stmt(self, m, f, elem_t, elem_n, elem_m, base, 
         indicies, proc_actuals, formals, pcall):
     """
     Create the distribution process body statement.
@@ -70,7 +71,9 @@ class TransformRep(NodeWalker):
     expr_t = ast.ExprSingle(elem_t)
     expr_n = ast.ExprSingle(elem_n)
     expr_m = ast.ExprSingle(elem_m)
-    expr_b = ast.ExprSingle(elem_b)
+    #expr_b = ast.ExprSingle(elem_b)
+    elem_base = ast.ElemNumber(base) 
+    expr_base = ast.ExprSingle(elem_base)
 
     # Replace ocurrances of index variables i with i = f(_t)
     divisor = m
@@ -98,15 +101,15 @@ class TransformRep(NodeWalker):
     #      ast.ExprSingle(ast.ElemGroup(d)))),
     #      ast.ExprSingle(ast.ElemId(defs.SYS_NUM_CORES_CONST)))
     d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
-    d = form_location(self.sym, elem_b, d, f)
+    d = form_location(self.sym, elem_base, d, f)
 
     # Create on the on statement
     on_stmt = ast.StmtOn(d,
         ast.StmtPcall(name,
           [ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x)), 
-            expr_x, ast.ExprBinop('-', elem_m, ast.ExprSingle(elem_x)),
-              expr_b] + proc_actuals))
-    on_stmt.offset = None
+            expr_x, ast.ExprBinop('-', elem_m, ast.ExprSingle(elem_x))] 
+            + proc_actuals))
+    on_stmt.location = None
 
     # Conditionally recurse {d()|d()} or d()
     s1 = ast.StmtIf(
@@ -118,11 +121,11 @@ class TransformRep(NodeWalker):
             #   d(t+n/2, n/2, m-n/2, ...)
             on_stmt,
             # d(t, n/2, n/2)
-            ast.StmtPcall(name, [expr_t, expr_x, expr_x, expr_b] 
+            ast.StmtPcall(name, [expr_t, expr_x, expr_x] 
                 + proc_actuals),
             ]),
         # else d(t, n/2, m)
-        ast.StmtPcall(name, [expr_t, expr_x, expr_m, expr_b] + proc_actuals))
+        ast.StmtPcall(name, [expr_t, expr_x, expr_m] + proc_actuals))
 
     # _x = n/2 ; s1
     n_div_2 = ast.ExprBinop('>>', elem_n, ast.ExprSingle(ast.ElemNumber(1)))
@@ -144,9 +147,13 @@ class TransformRep(NodeWalker):
     """
     Convert a replicated parallel statement into a divide-and-conquer form.
      - Return the tuple (process-def, process-call)
+    We only allow replicators where their location is known; i.e. stmt.location
+    is an Expr(Number(x)).
     """
     assert isinstance(stmt, ast.StmtRep)
     assert isinstance(stmt.stmt, ast.StmtPcall)
+    assert isinstance(stmt.location, ast.ExprSingle)
+    assert isinstance(stmt.location.elem, ast.ElemNumber)
     pcall = stmt.stmt
 
     # The context of the procedure call is each variable occurance in the
@@ -164,17 +171,16 @@ class TransformRep(NodeWalker):
     elem_t = ast.ElemId('_t') # Interval base
     elem_n = ast.ElemId('_n') # Interval width
     elem_m = ast.ElemId('_m') # Processes in interval
-    elem_b = ast.ElemId('_b') # Base address
+    #print(Printer().expr(stmt.location))
+    base = stmt.location.elem.value
 
     # Populate the distribution and replicator indicies
     formals.append(ast.Param('_t', T_VAL_SINGLE, None))
     formals.append(ast.Param('_n', T_VAL_SINGLE, None))
     formals.append(ast.Param('_m', T_VAL_SINGLE, None))
-    formals.append(ast.Param('_b', T_VAL_SINGLE, None))
     actuals.append(ast.ExprSingle(ast.ElemNumber(0)))
     actuals.append(ast.ExprSingle(ast.ElemNumber(n)))
     actuals.append(ast.ExprSingle(ast.ElemNumber(stmt.m)))
-    actuals.append(ast.ExprSingle(ast.ElemFcall('procid', [])))
    
     # For each non-index free-variable of the process call
     for x in context - set([x for x in stmt.indicies]):
@@ -196,7 +202,7 @@ class TransformRep(NodeWalker):
 
     # Create the process definition and perform semantic analysis to 
     # update symbol bindings. 
-    d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, elem_b,
+    d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, base,
                 stmt.indicies, proc_actuals, formals, pcall)
     #Printer().defn(d, 0)
     self.sem.defn(d)

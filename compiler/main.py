@@ -235,8 +235,8 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   if errorlog.any(): raise Error('in channel labelling')
 
   # 4. Insert procid()s
-  vmsg(v, "Inserting process ids")
-  InsertIds().walk_program(ast)
+  #vmsg(v, "Inserting process ids")
+  #InsertIds().walk_program(ast)
 
   # 5. Insert channel ends
   vmsg(v, "Inserting connections")

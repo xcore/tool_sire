@@ -7,7 +7,7 @@ from functools import reduce
 import definitions as defs
 import ast
 from walker import NodeWalker
-
+from evalexpr import EvalExpr
 from printer import Printer
 
 class LabelProcs(NodeWalker):
@@ -26,17 +26,18 @@ class LabelProcs(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
+    node.location = ast.ElemNumber(0) 
     if node.name == 'main':
-      self.stmt(node.stmt, ast.ExprSingle(ast.ElemNumber(0)))
+      self.stmt(node.stmt, ast.ExprSingle(node.location))
     else:
-      self.stmt(node.stmt, ast.ExprSingle(ast.ElemNumber(0)))
+      self.stmt(node.stmt, ast.ExprSingle(node.location))
   
   # Statements ==========================================
 
   # Contain processes with new offsets
 
   def stmt_rep(self, node, l):
-    node.offset = l
+    node.location = l
     
     # Calculate total # processes (m) and the next power of two of this (n)
     node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
@@ -78,59 +79,62 @@ class LabelProcs(NodeWalker):
     self.stmt(node.stmt, k)
     
   def stmt_on(self, node, l):
-    node.offset = l
+    node.location = l
     k = ast.ExprBinop('+', ast.ElemGroup(l), node.expr)
+    # Try and evaluate this new expression
+    v = EvalExpr().expr(k)
+    k = ast.ExprSingle(ast.ElemNumber(v)) if v != None else k
     self.stmt(node.stmt, k)
 
   # Contain local processes
 
   def stmt_seq(self, node, l):
-    node.offset = l
+    node.location = l
     [self.stmt(x, l) for x in node.stmt]
 
   def stmt_par(self, node, l):
-    node.offset = l
+    node.location = l
     [self.stmt(x, l) for x in node.stmt]
 
   def stmt_if(self, node, l):
-    node.offset = l
+    node.location = l
     self.stmt(node.thenstmt, l)
     self.stmt(node.elsestmt, l)
 
   def stmt_while(self, node, l):
-    node.offset = l
+    node.location = l
     self.stmt(node.stmt, l)
 
   def stmt_for(self, node, l):
-    node.offset = l
+    node.location = l
     self.stmt(node.stmt, l)
 
   # Statements
   
   def stmt_skip(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_pcall(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_ass(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_in(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_out(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_alias(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_connect(self, node, l):
-    node.offset = l
+    node.location = l
 
   def stmt_assert(self, node, l):
-    node.offset = l
+    node.location = l
   
   def stmt_return(self, node, l):
-    node.offset = l
+    node.location = l
   
