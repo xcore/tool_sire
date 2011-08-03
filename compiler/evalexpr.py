@@ -12,8 +12,8 @@ class EvalExpr(NodeWalker):
   """
   Evaluate a constant-valued expression. Return None if this is not possible.
   """
-  def __init__(self):
-    pass
+  def __init__(self, debug=False):
+    self.debug = debug
 
   # Expressions =========================================
 
@@ -62,11 +62,12 @@ class EvalExpr(NodeWalker):
   # Elements= ===========================================
 
   def elem_id(self, node):
-    #print('eval: id: '+node.name+', {}'.format(node.symbol))
+    if self.debug:
+      print('eval: id: '+node.name+', {}'.format(node.symbol))
     s = node.symbol
-    #if s.value: 
-    #  print('Evaluating elem: '+node.name+', {} = {}'.format(s, s.value))
-    return s.value if s and s.value else None
+    if self.debug and s.value != None:
+      print('Evaluating elem: '+node.name+', {} = {}'.format(s, s.value))
+    return s.value if (s != None and s.value != None) else None
 
   def elem_group(self, node):
     return self.expr(node.expr)

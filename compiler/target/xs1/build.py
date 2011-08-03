@@ -18,29 +18,30 @@ from util import vmsg
 from error import Error
 import builtin
 
-DEVICE_HDR       = 'device.h'
-PROGRAM          = 'program'
-PROGRAM_SRC      = PROGRAM+'.xc'
-PROGRAM_ASM      = PROGRAM+'.S'
-PROGRAM_OBJ      = PROGRAM+'.o'
-MASTER_JUMPTAB   = 'masterjumptab'
-MASTER_TABLES    = 'mastertables'
-CONST_POOL       = 'constpool'
-MASTER_XE        = 'master.xe'
-SLAVE_XE         = 'slave.xe'
+DEVICE_HDR     = 'device.h'
+PROGRAM        = 'program'
+PROGRAM_SRC    = PROGRAM+'.xc'
+PROGRAM_ASM    = PROGRAM+'.S'
+PROGRAM_OBJ    = PROGRAM+'.o'
+MASTER_JUMPTAB = 'masterjumptab'
+MASTER_TABLES  = 'mastertables'
+CONST_POOL     = 'constpool'
+MASTER_XE      = 'master.xe'
+SLAVE_XE       = 'slave.xe'
 
-XCC              = 'xcc'
-XAS              = 'xas'
-XOBJDUMP         = 'xobjdump'
-COMPILE_FLAGS    = ['-S', '-O2', 
+XCC            = 'xcc'
+XAS            = 'xas'
+XOBJDUMP       = 'xobjdump'
+# NOTE: Ignore warnings when compiling program source
+COMPILE_FLAGS = ['-S', '-O2', 
+  '-fverbose-asm', #'-Wall', '-Wextra', 
+  '-Winline','-Wno-timing',  '-Wunreachable-code',
+  ]
+ASSEMBLE_FLAGS = ['-c', '-O2',
   '-fverbose-asm', '-Wall', '-Wextra', '-Winline',
   '-Wno-timing',  '-Wunreachable-code',
   ]
-ASSEMBLE_FLAGS   = ['-c', '-O2',
-  '-fverbose-asm', '-Wall', '-Wextra', '-Winline',
-  '-Wno-timing',  '-Wunreachable-code',
-  ]
-LINK_FLAGS       = ['-nostartfiles', '-Xmapper', '--nochaninit']
+LINK_FLAGS = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
 RUNTIME_FILES = [
   'source.xc', 

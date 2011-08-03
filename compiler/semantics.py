@@ -4,16 +4,16 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
-
+import traceback
 import error
 import util
 import definitions as defs
-
 import ast
 from walker import NodeWalker
 from builtin import builtins
 from typedefs import *
 from evalexpr import EvalExpr
+from printer import Printer
 
 elem_types = {
   'elem_sub'     : None,
@@ -223,7 +223,7 @@ class Semantics(NodeWalker):
     """
     v = EvalExpr().expr(expr)
     if v == None:
-      self.non_const_error()
+      self.non_const_error(expr)
     else:
       return v
 
@@ -263,7 +263,7 @@ class Semantics(NodeWalker):
 
   def procedure_def_error(self, name, coord):
     """ 
-    Re-definition
+    Re-definition.
     """
     self.errorlog.report_error(
         "procedure '{}' definition invalid"
@@ -271,7 +271,7 @@ class Semantics(NodeWalker):
 
   def type_error(self, msg, name, coord):
     """ 
-    Mismatching type
+    Mismatching type.
     """
     self.errorlog.report_error(
         "type error in {} with '{}'"
@@ -279,18 +279,19 @@ class Semantics(NodeWalker):
 
   def form_error(self, msg, name, coord):
     """ 
-    Mismatching form
+    Mismatching form.
     """
     self.errorlog.report_error(
         "form error in {} with '{}'"
         .format(msg, name), coord)
 
-  def non_const_error(self):
+  def non_const_error(self, expr):
     """
-    Constant expression cannot be evaluated
+    Constant expression cannot be evaluated.
     """
-    self.errorlog.report_error("non-constant in expr")
-    
+    self.errorlog.report_error("non-constant in expr: {}"
+        .format(Printer().expr(expr)))
+
   def array_param_bound_decl_error(self, name, coord):
     """ 
     Array parameter length declaration is not constant or referenced by a
@@ -305,6 +306,19 @@ class Semantics(NodeWalker):
     Input statement target must be a single element.
     """
     self.errorlog.report_error("invalid input target", coord)
+
+  def index_range_error(self, elem, coord):
+    """ 
+    Invald index range element.
+    """
+    self.errorlog.report_error("invalid index range: {}"
+        .format(Printer().elem(elem), coord))
+
+  def index_count_error(self, value, coord):
+    """ 
+    Invald index count (<= 0).
+    """
+    self.errorlog.report_error("index count value: {}".format(value), coord)
 
   # Program ============================================
 
@@ -535,7 +549,7 @@ class Semantics(NodeWalker):
 
     # Check the index is an ElemIndexRange
     if not isinstance(node.index, ast.ElemIndexRange):
-      self.index_range_error('for loop', node.coord)
+      self.index_range_error(node.index, node.coord)
 
   def stmt_rep(self, node):
     
@@ -546,12 +560,14 @@ class Semantics(NodeWalker):
     # Check all index elements are ElemIndexRanges
     for x in node.indicies:
       if not isinstance(x, ast.ElemIndexRange):
-        self.index_range_error('parallel replicator', node.coord)
+        self.index_range_error(x, node.coord)
       
     # Determine the values of the base and count expressions
     for x in node.indicies:
-        x.base_value = self.eval_expr(x.base)
-        x.count_value = self.eval_expr(x.count)
+      x.base_value = self.eval_expr(x.base)
+      x.count_value = self.eval_expr(x.count)
+      if x.count_value <= 0:
+        self.index_count_error(x.count_value, node.coord)
 
   def stmt_on(self, node):
 
