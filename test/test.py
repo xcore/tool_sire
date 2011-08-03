@@ -12,4 +12,5 @@ class Test(object):
   def __init__(self, name, cores=[1], cmp_flags=[]):
     self.name = name
     self.cores = cores
+    self.cmp_flags = cmp_flags
 

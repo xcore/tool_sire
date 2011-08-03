@@ -43,10 +43,10 @@ class InsertOns(NodeWalker):
     compile-time distribution. If any process is already prefixed with an 'on',
     then do not add any (this is mainly for the test cases).
     """
-    if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
-      self.errorlog.report_error("parallel composition contains 'on's")
-      return d
     if not self.disable:
+      if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
+        self.errorlog.report_error("parallel composition contains 'on's")
+        return 0
       d = self.stmt(node.stmt[0])
       for (i, x) in enumerate(node.stmt[1:]):
         node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
