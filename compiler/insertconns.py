@@ -34,11 +34,10 @@ class InsertConns(NodeWalker):
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    offset_expr = ast.ExprSingle(ast.ElemNumber(
-        tab.lookup_slave_location(chan.name, elem.index)))
     location = None
     if elem.master:
-      location = form_location(self.sym, base, offset_expr, 1) 
+      location = ast.ExprSingle(ast.ElemNumber(
+        tab.lookup_slave_location(chan.name, elem.index)))
     chanend = ast.ElemId(chan.chanend)
     chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
         None, scope=T_SCOPE_PROC)
@@ -56,9 +55,8 @@ class InsertConns(NodeWalker):
       self.debug('New connection for index {}'.format(index))
       location = None
       if master:
-        location_expr = ast.ExprSingle(ast.ElemNumber(
+        location = ast.ExprSingle(ast.ElemNumber(
             tab.lookup_slave_location(chan.name, index)))
-        location = form_location(self.sym, base, location_expr, 1)
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
@@ -140,7 +138,6 @@ class InsertConns(NodeWalker):
           conns.append(self.gen_single_conn(tab, chanids, base, x))
         else:
           conns.append(self.gen_array_conn(tab, chanids, base, x))
-
       s = ast.StmtSeq(conns + [stmt])
       s.location = stmt.location
       return s

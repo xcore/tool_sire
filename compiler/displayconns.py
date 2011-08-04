@@ -1,0 +1,115 @@
+# Copyright (c) 2011, James Hanlon, All rights reserved
+# This software is freely distributable under a derivative of the
+# University of Illinois/NCSA Open Source License posted in
+# LICENSE.txt and at <http://github.xcore.com/>
+
+from walker import NodeWalker
+
+class DisplayConns(NodeWalker):
+  """
+  Display channel connections per-core.
+  """
+  class ConnMaster(object):
+    def __init__(self, name, index, target):
+      self.name = name
+      self.index = index
+      self.target = target
+
+    def __repr__(self):
+      return 'connect {}[{}] to {}'.format(self.name, self.index, self.target)
+
+  class ConnSlave(object):
+    def __init__(self, name, index):
+      self.name = name
+      self.index = index
+
+    def __repr__(self):
+      return 'connect {}[{}]'.format(self.name, self.index)
+
+  def __init__(self, device):
+    self.device = device
+    self.d = []
+    [self.d.append([]) for x in range(self.device.num_cores())]
+
+  def aggregate(self, chans, tab):
+    """
+    Iterate over ChanElemSets and aggregate the expanded channels with their
+    locations by locaiton into the 'd' array.
+    """
+    for x in chans:
+      for y in x.elems:
+        locations = tab.lookup(x.name, y.index)
+        if y.master:
+          self.d[locations[0]].append(self.ConnMaster(x.name, y.index, locations[1]))
+        else:
+          self.d[locations[1]].append(self.ConnSlave(x.name, y.index))
+ 
+  def display(self):
+    for (i, x) in enumerate(self.d):
+      print('Core {}:'.format(i))
+      for y in x:
+        print('  {}'.format(y))
+
+  def walk_program(self, node):
+    [self.defn(x) for x in node.defs]
+    self.display()
+  
+  def defn(self, node):
+    self.aggregate(node.chans, node.chantab)
+    self.stmt(node.stmt, node.chantab)
+
+  def stmt_rep(self, node, tab):
+    self.aggregate(node.chans, tab)
+    self.stmt(node.stmt, tab)
+
+  def stmt_par(self, node, tab):
+    [self.aggregate(x, tab) for x in node.chans]
+    [self.stmt(x, tab) for x in node.stmt]
+  
+  # Compound statements
+
+  def stmt_seq(self, node, tab):
+    [self.stmt(x, tab) for x in node.stmt]
+
+  def stmt_if(self, node, tab):
+    self.stmt(node.thenstmt, tab)
+    self.stmt(node.elsestmt, tab)
+
+  def stmt_while(self, node, tab):
+    self.stmt(node.stmt, tab)
+
+  def stmt_for(self, node, tab):
+    self.stmt(node.stmt, tab)
+
+  def stmt_on(self, node, tab):
+    self.stmt(node.stmt, tab)
+
+  # Statements not containing statements
+
+  def stmt_skip(self, node, tab):
+    pass
+
+  def stmt_pcall(self, node, tab):
+    pass
+
+  def stmt_ass(self, node, tab):
+    pass
+
+  def stmt_in(self, node, tab):
+    pass
+
+  def stmt_out(self, node, tab):
+    pass
+
+  def stmt_alias(self, node, tab):
+    pass
+
+  def stmt_connect(self, node, tab):
+    pass
+    
+  def stmt_assert(self, node, tab):
+    pass
+
+  def stmt_return(self, node, tab):
+    pass
+

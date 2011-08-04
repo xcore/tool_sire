@@ -1,15 +1,15 @@
 val N := NUM_CORES-1;
   
-proc node_(chanend left, chanend right) is
-  var v;
-{ left ? v ; right ! v + 1 }
-
 proc master_(chanend begin, chanend end) is
   var v;
 { begin ! 0; 
   end ? v;
   printvalln(v)
 }
+
+proc node_(chanend left, chanend right) is
+  var v;
+{ left ? v ; right ! v + 1 }
 
 proc main() is
   var i;
@@ -18,3 +18,4 @@ proc main() is
 { master_(c[0], c[N]) || 
   par i in [0 for N] do node_(c[i], c[i+1])
 }
+

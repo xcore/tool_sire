@@ -1,19 +1,21 @@
 val N := 2;
+val M := N + 1;
 
-proc node(chanend w, chanend e, chanend n, chanend s) is
+proc src_sink(chanend input, chanend output) is
+  skip
+
+proc cell(chanend n, chanend s, chanend w, chanend e) is
   skip
 
 proc main() is
+  chan y[N*(N+1)];
+  chan x[N*(N+1)];
   var i;
   var j;
-  var v;
-  var w;
-  chan x[N*N];
-  chan y[N*N];
+{ par i in [0 for N] do src_sink(y[i*M], y[(i*M)+N]) ||
+  par i in [0 for N] do src_sink(x[i*M], x[(i*M)+N]) ||
   par i in [0 for N], j in [0 for N] do
-    node(
-    x[(i*N)+j], 
-    x[(i*N)+(j+1)], 
-    y[(i*N)+j], 
-    y[(i*N)+(j+1)])
-  
+    cell(y[(i*M)+j], y[(i*M)+j+1],
+         x[(j*M)+i], x[(j*M)+i+1]) 
+}
+
