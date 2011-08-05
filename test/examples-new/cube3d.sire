@@ -1,15 +1,24 @@
+% min(x, y) = y xor ((x xor y) and -(x < y))
+
 val D := 3;
 val N := 1 << D;
 
-proc node(chanend c1, chanend c2, chanend c3) is
+proc master_(chanend d0, chanend d1, chanend d2) is
+  skip
+
+proc slave_(chanend d0, chanend d1, chanend d2) is
   skip
 
 proc main() is
   var i;
-  chan c[N*D];
-{ par i in [0 for N] do
-    node(
-      c[i^(1<<0)+0], 
-      c[i^(1<<1)+1], 
-      c[i^(1<<2)+2])
+  chan c[(N*D)/2];
+{ master_(c[0], c[1], c[2]) ||
+  par i in [1 for N-1] do
+    slave_(
+      %c[min(i, i^1)*D + 0], 
+      %c[min(i, i^2)*D + 1], 
+      %c[min(i, i^4)*D + 2], 
+      c[((i xor 1) xor ((i xor (i xor 1)) and (0-(i < (i xor 1)))))*D + 0], 
+      c[((i xor 2) xor ((i xor (i xor 2)) and (0-(i < (i xor 2)))))*D + 1], 
+      c[((i xor 4) xor ((i xor (i xor 4)) and (0-(i < (i xor 4)))))*D + 2], 
 }

@@ -1,0 +1,22 @@
+% min(x, y) = y xor ((x xor y) and -(x < y))
+
+val D := 2;
+val N := 1 << D;
+
+proc master_(chanend d0, chanend d1) is
+  skip
+
+proc slave_(chanend d0, chanend d1) is
+  skip
+
+proc main() is
+  var i;
+  chan c[(N*D)/2];
+{ master_(c[0], c[1]) ||
+  par i in [1 for N-1] do
+    slave_(
+      %c[min(i, i^1)*D + 0], 
+      %c[min(i, i^2)*D + 1], 
+      c[((i xor 1) xor ((i xor (i xor 1)) and (0-(i < (i xor 1)))))*D + 0], 
+      c[((i xor 2) xor ((i xor (i xor 2)) and (0-(i < (i xor 2)))))*D + 1]) 
+}

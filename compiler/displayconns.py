@@ -38,16 +38,17 @@ class DisplayConns(NodeWalker):
     """
     for x in chans:
       for y in x.elems:
-        locations = tab.lookup(x.name, y.index)
-        if y.master:
-          self.d[locations[0]].append(self.ConnMaster(x.name, y.index, locations[1]))
+        master = tab.is_master(x.name, y.index, y.location)
+        if master:
+          slave_loc = tab.lookup_slave_location(x.name, y.index)
+          self.d[y.location].append(self.ConnMaster(x.name, y.index, slave_loc))
         else:
-          self.d[locations[1]].append(self.ConnSlave(x.name, y.index))
+          self.d[y.location].append(self.ConnSlave(x.name, y.index))
  
   def display(self):
     for (i, x) in enumerate(self.d):
       print('Core {}:'.format(i))
-      for y in x:
+      for y in sorted(x, key=lambda x: (x.name, x.index)):
         print('  {}'.format(y))
 
   def walk_program(self, node):

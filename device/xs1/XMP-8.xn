@@ -1,40 +1,113 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" ?>
 <Network xmlns="http://www.xmos.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
-	<Type>XMP-8 Board</Type>
-	
-	<Declarations>
-		<Declaration>core stdcore[8]</Declaration>
-	</Declarations>
-
-	<Nodes>
-		<Node Id="0" Type="XS1-G4A-FB512">
-			<Core Number="0" Reference="stdcore[0]">
-				<Port Location="XS1_PORT_1E" Name="PORT_LED_0"/>
-			</Core>  
-            <Core Number="1" Reference="stdcore[1]"/>
-            <Core Number="2" Reference="stdcore[2]"/>
-            <Core Number="3" Reference="stdcore[3]"/>
-		</Node>
-		<Node id="1" Type="XS1-G4A-FB512">
-			<Core Number="0" Reference="stdcore[4]">
-				<Port Location="XS1_PORT_1E" Name="PORT_LED_1"/>
-			</Core>
-			<Core Number="1" Reference="stdcore[5]"/>
-			<Core Number="2" Reference="stdcore[6]"/>
-			<Core Number="3" Reference="stdcore[7]"/>
-		</Node>
-	</Nodes>
-
-	<Links>
-		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="2"/> <LinkEndpoint NodeId="0" Link="14"/> </Link>
-		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="6"/> <LinkEndpoint NodeId="0" Link="10"/> </Link>
-		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="4"/> <LinkEndpoint NodeId="0" Link="8"/> </Link>
-		<Link Encoding="5wire" Delays="0,1"> <LinkEndpoint Nodeid="1" Link="0"/> <LinkEndpoint NodeId="0" Link="12"/> </Link>
-	</Links>
-
-    <JTAGChain>
-		<JTAGDevice Nodeid="1"/>
-		<JTAGDevice NodeId="0"/>
-    </JTAGChain>
-
+  <Type>
+    Board
+  </Type>
+  <Name>
+    mesh-8
+  </Name>
+  <Declarations>
+    <Declaration>
+      core stdcore[8]
+    </Declaration>
+  </Declarations>
+  <Packages>
+    <Package Id="0" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="0" InPackageId="0" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[0]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="1" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="1" InPackageId="1" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[1]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="2" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="2" InPackageId="2" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[2]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="3" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="3" InPackageId="3" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[3]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="4" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="4" InPackageId="4" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[4]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="5" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="5" InPackageId="5" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[5]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="6" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="6" InPackageId="6" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[6]"/>
+        </Node>
+      </Nodes>
+    </Package>
+    <Package Id="7" Type="XS1-L1A-EMPTY">
+      <Nodes>
+        <Node Id="7" InPackageId="7" Type="XS1-L1A">
+          <Core Number="0" Reference="stdcore[7]"/>
+        </Node>
+      </Nodes>
+    </Package>
+  </Packages>
+  <Links>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="0"/>
+      <LinkEndpoint Link="X0LB" NodeId="1"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="1"/>
+      <LinkEndpoint Link="X0LB" NodeId="2"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="2"/>
+      <LinkEndpoint Link="X0LB" NodeId="3"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="3"/>
+      <LinkEndpoint Link="X0LB" NodeId="4"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="4"/>
+      <LinkEndpoint Link="X0LB" NodeId="5"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="5"/>
+      <LinkEndpoint Link="X0LB" NodeId="6"/>
+    </Link>
+    <Link Delays="4,4" Encoding="2wire">
+      <LinkEndpoint Link="X0LD" NodeId="6"/>
+      <LinkEndpoint Link="X0LB" NodeId="7"/>
+    </Link>
+  </Links>
+  <JTAGChain>
+    <JTAGDevice NodeId="0" Position="0"/>
+    <JTAGDevice NodeId="1" Position="1"/>
+    <JTAGDevice NodeId="2" Position="2"/>
+    <JTAGDevice NodeId="3" Position="3"/>
+    <JTAGDevice NodeId="4" Position="4"/>
+    <JTAGDevice NodeId="5" Position="5"/>
+    <JTAGDevice NodeId="6" Position="6"/>
+    <JTAGDevice NodeId="7" Position="7"/>
+  </JTAGChain>
 </Network>
+

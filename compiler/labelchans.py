@@ -25,7 +25,8 @@ class LabelChans(NodeWalker):
   iterators and tag each with its location. Then label each channel with the 
   relative offset from the master to the slave.
   """
-  def __init__(self, errorlog, print_debug=False):
+  def __init__(self, device, errorlog, print_debug=False):
+    self.device = device
     self.errorlog = errorlog
     self.print_debug = print_debug
 
@@ -39,9 +40,9 @@ class LabelChans(NodeWalker):
     and then adding it to the channel table and returning it as an element. 
     """
     location_value = EvalExpr().expr(stmt.location)
-    master = tab.insert(name, None, location_value)
+    tab.insert(name, None, location_value)
     self.debug('  {} at {}'.format(name, location_value))
-    return ChanElem(None, master)
+    return ChanElem(None, location_value)
 
   def subscript_channel(self, iters, tab, stmt, name, expr):
     """
@@ -71,10 +72,10 @@ class LabelChans(NodeWalker):
       location_value = EvalExpr().expr(location_expr)
 
       # Add to the table
-      master = tab.insert(name, index_value, location_value)
+      tab.insert(name, index_value, location_value)
 
       # Add the expanded channel use (name, index) to a list
-      chan_elems.append(ChanElem(index_value, master))
+      chan_elems.append(ChanElem(index_value, location_value))
 
       self.debug('  {}[{}] at {}'.format(name, index_value, location_value))
     
@@ -125,9 +126,6 @@ class LabelChans(NodeWalker):
     node.chanids = {}
     id_count = 0
     
-    # Display the channel table
-    #node.chantab.display()
-  
     # Check each channel is used correctly by inspecting the entries in the
     # channel table and label channel variables with unique identifiers.
     for x in node.decls:
@@ -142,6 +140,29 @@ class LabelChans(NodeWalker):
         id_count += 1
       else:
         pass
+
+    # Resolve multiple connections on the same channel id
+    # TODO: prove that this will terminate
+    change = True
+    while change:
+      change = False
+      #print('iteration')
+      for x in filter(lambda x: x.type==T_CHAN_ARRAY, node.decls):
+        core = [0]*self.device.num_cores() 
+        for y in range(x.symbol.value):
+          s = node.chantab.lookup_slave_location(x.name, y)
+          if core[s] > 0:
+            node.chantab.swap(x.name, y)
+            s = node.chantab.lookup_slave_location(x.name, y)
+            core[s] += 1
+            if core[s] > 1:
+              print('ERROR: multiple connections to slave {}'.format(s))
+            change = True
+          else:
+            core[s] += 1
+    
+    # Display the channel table
+    #node.chantab.display()
   
   # Statements ==========================================
 
@@ -287,12 +308,10 @@ class ChanTable(object):
     Add a channel element with an index and location to the table.
     """
     key = self.key(name, index)
-    master = False
     if not key in self.tab:
       self.tab[key] = []
-      master = True
     self.tab[key].append(location)
-    return master
+    #print('inserted '+name+'[{}] @ {}'.format(index, location))
 
   def lookup(self, name, index):
     """
@@ -307,6 +326,17 @@ class ChanTable(object):
     key = self.key(name, index)
     assert key in self.tab and len(self.tab[key])==2
     return self.tab[key][1]
+
+  def is_master(self, name, index, location):
+    key = self.key(name, index)
+    if key in self.tab:
+      return self.tab[key][0] == location
+    return None
+
+  def swap(self, name, index):
+    key = self.key(name, index)
+    if key in self.tab:
+      self.tab[key].reverse()
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -366,11 +396,12 @@ class ChanElem(object):
   """
   An element of a channel expansion with:
    - An (integer) index value
-   - If the element is a master end (boolean)
+   - The location of the use at the index (in order to retrieve the entry from
+     the channel table).
   """  
-  def __init__(self, index, master):
+  def __init__(self, index, location):
     self.index = index
-    self.master = master
+    self.location = location
 
 
 class ChanElemSet(object):

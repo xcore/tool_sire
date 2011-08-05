@@ -232,7 +232,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
 
   # 3. Label channels
   vmsg(v, "Labelling channels")
-  LabelChans(errorlog).walk_program(ast)
+  LabelChans(device, errorlog).walk_program(ast)
   if errorlog.any(): raise Error('in channel labelling')
 
   DisplayConns(device).walk_program(ast)

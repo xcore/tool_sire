@@ -247,7 +247,7 @@ class Printer(NodeWalker):
     self.indent.pop()
 
   def stmt_assert(self, node):
-    self.out('assert({})'.format(self.expr(node.expr)))
+    self.out('assert {}'.format(self.expr(node.expr)))
 
   def stmt_return(self, node):
     self.out('return {}'.format(self.expr(node.expr)))

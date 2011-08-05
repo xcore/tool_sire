@@ -2,10 +2,20 @@ val N := 2;
 val M := N + 1;
 
 proc src_sink(chanend input, chanend output) is
-  skip
+  var v;
+{ input ! 0;
+  output ? v;
+  assert v = N
+}
 
 proc cell(chanend n, chanend s, chanend w, chanend e) is
-  skip
+  var nin;
+  var win;
+{ n ? nin;
+  w ? win;
+  s ! nin + 1;
+  e ! win + 1
+}
 
 proc main() is
   chan y[N*(N+1)];

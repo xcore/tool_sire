@@ -34,8 +34,9 @@ class InsertConns(NodeWalker):
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
+    master = tab.is_master(chan.name, elem.index, elem.location)
     location = None
-    if elem.master:
+    if master:
       location = ast.ExprSingle(ast.ElemNumber(
         tab.lookup_slave_location(chan.name, elem.index)))
     chanend = ast.ElemId(chan.chanend)
@@ -94,10 +95,12 @@ class InsertConns(NodeWalker):
     x = chan.elems[0] 
     l = [[x, x]]
     location = base.elem.value+x.index
-    diff = index_offset_diff(chan.name, x.index, x.master, location)
+    master = tab.is_master(chan.name, x.index, x.location)
+    diff = index_offset_diff(chan.name, x.index, master, location)
     for x in chan.elems[1:]:
       location = base.elem.value+x.index
-      cdiff = index_offset_diff(chan.name, x.index, x.master, location)
+      master = tab.is_master(chan.name, x.index, x.location)
+      cdiff = index_offset_diff(chan.name, x.index, master, location)
       if diff == cdiff:
         l[-1][1] = x
       else:
@@ -114,11 +117,12 @@ class InsertConns(NodeWalker):
     s = None
     for x in reversed(l):
       location = base.elem.value+x[0].index
+      master = tab.is_master(chan.name, x[0].index, x[0].location)
       if x[0] == x[1]:
-        s = create_single_connection(s, chan, x[0].index, x[0].master)
+        s = create_single_connection(s, chan, x[0].index, master)
       else:
-        s = create_range_connection(s, chan, x[0].index, x[1].index, x[0].master, 
-            index_offset_diff(chan.name, x[0].index, x[0].master, location))
+        s = create_range_connection(s, chan, x[0].index, x[1].index, master, 
+            index_offset_diff(chan.name, x[0].index, master, location))
 
     return s
 
@@ -143,20 +147,6 @@ class InsertConns(NodeWalker):
       return s
     else:
       return stmt
-
-  def display_chans(self, chans):
-    for x in chans:
-      if x.expr:
-        print('  {}[{}]'.format(x.name, Printer().expr(x.expr)))
-      else:
-        print('  {}'.format(x.name))
-      for y in x.elems:
-        if y.master:
-          print('    connect {} to {}'.format(
-            '{}[{}]'.format(x.name, y.index) if x.expr!=None else x.name, '?'))
-        else:
-          print('    connect {}'.format(
-            '{}[{}]'.format(x.name, y.index) if x.expr!=None else x.name, '?'))
 
   # Program ============================================
 
