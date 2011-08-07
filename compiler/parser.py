@@ -395,7 +395,7 @@ class Parser(object):
           | expr COMMA expr_seq'''
     p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
-  def p_expr_sinle(self, p):
+  def p_expr_single(self, p):
     'expr : elem' 
     p[0] = ast.ExprSingle(p[1])
 

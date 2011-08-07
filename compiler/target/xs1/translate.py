@@ -217,7 +217,7 @@ class TranslateXS1(NodeWalker):
     elif node.type == T_VAR_SINGLE:
       return 'int '+node.name+';'
     elif node.type == T_VAL_SINGLE:
-      return '#define {} {}'.format(node.name, self.expr(node.expr))
+      return '#define {} ({})'.format(node.name, self.expr(node.expr))
     elif node.type == T_CHANEND_SINGLE:
       return 'unsigned '+node.name+';'
     #elif node.type == T_CHANEND_ARRAY:

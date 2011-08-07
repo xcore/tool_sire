@@ -11,6 +11,8 @@ from walker import NodeWalker
 class EvalExpr(NodeWalker):
   """
   Evaluate a constant-valued expression. Return None if this is not possible.
+
+  NOTE: this doesn't observe any precidence rules.
   """
   def __init__(self, debug=False):
     self.debug = debug
@@ -50,12 +52,12 @@ class EvalExpr(NodeWalker):
     elif node.op == 'xor': return a ^ b
     elif node.op == '<<':  return a << b
     elif node.op == '>>':  return a >> b
-    elif node.op == '<':   return a < b
-    elif node.op == '>':   return a > b
-    elif node.op == '<=':  return a <= b
-    elif node.op == '>=':  return a >= b
-    elif node.op == '=':   return a == b
-    elif node.op == '~=':  return a != b
+    elif node.op == '<':   return 1 if a < b else 0
+    elif node.op == '>':   return 1 if a > b else 0
+    elif node.op == '<=':  return 1 if a <= b else 0 
+    elif node.op == '>=':  return 1 if a >= b else 0
+    elif node.op == '=':   return 1 if a == b else 0
+    elif node.op == '~=':  return 1 if a != b else 0
     else:
       assert 0
   

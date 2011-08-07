@@ -50,7 +50,6 @@ class LabelChans(NodeWalker):
     for each the value of its index and location, and then add this to the
     channel table and corresponding expansion.
     """
-    #print(Printer().expr(elem.expr))
     #print(Printer().expr(stmt.location))
     chan_elems = []
 
@@ -126,6 +125,7 @@ class LabelChans(NodeWalker):
     node.chanids = {}
     id_count = 0
     
+    node.chantab.display()
     # Check each channel is used correctly by inspecting the entries in the
     # channel table and label channel variables with unique identifiers.
     for x in node.decls:
@@ -144,9 +144,10 @@ class LabelChans(NodeWalker):
     # Resolve multiple connections on the same channel id
     # TODO: prove that this will terminate
     change = True
+    count = 0
     while change:
       change = False
-      #print('iteration')
+      count += 1
       for x in filter(lambda x: x.type==T_CHAN_ARRAY, node.decls):
         core = [0]*self.device.num_cores() 
         for y in range(x.symbol.value):
@@ -160,7 +161,9 @@ class LabelChans(NodeWalker):
             change = True
           else:
             core[s] += 1
-    
+   
+    print('{} iterataions.'.format(count))
+
     # Display the channel table
     #node.chantab.display()
   
@@ -324,8 +327,9 @@ class ChanTable(object):
 
   def lookup_slave_location(self, name, index):
     key = self.key(name, index)
-    assert key in self.tab and len(self.tab[key])==2
-    return self.tab[key][1]
+    if key in self.tab:
+      return self.tab[key][1]
+    return None
 
   def is_master(self, name, index, location):
     key = self.key(name, index)
