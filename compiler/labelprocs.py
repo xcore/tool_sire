@@ -9,6 +9,7 @@ import ast
 from walker import NodeWalker
 from evalexpr import EvalExpr
 from printer import Printer
+from indicies import indicies_expr
 
 class LabelProcs(NodeWalker):
   """
@@ -42,36 +43,21 @@ class LabelProcs(NodeWalker):
     # Calculate total # processes (m) and the next power of two of this (n)
     node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
  
-    # Calculate the compression factor
-    #node.f = 1
-    #while node.m/node.f > self.device.num_cores():
-    #  node.f = node.f + 1
-    
     # Determine f and then set l = g(d_1, d_2, ..., d_k, f)
-    dims = [x.count_value for x in node.indicies]
-    k = None
-    for (i, x) in enumerate(node.indicies):
-      c = reduce(lambda x, y: x*y, dims[i+1:], 1)
-      e = (ast.ElemGroup(
-            ast.ExprBinop('*', ast.ElemId(x.name),
-              ast.ExprSingle(ast.ElemNumber(c)))) 
-              if c>1 else ast.ElemId(x.name))
-      k = ast.ExprSingle(e) if k==None else ast.ExprBinop('+', k, ast.ExprSingle(e))
-    
-    # Apply f
-    #k = (ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('/', 
-    #      ast.ElemGroup(k), ast.ExprSingle(ast.ElemNumber(node.f)))))
-    #        if node.f>1 else k)
+    #dims = [x.count_value for x in node.indicies]
+    k = indicies_expr(node.indicies)
+    #for (i, x) in enumerate(node.indicies):
+    #  c = reduce(lambda x, y: x*y, dims[i+1:], 1)
+    #  e = (ast.ElemGroup(
+    #        ast.ExprBinop('*', ast.ElemId(x.name),
+    #          ast.ExprSingle(ast.ElemNumber(c)))) 
+    #          if c>1 else ast.ElemId(x.name))
+    #  k = ast.ExprSingle(e) if k==None else ast.ExprBinop('+', k, ast.ExprSingle(e))
     
     # Add to base (if non-zero) and take modulo
-    if isinstance(l, ast.ElemNumber) and l.value==0:
-      pass
-    else:
+    if not (isinstance(l, ast.ElemNumber) and l.value==0):
       k = ast.ExprBinop('+', l, k)
-      #k = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('+', l, k)), 
-      #    ast.ExprSingle(elem_numcores))
 
-    assert not k==None
     self.stmt(node.stmt, k)
     
   def stmt_on(self, node, l):

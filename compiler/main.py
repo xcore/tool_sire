@@ -235,7 +235,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device):
   LabelChans(device, errorlog).walk_program(ast)
   if errorlog.any(): raise Error('in channel labelling')
 
-  DisplayConns(device).walk_program(ast)
+  #DisplayConns(device).walk_program(ast)
 
   # 4. Insert channel ends
   vmsg(v, "Inserting connections")

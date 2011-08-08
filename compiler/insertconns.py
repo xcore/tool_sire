@@ -12,7 +12,7 @@ from typedefs import *
 from symbol import Symbol
 from formlocation import form_location
 from printer import Printer
-from indicies import *
+from indicies import indicies_value, indicies_expr
 
 class InsertConns(NodeWalker):
   """
@@ -96,21 +96,21 @@ class InsertConns(NodeWalker):
       else:
         return tab.lookup_master_location(name, index)
 
-    # Sort the channel elements into increasing index
+    # Sort the channel elements into increasing order of indicies
     chan.elems = sorted(chan.elems, key=lambda x: x.indicies_value)
 
-    print('===')
     # Build a list of channel index ranges
+    self.debug('=====')
     x = chan.elems[0] 
     l = [[x, x]]
     master = tab.is_master(chan.name, x.index, x.location)
     diff = target_loc(chan.name, x.index, master) - x.indicies_value
-    print('{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
+    self.debug('{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
         chan.name, x.index, target_loc(chan.name, x.index, master), diff))
     for x in chan.elems[1:]:
       cmaster = tab.is_master(chan.name, x.index, x.location)
       cdiff = target_loc(chan.name, x.index, cmaster) - x.indicies_value
-      print('{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
+      self.debug('{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
           chan.name, x.index, target_loc(chan.name, x.index, cmaster), cdiff))
       if diff == cdiff and master == cmaster:
         l[-1][1] = x

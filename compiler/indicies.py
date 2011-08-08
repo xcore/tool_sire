@@ -24,12 +24,10 @@ def indicies_expr(indicies):
   r = None
   for (i, x) in enumerate(indicies):
     c = reduce(lambda x, y: x*y, dims[i+1:], 1)
+    c_expr = ast.ExprSingle(ast.ElemNumber(c))
     eid = ast.ElemId(x.name)
     eid.symbol = Symbol(x.name, T_VAL_SINGLE, None, scope=T_SCOPE_PROC)
-    e = (ast.ElemGroup(ast.ExprBinop('*', eid, 
-        ast.ExprSingle(ast.ElemNumber(c))))
-            if c>1 else eid)
-    r = (ast.ElemGroup(ast.ExprSingle(e)) if r==None 
-        else ast.ExprBinop('+', r, ast.ExprSingle(e)))
+    e = ast.ExprBinop('*', eid, c_expr) if c>1 else ast.ExprSingle(eid)
+    r = e if r==None else ast.ExprBinop('+', ast.ElemGroup(r), e)
   return r
 
