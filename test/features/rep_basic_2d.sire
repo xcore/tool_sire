@@ -1,5 +1,5 @@
-val X := NUM_CORES/2;
-val Y := 2;
+val X := 1;
+val Y := 1;
 
 proc main() is
   var i;

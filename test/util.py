@@ -1,12 +1,12 @@
 import sys
 import subprocess
 
-def test_generator(name, path, num_cores, cmp_flags, run_test):
+def test_generator(name, path, num_cores, cmp_flags, param, run_test):
   """ 
   Generate the test harness.
   """
   def test(self):
-    run_test(self, name, path, num_cores, cmp_flags)
+    run_test(self, name, path, num_cores, cmp_flags, param)
   return test
 
 def generate_test_set(target, path, test_set, run_test):
@@ -14,7 +14,8 @@ def generate_test_set(target, path, test_set, run_test):
   for t in test_set:
     for num_cores in t.cores:
       name = 'test_{}_{}_{}c'.format(target, t.name, num_cores)
-      test = test_generator(t.name, path, num_cores, t.cmp_flags, run_test)
+      test = test_generator(t.name, path, num_cores, 
+          t.cmp_flags, t.param, run_test)
       test.__name__ = name
       tests.append(test)
   return tests

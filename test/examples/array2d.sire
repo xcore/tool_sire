@@ -1,11 +1,18 @@
-val N := 4;
-val M := N + 1;
+val N := 1;
+val M := 1;
 
-proc src_sink(chanend input, chanend output) is
+proc src_sink_ns(chanend input, chanend output) is
   var v;
 { input ! 0;
   output ? v;
   assert v = N
+}
+
+proc src_sink_we(chanend input, chanend output) is
+  var v;
+{ input ! 0;
+  output ? v;
+  assert v = M
 }
 
 proc cell(chanend n, chanend s, chanend w, chanend e) is
@@ -22,8 +29,8 @@ proc main() is
   chan x[N*(N+1)];
   var i;
   var j;
-{ par i in [0 for N] do src_sink(y[i*M], y[(i*M)+N]) ||
-  par i in [0 for N] do src_sink(x[i*M], x[(i*M)+N]) ||
+{ par i in [0 for N] do src_sink_ns(y[i*M], y[(i*M)+N]) ||
+  par i in [0 for N] do src_sink_ew(x[i*M], x[(i*M)+N]) ||
   par i in [0 for N], j in [0 for N] do
     cell(y[(i*M)+j], y[(i*M)+j+1],
          x[(j*M)+i], x[(j*M)+i+1]) 

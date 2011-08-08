@@ -11,6 +11,7 @@ from util import read_file
 from util import generate_test_set
 from test import Test
 
+SED = 'sed'
 COMPILE  = 'sire'
 SIMULATE = 'axe'
 SIM_FLAGS = []
@@ -21,6 +22,8 @@ NO_DIST = ['-D']
 # Examples =====================================================
 
 xs1_example_tests = [ 
+  
+  # Sequential
   Test('hello', [1, 4, 16, 32, 64]),
   Test('power'),
   Test('ackermann'),
@@ -36,13 +39,29 @@ xs1_example_tests = [
   Test('mandlebrot-seq'),
   Test('nqueens-seq'),
   Test('mergesort-seq'),
+  
+  # Parallel (explicit on)
   Test('mergesort-par', [4, 16],         NO_DIST),
   Test('distribute',    [4, 16, 32, 64], NO_DIST),
+
+  # Parallel (replicators and channels)
+  Test('array1d', [4, 16, 64]),
+  Test('array2d', [4],  param=[('N', '1'), ('M', '1')]),
+  Test('array2d', [16], param=[('N', '2'), ('M', '2')]),
+  Test('array2d', [64], param=[('N', '3'), ('M', '3')]),
+  Test('tree',    [16], param=[('D', '1')]),
+  Test('tree',    [16], param=[('D', '2')]),
+  Test('tree',    [64], param=[('D', '3')]),
+  Test('cube2d',  [4]),
+  Test('cube3d',  [16]),
+  Test('cube4d',  [64]),
   ]
   
 # Features =====================================================
 
 xs1_feature_tests = [
+
+  # Miscellaneous
   Test('assert'),
   Test('for'),
   Test('while'),
@@ -51,10 +70,12 @@ xs1_feature_tests = [
   Test('array_slice1'),
   Test('array_slice2'),
   
+  # Builtins
   Test('builtin_fixedpoint'),
   Test('builtin_printing'),
   Test('builtin_procid', [16]),
 
+  # Threads
   Test('thread_basic_2',     [1], NO_DIST),
   Test('thread_basic_4',     [1], NO_DIST),
   Test('thread_basic_7',     [1], NO_DIST),
@@ -64,6 +85,7 @@ xs1_feature_tests = [
   Test('thread_arguments_4', [1], NO_DIST),
   Test('thread_arguments_7', [1], NO_DIST),
 
+  # On
   Test('on_self'),
   Test('on_basic',         [4, 16, 32, 64]),
   Test('on_children',      [4]),
@@ -80,24 +102,40 @@ xs1_feature_tests = [
   Test('on_collision_2',   [4, 16, 64], NO_DIST),
   Test('on_collision_4',   [4, 16, 64], NO_DIST),
 
+  # Replicators
   Test('rep_basic_1d', [4, 16, 32, 64]),
-  Test('rep_basic_2d', [4, 16, 32, 64]),
-  Test('rep_basic_3d', [16, 32, 64]),
+  Test('rep_basic_2d', [4],  param=[('X', '1'), ('Y', '1')]),
+  Test('rep_basic_2d', [4],  param=[('X', '2'), ('Y', '2')]),
+  Test('rep_basic_2d', [16], param=[('X', '3'), ('Y', '3')]),
+  Test('rep_basic_3d', [16], param=[('X', '1'), ('Y', '1'), ('Z', '1')]),
+  Test('rep_basic_3d', [16], param=[('X', '2'), ('Y', '2'), ('Z', '2')]),
+  Test('rep_basic_3d', [16], param=[('X', '3'), ('Y', '3'), ('Z', '3')]),
 
+  # Connect
   Test('connect_basic',      [4, 16], NO_DIST),
   Test('connect_reciprocal', [4, 16], NO_DIST),
   ]
 
-def run_test(self, name, path, num_cores, cmp_flags):
+def run_test(self, name, path, num_cores, cmp_flags, param):
   """
   Run a single test.
   """
   try:
 
+    filename = path+'/'+name+'.sire' 
+
+    # Set parameters
+    for (var, value) in param:
+      (exit, output) = call([SED, 's/val {} := [0-9]+;/val {} := {};/'
+        .format(var, var, value), filename])
+    self.assertTrue(exit)
+
     # Compile the program
-    (exit, output) = call([COMPILE, path+'/'+name+'.sire'] 
+    (exit, output) = call([COMPILE, filename]
         + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + cmp_flags)
     self.assertTrue(exit)
+
+    # Unset parameters?
 
     # Simulate execution
     (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)

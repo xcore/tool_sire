@@ -1,9 +1,8 @@
-val X := NUM_CORES;
+val N := NUM_CORES;
 
 proc main() is
   var i;
-  var v;
-{ par i in [1 for X] do
-    v := i
+{ par i in [1 for N] do 
+    skip
 }
 

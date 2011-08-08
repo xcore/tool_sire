@@ -1,13 +1,12 @@
-val X := NUM_CORES/4;
-val Y := 2;
-val Z := 2;
+val X := 1;
+val Y := 1;
+val Z := 1;
 
 proc main() is
   var i;
   var j;
   var k;
-  var v;
 { par i in [1 for X], j in [1 for Y], k in [1 for Z] do 
-    v := i + j + k
+    skip
 }
 
