@@ -39,11 +39,14 @@ class InsertConns(NodeWalker):
     if master:
       location = ast.ExprSingle(ast.ElemNumber(
         tab.lookup_slave_location(chan.name, elem.index)))
+    else:
+      location = ast.ExprSingle(ast.ElemNumber(
+        tab.lookup_master_location(chan.name, elem.index)))
     chanend = ast.ElemId(chan.chanend)
     chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
         None, scope=T_SCOPE_PROC)
     chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
-    return ast.StmtConnect(chanend, chanid, location)
+    return ast.StmtConnect(chanend, chanid, location, master)
 
   def gen_array_conn(self, tab, chanids, base, chan):
     """
@@ -58,22 +61,22 @@ class InsertConns(NodeWalker):
       if master:
         location = ast.ExprSingle(ast.ElemNumber(
             tab.lookup_slave_location(chan.name, index)))
+      else:
+        location = ast.ExprSingle(ast.ElemNumber(
+          tab.lookup_master_location(chan.name, index)))
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
       cond = ast.ExprBinop('=', ast.ElemGroup(chan.expr), ast.ElemNumber(index))
-      conn = ast.StmtConnect(chanend, chanid, location)
+      conn = ast.StmtConnect(chanend, chanid, location, master)
       return ast.StmtIf(cond, conn, s) if s else conn
 
     def create_range_connection(s, chan, begin, end, master, difference):
       self.debug('New connection over range {} to {}'.format(begin, end))
-      if master:
-        offset_expr = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(difference))))
-        offset_expr = ast.ExprUnary('-', offset_expr) if difference<0 else offset_expr
-        offset_expr = ast.ExprBinop('+', ast.ElemGroup(chan.expr), offset_expr)
-        location = form_location(self.sym, base, offset_expr, 1)
-      else:
-        location = None
+      offset_expr = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(difference))))
+      offset_expr = ast.ExprUnary('-', offset_expr) if difference<0 else offset_expr
+      offset_expr = ast.ExprBinop('+', ast.ElemGroup(chan.expr), offset_expr)
+      location = form_location(self.sym, base, offset_expr, 1)
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
@@ -82,11 +85,14 @@ class InsertConns(NodeWalker):
             ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
           ast.ExprBinop('<=', ast.ElemGroup(chan.expr),
             ast.ExprSingle(ast.ElemNumber(max(begin, end)))))
-      conn = ast.StmtConnect(chanend, chanid, location)
+      conn = ast.StmtConnect(chanend, chanid, location, master)
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def index_offset_diff(name, index, master, location):
-      return (tab.lookup_slave_location(name, index) - location if master else None)
+    def target_loc(name, index, loc):
+      if tab.is_master(name, index, loc):
+        return tab.lookup_slave_location(name, index)
+      else:
+        return tab.lookup_master_location(name, index)
 
     # Sort the channel elements into increasing index
     chan.elems = sorted(chan.elems, key=lambda x: x.index)
@@ -94,17 +100,18 @@ class InsertConns(NodeWalker):
     # Build a list of channel index ranges
     x = chan.elems[0] 
     l = [[x, x]]
-    location = base.elem.value+x.index
-    master = tab.is_master(chan.name, x.index, x.location)
-    diff = index_offset_diff(chan.name, x.index, master, location)
+    loc = base.elem.value + x.index
+    diff = target_loc(chan.name, x.index, loc) - loc
+    master = tab.is_master(chan.name, x.index, loc)
     for x in chan.elems[1:]:
-      location = base.elem.value+x.index
-      master = tab.is_master(chan.name, x.index, x.location)
-      cdiff = index_offset_diff(chan.name, x.index, master, location)
-      if diff == cdiff:
+      loc = base.elem.value + x.index
+      cdiff = target_loc(chan.name, x.index, loc) - loc
+      cmaster = tab.is_master(chan.name, x.index, loc)
+      if diff == cdiff and master == cmaster:
         l[-1][1] = x
       else:
         diff = cdiff
+        master = cmaster
         l.append([x, x])
   
     # Print them
@@ -116,13 +123,13 @@ class InsertConns(NodeWalker):
     # Construct the connection syntax
     s = None
     for x in reversed(l):
-      location = base.elem.value+x[0].index
+      loc = base.elem.value + x[0].index
       master = tab.is_master(chan.name, x[0].index, x[0].location)
       if x[0] == x[1]:
         s = create_single_connection(s, chan, x[0].index, master)
       else:
         s = create_range_connection(s, chan, x[0].index, x[1].index, master, 
-            index_offset_diff(chan.name, x[0].index, master, location))
+            target_loc(chan.name, x[0].index, loc) - loc)
 
     return s
 

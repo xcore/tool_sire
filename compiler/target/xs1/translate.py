@@ -340,12 +340,12 @@ class TranslateXS1(NodeWalker):
         self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
   def stmt_connect(self, node):
-    if node.expr:
+    if node.master:
       self.out('{} = {}({}, {});'.format(self.elem(node.left), 
         defs.LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
     else:
-      self.out('{} = {}({});'.format(self.elem(node.left), 
-        defs.LABEL_CONNECT_SLAVE, self.expr(node.id)))
+      self.out('{} = {}({}, {});'.format(self.elem(node.left),
+        defs.LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
 
   def stmt_if(self, node):
     self.out('if ({})'.format(self.expr(node.cond)))

@@ -1,4 +1,5 @@
 % min(x, y) = y xor ((x xor y) and -(x < y))
+% Node i connects to c[min(i, i^1)*D + 0], c[min(i, i^2)*D + 1].
 
 val D := 2;
 val N := 1 << D;
@@ -12,11 +13,9 @@ proc slave_(chanend d0, chanend d1) is
 proc main() is
   var i;
   chan c[(N*D)];
-{ %master_(c[0], c[1]) ||
-  par i in [0 for N] do
+{ master_(c[0], c[1]) ||
+  par i in [1 for N-1] do
     slave_(
-      %c[min(i, i^1)*D + 0], 
-      %c[min(i, i^2)*D + 1], 
       c[(((i xor 1) xor ((i xor (i xor 1)) and (-(i < (i xor 1)))))*D) + 0], 
       c[(((i xor 2) xor ((i xor (i xor 2)) and (-(i < (i xor 2)))))*D) + 1])
 }

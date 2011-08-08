@@ -6,10 +6,11 @@
 #define MASTER 1
 #define SLAVE  0
 
-bool dequeueMasterReq(conn_req &r, int connId);
-bool dequeueSlaveReq(conn_req &r, int connId);
-void queueMasterReq(int connId, unsigned threadCRI, unsigned chanCRI);
-void queueSlaveReq(unsigned tid, int connId, 
+bool dequeueMasterReq(conn_req &r, int connId, int origin);
+bool dequeueSlaveReq(conn_req &r, int connId, int origin);
+void queueMasterReq(int connId, int origin, 
+    unsigned threadCRI, unsigned chanCRI);
+void queueSlaveReq(unsigned tid, int connId, int origin, 
     unsigned threadCRI, unsigned chanCRI);
 
 /*
@@ -30,7 +31,7 @@ void COMPLETE(unsigned c, unsigned cri, unsigned v)
  *  3. Input slave CRI on t.
  *  4. Set local channel destination of c and return it.
  */
-unsigned _connectMaster(int connId, unsigned dest)
+unsigned _connectMaster(int connId, int dest)
 { int tid = THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
@@ -56,7 +57,7 @@ unsigned _connectMaster(int connId, unsigned dest)
  *  4. Input master CRI on t.
  *  5. Set local channel destination of c and return it.
  */
-unsigned _connectSlave(int connId)
+unsigned _connectSlave(int connId, int origin)
 { int tid = THREAD_ID();
   unsigned t = thread_chans[tid];
   unsigned c = GETR_CHANEND();
@@ -67,6 +68,7 @@ unsigned _connectSlave(int connId)
   OUT(t, tid);
   OUT(t, c);
   OUT(t, connId);
+  OUT(t, origin);
   OUTCT_END(t);
   destCRI = IN(t);
   CHKCT_END(t);
@@ -79,13 +81,15 @@ unsigned _connectSlave(int connId)
  *
  * Thread 0 serve master connection request.
  *  1. Receive channel id
- *  2. Receive master CRI
+ *  2. Receive address of master (origin)
+ *  3. Receive master CRI
  *  [queue or complete]
  *
  * Thread 0 serve slave connection request.
  *  1. Receive slave thread id
  *  2. Receive channel id
- *  3. Receive slave CRI
+ *  3. Receive master address (origin)
+ *  4. Receive slave CRI
  *  [queue or complete]
  */
 void serveConnReq()
@@ -96,10 +100,11 @@ void serveConnReq()
   if(IN(conn_master) == MASTER)
   { unsigned mChanCRI = IN(conn_master);
     int connId = IN(conn_master);
+    int origin = GET_GLOBAL_CORE_ID(mChanCRI); 
     conn_req sReq;
     CHKCT_END(conn_master);
-    if (!dequeueSlaveReq(sReq, connId))
-      queueMasterReq(connId, threadCRI, mChanCRI);
+    if (!dequeueSlaveReq(sReq, connId, origin))
+      queueMasterReq(connId, origin, threadCRI, mChanCRI);
     else
     { COMPLETE(conn_master, threadCRI, sReq.chanCRI);
       COMPLETE(conn_master, sReq.threadCRI, mChanCRI);
@@ -110,10 +115,11 @@ void serveConnReq()
   { unsigned tid = IN(conn_master);
     unsigned sChanCRI = IN(conn_master);
     int connId = IN(conn_master);
+    int origin = IN(conn_master);
     conn_req mReq;
     CHKCT_END(conn_master);
-    if (!dequeueMasterReq(mReq, connId))
-      queueSlaveReq(tid, connId, threadCRI, sChanCRI);
+    if (!dequeueMasterReq(mReq, connId, origin))
+      queueSlaveReq(tid, connId, origin, threadCRI, sChanCRI);
     else
     { COMPLETE(conn_master, mReq.threadCRI, sChanCRI);
       COMPLETE(conn_master, threadCRI, mReq.chanCRI);
@@ -135,9 +141,10 @@ void initConnections()
 /*
  * Dequeue a master connection request matching the channel id.
  */
-bool dequeueMasterReq(conn_req &r, int connId)
+bool dequeueMasterReq(conn_req &r, int connId, int origin)
 { for (int i=0; i<CONN_BUFFER_SIZE; i++)
-  { if (conn_buffer[i].connId == connId)
+  { if (conn_buffer[i].connId == connId 
+      && conn_buffer[i].origin == origin)
     { conn_buffer[i].connId = NONE;
       r.threadCRI = conn_buffer[i].threadCRI;
       r.chanCRI = conn_buffer[i].chanCRI;
@@ -150,9 +157,10 @@ bool dequeueMasterReq(conn_req &r, int connId)
 /*
  * Dequeue a slave connection request.
  */
-bool dequeueSlaveReq(conn_req &r, int connId)
+bool dequeueSlaveReq(conn_req &r, int connId, int origin)
 { for (int i=0; i<MAX_THREADS; i++)
-  { if (conn_locals[i].connId == connId)
+  { if (conn_locals[i].connId == connId
+      && conn_locals[i].origin == origin)
     { conn_locals[i].connId = NONE;
       r.threadCRI = conn_locals[i].threadCRI;
       r.chanCRI = conn_locals[i].chanCRI;
@@ -166,12 +174,14 @@ bool dequeueSlaveReq(conn_req &r, int connId)
  * Queue a master connection request: insert it in the next available slot in
  * the buffer.
  */
-void queueMasterReq(int connId, unsigned threadCRI, unsigned chanCRI)
+void queueMasterReq(int connId, int origin, 
+    unsigned threadCRI, unsigned chanCRI)
 { int i = 0;
   char b = 0;
   while (i<CONN_BUFFER_SIZE && !b)
   { if (conn_buffer[i].connId == NONE)
     { conn_buffer[i].connId = connId;
+      conn_buffer[i].origin = origin;
       conn_buffer[i].threadCRI = threadCRI;
       conn_buffer[i].chanCRI = chanCRI;
       b = 1;
@@ -186,9 +196,10 @@ void queueMasterReq(int connId, unsigned threadCRI, unsigned chanCRI)
  * Queue a slave connection request: insert it in the slot given by the thread
  * id.
  */
-void queueSlaveReq(unsigned tid, int connId, 
+void queueSlaveReq(unsigned tid, int connId, int origin,
     unsigned threadCRI, unsigned chanCRI)
 { conn_locals[tid].connId = connId;
+  conn_locals[tid].origin = origin;
   conn_locals[tid].threadCRI = threadCRI;
   conn_locals[tid].chanCRI = chanCRI;
 }

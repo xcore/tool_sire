@@ -64,7 +64,8 @@ class LabelChans(NodeWalker):
       # Substitute index variables for values
       for (y, z) in zip(iters, x):
         index_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
-        location_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
+        location_expr.accept(SubElem(ast.ElemId(y.name),
+          ast.ElemNumber(z-y.base_value)))
 
       # Evaluate the expressions
       index_value = EvalExpr().expr(index_expr)
@@ -125,7 +126,6 @@ class LabelChans(NodeWalker):
     node.chanids = {}
     id_count = 0
     
-    node.chantab.display()
     # Check each channel is used correctly by inspecting the entries in the
     # channel table and label channel variables with unique identifiers.
     for x in node.decls:
@@ -140,29 +140,39 @@ class LabelChans(NodeWalker):
         id_count += 1
       else:
         pass
-
+    
     # Resolve multiple connections on the same channel id
     # TODO: prove that this will terminate
-    change = True
-    count = 0
-    while change:
-      change = False
-      count += 1
-      for x in filter(lambda x: x.type==T_CHAN_ARRAY, node.decls):
-        core = [0]*self.device.num_cores() 
-        for y in range(x.symbol.value):
-          s = node.chantab.lookup_slave_location(x.name, y)
-          if core[s] > 0:
-            node.chantab.swap(x.name, y)
-            s = node.chantab.lookup_slave_location(x.name, y)
-            core[s] += 1
-            if core[s] > 1:
-              print('ERROR: multiple connections to slave {}'.format(s))
-            change = True
-          else:
-            core[s] += 1
-   
-    print('{} iterataions.'.format(count))
+    #for x in filter(lambda x: x.type==T_CHAN_ARRAY, node.decls):
+    #  core = [0]*self.device.num_cores()
+    #  
+    #  # Initialise the number of master conn reqs for each core
+    #  for y in range(x.symbol.value):
+    #    s = node.chantab.lookup_slave_location(x.name, y)
+    #    if s != None: core[s] += 1 
+    #  
+    #  change = True
+    #  count = 0
+    #  while change and count < 100:
+    #    change = False
+    #    count += 1
+    #    # For each channel swap master/slave if >1 at slave
+    #    for y in range(x.symbol.value):
+    #      s = node.chantab.lookup_slave_location(x.name, y)
+    #      #for z in core[:8]: print(z)
+    #      if s != None:
+    #        if core[s] > 1:
+    #          core[s] -= 1
+    #          #print('swapping {}[{}]'.format(x.name, y))
+    #          node.chantab.swap(x.name, y)
+    #          s = node.chantab.lookup_slave_location(x.name, y)
+    #          core[s] += 1
+    #          change = True
+    #      #print('===')
+    #    #print('iteration {} ==='.format(count))
+    #  if count==100 and change:
+    #    print('ERROR: could not determine connections for {}'.format(x.name))
+    #  print('{} iterataions.'.format(count))
 
     # Display the channel table
     #node.chantab.display()
@@ -289,6 +299,9 @@ class LabelChans(NodeWalker):
     return ChanUseSet()
 
 
+MASTER = 0
+SLAVE  = 1
+
 class ChanTable(object):
   """
   A table to record the location of channel ends and their names. Each key maps
@@ -325,16 +338,22 @@ class ChanTable(object):
       return None
     return self.tab[key]
 
+  def lookup_master_location(self, name, index):
+    key = self.key(name, index)
+    if key in self.tab:
+      return self.tab[key][MASTER]
+    return None
+
   def lookup_slave_location(self, name, index):
     key = self.key(name, index)
     if key in self.tab:
-      return self.tab[key][1]
+      return self.tab[key][SLAVE]
     return None
 
   def is_master(self, name, index, location):
     key = self.key(name, index)
     if key in self.tab:
-      return self.tab[key][0] == location
+      return self.tab[key][MASTER] == location
     return None
 
   def swap(self, name, index):

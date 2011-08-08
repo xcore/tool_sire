@@ -19,12 +19,13 @@ class DisplayConns(NodeWalker):
       return 'connect {}[{}] to {}'.format(self.name, self.index, self.target)
 
   class ConnSlave(object):
-    def __init__(self, name, index):
+    def __init__(self, name, index, origin):
       self.name = name
       self.index = index
+      self.origin = origin
 
     def __repr__(self):
-      return 'connect {}[{}]'.format(self.name, self.index)
+      return 'connect {}[{}] from {}'.format(self.name, self.index, self.origin)
 
   def __init__(self, device):
     self.device = device
@@ -43,7 +44,8 @@ class DisplayConns(NodeWalker):
           slave_loc = tab.lookup_slave_location(x.name, y.index)
           self.d[y.location].append(self.ConnMaster(x.name, y.index, slave_loc))
         else:
-          self.d[y.location].append(self.ConnSlave(x.name, y.index))
+          master_loc = tab.lookup_master_location(x.name, y.index)
+          self.d[y.location].append(self.ConnSlave(x.name, y.index, master_loc))
  
   def display(self):
     for (i, x) in enumerate(self.d):

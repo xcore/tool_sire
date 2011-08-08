@@ -28,6 +28,7 @@ extern unsigned thread_chans[MAX_THREADS];
 
 typedef struct
 { unsigned connId;
+  unsigned origin;
   unsigned threadCRI;
   unsigned chanCRI;
 } conn_req;

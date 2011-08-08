@@ -356,10 +356,11 @@ class StmtAlias(Stmt):
 
 
 class StmtConnect(Stmt):
-  def __init__(self, left, id, expr, coord=None):
+  def __init__(self, left, id, expr, master, coord=None):
     self.left = left
     self.id = id
     self.expr = expr
+    self.master = master
     self.coord = coord
 
   def children(self):
@@ -378,6 +379,7 @@ class StmtConnect(Stmt):
 
   def __repr__(self):
     s =  'StmtConnect('
+    s += ', '.join('%s' % v for v in [self.master])
     s += ')'
     return s
 

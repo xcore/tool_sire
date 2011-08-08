@@ -67,6 +67,7 @@ class Lexer(object):
     'false'   : 'FALSE',
     'for'     : 'FOR',
     'func'    : 'FUNC',
+    'from'    : 'FROM',
     'if'      : 'IF',
     'is'      : 'IS',
     'in'      : 'IN',

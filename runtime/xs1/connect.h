@@ -7,8 +7,8 @@
 #define CONNECT_H
 
 void initConnections();
-unsigned _connectMaster(int chanid, unsigned dest);
-unsigned _connectSlave(int chanid);
+unsigned _connectMaster(int chanid, int dest);
+unsigned _connectSlave(int chanid, int origin);
 void serveConnReq();
 
 #endif
