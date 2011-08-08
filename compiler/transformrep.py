@@ -58,7 +58,7 @@ class TransformRep(NodeWalker):
     self.device = device
     self.debug = debug
 
-  def distribute_stmt(self, m, f, elem_t, elem_n, elem_m, base, 
+  def distribute_stmt(self, m, elem_t, elem_n, elem_m, base, 
         indicies, proc_actuals, formals, pcall):
     """
     Create the distribution process body statement.
@@ -71,7 +71,6 @@ class TransformRep(NodeWalker):
     expr_t = ast.ExprSingle(elem_t)
     expr_n = ast.ExprSingle(elem_n)
     expr_m = ast.ExprSingle(elem_m)
-    #expr_b = ast.ExprSingle(elem_b)
     elem_base = ast.ElemNumber(base) 
     expr_base = ast.ExprSingle(elem_base)
 
@@ -79,29 +78,19 @@ class TransformRep(NodeWalker):
     divisor = m
     for x in indicies:
       divisor = floor(divisor / x.count_value)
+      # Calculate the index i as a function of _t and the dimensions.
+      e = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('/', elem_t,
+            ast.ExprSingle(ast.ElemNumber(divisor)))),
+            ast.ExprSingle(ast.ElemNumber(x.count_value)))
+      if x.base_value > 0:
+        e = ast.ExprBinop('+', ast.ElemNumber(x.base_value),
+            ast.ExprSingle(ast.ElemGroup(e)))
+      # Then replace it for each ocurrance of i
       for y in pcall.args:
-        # Calculate the index i as a function of _t and the dimensions.
-        e = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('/', elem_t,
-              ast.ExprSingle(ast.ElemNumber(divisor)))),
-              ast.ExprSingle(ast.ElemNumber(x.count_value)))
-        if x.base_value > 0:
-          e = ast.ExprBinop('+', ast.ElemNumber(x.base_value),
-              ast.ExprSingle(ast.ElemGroup(e)))
-        # Then replace it for each ocurrance of i
-        y.accept(SubElem(ast.ElemId(x.name), 
-            ast.ElemGroup(e)))
+        y.accept(SubElem(ast.ElemId(x.name), ast.ElemGroup(e)))
  
-    # (((b + ((t+n/2)/f)) rem NUM_CORES
-    #d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
-    #if f > 1:
-    #  d = ast.ExprBinop('/', ast.ElemGroup(d),
-    #      ast.ExprSingle(ast.ElemNumber(f)))
-    #d = ast.ExprBinop('rem', 
-    #    ast.ElemGroup(ast.ExprBinop('+', elem_b,
-    #      ast.ExprSingle(ast.ElemGroup(d)))),
-    #      ast.ExprSingle(ast.ElemId(defs.SYS_NUM_CORES_CONST)))
     d = ast.ExprBinop('+', elem_t, ast.ExprSingle(elem_x))
-    d = form_location(self.sym, elem_base, d, f)
+    d = form_location(self.sym, elem_base, d, 1)
 
     # Create on the on statement
     on_stmt = ast.StmtOn(d,
@@ -117,8 +106,7 @@ class TransformRep(NodeWalker):
         ast.ExprBinop('>', elem_m, ast.ExprSingle(elem_x)),
         # then
         ast.StmtPar([
-            # on ((id()+t+n/2) rem NUM_CORES) / f do 
-            #   d(t+n/2, n/2, m-n/2, ...)
+            # on id()+t+n/2 do d(t+n/2, n/2, m-n/2, ...)
             on_stmt,
             # d(t, n/2, n/2)
             ast.StmtPcall(name, [expr_t, expr_x, expr_x] 
@@ -161,7 +149,7 @@ class TransformRep(NodeWalker):
     context = FreeVars().allvars(pcall)
     
     assert not stmt.m == None
-    assert not stmt.f == None
+    #assert not stmt.f == None
     n = util.next_power_of_2(stmt.m)
 
     # Create new variables
@@ -202,7 +190,7 @@ class TransformRep(NodeWalker):
 
     # Create the process definition and perform semantic analysis to 
     # update symbol bindings. 
-    d = self.distribute_stmt(stmt.m, stmt.f, elem_t, elem_n, elem_m, base,
+    d = self.distribute_stmt(stmt.m, elem_t, elem_n, elem_m, base,
                 stmt.indicies, proc_actuals, formals, pcall)
     #Printer().defn(d, 0)
     self.sem.defn(d)

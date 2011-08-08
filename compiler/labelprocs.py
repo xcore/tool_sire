@@ -43,9 +43,9 @@ class LabelProcs(NodeWalker):
     node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
  
     # Calculate the compression factor
-    node.f = 1
-    while node.m/node.f > self.device.num_cores():
-      node.f = node.f + 1
+    #node.f = 1
+    #while node.m/node.f > self.device.num_cores():
+    #  node.f = node.f + 1
     
     # Determine f and then set l = g(d_1, d_2, ..., d_k, f)
     dims = [x.count_value for x in node.indicies]
@@ -59,9 +59,9 @@ class LabelProcs(NodeWalker):
       k = ast.ExprSingle(e) if k==None else ast.ExprBinop('+', k, ast.ExprSingle(e))
     
     # Apply f
-    k = (ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('/', 
-          ast.ElemGroup(k), ast.ExprSingle(ast.ElemNumber(node.f)))))
-            if node.f>1 else k)
+    #k = (ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('/', 
+    #      ast.ElemGroup(k), ast.ExprSingle(ast.ElemNumber(node.f)))))
+    #        if node.f>1 else k)
     
     # Add to base (if non-zero) and take modulo
     if isinstance(l, ast.ElemNumber) and l.value==0:

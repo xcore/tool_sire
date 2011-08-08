@@ -50,8 +50,7 @@ class DisplayConns(NodeWalker):
   def display(self):
     for (i, x) in enumerate(self.d):
       print('Core {}:'.format(i))
-      #for y in sorted(x, key=lambda x: (x.name, x.index)):
-      for y in x:
+      for y in sorted(x, key=lambda x: (x.name, x.index)):
         print('  {}'.format(y))
 
   def walk_program(self, node):

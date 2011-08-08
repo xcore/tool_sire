@@ -9,7 +9,7 @@ proc slave_(chanend d0, chanend d1, chanend d2, chanend d4) is
 
 proc main() is
   var i;
-  chan c[(N*D)/2];
+  chan c[N*D];
 { master_(c[0], c[1], c[2], c[3]) ||
   par i in [1 for N-1] do
     slave_(

@@ -14,6 +14,7 @@ from typedefs import *
 from subelem import SubElem
 from evalexpr import EvalExpr
 from cmpexpr import CmpExpr
+from indicies import *
 
 from printer import Printer
 
@@ -44,7 +45,7 @@ class LabelChans(NodeWalker):
     self.debug('  {} at {}'.format(name, location_value))
     return ChanElem(None, location_value)
 
-  def subscript_channel(self, iters, tab, stmt, name, expr):
+  def subscript_channel(self, indicies, tab, stmt, name, expr):
     """
     Expand the use of a channel subscript over a set of iterators and determine
     for each the value of its index and location, and then add this to the
@@ -54,7 +55,7 @@ class LabelChans(NodeWalker):
     chan_elems = []
 
     # Iterate over cartesian product of iterator ranges
-    ranges = [range(x.base_value, x.base_value+x.count_value) for x in iters]
+    ranges = [range(x.base_value, x.base_value+x.count_value) for x in indicies]
     for x in product(*ranges):
 
       # Deep copy expressions so we can modify them
@@ -62,10 +63,12 @@ class LabelChans(NodeWalker):
       location_expr = copy.deepcopy(stmt.location)
 
       # Substitute index variables for values
-      for (y, z) in zip(iters, x):
+      index_values = []
+      for (y, z) in zip(indicies, x):
         index_expr.accept(SubElem(ast.ElemId(y.name), ast.ElemNumber(z)))
         location_expr.accept(SubElem(ast.ElemId(y.name),
           ast.ElemNumber(z-y.base_value)))
+        index_values.append(z)
 
       # Evaluate the expressions
       index_value = EvalExpr().expr(index_expr)
@@ -75,13 +78,14 @@ class LabelChans(NodeWalker):
       tab.insert(name, index_value, location_value)
 
       # Add the expanded channel use (name, index) to a list
-      chan_elems.append(ChanElem(index_value, location_value))
+      chan_elems.append(ChanElem(index_value, location_value, 
+          indicies, index_values))
 
       self.debug('  {}[{}] at {}'.format(name, index_value, location_value))
     
     return chan_elems
 
-  def expand_uses(self, tab, iters, chan_uses, stmt):
+  def expand_uses(self, tab, indicies, chan_uses, stmt):
     """
     For each channel use, expand it into a set of elements.
     """
@@ -90,11 +94,11 @@ class LabelChans(NodeWalker):
       if x.expr == None:
         elems = [self.single_channel(tab, stmt, x.name)]
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, elems, indicies, chanend))
       else:
-        elems = self.subscript_channel(iters, tab, stmt, x.name, x.expr)
+        elems = self.subscript_channel(indicies, tab, stmt, x.name, x.expr)
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, elems, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, elems, indicies, chanend))
     return chans
   
   def check_chan(self, name, index, locations):
@@ -183,28 +187,28 @@ class LabelChans(NodeWalker):
   # these boundaries. The set use_instances contains all the unique occurances
   # of channels in the contained process.
 
-  def stmt_rep(self, node, iters, tab):
-    iters = iters + node.indicies
-    chan_uses = self.stmt(node.stmt, iters, tab)
-    node.chans = self.expand_uses(tab, iters, chan_uses, node.stmt)
+  def stmt_rep(self, node, indicies, tab):
+    indicies = indicies + node.indicies
+    chan_uses = self.stmt(node.stmt, indicies, tab)
+    node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
 
     # Return no uses 
     return ChanUseSet()
       
-  def stmt_par(self, node, iters, tab):
+  def stmt_par(self, node, indicies, tab):
     
     # For each statement in the par, group the expansions
     node.chans = []
     for x in node.stmt:
-      chan_uses = self.stmt(x, iters, tab)
-      node.chans.append(self.expand_uses(tab, iters, chan_uses, node))
+      chan_uses = self.stmt(x, indicies, tab)
+      node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
     
     # Return no uses 
     return ChanUseSet()
  
   # Statements containing uses of channels.
 
-  def stmt_in(self, node, iters, tab):
+  def stmt_in(self, node, indicies, tab):
     c = node.left
     t = c.symbol.type
     self.debug('out channel {}:'.format(c.name))
@@ -220,7 +224,7 @@ class LabelChans(NodeWalker):
     else:
         return ChanUseSet()
 
-  def stmt_out(self, node, iters, tab):
+  def stmt_out(self, node, indicies, tab):
     c = node.left
     t = c.symbol.type
     self.debug('in channel {}:'.format(c.name))
@@ -237,7 +241,7 @@ class LabelChans(NodeWalker):
     else:
         return ChanUseSet()
 
-  def stmt_pcall(self, node, iters, tab):
+  def stmt_pcall(self, node, indicies, tab):
     uses = ChanUseSet()
     for x in node.args:
       if isinstance(x, ast.ExprSingle):
@@ -259,43 +263,43 @@ class LabelChans(NodeWalker):
     
   # Other statements containing processes
 
-  def stmt_seq(self, node, iters, tab):
+  def stmt_seq(self, node, indicies, tab):
     uses = ChanUseSet()
-    [uses.update(self.stmt(x, iters, tab)) for x in node.stmt]
+    [uses.update(self.stmt(x, indicies, tab)) for x in node.stmt]
     return uses
 
-  def stmt_if(self, node, iters, tab):
-    uses = self.stmt(node.thenstmt, iters, tab)
-    uses.update(self.stmt(node.elsestmt, iters, tab))
+  def stmt_if(self, node, indicies, tab):
+    uses = self.stmt(node.thenstmt, indicies, tab)
+    uses.update(self.stmt(node.elsestmt, indicies, tab))
     return uses
 
-  def stmt_while(self, node, iters, tab):
-    return self.stmt(node.stmt, iters, tab)
+  def stmt_while(self, node, indicies, tab):
+    return self.stmt(node.stmt, indicies, tab)
 
-  def stmt_for(self, node, iters, tab):
-    return self.stmt(node.stmt, iters, tab)
+  def stmt_for(self, node, indicies, tab):
+    return self.stmt(node.stmt, indicies, tab)
 
-  def stmt_on(self, node, iters, tab):
-    return self.stmt(node.stmt, iters, tab)
+  def stmt_on(self, node, indicies, tab):
+    return self.stmt(node.stmt, indicies, tab)
 
   # Statements not containing processes or channels uses
 
-  def stmt_ass(self, node, iters, tab):
+  def stmt_ass(self, node, indicies, tab):
     return ChanUseSet()
 
-  def stmt_alias(self, node, iters, tab):
+  def stmt_alias(self, node, indicies, tab):
     return ChanUseSet()
 
-  def stmt_skip(self, node, iters, tab):
+  def stmt_skip(self, node, indicies, tab):
     return ChanUseSet()
 
-  def stmt_connect(self, node, iters, tab):
+  def stmt_connect(self, node, indicies, tab):
     return ChanUseSet()
 
-  def stmt_assert(self, node, iters, tab):
+  def stmt_assert(self, node, indicies, tab):
     return ChanUseSet()
 
-  def stmt_return(self, node, iters, tab):
+  def stmt_return(self, node, indicies, tab):
     return ChanUseSet()
 
 
@@ -421,10 +425,12 @@ class ChanElem(object):
    - An (integer) index value
    - The location of the use at the index (in order to retrieve the entry from
      the channel table).
+   - The values of the iterators yeilding index.
   """  
-  def __init__(self, index, location):
+  def __init__(self, index, location, indicies, index_values):
     self.index = index
     self.location = location
+    self.indicies_value = indicies_value(indicies, index_values)
 
 
 class ChanElemSet(object):
@@ -433,11 +439,13 @@ class ChanElemSet(object):
    - The array name
    - The subscript expression
    - A set of elements relating to the expansion, e.g. c[0], c[1], ...
-   - The name of the channel end associated with this subscript
+   - The iterators used in the subscript.
+   - The name of the channel end associated with this subscript.
   """
-  def __init__(self, name, expr, elems, chanend):
+  def __init__(self, name, expr, elems, indicies, chanend):
     self.name = name
     self.expr = expr
     self.elems = elems
+    self.indicies = indicies
     self.chanend = chanend
 
