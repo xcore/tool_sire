@@ -1,0 +1,14 @@
+val W := 1;
+val X := 1;
+val Y := 1;
+val Z := 1;
+
+proc main() is
+  var i;
+  var j;
+  var k;
+  var l;
+{ par i in [1 for W], j in [1 for X], k in [1 for Y], l in [1 for Z] do 
+    skip
+}
+

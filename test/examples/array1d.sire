@@ -4,7 +4,7 @@ proc master_(chanend begin, chanend end) is
   var v;
 { begin ! 0; 
   end ? v;
-  printvalln(v)
+  assert v = N 
 }
 
 proc node_(chanend left, chanend right) is

@@ -1,5 +1,6 @@
 import sys
 import subprocess
+import os
 
 def test_generator(name, path, num_cores, cmp_flags, param, run_test):
   """ 
@@ -10,6 +11,9 @@ def test_generator(name, path, num_cores, cmp_flags, param, run_test):
   return test
 
 def generate_test_set(target, path, test_set, run_test):
+  """
+  Given a test set generate the unit test methods.
+  """
   tests = []
   for t in test_set:
     for num_cores in t.cores:
@@ -21,7 +25,8 @@ def generate_test_set(target, path, test_set, run_test):
   return tests
 
 def read_file(filename, read_lines=False):
-  """ Read a file and return its contents as a string 
+  """ 
+  Read a file and return its contents as a string 
   """
   try:
     #print('reading '+filename)
@@ -40,8 +45,33 @@ def read_file(filename, read_lines=False):
     raise Exception('Unexpected error: {}'
         .format(sys.exc_info()[0]))
 
+def write_file(filename, s):
+  """ 
+  Write the output to a file.
+  """
+  try:
+    file = open(filename, 'w')
+    file.write(s)
+    file.close()
+    return True
+  except IOError as err:
+    sys.stderr.write('writing output {}: {}'
+        .format(filename, err.strerror))
+    raise Error()
+  except:
+    raise Exception('Unexpected error: {}'
+        .format(sys.exc_info()[0]))
+
+def remove_file(filename):
+  """ 
+  Remove a file if it exists.
+  """
+  if os.path.isfile(filename):
+    os.remove(filename)
+
 def call(args):
-  """ Execute a shell command, return (success, output)
+  """ 
+  Execute a shell command, return (success, output)
   """
   try:
   

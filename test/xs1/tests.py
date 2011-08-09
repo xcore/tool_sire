@@ -5,13 +5,16 @@
 
 import sys
 import unittest
+import re
+import os
 
 from util import call
 from util import read_file
+from util import write_file
+from util import remove_file
 from util import generate_test_set
 from test import Test
 
-SED = 'sed'
 COMPILE  = 'sire'
 SIMULATE = 'axe'
 SIM_FLAGS = []
@@ -46,12 +49,15 @@ xs1_example_tests = [
 
   # Parallel (replicators and channels)
   Test('array1d', [4, 16, 64]),
-  Test('array2d', [4],  param=[('N', '1'), ('M', '1')]),
-  Test('array2d', [16], param=[('N', '2'), ('M', '2')]),
-  Test('array2d', [64], param=[('N', '3'), ('M', '3')]),
-  Test('tree',    [16], param=[('D', '1')]),
-  Test('tree',    [16], param=[('D', '2')]),
-  Test('tree',    [64], param=[('D', '3')]),
+  Test('array2d', [4],  param=[('N','1')]),
+  Test('array2d', [16], param=[('N','2')]),
+  Test('array2d', [64], param=[('N','3')]),
+  Test('array2d', [64], param=[('N','4')]),
+  Test('tree',    [4],  param=[('D','1')]),
+  Test('tree',    [16], param=[('D','2')]),
+  Test('tree',    [16], param=[('D','3')]),
+  Test('tree',    [64], param=[('D','4')]),
+  Test('tree',    [64], param=[('D','5')]),
   Test('cube2d',  [4]),
   Test('cube3d',  [16]),
   Test('cube4d',  [64]),
@@ -104,12 +110,17 @@ xs1_feature_tests = [
 
   # Replicators
   Test('rep_basic_1d', [4, 16, 32, 64]),
-  Test('rep_basic_2d', [4],  param=[('X', '1'), ('Y', '1')]),
-  Test('rep_basic_2d', [4],  param=[('X', '2'), ('Y', '2')]),
-  Test('rep_basic_2d', [16], param=[('X', '3'), ('Y', '3')]),
-  Test('rep_basic_3d', [16], param=[('X', '1'), ('Y', '1'), ('Z', '1')]),
-  Test('rep_basic_3d', [16], param=[('X', '2'), ('Y', '2'), ('Z', '2')]),
-  Test('rep_basic_3d', [16], param=[('X', '3'), ('Y', '3'), ('Z', '3')]),
+  Test('rep_basic_2d', [4],  param=[('X','1'), ('Y','1')]),
+  Test('rep_basic_2d', [4],  param=[('X','2'), ('Y','2')]),
+  Test('rep_basic_2d', [16], param=[('X','3'), ('Y','3')]),
+  Test('rep_basic_2d', [64], param=[('X','8'), ('Y','8')]),
+  Test('rep_basic_3d', [16], param=[('X','1'), ('Y','1'), ('Z','1')]),
+  Test('rep_basic_3d', [16], param=[('X','2'), ('Y','2'), ('Z','2')]),
+  Test('rep_basic_3d', [64], param=[('X','3'), ('Y','3'), ('Z','3')]),
+  Test('rep_basic_3d', [64], param=[('X','4'), ('Y','4'), ('Z','4')]),
+  Test('rep_basic_4d', [4],  param=[('W','1'), ('X','1'), ('Y','1'), ('Z','1')]),
+  Test('rep_basic_4d', [16], param=[('W','2'), ('X','2'), ('Y','2'), ('Z','2')]),
+  Test('rep_basic_4d', [64], param=[('W','2'), ('X','4'), ('Y','2'), ('Z','4')]),
 
   # Connect
   Test('connect_basic',      [4, 16], NO_DIST),
@@ -122,20 +133,25 @@ def run_test(self, name, path, num_cores, cmp_flags, param):
   """
   try:
 
-    filename = path+'/'+name+'.sire' 
+    filename = path+'/'+name+'.sire'
 
-    # Set parameters
-    for (var, value) in param:
-      (exit, output) = call([SED, 's/val {} := [0-9]+;/val {} := {};/'
-        .format(var, var, value), filename])
-    self.assertTrue(exit)
+    # Substitute parameters in a new temporary file
+    if len(param) > 0:
+      s = read_file(filename)
+      for (var, value) in param:
+        p = re.compile('val {} := [0-9]+;'.format(var))
+        s = p.sub('val {} := {};'.format(var, value), s, count=1)
+      filename = os.getcwd()+'/'+name+'.sire.tmp'
+      write_file(filename, s) 
 
     # Compile the program
     (exit, output) = call([COMPILE, filename]
         + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + cmp_flags)
     self.assertTrue(exit)
 
-    # Unset parameters?
+    # Delete the temporary version
+    if len(param) > 0:
+      remove_file(filename)
 
     # Simulate execution
     (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
