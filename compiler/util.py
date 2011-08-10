@@ -40,12 +40,10 @@ def write_file(filename, s):
     file.write(s)
     file.close()
     return True
-  
   except IOError as err:
     sys.stderr.write('writing output {}: {}'
         .format(filename, err.strerror))
     raise Error()
-
   except:
     raise Exception('Unexpected error: {}'
         .format(sys.exc_info()[0]))
