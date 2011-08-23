@@ -1,4 +1,4 @@
 test:
-	./main.py mpi
 	./main.py xs1
+	#./main.py mpi
 

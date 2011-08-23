@@ -108,6 +108,7 @@ void initMemory() {
  * Assume that master is always core 0.
  */
 void masterSync() {
+#ifdef XS1_G
   if (NUM_CORES > 1) {
     unsigned v;
     write_sswitch_reg(0, SWITCH_SCRATCH_REG, 1);
@@ -122,12 +123,14 @@ void masterSync() {
       readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
     } while (v != NUM_CORES);*/
   }
+#endif
 }
 
 /*
  * Ensure all cores are in a consistent state before completing initialisation.
  */
 void slaveSync() {
+#ifdef XS1_G
   unsigned coreId = GET_GLOBAL_CORE_ID(spawn_master);
   unsigned v;
   read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
@@ -140,6 +143,7 @@ void slaveSync() {
     readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
   } while (v != coreId);
   writeSSwitchReg(0, SWITCH_SCRATCH_REG, coreId+1);*/
+#endif
 }
 
 /*

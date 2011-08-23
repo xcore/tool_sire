@@ -48,7 +48,7 @@ def write_file(filename, s):
     raise Exception('Unexpected error: {}'
         .format(sys.exc_info()[0]))
 
-def call(args, verbose, display_stdout=True):
+def call(args, verbose=False, display_stdout=True):
   """ 
   Try to execute a shell command.
   """

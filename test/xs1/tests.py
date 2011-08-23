@@ -146,7 +146,7 @@ def run_test(self, name, path, num_cores, cmp_flags, param):
 
     # Compile the program
     (exit, output) = call([COMPILE, filename]
-        + ['-t', 'xs1', '-n', '{}'.format(num_cores)] + cmp_flags)
+        + ['-t', 'XS1', '-n', '{}'.format(num_cores)] + cmp_flags)
     self.assertTrue(exit)
 
     # Delete the temporary version

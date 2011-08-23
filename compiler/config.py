@@ -24,12 +24,12 @@ def init_paths():
   """
   Initialise various paths.
   """
-  globals()['SYSTEM_PATH'] = INSTALL_PATH+'/system'
+  globals()['SYSTEM_PATH']      = INSTALL_PATH+'/system'
   
   globals()['XS1_DEVICE_PATH']  = INSTALL_PATH+'/device/xs1'
-  globals()['XS1_SYSTEM_PATH'] = INSTALL_PATH+'/system/xs1'
+  globals()['XS1_SYSTEM_PATH']  = INSTALL_PATH+'/system/xs1'
   globals()['XS1_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/xs1'
   
-  globals()['MPI_SYSTEM_PATH'] = INSTALL_PATH+'/system/mpi'
+  globals()['MPI_SYSTEM_PATH']  = INSTALL_PATH+'/system/mpi'
   globals()['MPI_RUNTIME_PATH'] = INSTALL_PATH+'/runtime/mpi'
   

@@ -11,7 +11,6 @@ PARSE_LOG_FILE   = 'parselog.txt'
 DEFAULT_OUT_FILE = 'a'
 
 # Language constants
-SYS_CHAN_ARRAY = 'chan'
 SYS_CORE_ARRAY = 'core'
 SYS_NUM_CORES_CONST = 'NUM_CORES'
 MAX_PROC_PARAMETERS = 10

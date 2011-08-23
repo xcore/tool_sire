@@ -14,6 +14,7 @@ import ast
 import semantics
 import children
 
+from target.definitions import *
 from target.xs1.translate import TranslateXS1
 from target.mpi.translate import TranslateMPI
 from target.xs1.build import build_xs1
@@ -31,9 +32,9 @@ def translate(ast, sig, child, device, outfile, translate_only, v):
   ext = None
 
   # Create a tranlator AST walker
-  if device.system == 'xs1':
+  if device.system == SYSTEM_TYPE_XS1:
     walker = TranslateXS1(sig, child, buf)
-  elif device.system == 'mpi':
+  elif device.system == SYSTEM_TYPE_MPI:
     walker = TranslateMPI(sig, child, buf)
 
   walker.walk_program(ast)
@@ -54,9 +55,9 @@ def build(sig, buf, device, outfile, compile_only, show_calls, v):
   vmsg(v, 'Creating executable...')
 
   # Create a Build object
-  if device.system == 'xs1':
+  if device.system == SYSTEM_TYPE_XS1:
     build_xs1(sig, device, buf, outfile, compile_only, show_calls, v)
-  elif device.system == 'mpi':
+  elif device.system == SYSTEM_TYPE_MPI:
     build_mpi(device, buf, outfile, compile_only, show_calls, v)
 
 def generate(ast, sig, child, device, outfile, 
@@ -66,9 +67,9 @@ def generate(ast, sig, child, device, outfile,
   """
 
   # Load appropriate definitions for the system
-  if device.system == 'xs1':
+  if device.system == SYSTEM_TYPE_XS1:
     defs.load(config.XS1_SYSTEM_PATH+'/'+DEFS_FILE)
-  elif device.system == 'mpi':
+  elif device.system == SYSTEM_TYPE_MPI:
     defs.load(config.MPI_SYSTEM_PATH+'/'+DEFS_FILE)
   
   # Translate the AST

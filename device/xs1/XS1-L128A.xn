@@ -1,0 +1,153 @@
+<?xml version="1.0" ?>
+<Network xmlns="http://www.xmos.com" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.xmos.com http://www.xmos.com">
+  <Type>
+    Device
+  </Type>
+  <Name>
+    XS1-L128A
+  </Name>
+  <Declarations>
+    <Declaration>
+      core stdcore[128]
+    </Declaration>
+  </Declarations>
+  <Packages>
+    <Package ID="0" Type="XS1-L128A">
+      <Nodes>
+        <Node Id="0" InPackageId="0" Type="XS1-L128A">
+          <Core Number="0" Reference="stdcore[0]"/>
+          <Core Number="1" Reference="stdcore[1]"/>
+          <Core Number="2" Reference="stdcore[2]"/>
+          <Core Number="3" Reference="stdcore[3]"/>
+          <Core Number="4" Reference="stdcore[4]"/>
+          <Core Number="5" Reference="stdcore[5]"/>
+          <Core Number="6" Reference="stdcore[6]"/>
+          <Core Number="7" Reference="stdcore[7]"/>
+          <Core Number="8" Reference="stdcore[8]"/>
+          <Core Number="9" Reference="stdcore[9]"/>
+          <Core Number="10" Reference="stdcore[10]"/>
+          <Core Number="11" Reference="stdcore[11]"/>
+          <Core Number="12" Reference="stdcore[12]"/>
+          <Core Number="13" Reference="stdcore[13]"/>
+          <Core Number="14" Reference="stdcore[14]"/>
+          <Core Number="15" Reference="stdcore[15]"/>
+          <Core Number="16" Reference="stdcore[16]"/>
+          <Core Number="17" Reference="stdcore[17]"/>
+          <Core Number="18" Reference="stdcore[18]"/>
+          <Core Number="19" Reference="stdcore[19]"/>
+          <Core Number="20" Reference="stdcore[20]"/>
+          <Core Number="21" Reference="stdcore[21]"/>
+          <Core Number="22" Reference="stdcore[22]"/>
+          <Core Number="23" Reference="stdcore[23]"/>
+          <Core Number="24" Reference="stdcore[24]"/>
+          <Core Number="25" Reference="stdcore[25]"/>
+          <Core Number="26" Reference="stdcore[26]"/>
+          <Core Number="27" Reference="stdcore[27]"/>
+          <Core Number="28" Reference="stdcore[28]"/>
+          <Core Number="29" Reference="stdcore[29]"/>
+          <Core Number="30" Reference="stdcore[30]"/>
+          <Core Number="31" Reference="stdcore[31]"/>
+          <Core Number="32" Reference="stdcore[32]"/>
+          <Core Number="33" Reference="stdcore[33]"/>
+          <Core Number="34" Reference="stdcore[34]"/>
+          <Core Number="35" Reference="stdcore[35]"/>
+          <Core Number="36" Reference="stdcore[36]"/>
+          <Core Number="37" Reference="stdcore[37]"/>
+          <Core Number="38" Reference="stdcore[38]"/>
+          <Core Number="39" Reference="stdcore[39]"/>
+          <Core Number="40" Reference="stdcore[40]"/>
+          <Core Number="41" Reference="stdcore[41]"/>
+          <Core Number="42" Reference="stdcore[42]"/>
+          <Core Number="43" Reference="stdcore[43]"/>
+          <Core Number="44" Reference="stdcore[44]"/>
+          <Core Number="45" Reference="stdcore[45]"/>
+          <Core Number="46" Reference="stdcore[46]"/>
+          <Core Number="47" Reference="stdcore[47]"/>
+          <Core Number="48" Reference="stdcore[48]"/>
+          <Core Number="49" Reference="stdcore[49]"/>
+          <Core Number="50" Reference="stdcore[50]"/>
+          <Core Number="51" Reference="stdcore[51]"/>
+          <Core Number="52" Reference="stdcore[52]"/>
+          <Core Number="53" Reference="stdcore[53]"/>
+          <Core Number="54" Reference="stdcore[54]"/>
+          <Core Number="55" Reference="stdcore[55]"/>
+          <Core Number="56" Reference="stdcore[56]"/>
+          <Core Number="57" Reference="stdcore[57]"/>
+          <Core Number="58" Reference="stdcore[58]"/>
+          <Core Number="59" Reference="stdcore[59]"/>
+          <Core Number="60" Reference="stdcore[60]"/>
+          <Core Number="61" Reference="stdcore[61]"/>
+          <Core Number="62" Reference="stdcore[62]"/>
+          <Core Number="63" Reference="stdcore[63]"/>
+          <Core Number="64" Reference="stdcore[64]"/>
+          <Core Number="65" Reference="stdcore[65]"/>
+          <Core Number="66" Reference="stdcore[66]"/>
+          <Core Number="67" Reference="stdcore[67]"/>
+          <Core Number="68" Reference="stdcore[68]"/>
+          <Core Number="69" Reference="stdcore[69]"/>
+          <Core Number="70" Reference="stdcore[70]"/>
+          <Core Number="71" Reference="stdcore[71]"/>
+          <Core Number="72" Reference="stdcore[72]"/>
+          <Core Number="73" Reference="stdcore[73]"/>
+          <Core Number="74" Reference="stdcore[74]"/>
+          <Core Number="75" Reference="stdcore[75]"/>
+          <Core Number="76" Reference="stdcore[76]"/>
+          <Core Number="77" Reference="stdcore[77]"/>
+          <Core Number="78" Reference="stdcore[78]"/>
+          <Core Number="79" Reference="stdcore[79]"/>
+          <Core Number="80" Reference="stdcore[80]"/>
+          <Core Number="81" Reference="stdcore[81]"/>
+          <Core Number="82" Reference="stdcore[82]"/>
+          <Core Number="83" Reference="stdcore[83]"/>
+          <Core Number="84" Reference="stdcore[84]"/>
+          <Core Number="85" Reference="stdcore[85]"/>
+          <Core Number="86" Reference="stdcore[86]"/>
+          <Core Number="87" Reference="stdcore[87]"/>
+          <Core Number="88" Reference="stdcore[88]"/>
+          <Core Number="89" Reference="stdcore[89]"/>
+          <Core Number="90" Reference="stdcore[90]"/>
+          <Core Number="91" Reference="stdcore[91]"/>
+          <Core Number="92" Reference="stdcore[92]"/>
+          <Core Number="93" Reference="stdcore[93]"/>
+          <Core Number="94" Reference="stdcore[94]"/>
+          <Core Number="95" Reference="stdcore[95]"/>
+          <Core Number="96" Reference="stdcore[96]"/>
+          <Core Number="97" Reference="stdcore[97]"/>
+          <Core Number="98" Reference="stdcore[98]"/>
+          <Core Number="99" Reference="stdcore[99]"/>
+          <Core Number="100" Reference="stdcore[100]"/>
+          <Core Number="101" Reference="stdcore[101]"/>
+          <Core Number="102" Reference="stdcore[102]"/>
+          <Core Number="103" Reference="stdcore[103]"/>
+          <Core Number="104" Reference="stdcore[104]"/>
+          <Core Number="105" Reference="stdcore[105]"/>
+          <Core Number="106" Reference="stdcore[106]"/>
+          <Core Number="107" Reference="stdcore[107]"/>
+          <Core Number="108" Reference="stdcore[108]"/>
+          <Core Number="109" Reference="stdcore[109]"/>
+          <Core Number="110" Reference="stdcore[110]"/>
+          <Core Number="111" Reference="stdcore[111]"/>
+          <Core Number="112" Reference="stdcore[112]"/>
+          <Core Number="113" Reference="stdcore[113]"/>
+          <Core Number="114" Reference="stdcore[114]"/>
+          <Core Number="115" Reference="stdcore[115]"/>
+          <Core Number="116" Reference="stdcore[116]"/>
+          <Core Number="117" Reference="stdcore[117]"/>
+          <Core Number="118" Reference="stdcore[118]"/>
+          <Core Number="119" Reference="stdcore[119]"/>
+          <Core Number="120" Reference="stdcore[120]"/>
+          <Core Number="121" Reference="stdcore[121]"/>
+          <Core Number="122" Reference="stdcore[122]"/>
+          <Core Number="123" Reference="stdcore[123]"/>
+          <Core Number="124" Reference="stdcore[124]"/>
+          <Core Number="125" Reference="stdcore[125]"/>
+          <Core Number="126" Reference="stdcore[126]"/>
+          <Core Number="127" Reference="stdcore[127]"/>
+        </Node>
+      </Nodes>
+    </Package>
+  </Packages>
+  <JTAGChain>
+    <JTAGDevice NodeId="0"/>
+  </JTAGChain>
+</Network>

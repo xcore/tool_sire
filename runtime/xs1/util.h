@@ -142,9 +142,14 @@ void FREER(unsigned r) {
 // The node bits are written in MSB first, so need to be reversed
 inline
 unsigned GEN_CHAN_RI_0(unsigned dest) {
+#ifdef XS1_G
   unsigned n = dest / NUM_CORES_PER_NODE;
   asm("bitrev %0, %1" : "=r"(n) : "r"(n));
-  return n | (dest % NUM_CORES_PER_NODE) << 16 | 0x2;
+  return n | (dest % NUM_CORES_PER_NODE) << 16 | XS1_RES_TYPE_CHANEND;
+#endif
+#ifdef XS1_L
+  return dest << 16 | XS1_RES_TYPE_CHANEND;
+#endif
 }
 
 // Create a channel resource identifier with a particular count
@@ -185,31 +190,46 @@ unsigned THREAD_SP(int tid) {
 // Given a resource id, return the node identifer
 inline
 unsigned GET_NODE_ID(unsigned resId) {
+#ifdef XS1_G
   unsigned int n;
   asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
   return n & 0xFF;
+#endif
+#ifdef XS1_L
+  return (resId >> 16 & 0xFFFF) / NUM_CORES_PER_NODE;
+#endif
 }
 
 // Given a resource id, return the core identifier
 inline
 unsigned GET_CORE_ID(unsigned resId) {
+#ifdef XS1_G
   return (resId >> 16) & 0xFF;
+#endif
+#ifdef XS1_L
+  return (resId >> 16 & 0xFFFF) % NUM_CORES_PER_NODE;
+#endif
 }
 
 // Given a resource id, return the global core label.
 inline
 unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
+#ifdef XS1_G
   return (GET_NODE_ID(resId) * NUM_CORES_PER_NODE) + GET_CORE_ID(resId);
+#endif
+#ifdef XS1_L
+  return resId >> 16 & 0xFFFF;
+#endif
 }
 
 inline
-void DISABLE_INTERRUPTS()
-{ asm("clrsr " S(SR_IEBLE));
+void DISABLE_INTERRUPTS() { 
+  asm("clrsr " S(SR_IEBLE));
 }
 
 inline
-void ENABLE_INTERRUPTS()
-{ asm("setsr " S(SR_IEBLE));
+void ENABLE_INTERRUPTS(){ 
+  asm("setsr " S(SR_IEBLE));
 }
 
 unsigned memAlloc(unsigned int size);
