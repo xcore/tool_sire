@@ -52,6 +52,7 @@ builtin_conversion = {
   'div8_24'    : 'div8_24',
   # System
   'procid'     : '_procId',
+  'rand'       : '_rand',
 }
 
 class TranslateXS1(NodeWalker):
@@ -183,8 +184,9 @@ class TranslateXS1(NodeWalker):
     contrast with the MPI implementation where there is only a single
     binary.
     """
-    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
   
   # Program ============================================
 

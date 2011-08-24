@@ -19,6 +19,7 @@ extern void _main(void);
 
 // Global data
 extern unsigned _sp;
+extern unsigned _seed;
 
 // Processor allocation
 extern unsigned spawn_master;

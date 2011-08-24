@@ -1,18 +1,20 @@
-/* Global data (local to the runtime on a core). These must be delcared in
+/* 
+ * Global data (local to the runtime on a core). These must be delcared in
  * this way so that we can guarantee they will be linked at the same addresses
  * in the master and slave binaries (at the beginnning of the dp region).
  */
 
 #include "system/xs1/definitions.h"
 
-  .globl _sp,              "ui"
+  .globl _sp,          "ui"
+  .globl _seed,        "ui"
 
   .globl spawn_master, "ui"
   .globl thread_chans, "a(:ui)"
 
-  .globl conn_master, "ui"
-  .globl conn_buffer, "a(:s(){m(connId){ui},m(origin){ui},m(threadCRI){ui},m(chanCRI){ui}})"
-  .globl conn_locals, "a(:s(){m(connId){ui},m(origin){ui},m(threadCRI){ui},m(chanCRI){ui}})"
+  .globl conn_master,  "ui"
+  .globl conn_buffer,  "a(:s(){m(connId){ui},m(origin){ui},m(threadCRI){ui},m(chanCRI){ui}})"
+  .globl conn_locals,  "a(:s(){m(connId){ui},m(origin){ui},m(threadCRI){ui},m(chanCRI){ui}})"
 
 .section .dp.data, "awd", @progbits
   .align BYTES_PER_WORD
@@ -24,6 +26,10 @@
 _sp:
   .space BYTES_PER_WORD
   .set _sp.globound, BYTES_PER_WORD
+
+_seed:
+  .word 0xFFFFFFFF
+  .set _seed.globound, BYTES_PER_WORD
 
 /*
  * Processor allocaion

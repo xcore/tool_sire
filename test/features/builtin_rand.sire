@@ -1,0 +1,8 @@
+val N := 10;
+
+proc main() is
+  var i;
+{ for i in [0 for N] do rand()
+% for i in [0 for N] do printvalln(rand())
+}
+
