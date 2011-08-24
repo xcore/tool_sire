@@ -1,0 +1,65 @@
+val D := 3;      % Tree depth
+val N := 1 << D; % Number of leaves
+val LEN := 100;  % Number of data items at each leaf.
+val NUM_QUERIES := 10;
+
+proc serve(chanend input, chanend c) is
+  var query;
+{ input ? query; 
+  c ! query;
+  c ? result;
+  input ! result
+}
+
+proc leaf(chanend c) is
+  var data[LEN];
+  var enq;
+  var found;
+  var i;
+{ for i in [0 for LEN] do
+    data[i] := rand();
+  while true do
+  { found := false;
+    for i in [0 for LEN] do
+      found := (data[i] = enq) or found;
+    c ! found
+  }
+}
+
+proc branch(chanend root, chanend left, chanend right) is
+  var query;
+  var lfound;
+  var rfound;
+{ while true do
+  { root ? query;
+    left ! query;
+    right ! query;
+    left ? lfound;
+    right ? rfound;
+    root ! lfound or rfound
+  }
+}
+
+proc tree(chanend input) is
+  chan c[(2*N)-1];
+  var v;
+  var i;
+{ serve(input, c[0]) ||
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
+  par i in [0 for N] do
+    leaf(c[(N-1) + i])
+}
+
+proc main() is
+  chan c;
+  var i;
+  var result;
+{ tree(c) ||
+  for i in [0 for NUM_QUERIES] do
+  { c ! rand();
+    c ? result;
+    printvalln(result)
+  }
+}
+

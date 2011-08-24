@@ -1,0 +1,131 @@
+val D := 3;      % Tree depth
+val N := 1 << D; % Number of leaves
+val LEN := 100;  % Number of data items at each leaf.
+val SIZE := N * LEN;
+val PUT := 0;
+val GET := 1;
+
+func hash(val v) is
+  return ((v+(v>>3))+(v<<2) rem SIZE
+
+proc serve(chanend c, chanend t) is
+  var query;
+  var key;
+  var value;
+{ c ? query;
+  if query = PUT
+  then
+  { c ? key;
+    c ? value;
+    t ! PUT;
+    t ! hash(key);
+    t ! value
+  }
+  else 
+  if query = GET
+  then
+  { c ? key;
+    t ! GET;
+    t ! hash(key);
+    t ? value;
+    c ! value;
+  }
+  else skip
+}
+
+proc branch(val i, chanend root, chanend left, chanend right) is
+  var query;
+  var key;
+  var value;
+  var lfound;
+  var rfound;
+{ while true do
+  { root ? query;
+    if query = PUT
+    then
+    { root ? key;
+      root ? value;
+      if 0 % key is in left subtree
+      then
+      { left ! PUT;
+        left ! key;
+        left ! value
+      }
+      else
+      { right ! PUT;
+        right ! key;
+        right ! value
+      }
+    }
+    else
+    if query = GET
+    then
+    { root ? key;
+      if 0 % key is in left subtree
+      then
+      { left ! GET;
+        left ! key;
+        left ? value;
+        root ! value
+      }
+      else
+      { right ! GET;
+        right ! key;
+        right ? value;
+        root ! value;
+      }
+    }
+  }
+}
+
+proc leaf(chanend c) is
+  var data[LEN];
+  var enq;
+  var found;
+  var i;
+{ while true do
+  { found := false
+  ; for i in [0 for LEN] do
+      found := (data[i] = enq) or found
+  ; c ! found
+  }
+}
+
+proc table(chanend query) is
+  chan c[(2*N)-1];
+  var i;
+{ serve(query, c[0]) ||
+  par i in [0 for N-1] do
+    branch(i, c[i], c[(2*i)+1], c[(2*i)+2]) ||
+  par i in [0 for N] do 
+    leaf(c[(N-1) + i])
+}
+
+% put(key, data)
+func put(chanend c, val key, val value) is
+{ c ! PUT;
+  c ! key; 
+  c ! value
+}
+
+% get(key) returns data
+func get(chanend c, val key) is
+  var value;
+{ c ! GET;
+  c ! key;
+  c ? value;
+  return value
+}
+
+proc main() is
+  chan c;
+  var key;
+  var value;
+{ table(c) ||
+  { put(c, 0, 0xDEADBEEF);
+    put(c, 1, 0xBADFOOD);
+    assert get(c, 0) = 0xDEADBEEF;
+    assert get(c, 1) = 0xBADFOOD
+  }
+}
+
