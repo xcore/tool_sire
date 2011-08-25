@@ -5,6 +5,7 @@
 
 from functools import reduce
 
+from util import vmsg
 from walker import NodeWalker
 import ast
 
@@ -27,28 +28,32 @@ class InsertOns(NodeWalker):
 
   # Program ============================================
 
-  def walk_program(self, node):
-    #d = 0
-    #for x in node.defs[:-1]:
-    #  d = self.stmt(x.stmt, d)
-    #  self.tab[x.name] = d
+  def walk_program(self, node, v):
   
     # Start distribution from 'main'
     self.defs = node.defs
     d = self.stmt(node.defs[-1].stmt, 0)
+    
+    # Check the available number of processors has not been exceeded
     if d > self.device.num_cores():
-      self.errorlog.report_error('insufficient processors: {} > {}'
+      self.errorlog.report_error(
+      'insufficient processors: {} required, {} available'
           .format(d, self.device.num_cores()))
+
+    # Report processor usage
+    vmsg(v, '  {}/{} processors used'.format(d, self.device.num_cores()))
 
   # Statements ==========================================
 
   # We want to walk over the program by following process calls.
 
   def stmt_pcall(self, node, d):
+    # Return the count for a declared process
     for x in self.defs:
       if x.name == node.name:
         return self.stmt(x.stmt, d)
-    assert 0
+    # Otherwise return 1 for builtin functions
+    return 1
 
   # Statements containing statements
 

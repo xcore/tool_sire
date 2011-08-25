@@ -1,4 +1,4 @@
-val D    := 3;       % Tree depth
+val D    := 2;       % Tree depth
 val N    := 1 << D;  % Number of leaves
 val LEN  := 100;     % Number of data items at each leaf.
 val SIZE := N * LEN;
@@ -12,25 +12,27 @@ proc serve(chanend c, chanend t) is
   var query;
   var key;
   var value;
-{ c ? query;
-  if query = PUT
-  then
-  { c ? key;
-    c ? value;
-    t ! PUT;
-    t ! hash(key);
-    t ! value
+{ while true do
+  { c ? query;
+    if query = PUT
+    then
+    { c ? key;
+      c ? value;
+      t ! PUT;
+      t ! hash(key);
+      t ! value
+    }
+    else 
+    if query = GET
+    then
+    { c ? key;
+      t ! GET;
+      t ! hash(key);
+      t ? value;
+      c ! value
+    }
+    else skip
   }
-  else 
-  if query = GET
-  then
-  { c ? key;
-    t ! GET;
-    t ! hash(key);
-    t ? value;
-    c ! value
-  }
-  else skip
 }
 
 proc branch(chanend root, chanend left, chanend right) is
@@ -111,16 +113,19 @@ proc get(var value, chanend c, val key) is
   c ? value
 }
 
+proc foo(chanend c) is skip
+
 proc main() is
   chan c;
   var value;
 { table(c) ||
   { put(c, 1, 0xDEADBEEF);
-    put(c, 34, 0xBADF00D);
+    %put(c, 34, 0xBADF00D);
     get(value, c, 1);
-    assert value = 0xDEADBEEF;
-    get(value, c, 34);
-    assert value = 0xBADF00D
+    %printhexln(value);
+    assert value = 0xDEADBEEF
+    %get(value, c, 34);
+    %assert value = 0xBADF00D
   }
 }
 

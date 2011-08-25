@@ -8,6 +8,7 @@ import sys
 import definitions as defs
 import config
 import ast
+import builtin
 from util import read_file
 from walker import NodeWalker
 from typedefs import *
@@ -177,6 +178,14 @@ class TranslateXS1(NodeWalker):
     self.out('#include "runtime/xs1/util.h"')
     self.out('')
   
+  def jumptable(self, names):
+    self.out('\n/*')
+    self.out(' * Jump table')
+    self.out(' * ==========')
+    self.out(' *')
+    [self.out(' * cp[{}] {}'.format(i, x)) for (i, x) in enumerate(names)]
+    self.out('*/\n')
+
   def builtins(self):
     """ 
     Insert builtin code. We include builtin code directly here so that it
@@ -187,13 +196,17 @@ class TranslateXS1(NodeWalker):
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
-  
+ 
   # Program ============================================
 
   def walk_program(self, node):
 
+    # List of names for the jump table
+    names = builtin.runtime_functions + self.sig.mobile_proc_names
+
     # Walk the entire program
     self.header()
+    self.jumptable(names)
     self.builtins()
     
     # Declarations
@@ -204,7 +217,7 @@ class TranslateXS1(NodeWalker):
     # Prototypes and definitions
     [self.prototype(p) for p in node.defs]
     self.out('')
-    [self.definition(p) for p in node.defs]
+    [self.definition(p, names) for p in node.defs]
 
     # Output the buffered blocks
     self.blocker.output()
@@ -224,10 +237,6 @@ class TranslateXS1(NodeWalker):
       return 'unsigned '+node.name+';'
     #elif node.type == T_CHANEND_ARRAY:
     #  return 'unsigned {}[{}];'.format(node.name, self.expr(node.expr))
-    #elif node.type == T_CHAN_ARRAY:
-    #  return 'chanarray'
-    #elif node.type == T_CHAN_SINGLE:
-    #  return 'chan'
     else:
       assert 0
 
@@ -240,10 +249,10 @@ class TranslateXS1(NodeWalker):
         ', '.join([self.param(x) for x in node.formals]))
     self.out(s)
 
-  def definition(self, node):
+  def definition(self, node, names):
+    self.out('// cp[{}]'.format(names.index(node.name)))
     self.out('#pragma unsafe arrays')
-    s = ''
-    s += 'void' if node.type == T_PROC else 'int'
+    s = 'void' if node.type == T_PROC else 'int'
     s += ' {}({}){}'.format(self.procedure_name(node.name),
         ', '.join([self.param(x) for x in node.formals]),
         ';' if not node.stmt else '')
@@ -251,10 +260,10 @@ class TranslateXS1(NodeWalker):
     self.out(s)
     
     if node.stmt:
-        self.blocker.begin()
-        [self.out(self.decl(x)) for x in node.decls]
-        self.stmt_block(node.stmt)
-        self.blocker.end()
+      self.blocker.begin()
+      [self.out(self.decl(x)) for x in node.decls]
+      self.stmt_block(node.stmt)
+      self.blocker.end()
     
     self.out('')
   
@@ -287,8 +296,6 @@ class TranslateXS1(NodeWalker):
     pass
 
   def stmt_pcall(self, node):
-    #if self.parent == node.name:
-    #  self.out('#pragma stackcalls 10')
     self.out('{}({});'.format(
       self.procedure_name(node.name), self.arguments(node.args)))
 
