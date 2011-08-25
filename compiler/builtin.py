@@ -45,8 +45,8 @@ mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System builtins
-procid = func_decl('procid', [])
-rand   = func_decl('rand', [])
+procid = func_decl('procid', []) # Required for implementation of on and connect
+rand   = func_decl('rand', [], mobile=True)
 
 builtins = {
   'printchar'   : printchar,

@@ -83,14 +83,14 @@ class RenameChans(NodeWalker):
     t = c.symbol.type
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)):
-      node.left = self.rename_chan(c, chans)
+      node.left = self.rename_chan(c, chans).elem
 
   def stmt_out(self, node, chans):
     c = node.left
     t = c.symbol.type
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)):
-      node.left = self.rename_chan(c, chans)
+      node.left = self.rename_chan(c, chans).elem
 
   def stmt_pcall(self, node, chans):
     for (i, x) in enumerate(node.args):

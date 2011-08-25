@@ -53,7 +53,7 @@ builtin_conversion = {
   'div8_24'    : 'div8_24',
   # System
   'procid'     : '_procId',
-  'rand'       : '_rand',
+  'rand'       : 'rand',
 }
 
 class TranslateXS1(NodeWalker):
