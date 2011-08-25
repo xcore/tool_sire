@@ -73,8 +73,8 @@ class RenameChans(NodeWalker):
   def stmt_par(self, node, chans):
     [self.stmt(x, y) for (x, y) in zip(node.stmt, node.chans)]
 
-  def stmt_seq(self, node, chans):
-    [self.stmt(x, chans) for x in node.stmt]
+  def stmt_on(self, node, chans):
+    self.stmt(node.stmt, node.chans)
 
   # Statements containing uses of channels
 
@@ -106,6 +106,9 @@ class RenameChans(NodeWalker):
   
   # Other statements containing statements
 
+  def stmt_seq(self, node, chans):
+    [self.stmt(x, chans) for x in node.stmt]
+
   def stmt_if(self, node, chans):
     self.stmt(node.thenstmt, chans)
     self.stmt(node.elsestmt, chans)
@@ -114,9 +117,6 @@ class RenameChans(NodeWalker):
     self.stmt(node.stmt, chans)
 
   def stmt_for(self, node, chans):
-    self.stmt(node.stmt, chans)
-
-  def stmt_on(self, node, chans):
     self.stmt(node.stmt, chans)
 
   # Statements we can ignore

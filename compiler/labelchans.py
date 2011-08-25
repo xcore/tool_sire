@@ -43,7 +43,7 @@ class LabelChans(NodeWalker):
     location_value = EvalExpr().expr(stmt.location)
     tab.insert(name, None, location_value)
     self.debug('  {} at {}'.format(name, location_value))
-    return ChanElem(None, location_value)
+    return ChanElem(None, location_value, None, None)
 
   def subscript_channel(self, indicies, tab, stmt, name, expr):
     """
@@ -206,6 +206,13 @@ class LabelChans(NodeWalker):
     # Return no uses 
     return ChanUseSet()
  
+  def stmt_on(self, node, indicies, tab):
+    chan_uses = self.stmt(node.stmt, indicies, tab)
+    node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
+    
+    # Return no uses 
+    return ChanUseSet()
+
   # Statements containing uses of channels.
 
   def stmt_in(self, node, indicies, tab):
@@ -277,9 +284,6 @@ class LabelChans(NodeWalker):
     return self.stmt(node.stmt, indicies, tab)
 
   def stmt_for(self, node, indicies, tab):
-    return self.stmt(node.stmt, indicies, tab)
-
-  def stmt_on(self, node, indicies, tab):
     return self.stmt(node.stmt, indicies, tab)
 
   # Statements not containing processes or channels uses
@@ -430,7 +434,9 @@ class ChanElem(object):
   def __init__(self, index, location, indicies, index_values):
     self.index = index
     self.location = location
-    self.indicies_value = indicies_value(indicies, index_values)
+    self.indicies_value = None
+    if indicies != None and index_values != None:
+      self.indicies_value = indicies_value(indicies, index_values)
 
 
 class ChanElemSet(object):

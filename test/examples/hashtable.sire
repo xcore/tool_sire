@@ -1,12 +1,12 @@
-val D := 3;      % Tree depth
-val N := 1 << D; % Number of leaves
-val LEN := 100;  % Number of data items at each leaf.
+val D    := 3;       % Tree depth
+val N    := 1 << D;  % Number of leaves
+val LEN  := 100;     % Number of data items at each leaf.
 val SIZE := N * LEN;
-val PUT := 0;
-val GET := 1;
+val PUT  := 0;
+val GET  := 1;
 
 func hash(val v) is
-  return ((v+(v>>3))+(v<<2) rem SIZE
+  return ((v+(v>>3))+(v<<2)) rem SIZE
 
 proc serve(chanend c, chanend t) is
   var query;
@@ -28,66 +28,62 @@ proc serve(chanend c, chanend t) is
     t ! GET;
     t ! hash(key);
     t ? value;
-    c ! value;
+    c ! value
   }
   else skip
 }
 
-proc branch(val i, chanend root, chanend left, chanend right) is
+proc branch(chanend root, chanend left, chanend right) is
   var query;
   var key;
   var value;
-  var lfound;
-  var rfound;
 { while true do
   { root ? query;
     if query = PUT
     then
-    { root ? key;
-      root ? value;
-      if 0 % key is in left subtree
-      then
-      { left ! PUT;
-        left ! key;
-        left ! value
-      }
-      else
-      { right ! PUT;
-        right ! key;
-        right ! value
-      }
+    { root  ? key;
+      root  ? value;
+      left  ! PUT;
+      left  ! key;
+      left  ! value;
+      right ! PUT;
+      right ! key;
+      right ! value
     }
     else
     if query = GET
     then
-    { root ? key;
-      if 0 % key is in left subtree
-      then
-      { left ! GET;
-        left ! key;
-        left ? value;
-        root ! value
-      }
-      else
-      { right ! GET;
-        right ! key;
-        right ? value;
-        root ! value;
-      }
+    { root  ? key;
+      left  ! GET;
+      left  ! key;
+      left  ? value;
+      root  ! value;
+      right ! GET;
+      right ! key;
+      right ? value;
+      root  ! value
     }
+    else skip
   }
 }
 
-proc leaf(chanend c) is
-  var data[LEN];
-  var enq;
-  var found;
-  var i;
+proc leaf(val i, chanend c) is
+  var table[LEN];
+  var query;
+  var key;
+  var value;
 { while true do
-  { found := false
-  ; for i in [0 for LEN] do
-      found := (data[i] = enq) or found
-  ; c ! found
+  { c ? query;
+    if query = PUT
+    then
+    { c ? key;
+      c ? value;
+      table[key-(i*LEN)] := value
+    }
+    else
+    { c ? key;
+      c ! table[key-(i*LEN)]
+    }
   }
 }
 
@@ -96,36 +92,35 @@ proc table(chanend query) is
   var i;
 { serve(query, c[0]) ||
   par i in [0 for N-1] do
-    branch(i, c[i], c[(2*i)+1], c[(2*i)+2]) ||
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
   par i in [0 for N] do 
-    leaf(c[(N-1) + i])
+    leaf(i, c[(N-1) + i])
 }
 
 % put(key, data)
-func put(chanend c, val key, val value) is
+proc put(chanend c, val key, val value) is
 { c ! PUT;
   c ! key; 
   c ! value
 }
 
 % get(key) returns data
-func get(chanend c, val key) is
-  var value;
+proc get(var value, chanend c, val key) is
 { c ! GET;
   c ! key;
-  c ? value;
-  return value
+  c ? value
 }
 
 proc main() is
   chan c;
-  var key;
   var value;
 { table(c) ||
-  { put(c, 0, 0xDEADBEEF);
-    put(c, 1, 0xBADFOOD);
-    assert get(c, 0) = 0xDEADBEEF;
-    assert get(c, 1) = 0xBADFOOD
+  { put(c, 1, 0xDEADBEEF);
+    put(c, 34, 0xBADF00D);
+    get(value, c, 1);
+    assert value = 0xDEADBEEF;
+    get(value, c, 34);
+    assert value = 0xBADF00D
   }
 }
 

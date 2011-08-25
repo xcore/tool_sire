@@ -76,7 +76,7 @@ class Printer(NodeWalker):
       return 'var {}'.format(node.name)
     
     elif node.type == T_VAR_ARRAY:
-      return '{}[{}]'.format(node.name, self.expr(node.expr))
+      return 'var {}[{}]'.format(node.name, self.expr(node.expr))
     
     elif node.type == T_REF_ARRAY:
       return node.name+'[]'

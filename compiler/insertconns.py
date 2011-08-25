@@ -184,8 +184,8 @@ class InsertConns(NodeWalker):
       d.symbol = Symbol(x, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
       node.decls.append(d)
 
-    self.debug('[def connections]:')
     if self.print_debug:
+      self.debug('[def connections]:')
       self.display_chans(node.chans)
   
   # Statements ==========================================
@@ -193,8 +193,8 @@ class InsertConns(NodeWalker):
   # Top-level statements where connections are inserted
 
   def stmt_rep(self, node, tab, chanids, decls):
-    self.debug('[rep connections]:')
     if self.print_debug:
+      self.debug('[rep connections]:')
       self.display_chans(node.chans)
     self.stmt(node.stmt, tab, chanids, decls)
     node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans)
@@ -210,6 +210,14 @@ class InsertConns(NodeWalker):
       if self.print_debug:
         self.display_chans(y)
  
+  def stmt_on(self, node, tab, chanids, decls):
+    if self.print_debug:
+      self.debug('[on connections]:')
+      self.display_chans(node.chans)
+    self.stmt(node.stmt, tab, chanids, decls)
+    node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans)
+    decls.extend([x.chanend for x in node.chans])
+
   # Other statements containing processes
 
   def stmt_seq(self, node, tab, chanids, decls):
@@ -223,9 +231,6 @@ class InsertConns(NodeWalker):
     self.stmt(node.stmt, tab, chanids, decls)
 
   def stmt_for(self, node, tab, chanids, decls):
-    self.stmt(node.stmt, tab, chanids, decls)
-
-  def stmt_on(self, node, tab, chanids, decls):
     self.stmt(node.stmt, tab, chanids, decls)
 
   # Other statements
