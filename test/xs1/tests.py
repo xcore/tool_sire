@@ -79,6 +79,7 @@ xs1_feature_tests = [
   # Builtins
   Test('builtin_fixedpoint'),
   Test('builtin_printing'),
+  Test('builtin_rand'),
   Test('builtin_procid', [16]),
 
   # Threads
