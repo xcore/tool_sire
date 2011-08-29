@@ -15,6 +15,14 @@ syn keyword	sKeyword     proc func is return skip
 syn keyword	sKeyword     on aliases skip connect to from assert
 syn keyword	sKeyword     true false
 
+" Builtins
+syn keyword     sBuiltin     printchar printcharln 
+syn keyword     sBuiltin     printval printvalln 
+syn keyword     sBuiltin     printhex printhexln
+syn keyword     sBuiltin     printstr printstrln println
+syn keyword     sBuiltin     mulf8_24 divf8_24
+syn keyword     sBuiltin     procid crc rand
+
 " Control structures
 syn keyword	sStructure   if then else
 syn keyword     sRepeat      while do for in to step par
@@ -59,6 +67,7 @@ if version >= 508 || !exists("did_x_syntax_inits")
   endif
   
   HiLink sKeyword     Keyword
+  HiLink sBuiltin     Function
   HiLink sType        Type
   HiLink sStructure   Structure
   HiLink sRepeat      Repeat
