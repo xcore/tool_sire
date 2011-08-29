@@ -53,6 +53,7 @@ builtin_conversion = {
   'div8_24'    : 'div8_24',
   # System
   'procid'     : '_procId',
+  'crc'        : 'crc',
   'rand'       : 'rand',
 }
 

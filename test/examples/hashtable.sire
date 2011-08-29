@@ -6,7 +6,7 @@ val PUT  := 0;
 val GET  := 1;
 
 func hash(val v) is
-  return ((v+(v>>3))+(v<<2)) rem SIZE
+  return crc(v) rem SIZE
 
 proc serve(chanend c, chanend t) is
   var query;

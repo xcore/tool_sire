@@ -46,6 +46,7 @@ divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System builtins
 procid = func_decl('procid', []) # Required for implementation of on and connect
+crc    = func_decl('crc', [SVAL_PARAM], mobile=True)
 rand   = func_decl('rand', [], mobile=True)
 
 builtins = {
@@ -61,6 +62,7 @@ builtins = {
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,
+  'crc'         : crc,
   'rand'        : rand,
   }
 

@@ -1,4 +1,4 @@
-val N := 10;
+val N := 100;
 
 proc main() is
   var i;
