@@ -11,7 +11,7 @@ syn case match
 
 " Keywords
 syn keyword	sType	     var val chan chanend
-syn keyword	sKeyword     proc func is return skip 
+syn keyword	sKeyword     proc func is return skip server 
 syn keyword	sKeyword     on aliases skip connect to from assert
 syn keyword	sKeyword     true false
 

@@ -1,0 +1,52 @@
+val N := 10;
+
+proc foo(chanend c) is skip
+proc bar(chanend c) is skip
+proc baz(chanend c) is skip
+
+%server(chan c[N]) table() is
+proc table(chanend c[N]) is
+  var i;
+{
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
+  par i in [0 for N] do 
+    leaf(i, c[(N-1) + i])
+}
+
+proc foo(chanend c[N]) is
+  var i;
+  chan d[M+1];
+{ { control(d[0], d[M])
+  par i in [0 for N] do node()
+}
+
+proc main() is
+  var i;
+{ 
+  
+  server(chan c[N]) par i in [0 for N] do serve(c[i])
+  { par i in [0 for N] do foo(c[i]);
+    par i in [0 for N] do bar(c[i]);
+    par i in [0 for N] do baz(c[i])
+  }
+
+
+  server(chan c) table(c)
+  { foo(c);
+    bar(c);
+    baz(c)
+  }
+  
+  server(chan c[N]) table(c)
+  { par i in [0 for N] do foo(i, c);
+    bar(c);
+    baz(c)
+  }
+  
+  server(chan c) device(c)
+  { foo(c);
+    bar(c);
+    baz(c)
+  }
+}

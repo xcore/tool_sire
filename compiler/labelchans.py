@@ -179,7 +179,7 @@ class LabelChans(NodeWalker):
     #  print('{} iterataions.'.format(count))
 
     # Display the channel table
-    #node.chantab.display()
+    node.chantab.display()
   
   # Statements ==========================================
 

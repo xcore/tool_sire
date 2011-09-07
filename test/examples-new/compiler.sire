@@ -1,0 +1,32 @@
+val N := 10;
+
+proc ast(chan c[N]) is
+{
+}
+
+proc symtab(chan c) is
+{
+}
+
+proc main() is
+{
+
+  server(chan c_ast, chan c_sym) 
+  { ast(c_ast) || symtab(c_sym) }
+  { lex(c_ast, c_sym);
+    syn(c_ast, c_sym);
+    sem(c_ast, c_sym);
+    optimise(c_ast);
+    codegen(c_ast)
+  }
+
+  server(chan c_ast[N], chan c_sym[N]) 
+  { ast(c_ast) || symtab(c_sym) }
+  { lex(c_ast, c_sym);
+    syn(c_ast, c_sym);
+    sem(c_ast, c_sym);
+    optimise(c_ast);
+    codegen(c_ast)
+  }
+
+}
