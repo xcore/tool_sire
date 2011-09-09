@@ -39,6 +39,7 @@ class NodeVisitor(object):
   def visit_stmt_out(self, node): pass
   def visit_stmt_alias(self, node): pass
   def visit_stmt_connect(self, node): pass
+  def visit_stmt_server(self, node): pass
   def visit_stmt_while(self, node): pass
   def visit_stmt_for(self, node): pass
   def visit_stmt_rep(self, node): pass
@@ -380,6 +381,31 @@ class StmtConnect(Stmt):
   def __repr__(self):
     s =  'StmtConnect('
     s += ', '.join('%s' % v for v in [self.master])
+    s += ')'
+    return s
+
+
+class StmtServer(Stmt):
+  def __init__(self, server, scope, coord=None):
+    self.server = server
+    self.scope = scope
+    self.coord = coord
+
+  def children(self):
+    c = []
+    if self.server is not None: c.append(self.server)
+    if self.scope is not None: c.append(self.scope)
+    return tuple(c)
+
+  def accept(self, visitor):
+    tag = visitor.visit_stmt_server(self)
+    visitor.down(tag)
+    for c in self.children():
+      c.accept(visitor)
+    visitor.up(tag)
+
+  def __repr__(self):
+    s =  'StmtServer('
     s += ')'
     return s
 

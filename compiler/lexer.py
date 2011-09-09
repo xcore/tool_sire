@@ -75,6 +75,7 @@ class Lexer(object):
     'par'     : 'PAR',
     'proc'    : 'PROC',
     'return'  : 'RETURN',
+    'server'  : 'SERVER',
     'skip'    : 'SKIP',
     'then'    : 'THEN',
     'to'      : 'TO',

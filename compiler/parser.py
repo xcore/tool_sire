@@ -342,6 +342,10 @@ class Parser(object):
     'stmt : CONNECT left COLON expr FROM expr'
     p[0] = ast.StmtConnect(p[2], p[4], p[6], False, self.coord(p))
 
+  def p_stmt_server(self, p):
+    'stmt : SERVER stmt stmt'
+    p[0] = ast.StmtServer(p[3], p[5], p[6], self.coord(p))
+
   def p_stmt_if(self, p):
     'stmt : IF expr THEN stmt ELSE stmt'
     p[0] = ast.StmtIf(p[2], p[4], p[6], self.coord(p))
