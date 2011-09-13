@@ -64,6 +64,10 @@ class TemplateWalker(NodeWalker):
   def stmt_alias(self, node):
     self.expr(node.slice)
 
+  def stmt_server(self, node):
+    self.stmt(node.server)
+    self.stmt(node.scope)
+
   def stmt_connect(self, node):
     self.elem(node.chan)
     self.elem(node.core)

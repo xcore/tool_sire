@@ -118,7 +118,7 @@ class LabelChans(NodeWalker):
   # Program ============================================
 
   def walk_program(self, node):
-    [self.defn(x) for x in node.defs]
+    self.defn(node.defs[-1])
   
   # Procedure definitions ===============================
   
@@ -145,39 +145,6 @@ class LabelChans(NodeWalker):
       else:
         pass
     
-    # Resolve multiple connections on the same channel id
-    # TODO: prove that this will terminate
-    #for x in filter(lambda x: x.type==T_CHAN_ARRAY, node.decls):
-    #  core = [0]*self.device.num_cores()
-    #  
-    #  # Initialise the number of master conn reqs for each core
-    #  for y in range(x.symbol.value):
-    #    s = node.chantab.lookup_slave_location(x.name, y)
-    #    if s != None: core[s] += 1 
-    #  
-    #  change = True
-    #  count = 0
-    #  while change and count < 100:
-    #    change = False
-    #    count += 1
-    #    # For each channel swap master/slave if >1 at slave
-    #    for y in range(x.symbol.value):
-    #      s = node.chantab.lookup_slave_location(x.name, y)
-    #      #for z in core[:8]: print(z)
-    #      if s != None:
-    #        if core[s] > 1:
-    #          core[s] -= 1
-    #          #print('swapping {}[{}]'.format(x.name, y))
-    #          node.chantab.swap(x.name, y)
-    #          s = node.chantab.lookup_slave_location(x.name, y)
-    #          core[s] += 1
-    #          change = True
-    #      #print('===')
-    #    #print('iteration {} ==='.format(count))
-    #  if count==100 and change:
-    #    print('ERROR: could not determine connections for {}'.format(x.name))
-    #  print('{} iterataions.'.format(count))
-
     # Display the channel table
     node.chantab.display()
   
@@ -250,6 +217,7 @@ class LabelChans(NodeWalker):
 
   def stmt_pcall(self, node, indicies, tab):
     uses = ChanUseSet()
+
     for x in node.args:
       if isinstance(x, ast.ExprSingle):
 

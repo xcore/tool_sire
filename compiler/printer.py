@@ -199,13 +199,20 @@ class Printer(NodeWalker):
     self.out('{} aliases {}'.format(
       self.elem(node.left), self.elem(node.slice)))
 
+  def stmt_server(self, node):
+    self.out('server\n')
+    self.indent.append(INDENT)
+    self.stmt(node.server)
+    self.indent.pop()
+    self.out('\n')
+    self.indent.append(INDENT)
+    self.stmt(node.slave)
+    self.indent.pop()
+
   def stmt_connect(self, node):
-    if node.master:
-      self.out('connect {}:{} to {}'.format(self.elem(node.left), 
-        self.expr(node.id), self.expr(node.expr)))
-    else:
-      self.out('connect {}:{} from {}'.format(self.elem(node.left), 
-        self.expr(node.id), self.expr(node.expr)))
+    self.out('connect {}:{} {} {}'.format(
+      self.elem(node.left), self.expr(node.id), 
+      'to' if node.master else 'from', self.expr(node.expr)))
 
   def stmt_if(self, node):
     self.out('if {}\n'.format(self.expr(node.cond)))

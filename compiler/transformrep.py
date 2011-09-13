@@ -1,4 +1,4 @@
-# Copyright (c) 2011, James Hanlon, All rights reserved
+# Cmpyright (c) 2011, James Hanlon, All rights reserved
 # This software is freely distributable under a derivative of the
 # University of Illinois/NCSA Open Source License posted in
 # LICENSE.txt and at <http://github.xcore.com/>
@@ -225,7 +225,7 @@ class TransformRep(NodeWalker):
       p.append(d)
     return p
   
-  # Statements ==========================================
+  # Statements containing statements ====================
 
   def stmt_seq(self, node):
     p = []
@@ -283,6 +283,8 @@ class TransformRep(NodeWalker):
       (d, node.stmt) = self.transform_rep(node.stmt)
       p.append(d)
     return p
+
+  # Statements ==========================================
 
   def stmt_skip(self, node):
     return []

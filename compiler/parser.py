@@ -344,7 +344,7 @@ class Parser(object):
 
   def p_stmt_server(self, p):
     'stmt : SERVER stmt stmt'
-    p[0] = ast.StmtServer(p[3], p[5], p[6], self.coord(p))
+    p[0] = ast.StmtServer(p[2], p[3], self.coord(p))
 
   def p_stmt_if(self, p):
     'stmt : IF expr THEN stmt ELSE stmt'

@@ -515,6 +515,12 @@ class Semantics(NodeWalker):
     if not isinstance(node.slice, ast.ElemSlice):
       self.slice_error('alias', node.coord)
 
+  def stmt_server(self, node):
+
+    # Children
+    self.stmt(node.server)
+    self.stmt(node.slave)
+
   def stmt_connect(self, node):
 
     # Children

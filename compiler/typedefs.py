@@ -20,6 +20,7 @@ from type import Type
 #  - T_REF_SINGLE
 #  - T_REF_ARRAY
 #  - T_CHANEND_SINGLE
+#  - T_CHANEND_ARRAY
 #
 # (extra) Elements:
 #  - T_VAR_SUB
@@ -48,6 +49,7 @@ T_REF_ARRAY      = Type('ref', 'array')
 
 # Channel arrays
 T_CHAN_ARRAY     = Type('chan', 'array')
+T_CHANEND_ARRAY  = Type('chanend', 'array')
 
 # Procedures
 T_PROC           = Type('proc', 'procedure')

@@ -26,6 +26,7 @@ from semantics import Semantics
 from buildcfg import BuildCFG
 from liveness import Liveness
 from insertons import InsertOns
+from expandprocs import ExpandProcs
 from labelprocs import LabelProcs
 from labelchans import LabelChans
 from displayconns import DisplayConns
@@ -222,52 +223,57 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   """
 
   # 1. Distribute processes
+  vmsg(v, "Expanding processes")
+  ExpandProcs(ast, v).walk_program(ast)
+  #if errorlog.any(): raise Error('in process disribution')
+
+  # 1. Distribute processes
   vmsg(v, "Distributing processes")
-  InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
-  if errorlog.any(): raise Error('in process disribution')
+  #InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
+  #if errorlog.any(): raise Error('in process disribution')
 
   # 2. Label process locations
   vmsg(v, "Labelling processes")
-  LabelProcs(sym, device).walk_program(ast)
+  #LabelProcs(sym, device).walk_program(ast)
 
   # 3. Label channels
   vmsg(v, "Labelling channels")
-  LabelChans(device, errorlog).walk_program(ast)
-  if errorlog.any(): raise Error('in channel labelling')
+  #LabelChans(device, errorlog).walk_program(ast)
+  #if errorlog.any(): raise Error('in channel labelling')
 
-  DisplayConns(device).walk_program(ast)
+  #DisplayConns(device).walk_program(ast)
 
   # 4. Insert channel ends
   vmsg(v, "Inserting connections")
-  InsertConns(sym).walk_program(ast)
+  #InsertConns(sym).walk_program(ast)
 
   # 5. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  RenameChans().walk_program(ast)
+  #RenameChans().walk_program(ast)
   
   # 6. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
-  BuildCFG().run(ast)
+  #BuildCFG().run(ast)
 
   # 7. Perform liveness analysis
-  vmsg(v, "Performing liveness analysis")
-  Liveness().run(ast)
+  #vmsg(v, "Performing liveness analysis")
+  #Liveness().run(ast)
 
   # 8. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  TransformPar(sem, sig).walk_program(ast)
+  #TransformPar(sem, sig).walk_program(ast)
   
   # 9. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  TransformRep(sym, sem, sig, device).walk_program(ast)
+  #TransformRep(sym, sem, sig, device).walk_program(ast)
   
   # 10. Flatten nested calls
   vmsg(v, "Flattening nested calls")
-  FlattenCalls(sig).walk_program(ast)
+  #FlattenCalls(sig).walk_program(ast)
    
   # 11. Perform child analysis
   vmsg(v, "Performing child analysis")
-  child = child_analysis(sig, ast)
+  #child = child_analysis(sig, ast)
 
   # Display (pretty-print) the transformed AST
   if pprint_trans_ast: 

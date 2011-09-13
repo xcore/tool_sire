@@ -386,15 +386,15 @@ class StmtConnect(Stmt):
 
 
 class StmtServer(Stmt):
-  def __init__(self, server, scope, coord=None):
+  def __init__(self, server, slave, coord=None):
     self.server = server
-    self.scope = scope
+    self.slave = slave
     self.coord = coord
 
   def children(self):
     c = []
     if self.server is not None: c.append(self.server)
-    if self.scope is not None: c.append(self.scope)
+    if self.slave is not None: c.append(self.slave)
     return tuple(c)
 
   def accept(self, visitor):
