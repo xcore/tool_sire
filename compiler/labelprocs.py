@@ -44,15 +44,7 @@ class LabelProcs(NodeWalker):
     node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
  
     # Determine f and then set l = g(d_1, d_2, ..., d_k, f)
-    #dims = [x.count_value for x in node.indicies]
     k = indicies_expr(node.indicies)
-    #for (i, x) in enumerate(node.indicies):
-    #  c = reduce(lambda x, y: x*y, dims[i+1:], 1)
-    #  e = (ast.ElemGroup(
-    #        ast.ExprBinop('*', ast.ElemId(x.name),
-    #          ast.ExprSingle(ast.ElemNumber(c)))) 
-    #          if c>1 else ast.ElemId(x.name))
-    #  k = ast.ExprSingle(e) if k==None else ast.ExprBinop('+', k, ast.ExprSingle(e))
     
     # Add to base (if non-zero) and take modulo
     if not (isinstance(l, ast.ElemNumber) and l.value==0):
@@ -62,13 +54,12 @@ class LabelProcs(NodeWalker):
     
   def stmt_on(self, node, l):
     node.location = l
-    k = ast.ExprBinop('+', ast.ElemGroup(l), node.expr)
-    # Try and evaluate this new expression
-    v = EvalExpr().expr(k)
+    # Try and evaluate this 'target' expression
+    v = EvalExpr().expr(node.expr)
     k = ast.ExprSingle(ast.ElemNumber(v)) if v != None else k
     self.stmt(node.stmt, k)
 
-  # Contain local processes
+  # Statements containing statements
 
   def stmt_seq(self, node, l):
     node.location = l
@@ -78,6 +69,11 @@ class LabelProcs(NodeWalker):
     node.location = l
     [self.stmt(x, l) for x in node.stmt]
 
+  def stmt_server(self, node, l):
+    node.location = l
+    self.stmt(node.server, l)
+    self.stmt(node.client, l)
+  
   def stmt_if(self, node, l):
     node.location = l
     self.stmt(node.thenstmt, l)

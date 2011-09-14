@@ -245,6 +245,17 @@ class TransformRep(NodeWalker):
         p.append(d)
     return p
 
+  def stmt_server(self, node):
+    p = self.stmt(node.server)
+    p += self.stmt(node.client)
+    if isinstance(node.server, ast.StmtRep):
+      (d, node.server) = self.transform_rep(node.server)
+      p.append(d)
+    if isinstance(node.client, ast.StmtRep):
+      (d, node.client) = self.transform_rep(node.client)
+      p.append(d)
+    return p
+
   def stmt_if(self, node):
     p = self.stmt(node.thenstmt)
     p += self.stmt(node.elsestmt)

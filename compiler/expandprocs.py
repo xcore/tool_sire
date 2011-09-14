@@ -15,10 +15,10 @@ class ExpandProcs(NodeWalker):
   """
   Expand procedures by substibuting the defined process.
   """
-  def __init__(self, node, verbose=False):
+  def __init__(self, sig, node):
+    self.sig = sig
     self.ast = node
     self.subs = dict([(x.name, 0) for x in self.ast.defs])
-    self.verbose = verbose
 
   def substitute(self, stmt):
     """
@@ -37,18 +37,20 @@ class ExpandProcs(NodeWalker):
       for x in defn.decls:
         name = '_'+defn.name+'{}'.format(self.subs[defn.name])+'_'+x.name
         proc.accept(Rename(x.name, name))
-        decls.append(ast.Decl(name, x.type, x.expr))
+        decl = ast.Decl(name, x.type, x.expr)
+        decl.symbol = x.symbol 
+        decls.append(decl)
 
       # Rename actual parameters for ocurrances of formals
       for (x, y) in zip(defn.formals, stmt.args):
         if x.type == T_VAL_SINGLE:
           proc.accept(SubElem(ast.ElemId(x.name), ast.ElemGroup(y)))
         elif x.type == T_REF_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), y))
+          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
         elif x.type == T_REF_ARRAY:
           proc.accept(Rename(x.name, y.name))
         elif x.type == T_CHANEND_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), y))
+          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
         elif x.type == T_CHANEND_ARRAY:
           proc.accept(Rename(x.name, y.name))
         else:
@@ -69,6 +71,7 @@ class ExpandProcs(NodeWalker):
     node.defs[-1].decls.extend(self.stmt(node.defs[-1].stmt))
 
     # Remove all (now redundant) procedure definitions
+    [self.sig.remove(x.name) for x in node.defs[:-1] if x.type == T_PROC]
     node.defs = [x for x in node.defs if x.type == T_FUNC] + [node.defs[-1]]
   
   # Statements containing statements ====================
@@ -91,10 +94,10 @@ class ExpandProcs(NodeWalker):
 
   def stmt_server(self, node):
     (decls, node.server) = self.substitute(node.server)
-    (d, node.slave) = self.substitute(node.slave)
+    (d, node.client) = self.substitute(node.client)
     decls.extend(d)
     decls.extend(self.stmt(node.server))
-    decls.extend(self.stmt(node.slave))
+    decls.extend(self.stmt(node.client))
     return decls
 
   def stmt_if(self, node):

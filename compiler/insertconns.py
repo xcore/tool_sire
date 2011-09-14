@@ -203,13 +203,27 @@ class InsertConns(NodeWalker):
   def stmt_par(self, node, tab, chanids, decls):
     self.debug('[par connections]:')
     for (i, (x, y)) in enumerate(zip(node.stmt, node.chans)):
-      self.debug('[par stmt]: ')
+      self.debug('[process {}]: '.format(i))
       self.stmt(x, tab, chanids, decls) 
       node.stmt[i] = self.insert_connections(tab, chanids, node.stmt[i], y)
       decls.extend([z.chanend for z in y])
       if self.print_debug:
         self.display_chans(y)
- 
+
+  def stmt_server(self, node, tab, chanids, decls):
+    self.debug('[server connections]:')
+    self.stmt(node.server, tab, chanids, decls)
+    node.server = self.insert_connections(tab, chanids, node.server, node.chans[0])
+    decls.extend([x.chanend for x in node.chans[0]])
+    if self.print_debug:
+      self.display_chans(node.chans[0])
+    self.debug('[client connections]:')
+    self.stmt(node.client, tab, chanids, decls)
+    node.client = self.insert_connections(tab, chanids, node.client, node.chans[1])
+    decls.extend([x.chanend for x in node.chans[1]])
+    if self.print_debug:
+      self.display_chans(node.chans[1])
+
   def stmt_on(self, node, tab, chanids, decls):
     if self.print_debug:
       self.debug('[on connections]:')

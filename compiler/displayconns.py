@@ -16,7 +16,8 @@ class DisplayConns(NodeWalker):
       self.target = target
 
     def __repr__(self):
-      return 'connect {}[{}] to {}'.format(self.name, self.index, self.target)
+      return 'connect {}{} to {}'.format(self.name, 
+          '[{}]'.format(self.index) if self.index else '', self.target)
 
   class ConnSlave(object):
     def __init__(self, name, index, origin):
@@ -25,7 +26,8 @@ class DisplayConns(NodeWalker):
       self.origin = origin
 
     def __repr__(self):
-      return 'connect {}[{}] from {}'.format(self.name, self.index, self.origin)
+      return 'connect {}{} from {}'.format(self.name, 
+          '[{}]'.format(self.index) if self.index else '', self.origin)
 
   def __init__(self, device):
     self.device = device
@@ -68,6 +70,12 @@ class DisplayConns(NodeWalker):
   def stmt_par(self, node, tab):
     [self.aggregate(x, tab) for x in node.chans]
     [self.stmt(x, tab) for x in node.stmt]
+  
+  def stmt_server(self, node, tab):
+    self.aggregate(node.chans[0], tab)
+    self.aggregate(node.chans[1], tab)
+    self.stmt(node.server, tab)
+    self.stmt(node.client, tab)
   
   # Compound statements
 

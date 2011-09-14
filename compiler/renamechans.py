@@ -73,6 +73,10 @@ class RenameChans(NodeWalker):
   def stmt_par(self, node, chans):
     [self.stmt(x, y) for (x, y) in zip(node.stmt, node.chans)]
 
+  def stmt_server(self, node, chans):
+    self.stmt(node.server, node.chans[0])
+    self.stmt(node.client, node.chans[1])
+
   def stmt_on(self, node, chans):
     self.stmt(node.stmt, node.chans)
 

@@ -74,6 +74,12 @@ class BuildCFG(NodeWalker):
     [p.extend(self.stmt(x, pred, succ)) for x in node.stmt]
     return p
 
+  def stmt_server(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    p = self.stmt(node.server, pred, succ)
+    p += self.stmt(node.client, pred, succ)
+    return p
+
   def stmt_rep(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
     node.defs |= set([x for x in node.indicies])

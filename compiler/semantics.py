@@ -519,7 +519,7 @@ class Semantics(NodeWalker):
 
     # Children
     self.stmt(node.server)
-    self.stmt(node.slave)
+    self.stmt(node.client)
 
   def stmt_connect(self, node):
 

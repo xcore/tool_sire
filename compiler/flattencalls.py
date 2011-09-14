@@ -117,12 +117,6 @@ class FlattenCalls(NodeWalker):
   
   # Statements ==========================================
 
-  def stmt_seq(self, node, replace):
-    [self.stmt(x, replace) for x in node.stmt]
-
-  def stmt_par(self, node, replace):
-    [self.stmt(x, replace) for x in node.stmt]
-
   def stmt_pcall(self, node, replace):
     """
     For a pcall matching a replacement name, replace the call.
@@ -133,6 +127,16 @@ class FlattenCalls(NodeWalker):
           print('Replacing pcall '+name+' with '+pcall.name)
         node.name = pcall.name
         node.args = pcall.args
+
+  def stmt_seq(self, node, replace):
+    [self.stmt(x, replace) for x in node.stmt]
+
+  def stmt_par(self, node, replace):
+    [self.stmt(x, replace) for x in node.stmt]
+
+  def stmt_server(self, node, replace):
+    self.stmt(node.server, replace)
+    self.stmt(node.client, replace)
 
   def stmt_if(self, node, replace):
     self.stmt(node.thenstmt, replace)

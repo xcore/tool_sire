@@ -64,6 +64,11 @@ class Liveness(NodeWalker):
     b = self.compute(node)
     return a or b
 
+  def stmt_server(self, node):
+    a = self.stmt(node.server)
+    b = self.stmt(node.client)
+    return a or b
+
   def stmt_if(self, node):
     a = self.stmt(node.thenstmt)
     b = self.stmt(node.elsestmt)

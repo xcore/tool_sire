@@ -201,11 +201,9 @@ class TransformPar(NodeWalker):
 
   # Parallel composition
   def stmt_par(self, node, succ):
-    """
-    We only need to transform statements [1:].
-    """
     p = []
     [p.extend(self.stmt(x, succ)) for x in node.stmt]
+    # We only need to transform statements [1:].
     for (i, x) in enumerate(node.stmt[1:]):
       if not isinstance(x, ast.StmtPcall):
         if(self.debug):
@@ -213,6 +211,18 @@ class TransformPar(NodeWalker):
         (proc, node.stmt[i+1]) = self.stmt_to_process(x, succ)
         p.insert(0, proc)
         self.defn(proc).extend(p)
+    return p
+
+  # Server
+  def stmt_server(self, node, succ):
+    p = self.stmt(node.server, succ)
+    p += self.stmt(node.client, succ)
+    if not isinstance(node.client, ast.StmtPcall):
+      if(self.debug):
+        print('Transforming server client')
+      (proc, node.client) = self.stmt_to_process(node.client, succ)
+      p.insert(0, proc)
+      self.defn(proc).extend(p)
     return p
 
   # Parallel replication

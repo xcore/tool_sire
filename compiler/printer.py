@@ -176,6 +176,16 @@ class Printer(NodeWalker):
   def stmt_par(self, node):
     self.stmt_block(node, '||')
 
+  def stmt_server(self, node):
+    self.out('server\n')
+    self.indent.append(INDENT)
+    self.stmt(node.server)
+    self.indent.pop()
+    self.out('\n')
+    self.indent.append(INDENT)
+    self.stmt(node.client)
+    self.indent.pop()
+
   def stmt_skip(self, node):
     self.out('skip')
 
@@ -198,16 +208,6 @@ class Printer(NodeWalker):
   def stmt_alias(self, node):
     self.out('{} aliases {}'.format(
       self.elem(node.left), self.elem(node.slice)))
-
-  def stmt_server(self, node):
-    self.out('server\n')
-    self.indent.append(INDENT)
-    self.stmt(node.server)
-    self.indent.pop()
-    self.out('\n')
-    self.indent.append(INDENT)
-    self.stmt(node.slave)
-    self.indent.pop()
 
   def stmt_connect(self, node):
     self.out('connect {}:{} {} {}'.format(

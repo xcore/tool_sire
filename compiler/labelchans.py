@@ -146,7 +146,7 @@ class LabelChans(NodeWalker):
         pass
     
     # Display the channel table
-    node.chantab.display()
+    #node.chantab.display()
   
   # Statements ==========================================
 
@@ -173,6 +173,16 @@ class LabelChans(NodeWalker):
     # Return no uses 
     return ChanUseSet()
  
+  def stmt_server(self, node, indicies, tab):
+    node.chans = []
+    chan_uses = self.stmt(node.server, indicies, tab)
+    node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
+    chan_uses = self.stmt(node.client, indicies, tab)
+    node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
+
+    # Return no uses 
+    return ChanUseSet()
+
   def stmt_on(self, node, indicies, tab):
     chan_uses = self.stmt(node.stmt, indicies, tab)
     node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)

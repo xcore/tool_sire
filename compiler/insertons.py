@@ -70,16 +70,20 @@ class InsertOns(NodeWalker):
     if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
       self.errorlog.report_error("parallel composition contains 'on's")
       return 0
-    d += self.stmt(node.stmt[0], parent, d)
+    e = self.stmt(node.stmt[0], parent, d)
+    #print('par before d = {}'.format(e))
     for (i, x) in enumerate(node.stmt[1:]):
-      node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
-      d += self.stmt(x, parent, d)
-    return d
+      node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d+e)), x)
+      e += self.stmt(x, parent, d+e)
+    #print('par after d = {}'.format(e))
+    return e
 
   def stmt_server(self, node, parent, d):
-    d = self.stmt(node.server, parent, d)
-    node.slave = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.slave)
-    d += self.stmt(node.slave, parent, d)
+    #print('d before = {}'.format(d))
+    d += self.stmt(node.server, parent, d)
+    #print('d after = {}'.format(d))
+    node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
+    d += self.stmt(node.client, parent, d)
     return d
 
   def stmt_rep(self, node, parent, d):
@@ -92,11 +96,12 @@ class InsertOns(NodeWalker):
     d += e
     return e * offset
     
+  def stmt_on(self, node, parent, d):
+    #assert 0
+    return self.stmt(node.stmt, parent, d)
+
   def stmt_seq(self, node, parent, d):
     return max([self.stmt(x, parent, d) for x in node.stmt])
-
-  def stmt_on(self, node, parent, d):
-    return self.stmt(node.stmt, parent, d)
 
   def stmt_if(self, node, parent, d):
     d = self.stmt(node.thenstmt, parent, d)
