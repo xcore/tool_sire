@@ -13,26 +13,42 @@ class SubElem(NodeVisitor):
   replaced by name.
   """
   def __init__(self, old, new):
-    """
-    Elements old (name) and new (element).
-    """
     self.old = old
     self.new = new
     #print('Replacing: {}, with {}'.format(old, new))
 
+  def substitute(self, elem):
+    if (isinstance(elem, type(self.old)) 
+        and elem.name == self.old.name):
+      return self.new
+    else:
+      return elem
+
+  # Statements containing elements ======================
+
+  def visit_stmt_ass(self, node):
+    node.left = self.substitute(node.left)
+
+  def visit_stmt_in(self, node):
+    node.left = self.substitute(node.left)
+
+  def visit_stmt_out(self, node):
+    node.left = self.substitute(node.left)
+
+  def visit_stmt_alias(self, node):
+    node.left = self.substitute(node.left)
+
+  def visit_stmt_connect(self, node):
+    node.left = self.substitute(node.left)
+
+  # Expressions containing elements =====================
+
   def visit_expr_single(self, node):
-    if isinstance(node.elem, type(self.old)):
-      if node.elem.name == self.old.name:
-        node.elem = self.new
+    node.elem = self.substitute(node.elem)
 
   def visit_expr_unary(self, node):
-    if isinstance(node.elem, type(self.old)):
-      if node.elem.name == self.old.name:
-        node.elem = self.new
+    node.elem = self.substitute(node.elem)
 
   def visit_expr_binop(self, node):
-    assert not isinstance(node.right, ast.Elem)
-    if isinstance(node.elem, type(self.old)):
-      if node.elem.name == self.old.name:
-        node.elem = self.new
+    node.elem = self.substitute(node.elem)
 

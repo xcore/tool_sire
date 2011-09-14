@@ -32,7 +32,7 @@ class InsertOns(NodeWalker):
   
     if not self.disable:
       
-      # Start distribution from 'main'
+      # All processes have been flattened into 'main'
       self.defs = node.defs
       d = self.stmt(node.defs[-1].stmt, node.defs[-1].name, 0)
       
@@ -74,6 +74,12 @@ class InsertOns(NodeWalker):
     for (i, x) in enumerate(node.stmt[1:]):
       node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), x)
       d += self.stmt(x, parent, d)
+    return d
+
+  def stmt_server(self, node, parent, d):
+    d = self.stmt(node.server, parent, d)
+    node.slave = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.slave)
+    d += self.stmt(node.slave, parent, d)
     return d
 
   def stmt_rep(self, node, parent, d):

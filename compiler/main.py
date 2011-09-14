@@ -229,8 +229,8 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 1. Distribute processes
   vmsg(v, "Distributing processes")
-  #InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
-  #if errorlog.any(): raise Error('in process disribution')
+  InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
+  if errorlog.any(): raise Error('in process disribution')
 
   # 2. Label process locations
   vmsg(v, "Labelling processes")
