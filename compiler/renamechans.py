@@ -39,6 +39,22 @@ class RenameChans(NodeWalker):
           e = ast.ElemId(x.chanend)
           e.symbol = s
           return ast.ExprSingle(e)
+    
+    if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_SINGLE:
+      for x in chans:
+        if elem.name == x.name:
+          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+          e = ast.ElemId(x.chanend)
+          e.symbol = s
+          return ast.ExprSingle(e)
+
+    elif isinstance(elem, ast.ElemSub) and elem.symbol.type == T_CHANEND_ARRAY:
+      for x in chans:
+        if elem.name == x.name and CmpExpr().expr(elem.expr, x.expr):
+          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+          e = ast.ElemId(x.chanend)
+          e.symbol = s
+          return ast.ExprSingle(e)
     else:
       assert 0
 
@@ -86,14 +102,18 @@ class RenameChans(NodeWalker):
     c = node.left
     t = c.symbol.type
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
-        or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)):
+        or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_SINGLE)
+        or (isinstance(c, ast.ElemSub) and t == T_CHANEND_ARRAY)):
       node.left = self.rename_chan(c, chans).elem
 
   def stmt_out(self, node, chans):
     c = node.left
     t = c.symbol.type
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
-        or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)):
+        or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_SINGLE)
+        or (isinstance(c, ast.ElemSub) and t == T_CHANEND_ARRAY)):
       node.left = self.rename_chan(c, chans).elem
 
   def stmt_pcall(self, node, chans):
@@ -107,6 +127,15 @@ class RenameChans(NodeWalker):
         elif (isinstance(x.elem, ast.ElemSub)
             and x.elem.symbol.type == T_CHAN_ARRAY):
           node.args[i] = self.rename_chan(x.elem, chans)
+
+        elif (isinstance(x.elem, ast.ElemId)
+            and x.elem.symbol.type == T_CHANEND_SINGLE):
+          node.args[i] = self.rename_chan(x.elem, chans)
+
+        elif (isinstance(x.elem, ast.ElemSub)
+            and x.elem.symbol.type == T_CHANEND_ARRAY):
+          node.args[i] = self.rename_chan(x.elem, chans)
+
   
   # Other statements containing statements
 

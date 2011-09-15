@@ -198,11 +198,11 @@ class LabelChans(NodeWalker):
     self.debug('out channel {}:'.format(c.name))
     
     if (isinstance(c, ast.ElemId) 
-        and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+        and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
       return ChanUseSet([ChanUse(c.name, None)])
     
     elif (isinstance(c, ast.ElemSub)
-       and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+       and (t == T_CHAN_ARRAY or t == T_CHANEND_ARRAY)):
         return ChanUseSet([ChanUse(c.name, c.expr)])
     
     else:
@@ -214,12 +214,11 @@ class LabelChans(NodeWalker):
     self.debug('in channel {}:'.format(c.name))
 
     if (isinstance(c, ast.ElemId) 
-        and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
-
+        and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
       return ChanUseSet([ChanUse(c.name, None)])
     
-    elif (isinstance(c, ast.ElemSub)
-       and (t == T_CHAN_SINGLE or t == T_CHAN_ARRAY)):
+    elif (isinstance(c, ast.ElemSub) and
+        (t == T_CHAN_ARRAY or t == T_CHANEND_ARRAY)):
         return ChanUseSet([ChanUse(c.name, c.expr)])
     
     else:

@@ -10,24 +10,28 @@ class DisplayConns(NodeWalker):
   Display channel connections per-core.
   """
   class ConnMaster(object):
-    def __init__(self, name, index, target):
+    def __init__(self, name, chanend, index, target):
       self.name = name
+      self.chanend = chanend
       self.index = index
       self.target = target
 
     def __repr__(self):
-      return 'connect {}{} to {}'.format(self.name, 
-          '[{}]'.format(self.index) if self.index else '', self.target)
+      return 'connect {} ({}{}) to {}'.format(self.chanend, self.name, 
+          '[{}]'.format(self.index) if self.index!=None else '', 
+          self.target)
 
   class ConnSlave(object):
-    def __init__(self, name, index, origin):
+    def __init__(self, name, chanend, index, origin):
       self.name = name
+      self.chanend = chanend
       self.index = index
       self.origin = origin
 
     def __repr__(self):
-      return 'connect {}{} from {}'.format(self.name, 
-          '[{}]'.format(self.index) if self.index else '', self.origin)
+      return 'connect {} ({}{}) from {}'.format(self.chanend, self.name, 
+          '[{}]'.format(self.index) if self.index!=None else '', 
+          self.origin)
 
   def __init__(self, device):
     self.device = device
@@ -44,15 +48,18 @@ class DisplayConns(NodeWalker):
         master = tab.is_master(x.name, y.index, y.location)
         if master:
           slave_loc = tab.lookup_slave_location(x.name, y.index)
-          self.d[y.location].append(self.ConnMaster(x.name, y.index, slave_loc))
+          self.d[y.location].append(self.ConnMaster(
+            x.name, x.chanend, y.index, slave_loc))
         else:
           master_loc = tab.lookup_master_location(x.name, y.index)
-          self.d[y.location].append(self.ConnSlave(x.name, y.index, master_loc))
+          self.d[y.location].append(self.ConnSlave(
+            x.name, x.chanend, y.index, master_loc))
  
   def display(self):
     for (i, x) in enumerate(self.d):
       print('Core {}:'.format(i))
-      for y in sorted(x, key=lambda x: (x.name, x.index)):
+      #for y in sorted(x, key=lambda x: (x.name, x.index)):
+      for y in sorted(x, key=lambda x: x.chanend):
         print('  {}'.format(y))
 
   def walk_program(self, node):
@@ -63,6 +70,8 @@ class DisplayConns(NodeWalker):
     self.aggregate(node.chans, node.chantab)
     self.stmt(node.stmt, node.chantab)
 
+  # Boundary statements (which get distributed)
+
   def stmt_rep(self, node, tab):
     self.aggregate(node.chans, tab)
     self.stmt(node.stmt, tab)
@@ -72,11 +81,14 @@ class DisplayConns(NodeWalker):
     [self.stmt(x, tab) for x in node.stmt]
   
   def stmt_server(self, node, tab):
-    self.aggregate(node.chans[0], tab)
-    self.aggregate(node.chans[1], tab)
+    [self.aggregate(x, tab) for x in node.chans]
     self.stmt(node.server, tab)
     self.stmt(node.client, tab)
   
+  def stmt_on(self, node, tab):
+    self.aggregate(node.chans, tab)
+    self.stmt(node.stmt, tab)
+
   # Compound statements
 
   def stmt_seq(self, node, tab):
@@ -90,9 +102,6 @@ class DisplayConns(NodeWalker):
     self.stmt(node.stmt, tab)
 
   def stmt_for(self, node, tab):
-    self.stmt(node.stmt, tab)
-
-  def stmt_on(self, node, tab):
     self.stmt(node.stmt, tab)
 
   # Statements not containing statements

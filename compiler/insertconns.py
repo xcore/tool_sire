@@ -152,7 +152,7 @@ class InsertConns(NodeWalker):
     """
     if len(chans) > 0:
       conns = []
-      for x in chans:
+      for x in sorted(chans, key=lambda x: x.chanend):
         if len(x.elems) == 1:
           conns.append(self.gen_single_conn(tab, chanids, x))
         else:
