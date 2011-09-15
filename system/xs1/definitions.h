@@ -24,6 +24,8 @@
 #define LABEL_PROC_ID            "_procId"
 #define LABEL_CONNECT_MASTER     "_connectMaster"
 #define LABEL_CONNECT_SLAVE      "_connectSlave"
+#define LABEL_CONNECT_SERVER     "_connectMaster"
+#define LABEL_CONNECT_CLIENT     "_connectClient"
 
 // Jump table indicies
 #define JUMPI_CREATE_REMOTE      0

@@ -9,6 +9,8 @@
 void initConnections();
 unsigned _connectMaster(int chanid, int dest);
 unsigned _connectSlave(int chanid, int origin);
+unsigned _connectServer(int connId);
+unsigned _connectClient(int connId, int dest);
 void serveConnReq();
 
 #endif

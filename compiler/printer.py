@@ -7,6 +7,7 @@ import sys
 
 import ast
 from walker import NodeWalker
+from definitions import *
 from typedefs import *
 
 INDENT = '  '
@@ -210,9 +211,20 @@ class Printer(NodeWalker):
       self.elem(node.left), self.elem(node.slice)))
 
   def stmt_connect(self, node):
-    self.out('connect {}:{} {} {}'.format(
-      self.elem(node.left), self.expr(node.id), 
-      'to' if node.master else 'from', self.expr(node.expr)))
+    if node.type == CONNECT_MASTER:
+      self.out('connect {}:{} to slave {}'.format(self.elem(node.left), 
+        self.expr(node.id), self.expr(node.expr)))
+    elif node.type == CONNECT_SLAVE:
+      self.out('connect {}:{} to master {}'.format(self.elem(node.left), 
+        self.expr(node.id), self.expr(node.expr)))
+    elif node.type == CONNECT_CLIENT:
+      self.out('connect {}:{} to server {}'.format(self.elem(node.left), 
+        self.expr(node.id), self.expr(node.expr)))
+    elif node.type == CONNECT_SERVER:
+      self.out('connect {}:{} to client'.format(self.elem(node.left), 
+        self.expr(node.id)))
+    else:
+      assert 0
 
   def stmt_if(self, node):
     self.out('if {}\n'.format(self.expr(node.cond)))

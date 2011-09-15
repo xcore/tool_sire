@@ -4,8 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from walker import NodeWalker
-from definitions import PROC_ID_VAR
-from typedefs import T_VAR_SINGLE, T_SCOPE_PROC
+from typedefs import *
 from symbol import Symbol
 import ast
 

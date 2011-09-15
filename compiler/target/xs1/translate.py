@@ -5,7 +5,7 @@
 
 import sys
 
-import definitions as defs
+from definitions import *
 import config
 import ast
 import builtin
@@ -145,13 +145,12 @@ class TranslateXS1(NodeWalker):
             tmp = self.blocker.get_tmp()
             self.asm('add %0, %1, %2', outop=tmp,
                 inops=[x.elem.name, '({})*{}'.format(
-                self.expr(x.elem.begin),
-                defs.BYTES_PER_WORD)])
+                self.expr(x.elem.begin), BYTES_PER_WORD)])
             arg = tmp
           elif x.elem.symbol.type == T_REF_ARRAY:
             arg = '{}+(({})*{})'.format(
                 x.elem.name, self.expr(x.elem.base),
-                defs.BYTES_PER_WORD)
+                BYTES_PER_WORD)
 
       new.append(self.expr(x) if not arg else arg)
 
@@ -284,14 +283,17 @@ class TranslateXS1(NodeWalker):
 
   # Statements ==========================================
 
-  def stmt_par(self, node):
-    gen_par(self, node)
-
   def stmt_seq(self, node):
     self.blocker.begin()
     for x in node.children(): 
       self.stmt(x)
     self.blocker.end()
+
+  def stmt_par(self, node):
+    gen_par(self, node)
+
+  def stmt_server(self, node):
+    pass
 
   def stmt_skip(self, node):
     pass
@@ -343,19 +345,27 @@ class TranslateXS1(NodeWalker):
     if node.left.symbol.type == T_VAR_ARRAY:
       self.asm('add %0, %1, %2', outop=node.left.name, 
           inops=[node.slice.name, '({})*{}'.format(
-            self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
+            self.expr(node.slice.begin), BYTES_PER_WORD)])
 
     elif node.left.symbol.type == T_REF_ARRAY:
       self.out('{} = {} + ({})*{};'.format(self.elem(node.left), node.slice.name, 
-        self.expr(node.slice.base), defs.BYTES_PER_WORD))
+        self.expr(node.slice.base), BYTES_PER_WORD))
 
   def stmt_connect(self, node):
-    if node.master:
+    if node.type == CONNECT_MASTER:
       self.out('{} = {}({}, {});'.format(self.elem(node.left), 
-        defs.LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
-    else:
+        LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
+    elif node.type == CONNECT_SLAVE:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
-        defs.LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
+        LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
+    elif node.type == CONNECT_SERVER:
+      self.out('{} = {}({});'.format(self.elem(node.left),
+        LABEL_CONNECT_MASTER, self.expr(node.id)))
+    elif node.type == CONNECT_CLIENT:
+      self.out('{} = {}({}, {});'.format(self.elem(node.left),
+        LABEL_CONNECT_CLIENT, self.expr(node.id), self.expr(node.expr)))
+    else:
+      assert 0
 
   def stmt_if(self, node):
     self.out('if ({})'.format(self.expr(node.cond)))
@@ -444,7 +454,7 @@ class TranslateXS1(NodeWalker):
     if node.symbol.type == T_VAR_ARRAY:
       address = '(unsigned, '+address+')'
     return '({} + ({})*{})'.format(address, self.expr(node.base),
-         defs.BYTES_PER_WORD)
+         BYTES_PER_WORD)
 
   def elem_fcall(self, node):
     return '{}({})'.format(self.procedure_name(node.name), self.arguments(node.args))

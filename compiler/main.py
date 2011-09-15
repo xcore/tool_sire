@@ -251,7 +251,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   LabelChans(device, errorlog).walk_program(ast)
   if errorlog.any(): raise Error('in channel labelling')
 
-  DisplayConns(device).walk_program(ast)
+  #DisplayConns(device).walk_program(ast)
 
   # 7. Insert channel ends
   vmsg(v, "Inserting connections")
@@ -259,8 +259,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  #RenameChans().walk_program(ast)
-  
+  RenameChans().walk_program(ast)
+ 
+  # TODO: mark chan variables as normal or server and 
+  # then mark chanends marked as master/slave/server/client, remove the server
+
   # 9. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
   BuildCFG().run(ast)

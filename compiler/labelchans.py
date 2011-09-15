@@ -112,8 +112,9 @@ class LabelChans(NodeWalker):
       self.errorlog.report_warning('channel '+c+' is not used')
     elif len(locations) == 1:
       self.errorlog.report_error('channel '+c+' has no slave connection')
-    elif len(locations) > 2:
-      self.errorlog.report_error('channel '+c+' has multiple slaves') 
+    # NOTE: this is valid with server connections
+    #elif len(locations) > 2:
+    #  self.errorlog.report_error('channel '+c+' has multiple slaves') 
 
   # Program ============================================
 
@@ -146,7 +147,7 @@ class LabelChans(NodeWalker):
         pass
     
     # Display the channel table
-    #node.chantab.display()
+    node.chantab.display()
   
   # Statements ==========================================
 

@@ -3,8 +3,10 @@
 #include "connect.h"
 
 #define NONE (-1)
-#define MASTER 1
-#define SLAVE  0
+#define MASTER 0
+#define SLAVE  1
+#define CLIENT 2
+#define SERVER 3
 
 bool dequeueMasterReq(conn_req &r, int connId, int origin);
 bool dequeueSlaveReq(conn_req &r, int connId, int origin);
@@ -77,6 +79,23 @@ unsigned _connectSlave(int connId, int origin)
 }
 
 /*
+ *
+ */
+unsigned _connectServer(int connId)
+{ unsigned c = GETR_CHANEND();
+  // Obtain server's CRI and SETD(c, cri)
+  return c;
+}
+
+/*
+ *
+ */
+unsigned _connectClient(int connId, int dest)
+{ unsigned c = GETR_CHANEND();
+  return c;
+}
+
+/*
  * Handle an incoming master or slave connection request.
  *
  * Thread 0 serve master connection request.
@@ -95,35 +114,42 @@ unsigned _connectSlave(int connId, int origin)
 void serveConnReq()
 { unsigned threadCRI = IN(conn_master);
   SETD(conn_master, threadCRI);
-
-  // Master request
-  if(IN(conn_master) == MASTER)
-  { unsigned mChanCRI = IN(conn_master);
-    int connId = IN(conn_master);
-    int origin = GET_GLOBAL_CORE_ID(mChanCRI); 
-    conn_req sReq;
-    CHKCT_END(conn_master);
-    if (!dequeueSlaveReq(sReq, connId, origin))
-      queueMasterReq(connId, origin, threadCRI, mChanCRI);
-    else
-    { COMPLETE(conn_master, threadCRI, sReq.chanCRI);
-      COMPLETE(conn_master, sReq.threadCRI, mChanCRI);
-    }
-  }
-  // Slave request
-  else
-  { unsigned tid = IN(conn_master);
-    unsigned sChanCRI = IN(conn_master);
-    int connId = IN(conn_master);
-    int origin = IN(conn_master);
-    conn_req mReq;
-    CHKCT_END(conn_master);
-    if (!dequeueMasterReq(mReq, connId, origin))
-      queueSlaveReq(tid, connId, origin, threadCRI, sChanCRI);
-    else
-    { COMPLETE(conn_master, mReq.threadCRI, sChanCRI);
-      COMPLETE(conn_master, threadCRI, mReq.chanCRI);
-    }
+  
+  switch (IN(conn_master))
+  { default: assert 0;
+    case MASTER:
+      { unsigned mChanCRI = IN(conn_master);
+        int connId = IN(conn_master);
+        int origin = GET_GLOBAL_CORE_ID(mChanCRI); 
+        conn_req sReq;
+        CHKCT_END(conn_master);
+        if (!dequeueSlaveReq(sReq, connId, origin))
+          queueMasterReq(connId, origin, threadCRI, mChanCRI);
+        else
+        { COMPLETE(conn_master, threadCRI, sReq.chanCRI);
+          COMPLETE(conn_master, sReq.threadCRI, mChanCRI);
+        }
+      }
+      break;
+    case SLAVE:
+      { unsigned tid = IN(conn_master);
+        unsigned sChanCRI = IN(conn_master);
+        int connId = IN(conn_master);
+        int origin = IN(conn_master);
+        conn_req mReq;
+        CHKCT_END(conn_master);
+        if (!dequeueMasterReq(mReq, connId, origin))
+          queueSlaveReq(tid, connId, origin, threadCRI, sChanCRI);
+        else
+        { COMPLETE(conn_master, mReq.threadCRI, sChanCRI);
+          COMPLETE(conn_master, threadCRI, mReq.chanCRI);
+        }
+      }
+      break;
+    case CLIENT:
+      break;
+    case SERVER:
+      break;
   }
 }
 

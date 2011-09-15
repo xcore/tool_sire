@@ -7,6 +7,7 @@ import os
 
 import ply.yacc as yacc
 from lexer import Lexer
+from definitions import *
 from typedefs import *
 
 import error
@@ -26,6 +27,7 @@ class Coord(object):
     str = "%s:%s" % (self.file, self.line)
     if self.column: str += ":%s" % self.column
     return str
+
 
 class Parser(object):
   """ 
@@ -340,12 +342,20 @@ class Parser(object):
     p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))
 
   def p_stmt_connect_master(self, p):
-    'stmt : CONNECT left COLON expr TO expr'
-    p[0] = ast.StmtConnect(p[2], p[4], p[6], True, self.coord(p))
+    'stmt : CONNECT left COLON expr TO SLAVE expr'
+    p[0] = ast.StmtConnect(p[2], p[4], p[7], CONNECT_MASTER, self.coord(p))
 
   def p_stmt_connect_slave(self, p):
-    'stmt : CONNECT left COLON expr FROM expr'
-    p[0] = ast.StmtConnect(p[2], p[4], p[6], False, self.coord(p))
+    'stmt : CONNECT left COLON expr TO MASTER expr'
+    p[0] = ast.StmtConnect(p[2], p[4], p[7], CONNECT_SLAVE, self.coord(p))
+
+  def p_stmt_connect_client(self, p):
+    'stmt : CONNECT left COLON expr TO SERVER expr'
+    p[0] = ast.StmtConnect(p[2], p[4], p[7], CONNECT_CLIENT, self.coord(p))
+
+  def p_stmt_connect_server(self, p):
+    'stmt : CONNECT left COLON expr TO CLIENT'
+    p[0] = ast.StmtConnect(p[2], p[4], None, CONNECT_SERVER, self.coord(p))
 
   def p_stmt_server(self, p):
     'stmt : SERVER stmt stmt'
