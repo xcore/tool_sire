@@ -255,10 +255,15 @@ class Parser(object):
     'param_decl : VAR name'
     p[0] = ast.Param(p[2], T_REF_SINGLE, None, self.coord(p))
 
-  # Single reference parameter
+  # Single chanend parameter
   def p_param_decl_chanend(self, p):
     'param_decl : CHANEND name'
     p[0] = ast.Param(p[2], T_CHANEND_SINGLE, None, self.coord(p))
+
+  # Array reference parameter
+  def p_param_decl_chanend_array(self, p):
+    'param_decl : CHANEND name LBRACKET expr RBRACKET'
+    p[0] = ast.Param(p[2], T_CHANEND_ARRAY, p[4], self.coord(p))
 
   # Array reference parameter
   # TODO: record where the reference is 'var' or 'val'.

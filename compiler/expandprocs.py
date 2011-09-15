@@ -48,11 +48,11 @@ class ExpandProcs(NodeWalker):
         elif x.type == T_REF_SINGLE:
           proc.accept(SubElem(ast.ElemId(x.name), y.elem))
         elif x.type == T_REF_ARRAY:
-          proc.accept(Rename(x.name, y.name))
+          proc.accept(Rename(x.name, y.elem.name))
         elif x.type == T_CHANEND_SINGLE:
           proc.accept(SubElem(ast.ElemId(x.name), y.elem))
         elif x.type == T_CHANEND_ARRAY:
-          proc.accept(Rename(x.name, y.name))
+          proc.accept(Rename(x.name, y.elem.name))
         else:
           assert 0
 

@@ -235,7 +235,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 3. Transform servers
   vmsg(v, "Transforming servers")
-  TransformServer().walk_program(ast)
+  #TransformServer().walk_program(ast)
 
   # 4. Distribute processes
   vmsg(v, "Distributing processes")
@@ -255,11 +255,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 7. Insert channel ends
   vmsg(v, "Inserting connections")
-  InsertConns(sym).walk_program(ast)
+  #InsertConns(sym).walk_program(ast)
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  RenameChans().walk_program(ast)
+  #RenameChans().walk_program(ast)
   
   # 9. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
@@ -271,11 +271,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 11. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  TransformPar(sem, sig).walk_program(ast)
+  #TransformPar(sem, sig).walk_program(ast)
   
   # 12. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  TransformRep(sym, sem, sig, device).walk_program(ast)
+  #TransformRep(sym, sem, sig, device).walk_program(ast)
   
   # 13. Flatten nested calls
   vmsg(v, "Flattening nested calls")

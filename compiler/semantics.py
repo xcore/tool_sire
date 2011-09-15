@@ -35,26 +35,31 @@ param_conversions = {
     T_REF_SINGLE, 
     T_VAR_SUB,
     T_REF_SUB,
-  ],
+    ],
 
   T_REF_SINGLE : [
     T_VAR_SINGLE, 
     T_REF_SINGLE, 
     T_VAR_SUB,
     T_REF_SUB,
-  ],
+    ],
 
   T_REF_ARRAY : [
     T_VAR_ARRAY, 
     T_REF_ARRAY, 
-  ],
+    ],
 
   T_CHANEND_SINGLE : [
     T_CHANEND_SINGLE,
     T_CHANEND_SUB,
     T_CHAN_SINGLE,
     T_CHAN_SUB,
-  ],
+    ],
+
+  T_CHANEND_ARRAY : [
+    T_CHANEND_ARRAY,
+    T_CHAN_ARRAY,
+    ],
 }
 
 # Relation of variable types to formal parameter types for parallel composition.
@@ -67,6 +72,7 @@ par_var_to_param = {
   T_VAR_ARRAY      : T_REF_ARRAY, 
   T_REF_ARRAY      : T_REF_ARRAY,
   T_CHANEND_SINGLE : T_CHANEND_SINGLE,
+  T_CHANEND_ARRAY  : T_CHANEND_ARRAY,
 }
 
 # Relation of variable types to formal parameter types for parallel replication.
@@ -412,11 +418,11 @@ class Semantics(NodeWalker):
   def param(self, node):
 
     # Children
-    if node.type == T_REF_ARRAY:
+    if node.type == T_REF_ARRAY or node.type == T_CHANEND_ARRAY:
       self.expr(node.expr)
 
     # Try and determine the array bound (if it's constant valued)
-    if node.type == T_REF_ARRAY:
+    if node.type == T_REF_ARRAY or node.type == T_CHANEND_ARRAY:
       node.symbol.value = EvalExpr().expr(node.expr)
       #print(node.name+' = {}'.format(node.symbol.value))
 
