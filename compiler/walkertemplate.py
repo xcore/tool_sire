@@ -43,6 +43,11 @@ class TemplateWalker(NodeWalker):
   def stmt_par(self, node):
     [self.stmt(x) for x in node.stmt]
 
+  def stmt_server(self, node):
+    [self.decl(x) for x in node.decls]
+    self.stmt(node.server)
+    self.stmt(node.client)
+
   def stmt_skip(self, node):
     pass
 
@@ -64,12 +69,9 @@ class TemplateWalker(NodeWalker):
   def stmt_alias(self, node):
     self.expr(node.slice)
 
-  def stmt_server(self, node):
-    self.stmt(node.server)
-    self.stmt(node.scope)
-
   def stmt_connect(self, node):
-    self.elem(node.chan)
+    self.elem(node.left)
+    self.expr(node.id)
     self.elem(node.core)
 
   def stmt_if(self, node):

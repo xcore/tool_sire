@@ -38,6 +38,7 @@ from renamechans import RenameChans
 from transformpar import TransformPar
 from transformrep import TransformRep
 from flattencalls import FlattenCalls
+from removedecls import RemoveDecls
 from children import Children
 
 from codegen import generate
@@ -259,11 +260,8 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  #RenameChans().walk_program(ast)
+  RenameChans().walk_program(ast)
  
-  # TODO: mark chan variables as normal or server and 
-  # then mark chanends marked as master/slave/server/client, remove the server
-
   # 9. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
   BuildCFG().run(ast)
@@ -284,7 +282,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
    
-  # 14. Perform child analysis
+  # 14. Remove unused declarations
+  vmsg(v, "Removing unused declarations")
+  RemoveDecls().walk_program(ast)
+   
+  # 15. Perform child analysis
   vmsg(v, "Performing child analysis")
   child = child_analysis(sig, ast)
 

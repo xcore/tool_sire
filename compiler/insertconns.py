@@ -42,10 +42,7 @@ class InsertConns(NodeWalker):
       else:
         assert 0
     else:
-      #if scope == CONNECT_SCOPE_NONE:
       return CONNECT_MASTER if master else CONNECT_SLAVE
-      #else:
-      #  assert 0
 
   def gen_single_conn(self, tab, chanids, chan, scope):
     """

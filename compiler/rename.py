@@ -10,15 +10,19 @@ import ast
 
 class Rename(NodeVisitor):
   """ 
-  Rename an identifier 'old' with 'new'.
+  Rename an identifier 'old' with 'new' and if a symbol is supplied, replace
+  that as well.
   """
-  def __init__(self, old, new):
+  def __init__(self, old, new, symbol=None):
     self.old = old
     self.new = new
+    self.symbol = symbol
 
   def rename(self, elem):
     if hasattr(elem, 'name') and elem.name == self.old:
       elem.name = self.new
+      if self.symbol != None:
+        elem.symbol = self.symbol
     return elem
 
   # Statements containing elements ======================

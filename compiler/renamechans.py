@@ -90,6 +90,7 @@ class RenameChans(NodeWalker):
     [self.stmt(x, y) for (x, y) in zip(node.stmt, node.chans)]
 
   def stmt_server(self, node, chans):
+    node.decls = self.remove_chan_decls(node.decls)
     self.stmt(node.server, node.chans[0])
     self.stmt(node.client, node.chans[1])
 

@@ -182,7 +182,7 @@ class Printer(NodeWalker):
     self.stmt_block(node, '||')
 
   def stmt_server(self, node):
-    self.out('server({})'.format(', '.join(
+    self.out('server({})\n'.format(', '.join(
         [self.param(x) for x in node.decls])))
     self.indent.append(INDENT)
     self.stmt(node.server)
