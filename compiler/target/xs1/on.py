@@ -86,7 +86,7 @@ def argument(t, n, celem, proc_name, args, index, arg, param):
 
   return n
 
-def gen_on(t, node):
+def gen_on(t, node, chans):
     """
     Generate an on statement, given the translation object t and the AST node.
     We expect the form::
@@ -110,7 +110,7 @@ def gen_on(t, node):
 
     # Local evaluation
     t.blocker.begin()
-    t.stmt(node.stmt)
+    t.stmt(node.stmt, chans)
     t.blocker.end()
 
     t.out('else')

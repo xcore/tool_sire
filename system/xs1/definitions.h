@@ -6,6 +6,14 @@
 #ifndef XS1_DEFINITIONS_H
 #define XS1_DEFINITIONS_H
 
+/*
+ NOTE: this file is parsed by compiler/definitions.py which expects the
+ following format, either:
+  - a commented line beginning '//'
+  - or a definiton of the form '#define <name> <value>' where value is a string
+    or decimal or hexdecimal integer.
+*/
+
 // Labels
 #define LABEL_EXEP_HANDLER       "exepHandler"
 #define LABEL_HOST_HANDLER       "hostHandler"
@@ -24,7 +32,7 @@
 #define LABEL_PROC_ID            "_procId"
 #define LABEL_CONNECT_MASTER     "_connectMaster"
 #define LABEL_CONNECT_SLAVE      "_connectSlave"
-#define LABEL_CONNECT_SERVER     "_connectMaster"
+#define LABEL_CONNECT_SERVER     "_connectServer"
 #define LABEL_CONNECT_CLIENT     "_connectClient"
 
 // Jump table indicies

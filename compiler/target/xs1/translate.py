@@ -5,13 +5,13 @@
 
 import sys
 
-from definitions import *
+from typedefs import *
+import definitions as defs
 import config
 import ast
 import builtin
 from util import read_file
 from walker import NodeWalker
-from typedefs import *
 from blocker import Blocker
 from blocker import INDENT
 from target.xs1.on import gen_on
@@ -98,17 +98,17 @@ class TranslateXS1(NodeWalker):
     """
     self.out('// '+s)
 
-  def stmt_block(self, stmt):
+  def stmt_block(self, stmt, chans):
     """ 
     Decide whether the statement needs a block.
     """
     if not (isinstance(stmt, ast.StmtSeq) 
         or isinstance(stmt, ast.StmtPar)):
       self.blocker.begin()
-      self.stmt(stmt)
+      self.stmt(stmt, chans)
       self.blocker.end()
     else:
-      self.stmt(stmt)
+      self.stmt(stmt, chans)
     
   def procedure_name(self, name):
     """ 
@@ -235,8 +235,6 @@ class TranslateXS1(NodeWalker):
       return '#define {} ({})'.format(node.name, self.expr(node.expr))
     elif node.type == T_CHANEND_SINGLE:
       return 'unsigned '+node.name+';'
-    #elif node.type == T_CHANEND_ARRAY:
-    #  return 'unsigned {}[{}];'.format(node.name, self.expr(node.expr))
     else:
       assert 0
 
@@ -262,7 +260,7 @@ class TranslateXS1(NodeWalker):
     if node.stmt:
       self.blocker.begin()
       [self.out(self.decl(x)) for x in node.decls]
-      self.stmt_block(node.stmt)
+      self.stmt_block(node.stmt, {})
       self.blocker.end()
     
     self.out('')
@@ -282,27 +280,25 @@ class TranslateXS1(NodeWalker):
       assert 0
 
   # Statements ==========================================
+  # These output themselves and pass a map of chanend names to connection
+  # type (master, slave, server or client). This map is updated by connect
+  # statements which determine the type. This map is used by input and output
+  # statments to choose the correct operation.
 
-  def stmt_seq(self, node):
+  def stmt_seq(self, node, chans):
     self.blocker.begin()
     for x in node.children(): 
-      self.stmt(x)
+      self.stmt(x, chans)
     self.blocker.end()
 
-  def stmt_par(self, node):
-    gen_par(self, node)
+  def stmt_par(self, node, chans):
+    gen_par(self, node, chans)
 
-  def stmt_server(self, node):
-    pass
-
-  def stmt_skip(self, node):
-    pass
-
-  def stmt_pcall(self, node):
+  def stmt_pcall(self, node, chans):
     self.out('{}({});'.format(
       self.procedure_name(node.name), self.arguments(node.args)))
 
-  def stmt_ass(self, node):
+  def stmt_ass(self, node, chans):
   
     # If the target is an array reference, then generate a store after
     if node.left.symbol.type == T_REF_ARRAY:
@@ -316,27 +312,37 @@ class TranslateXS1(NodeWalker):
       self.out('{} = {};'.format(
         self.elem(node.left), self.expr(node.expr)))
 
-  def stmt_in(self, node):
-    self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
-    self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
-    self.out('    "in    %0, res[%1];"')
-    self.out('    : "=r"({}) : "r"({}));'
-        .format(self.expr(node.expr), self.elem(node.left)))
-    self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-    self.out('    "outct res[%0]," S(XS1_CT_END)')
-    self.out('    :: "r"({}));'
-        .format(self.elem(node.left)))
+  def stmt_in(self, node, chans):
+    if chans[node.left.name] == defs.CONNECT_SERVER:
+      self.out('//server in')
+    elif chans[node.left.name] == defs.CONNECT_CLIENT:
+      self.out('//client in')
+    else:
+      self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "in    %0, res[%1];"')
+      self.out('    : "=r"({}) : "r"({}));'
+          .format(self.expr(node.expr), self.elem(node.left)))
+      self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}));'
+          .format(self.elem(node.left)))
     
-  def stmt_out(self, node):
-    self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
-    self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
-    self.out('    "out   res[%0], %1;"')
-    self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-    self.out('    "chkct res[%0]," S(XS1_CT_END)')
-    self.out('    :: "r"({}), "r"({}));'
-        .format(self.elem(node.left), self.expr(node.expr)))
+  def stmt_out(self, node, chans):
+    if chans[node.left.name] == defs.CONNECT_SERVER:
+      self.out('//server out')
+    elif chans[node.left.name] == defs.CONNECT_CLIENT:
+      self.out('//client out')
+    else:
+      self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "out   res[%0], %1;"')
+      self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}), "r"({}));'
+          .format(self.elem(node.left), self.expr(node.expr)))
 
-  def stmt_alias(self, node):
+  def stmt_alias(self, node, chans):
     """ 
     Generate an alias statement. If the slice target is an array we must use
     some inline assembly to get xcc to load the address for us. Otherwise,
@@ -351,52 +357,65 @@ class TranslateXS1(NodeWalker):
       self.out('{} = {} + ({})*{};'.format(self.elem(node.left), node.slice.name, 
         self.expr(node.slice.base), BYTES_PER_WORD))
 
-  def stmt_connect(self, node):
-    if node.type == CONNECT_MASTER:
+  def stmt_connect(self, node, chans):
+    if node.type == defs.CONNECT_MASTER:
       self.out('{} = {}({}, {});'.format(self.elem(node.left), 
-        LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
-    elif node.type == CONNECT_SLAVE:
+        defs.LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
+      chans[node.left.name] = defs.CONNECT_MASTER
+    elif node.type == defs.CONNECT_SLAVE:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
-        LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
-    elif node.type == CONNECT_SERVER:
+        defs.LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
+      chans[node.left.name] = defs.CONNECT_SLAVE
+    elif node.type == defs.CONNECT_SERVER:
       self.out('{} = {}({});'.format(self.elem(node.left),
-        LABEL_CONNECT_MASTER, self.expr(node.id)))
-    elif node.type == CONNECT_CLIENT:
+        defs.LABEL_CONNECT_SERVER, self.expr(node.id)))
+      chans[node.left.name] = defs.CONNECT_SERVER
+    elif node.type == defs.CONNECT_CLIENT:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
-        LABEL_CONNECT_CLIENT, self.expr(node.id), self.expr(node.expr)))
+        defs.LABEL_CONNECT_CLIENT, self.expr(node.id), self.expr(node.expr)))
+      chans[node.left.name] = defs.CONNECT_CLIENT
     else:
       assert 0
 
-  def stmt_if(self, node):
+  def stmt_if(self, node, chans):
     self.out('if ({})'.format(self.expr(node.cond)))
-    self.stmt_block(node.thenstmt)
+    self.stmt_block(node.thenstmt, chans)
     if not isinstance(node.elsestmt, ast.StmtSkip):
       self.out('else')
-      self.stmt_block(node.elsestmt)
+      self.stmt_block(node.elsestmt, chans)
 
-  def stmt_while(self, node):
+  def stmt_while(self, node, chans):
     self.out('while ({})'.format(self.expr(node.cond)))
-    self.stmt_block(node.stmt)
+    self.stmt_block(node.stmt, chans)
   
-  def stmt_for(self, node):
+  def stmt_for(self, node, chans):
     self.out('for ({0} = {1}; {0} < ({1}+{2}); {0}++)'.format(
       node.index.name, self.expr(node.index.base), 
       self.expr(node.index.count)))
-    self.stmt_block(node.stmt)
+    self.stmt_block(node.stmt, chans)
 
-  def stmt_rep(self, node):
-    pass
+  def stmt_on(self, node, chans):
+    gen_on(self, node, chans)
 
-  def stmt_on(self, node):
-    gen_on(self, node)
-
-  def stmt_assert(self, node):
+  def stmt_assert(self, node, chans):
     self.out('ASSERT({});'.format(self.expr(node.expr)))
 
-  def stmt_return(self, node):
+  def stmt_return(self, node, chans):
     self.out('return {};'.format(self.expr(node.expr)))
 
+  def stmt_skip(self, node, chans):
+    pass
+
+  # Statements that have been reduced to a canonical form
+
+  def stmt_server(self, node, chans):
+    assert 0
+
+  def stmt_rep(self, node, chans):
+    assert 0
+
   # Expressions =========================================
+  # Return their string representation
 
   def expr_single(self, node):
 
@@ -440,7 +459,8 @@ class TranslateXS1(NodeWalker):
     return '{} {} {}'.format(self.elem(node.elem), 
         op_conversion[node.op], self.expr(node.right))
   
-  # Elements= ===========================================
+  # Elements ============================================
+  # Return their string representation
 
   def elem_group(self, node):
     return '({})'.format(self.expr(node.expr))

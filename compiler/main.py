@@ -234,50 +234,50 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   vmsg(v, "Flattening nested parallel composition")
   FlattenPar().walk_program(ast)
 
-  # 3. Transform servers
-  vmsg(v, "Transforming servers")
-  #TransformServer().walk_program(ast)
-
-  # 4. Distribute processes
+  # 3. Distribute processes
   vmsg(v, "Distributing processes")
   InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
   if errorlog.any(): raise Error('in process disribution')
 
-  # 5. Label process locations
+  # 4. Label process locations
   vmsg(v, "Labelling processes")
   LabelProcs(sym, device).walk_program(ast)
 
-  # 6. Label channels
+  # 5. Label channels
   vmsg(v, "Labelling channels")
   LabelChans(device, errorlog).walk_program(ast)
   if errorlog.any(): raise Error('in channel labelling')
 
   #DisplayConns(device).walk_program(ast)
 
-  # 7. Insert channel ends
+  # 6. Insert channel ends
   vmsg(v, "Inserting connections")
   InsertConns(sym).walk_program(ast)
 
-  # 8. Rename channel uses
+  # 7. Rename channel uses
   vmsg(v, "Renaming channel uses")
   RenameChans().walk_program(ast)
  
-  # 9. Build the control-flow graph and initialise sets for liveness analysis
+  # 8. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
   BuildCFG().run(ast)
 
-  # 10. Perform liveness analysis
+  # 9. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   Liveness().run(ast)
 
-  # 11. Transform parallel composition
+  # 10. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  #TransformPar(sem, sig).walk_program(ast)
+  TransformPar(sem, sig).walk_program(ast)
   
-  # 12. Transform parallel replication
+  # 11. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  #TransformRep(sym, sem, sig, device).walk_program(ast)
+  TransformRep(sym, sem, sig, device).walk_program(ast)
   
+  # 12. Transform server processes
+  vmsg(v, "Transforming server processes")
+  TransformServer().walk_program(ast)
+
   # 13. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)

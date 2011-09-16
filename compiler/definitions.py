@@ -20,10 +20,6 @@ CONNECT_MASTER       = 0
 CONNECT_SLAVE        = 1
 CONNECT_CLIENT       = 2
 CONNECT_SERVER       = 3
-                   
-CONNECT_SCOPE_NONE   = 0
-CONNECT_SCOPE_SERVER = 1
-CONNECT_SCOPE_CLIENT = 2
 
 def convert_value(s):
   """
@@ -53,8 +49,7 @@ def load(path):
         if frags[0] == '#define':
           s = convert_value(frags[2])
           globals()[frags[1]] = s
-          #print("Set global {} = {} ({})".format(
-          #  frags[1], s, s.__class__.__name__))
+          #print("Set global {} = {} ({})".format(frags[1], s, s.__class__.__name__))
     return True
   else:
     return False

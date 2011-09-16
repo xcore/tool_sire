@@ -461,6 +461,9 @@ class Semantics(NodeWalker):
     self.sym.begin_scope(T_SCOPE_SERVER)
     [self.decl(x) for x in node.decls]
     self.stmt(node.server)
+    self.sym.end_scope()
+    self.sym.begin_scope(T_SCOPE_CLIENT)
+    [self.decl(x) for x in node.decls]
     self.stmt(node.client)
     self.sym.end_scope()
 

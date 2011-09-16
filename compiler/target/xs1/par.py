@@ -141,7 +141,7 @@ def slave_unset(t):
   """
   t.asm('set sp, %0', inops=['THREAD_SP(THREAD_ID())'])
 
-def gen_par(t, node):
+def gen_par(t, node, chans):
   """
   Generate a parallel block.
   """
@@ -172,7 +172,7 @@ def gen_par(t, node):
   # Master synchronise and run
   t.comment('Master fork')
   t.asm('msync res[%0]', inops=['_sync']) # Fork
-  t.stmt(node.stmt[0])
+  t.stmt(node.stmt[0], chans)
  
   # Master join
   t.comment('Master join')

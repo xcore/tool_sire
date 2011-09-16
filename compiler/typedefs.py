@@ -64,3 +64,5 @@ T_SCOPE_PROGRAM  = 'program'
 T_SCOPE_PROC     = 'proc'
 T_SCOPE_FUNC     = 'func'
 T_SCOPE_SERVER   = 'server'
+T_SCOPE_CLIENT   = 'client'
+
