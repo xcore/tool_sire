@@ -10,7 +10,7 @@ from typedefs import *
 
 scopes = [
   T_SCOPE_SYSTEM, 
-  T_SCOPE_MODULE,
+  T_SCOPE_PROGRAM,
   T_SCOPE_PROC,
   T_SCOPE_FUNC,
   ]
@@ -97,7 +97,7 @@ class SymbolTable(object):
         return x
     #if self.debug:
     #  print('Lookup: '+key+' found {}'.format(symbol))
-    print('didnt find symbol: '+key)
+    #print('didnt find symbol: '+key)
     return None
 
   def lookup_scoped(self, key):

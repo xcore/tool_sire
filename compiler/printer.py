@@ -17,7 +17,7 @@ class Printer(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, buf=sys.stdout, labels=True):
+  def __init__(self, buf=sys.stdout, labels=False):
     super(Printer, self).__init__()
     self.buf = buf
     self.labels = labels
@@ -142,6 +142,10 @@ class Printer(NodeWalker):
       return 'chanend {}'.format(node.name)
     elif node.type == T_CHANEND_ARRAY:
       return 'chanend {}[{}]'.format(node.name, self.expr(node.expr))
+    elif node.type == T_CHAN_SINGLE:
+      return 'chan {}'.format(node.name)
+    elif node.type == T_CHAN_ARRAY:
+      return 'chan {}[{}]'.format(node.name, self.expr(node.expr))
     else:
       assert 0
 
@@ -178,7 +182,8 @@ class Printer(NodeWalker):
     self.stmt_block(node, '||')
 
   def stmt_server(self, node):
-    self.out('server\n')
+    self.out('server({})'.format(', '.join(
+        [self.param(x) for x in node.decls])))
     self.indent.append(INDENT)
     self.stmt(node.server)
     self.indent.pop()

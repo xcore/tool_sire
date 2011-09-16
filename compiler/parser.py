@@ -267,6 +267,16 @@ class Parser(object):
     'param_decl : CHANEND name LBRACKET expr RBRACKET'
     p[0] = ast.Param(p[2], T_CHANEND_ARRAY, p[4], self.coord(p))
 
+  # Single chanend parameter
+  def p_param_decl_chan(self, p):
+    'param_decl : CHAN name'
+    p[0] = ast.Param(p[2], T_CHAN_SINGLE, None, self.coord(p))
+
+  # Array reference parameter
+  def p_param_decl_chan_array(self, p):
+    'param_decl : CHAN name LBRACKET expr RBRACKET'
+    p[0] = ast.Param(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
+
   # Array reference parameter
   # TODO: record where the reference is 'var' or 'val'.
   def p_param_decl_array_ref(self, p):
@@ -358,8 +368,8 @@ class Parser(object):
     p[0] = ast.StmtConnect(p[2], p[4], None, CONNECT_SERVER, self.coord(p))
 
   def p_stmt_server(self, p):
-    'stmt : SERVER stmt stmt'
-    p[0] = ast.StmtServer(p[2], p[3], self.coord(p))
+    'stmt : SERVER LPAREN formals RPAREN stmt stmt'
+    p[0] = ast.StmtServer(p[3], p[5], p[6], self.coord(p))
 
   def p_stmt_if(self, p):
     'stmt : IF expr THEN stmt ELSE stmt'

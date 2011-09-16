@@ -18,6 +18,8 @@ from indicies import *
 
 from printer import Printer
 
+DISPLAY_CHANTAB = False
+
 class LabelChans(NodeWalker):
   """
   For each procedure definition, construct a table which records for each use
@@ -94,11 +96,11 @@ class LabelChans(NodeWalker):
       if x.expr == None:
         elems = [self.single_channel(tab, stmt, x.name)]
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, elems, indicies, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies, chanend))
       else:
         elems = self.subscript_channel(indicies, tab, stmt, x.name, x.expr)
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, elems, indicies, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies, chanend))
     return chans
   
   def check_chan(self, name, index, locations):
@@ -129,25 +131,23 @@ class LabelChans(NodeWalker):
     chan_uses = self.stmt(node.stmt, [], node.chantab)
     node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
     node.chanids = {}
-    id_count = 0
     
     # Check each channel is used correctly by inspecting the entries in the
     # channel table and label channel variables with unique identifiers.
     for x in node.decls:
       if x.type == T_CHAN_SINGLE:
         self.check_chan(x.name, None, node.chantab.lookup(x.name, None))
-        node.chanids[x.name] = id_count
-        id_count += 1
+        node.chanids[x.name] = len(node.chanids)
       elif x.type == T_CHAN_ARRAY:
         for y in range(x.symbol.value):
           self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
-        node.chanids[x.name] = id_count
-        id_count += 1
+        node.chanids[x.name] = len(node.chanids)
       else:
         pass
     
     # Display the channel table
-    node.chantab.display()
+    if DISPLAY_CHANTAB:
+      node.chantab.display()
   
   # Statements ==========================================
 
@@ -180,6 +180,20 @@ class LabelChans(NodeWalker):
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
     chan_uses = self.stmt(node.client, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
+    node.chanids = {}
+   
+    # Check each channel is used correctly by inspecting the entries in the
+    # channel table and label channel variables with unique identifiers.
+    for x in node.decls:
+      if x.type == T_CHAN_SINGLE:
+        self.check_chan(x.name, None, tab.lookup(x.name, None))
+        node.chanids[x.name] = len(node.chanids)
+      elif x.type == T_CHAN_ARRAY:
+        for y in range(x.symbol.value):
+          self.check_chan(x.name, y, tab.lookup(x.name, y))
+        node.chanids[x.name] = len(node.chanids)
+      else:
+        assert 0
 
     # Return no uses 
     return ChanUseSet()
@@ -200,11 +214,11 @@ class LabelChans(NodeWalker):
     
     if (isinstance(c, ast.ElemId) 
         and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
-      return ChanUseSet([ChanUse(c.name, None)])
+      return ChanUseSet([ChanUse(c.name, None, c.symbol)])
     
     elif (isinstance(c, ast.ElemSub)
        and (t == T_CHAN_ARRAY or t == T_CHANEND_ARRAY)):
-        return ChanUseSet([ChanUse(c.name, c.expr)])
+        return ChanUseSet([ChanUse(c.name, c.expr, c.symbol)])
     
     else:
         return ChanUseSet()
@@ -216,11 +230,11 @@ class LabelChans(NodeWalker):
 
     if (isinstance(c, ast.ElemId) 
         and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
-      return ChanUseSet([ChanUse(c.name, None)])
+      return ChanUseSet([ChanUse(c.name, None, c.symbol)])
     
     elif (isinstance(c, ast.ElemSub) and
         (t == T_CHAN_ARRAY or t == T_CHANEND_ARRAY)):
-        return ChanUseSet([ChanUse(c.name, c.expr)])
+        return ChanUseSet([ChanUse(c.name, c.expr, c.symbol)])
     
     else:
         return ChanUseSet()
@@ -234,12 +248,12 @@ class LabelChans(NodeWalker):
         if (isinstance(x.elem, ast.ElemId)
             and x.elem.symbol.type == T_CHAN_SINGLE):
           self.debug('single arg channel {}:'.format(x.elem.name))
-          uses.add(ChanUse(x.elem.name, None))
+          uses.add(ChanUse(x.elem.name, None, c.elem.symbol))
 
         elif (isinstance(x.elem, ast.ElemSub)
             and x.elem.symbol.type == T_CHAN_ARRAY):
           self.debug('subscript arg channel {}:'.format(x.elem.name))
-          uses.add(ChanUse(x.elem.name, x.elem.expr))
+          uses.add(ChanUse(x.elem.name, x.elem.expr, c.elem.symbol))
 
         else:
           pass
@@ -365,9 +379,10 @@ class ChanUse(object):
   """
   A channel use.
   """
-  def __init__(self, name, expr):
+  def __init__(self, name, expr, symbol):
     self.name = name
     self.expr = expr
+    self.symbol = symbol
 
   def __eq__(self, x):
     if not self.expr:
@@ -426,9 +441,10 @@ class ChanElemSet(object):
    - The iterators used in the subscript.
    - The name of the channel end associated with this subscript.
   """
-  def __init__(self, name, expr, elems, indicies, chanend):
+  def __init__(self, name, expr, symbol, elems, indicies, chanend):
     self.name = name
     self.expr = expr
+    self.symbol = symbol
     self.elems = elems
     self.indicies = indicies
     self.chanend = chanend

@@ -386,7 +386,8 @@ class StmtConnect(Stmt):
 
 
 class StmtServer(Stmt):
-  def __init__(self, server, client, coord=None):
+  def __init__(self, decls, server, client, coord=None):
+    self.decls = decls
     self.server = server
     self.client = client
     self.coord = coord
@@ -395,6 +396,7 @@ class StmtServer(Stmt):
     c = []
     if self.server is not None: c.append(self.server)
     if self.client is not None: c.append(self.client)
+    if self.decls is not None: c.extend(self.decls)
     return tuple(c)
 
   def accept(self, visitor):

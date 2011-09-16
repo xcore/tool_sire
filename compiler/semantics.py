@@ -326,6 +326,12 @@ class Semantics(NodeWalker):
     """
     self.errorlog.report_error("index count value: {}".format(value), coord)
 
+  def server_decls_error(self, coord):
+    """ 
+    Server declarations contain non-channel type.
+    """
+    self.errorlog.report_error("server channels", coord)
+
   # Program ============================================
 
   def walk_program(self, node):
@@ -333,7 +339,7 @@ class Semantics(NodeWalker):
     Walk the progrm in a global 'program' scope. Don't close this so that
     symbols for any declared values remain accessible. 
     """
-    self.sym.begin_scope('program')
+    self.sym.begin_scope(T_SCOPE_PROGRAM)
     [self.decl(x) for x in node.decls]
     [self.defn(x) for x in node.defs]
     
@@ -378,7 +384,7 @@ class Semantics(NodeWalker):
         self.redecl_error(node.name, node.coord)
 
     # Begin a new scope for decls and stmt components
-    self.sym.begin_scope('proc')
+    self.sym.begin_scope(T_SCOPE_PROC)
     
     # First obtain all the symbols so that we can resolve all array length
     # specifiers, i.e. where the specifier appears before the array parameter.
@@ -438,6 +444,25 @@ class Semantics(NodeWalker):
 
   def stmt_par(self, node):
     [self.stmt(x) for x in node.stmt]
+
+  def stmt_server(self, node):
+
+    # Check each declaration is a channel and *is not declared in any other
+    # scope* because this will break the (simple implementation of the) channel
+    # table for connection insertion.
+    for x in node.decls:
+      if not (x.type == T_CHAN_SINGLE or x.type == T_CHAN_ARRAY):
+        self.server_decls_error(node.coord)
+      else:
+        if self.sym.lookup(x.name) != None:
+          self.redecl_error(x.name, x.coord)
+
+    # Children
+    self.sym.begin_scope(T_SCOPE_SERVER)
+    [self.decl(x) for x in node.decls]
+    self.stmt(node.server)
+    self.stmt(node.client)
+    self.sym.end_scope()
 
   def stmt_skip(self, node):
     pass
@@ -520,12 +545,6 @@ class Semantics(NodeWalker):
     # Check the element is a slice
     if not isinstance(node.slice, ast.ElemSlice):
       self.slice_error('alias', node.coord)
-
-  def stmt_server(self, node):
-
-    # Children
-    self.stmt(node.server)
-    self.stmt(node.client)
 
   def stmt_connect(self, node):
 

@@ -6,24 +6,24 @@
 import util as util
 
 # General constants
-VERSION             = '0.1.1'
-PARSE_LOG_FILE      = 'parselog.txt'
-DEFAULT_OUT_FILE    = 'a'
+VERSION              = '0.1.1'
+PARSE_LOG_FILE       = 'parselog.txt'
+DEFAULT_OUT_FILE     = 'a'
 
 # Language constants
-SYS_NUM_CORES_CONST = 'NUM_CORES'
-MAX_PROC_PARAMETERS = 10
-LABEL_MAIN          = '_main'
-
+SYS_NUM_CORES_CONST  = 'NUM_CORES'
+MAX_PROC_PARAMETERS  = 10
+LABEL_MAIN           = '_main'
+                    
 # Type enumerations for connect
-CONNECT_MASTER      = 0
-CONNECT_SLAVE       = 1
-CONNECT_CLIENT      = 2
-CONNECT_SERVER      = 3
+CONNECT_MASTER       = 0
+CONNECT_SLAVE        = 1
+CONNECT_CLIENT       = 2
+CONNECT_SERVER       = 3
                    
-SCOPE_NONE          = 0
-SCOPE_SERVER        = 1
-SCOPE_CLIENT        = 2
+CONNECT_SCOPE_NONE   = 0
+CONNECT_SCOPE_SERVER = 1
+CONNECT_SCOPE_CLIENT = 2
 
 def convert_value(s):
   """

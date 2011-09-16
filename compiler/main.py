@@ -259,7 +259,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  RenameChans().walk_program(ast)
+  #RenameChans().walk_program(ast)
  
   # TODO: mark chan variables as normal or server and 
   # then mark chanends marked as master/slave/server/client, remove the server

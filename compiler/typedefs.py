@@ -60,7 +60,7 @@ T_TAG            = Type('tag')
 
 # Scopes
 T_SCOPE_SYSTEM   = 'system'
-T_SCOPE_MODULE   = 'module'
+T_SCOPE_PROGRAM  = 'program'
 T_SCOPE_PROC     = 'proc'
 T_SCOPE_FUNC     = 'func'
-
+T_SCOPE_SERVER   = 'server'

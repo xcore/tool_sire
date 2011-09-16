@@ -29,19 +29,23 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       print(s)
 
-  def connect_type(self, scope, master):
+  def connect_type(self, chan, scope, master):
     """
-    Given a scope type and whether the connect is a master or slave, return
-    the resulting type of the connect statement.
+    Given a 'chan' ChanElemSet, scope type and whether the connect is a master
+    or slave, return the resulting type of the connect statement.
     """
-    if scope == SCOPE_NONE:
-      return CONNECT_MASTER if master else CONNECT_SLAVE
-    elif scope == SCOPE_SERVER:
-      return CONNECT_SERVER
-    elif scope == SCOPE_CLIENT:
-      return CONNECT_CLIENT
+    if chan.symbol.scope == T_SCOPE_SERVER:
+      if scope == CONNECT_SCOPE_SERVER:
+        return CONNECT_SERVER
+      elif scope == CONNECT_SCOPE_CLIENT:
+        return CONNECT_CLIENT
+      else:
+        assert 0
     else:
-      assert 0
+      #if scope == CONNECT_SCOPE_NONE:
+      return CONNECT_MASTER if master else CONNECT_SLAVE
+      #else:
+      #  assert 0
 
   def gen_single_conn(self, tab, chanids, chan, scope):
     """
@@ -62,7 +66,7 @@ class InsertConns(NodeWalker):
         None, scope=T_SCOPE_PROC)
     chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
     return ast.StmtConnect(chanend, chanid, location, 
-        self.connect_type(scope, master))
+        self.connect_type(chan, scope, master))
 
   def gen_array_conn(self, tab, chanids, chan, scope):
     """
@@ -87,7 +91,7 @@ class InsertConns(NodeWalker):
       cond = ast.ExprBinop('=', ast.ElemGroup(indicies_expr), 
           ast.ElemNumber(range_begin))
       conn = ast.StmtConnect(chanend, chanid, location, 
-          self.connect_type(scope, master))
+          self.connect_type(chan, scope, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
     def create_range_connection(s, chan, indicies_expr, begin, end, master,
@@ -109,7 +113,7 @@ class InsertConns(NodeWalker):
           ast.ExprBinop('<=', ast.ElemGroup(indicies_expr),
             ast.ExprSingle(ast.ElemNumber(max(begin, end)))))
       conn = ast.StmtConnect(chanend, chanid, location,
-          self.connect_type(scope, master))
+          self.connect_type(chan, scope, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
     def target_loc(name, index, master):
@@ -196,9 +200,9 @@ class InsertConns(NodeWalker):
     self.debug('Inserting connections for: '+node.name)
     decls = []
     decls.extend([x.chanend for x in node.chans])
-    self.stmt(node.stmt, node.chantab, node.chanids, decls, SCOPE_NONE)
+    self.stmt(node.stmt, node.chantab, node.chanids, decls, CONNECT_SCOPE_NONE)
     node.stmt = self.insert_connections(node.chantab, node.chanids, 
-        node.stmt, node.chans, SCOPE_NONE)
+        node.stmt, node.chans, CONNECT_SCOPE_NONE)
 
     # Insert the channel end declarations
     for x in decls:
@@ -236,15 +240,16 @@ class InsertConns(NodeWalker):
 
   def stmt_server(self, node, tab, chanids, decls, scope):
     self.debug('[server connections]:')
-    self.stmt(node.server, tab, chanids, decls, SCOPE_SERVER)
-    node.server = self.insert_connections(tab, chanids, node.server,
+    node.chanids.update(chanids)
+    self.stmt(node.server, tab, node.chanids, decls, CONNECT_SCOPE_SERVER)
+    node.server = self.insert_connections(tab, node.chanids, node.server,
         node.chans[0], scope)
     decls.extend([x.chanend for x in node.chans[0]])
     if self.print_debug:
       self.display_chans(node.chans[0])
     self.debug('[client connections]:')
-    self.stmt(node.client, tab, chanids, decls, SCOPE_CLIENT)
-    node.client = self.insert_connections(tab, chanids, node.client,
+    self.stmt(node.client, tab, node.chanids, decls, CONNECT_SCOPE_CLIENT)
+    node.client = self.insert_connections(tab, node.chanids, node.client,
         node.chans[1], scope)
     decls.extend([x.chanend for x in node.chans[1]])
     if self.print_debug:
