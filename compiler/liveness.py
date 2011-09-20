@@ -44,13 +44,13 @@ class Liveness(NodeWalker):
     #node.accept(Display(self.print_livesets))
     
     while any([self.stmt(x.stmt) if x.stmt else False for x in node.defs]):
-      #print('=========================================================')
-      #node.accept(Display(self.print_livesets))
-      #print('=========================================================')
-      pass
+      if debug: 
+        print('=========================================================')
+        node.accept(Display(self.print_livesets))
+        print('=========================================================')
 
-    #if debug:
-    #node.accept(Display(self.print_livesets))
+    if debug:
+      node.accept(Display(self.print_livesets))
   
   # Statements ==========================================
 
@@ -67,7 +67,8 @@ class Liveness(NodeWalker):
   def stmt_server(self, node):
     a = self.stmt(node.server)
     b = self.stmt(node.client)
-    return a or b
+    c = self.compute(node)
+    return a or b or c
 
   def stmt_if(self, node):
     a = self.stmt(node.thenstmt)

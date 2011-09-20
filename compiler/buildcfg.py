@@ -19,8 +19,8 @@ class BuildCFG(NodeWalker):
   if, this is the 'then' and 'else' statements. These lists are then given as
   the predecessors to the next statement.
   """
-  def __init__(self):
-    pass
+  def __init__(self, debug=False):
+    self.debug = debug
 
   def init_sets(self, node, pred, succ):
     node.pred = pred
@@ -52,11 +52,14 @@ class BuildCFG(NodeWalker):
       node.pred = self.stmt(node.stmt, [], [])
 
     # Display the successors of each node
-    #node.accept(Display(self.print_successors))
+    if self.debug:
+      node.accept(Display(self.print_successors))
 
   # Statements ==========================================
 
   # Statements containing statements
+  # Statements return the list of statements exiting it which are used as
+  # predecessors of the next consecutive statement.
 
   def stmt_seq(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt[0]])
@@ -215,9 +218,9 @@ class BuildCFG(NodeWalker):
 
   # Index range
   def elem_index_range(self, node):
-    node.defs |= set([node.name])
-    node.use |= self.expr(node.base)
-    node.use |= self.expr(node.count)
+    #node.use |= self.expr(node.base)
+    #node.use |= self.expr(node.count)
+    return set([node])
 
   def elem_group(self, node):
     return self.expr(node.expr)

@@ -73,19 +73,25 @@ class TransformPar(NodeWalker):
     (transform replicator stage) and passed-by-reference.
     """
     assert isinstance(stmt, ast.Stmt)
-    # Sets for live-in and local decls (for non-live, non-array targets).
-    # Live-over = live-in u live-out
-    # TODO: we want to add variables as parameters if (they are live in or live
-    # out) and are used in the statement body.
-    #print('Successors: {}'.format(' '.join(['{}'.format(x.pred) for x in succ])))
+    # Sets for live-in and local decls (for non-live, non-array targets). We
+    # want to add formal parameters for any live-in variable and for any
+    # variable that is both live-in and live-out:
+    #   Live-over = (live-in | (live-in & live-out)) & free
+    # where | is set union and & is set intersection.
+
     out = set()
-    #[(out.update(y.out) for y in x.pred) for x in succ]
     [out.update(y.out) for y in succ.pred]
+    #print('Successors: {}'.format(' '.join(['{}'.format(x.pred) for x in succ])))
+    #[print(y.out) for y in succ.pred]
     
     free = FreeVars().allvars(stmt) 
-    live = (stmt.inp | out) & free
-    #print('Live (in and out): {}'.format(live))
+    live = (stmt.inp | (stmt.inp & out)) & free
     local_decls = free - live
+    #print('Free: {}'.format(free))
+    #print('Live-in: {}'.format(stmt.inp))
+    #print('Live-out: {}'.format(out))
+    #print('(in | (in & out)) | free: {}'.format(live))
+    #print('local decls (U_{s in succ(stmt))} s.pred: {}'.format(local_decls)) 
     #Printer().stmt(stmt)
 
     # Create the formal and actual paramerer and local declaration lists

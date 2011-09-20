@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from walker import NodeWalker
+import ast
 
 class FreeVars(NodeWalker):
   """
