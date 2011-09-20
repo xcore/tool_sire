@@ -17,6 +17,7 @@ class SignatureTable(object):
     self.debug = debug
     self.tab = {}
     self.mobile_proc_names = []
+    self.mobile_proc_marks = {} # This is pretty wasteful
     self.id_count = 0
 
   def insert(self, type, node, mobile=True):
@@ -40,6 +41,7 @@ class SignatureTable(object):
       # Add it to the list of mobiles if it is mobile
       if mobile:
         self.mobile_proc_names.append(node.name)
+        self.mobile_proc_marks[node.name] = False
         #print('Added mobile '+node.name)
       
       if(self.debug):
@@ -61,6 +63,15 @@ class SignatureTable(object):
       return True
     else:
       return False
+
+  def mark(self, name):
+    assert name in self.mobile_proc_marks
+    self.mobile_proc_marks[name] = True
+
+  def remove_unused(self):
+    used = []
+    [used.append(x) for x in self.mobile_proc_names if self.mobile_proc_marks[x]]
+    self.mobile_proc_names = used
 
   #def lookup_param_type(self, name, i):
   #  """

@@ -444,6 +444,8 @@ def build_jumptab(sig, buf, v):
   buf.write('\t.word '+defs.LABEL_PROC_ID+'\n')
   buf.write('\t.word '+defs.LABEL_CONNECT_MASTER+'\n')
   buf.write('\t.word '+defs.LABEL_CONNECT_SLAVE+'\n')
+  buf.write('\t.word '+defs.LABEL_CONNECT_SERVER+'\n')
+  buf.write('\t.word '+defs.LABEL_CONNECT_CLIENT+'\n')
 
   # Program entries
   for x in sig.mobile_proc_names:

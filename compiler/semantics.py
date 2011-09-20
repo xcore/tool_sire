@@ -342,6 +342,11 @@ class Semantics(NodeWalker):
     self.sym.begin_scope(T_SCOPE_PROGRAM)
     [self.decl(x) for x in node.decls]
     [self.defn(x) for x in node.defs]
+    self.sym.end_scope()
+
+    # Remove any unused procedures from the signature table. This is to stop
+    # unused builtin functions from appearing unneccesarily in the jumptable.
+    self.sig.remove_unused()
     
   # Variable declarations ===============================
 
@@ -383,6 +388,10 @@ class Semantics(NodeWalker):
       if not s.prototype:
         self.redecl_error(node.name, node.coord)
 
+    # Mark the main procedure in the signature table
+    if node.name == '_main':
+      self.sig.mark('_main')
+      
     # Begin a new scope for decls and stmt components
     self.sym.begin_scope(T_SCOPE_PROC)
     
@@ -479,6 +488,9 @@ class Semantics(NodeWalker):
     node.symbol = self.check_decl(node.name, node.coord)
     self.check_def(node)
     
+    # Mark the procedure as used in the signature table
+    self.sig.mark(node.name)
+
     # TODO: check actual-formal types match, e.g. with refs.
 
   def stmt_ass(self, node):

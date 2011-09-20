@@ -72,5 +72,7 @@ runtime_functions = [
   '_procId',
   '_connectMaster',
   '_connectSlave',
+  '_connectServer',
+  '_connectClient',
   ]
 

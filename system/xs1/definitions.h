@@ -36,13 +36,18 @@
 #define LABEL_CONNECT_CLIENT     "_connectClient"
 
 // Jump table indicies
+// When adding new entries ensure the following are consistent:
+//  - compiler/target/xs1/build.py (jumptable)
+//  - compiler/builtin.py (list of builtins)
 #define JUMPI_CREATE_REMOTE      0
 #define JUMPI_PROC_ID            1
 #define JUMPI_CONNECT_MASTER     2
 #define JUMPI_CONNECT_SLAVE      3
+#define JUMPI_CONNECT_SERVER     4
+#define JUMPI_CONNECT_CLIENT     5
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        4 
+#define JUMP_INDEX_OFFSET        6 
 
 // Hardware parameters
 #define RAM_BASE                 0x10000
