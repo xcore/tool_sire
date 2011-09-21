@@ -1,28 +1,52 @@
+#include <print.h>
+
 #include "util.h"
 #include "globals.h"
 #include "connect.h"
 
+#define LOCAL_CONNECT_CHAN \
+  ((c & 0xFFFF0000) | (GEN_CHAN_RI(0, CONTROL_CONNECT) & 0xFFFF))
+#define COMPLETE(c, cri, v) \
+  { SETD(c, cri); OUT(c, v); OUTCT_END(c); }
 #define NONE (-1)
 #define MASTER 0
 #define SLAVE  1
-#define CLIENT 2
-#define SERVER 3
+#define SERVER 2
+#define CLIENT 3 
 
+// Master-slave connection handling
 bool dequeueMasterReq(conn_req &r, int connId, int origin);
 bool dequeueSlaveReq(conn_req &r, int connId, int origin);
-void queueMasterReq(int connId, int origin, 
-    unsigned threadCRI, unsigned chanCRI);
-void queueSlaveReq(unsigned tid, int connId, int origin, 
-    unsigned threadCRI, unsigned chanCRI);
+void queueMasterReq(int connId, int origin, unsigned chanCRI);
+void queueSlaveReq(unsigned tid, int connId, int origin, unsigned chanCRI);
+
+// Client-server conneciton handling
+void openConn(int connId, unsigned chanCRI);
+bool getOpenConn(conn_srv &c, int connId);
+void queueClientReq(int connId, unsigned chanCRI);
+bool dequeueClientReq(conn_req &r, int connId);
 
 /*
  * Complete one side of a connection by sending the CRI of the other party.
- */
+ *
 inline
 void COMPLETE(unsigned c, unsigned cri, unsigned v)
 { SETD(c, cri);
   OUT(c, v);
   OUTCT_END(c);
+}*/
+
+/*
+ * Initialise the conn_buffer and conn_local arrays.
+ */
+#pragma unsafe arrays
+void initConnections()
+{ for (int i=0; i<CONN_BUFFER_SIZE; i++)
+    conn_buffer[i].connId = NONE;
+  for (int i=0; i<MAX_THREADS; i++)
+    conn_locals[i].connId = NONE;
+  for (int i=0; i<MAX_OPEN_CONNS; i++)
+    conn_server[i].connId = NONE;
 }
 
 /*
@@ -34,18 +58,15 @@ void COMPLETE(unsigned c, unsigned cri, unsigned v)
  *  4. Set local channel destination of c and return it.
  */
 unsigned _connectMaster(int connId, int dest)
-{ int tid = THREAD_ID();
-  unsigned t = thread_chans[tid];
-  unsigned c = GETR_CHANEND();
-  unsigned destCRI = GEN_CHAN_RI(dest, 1);
-  SETD(t, destCRI);
-  OUT(t, t);
-  OUT(t, MASTER);
-  OUT(t, c);
-  OUT(t, connId);
-  OUTCT_END(t);
-  destCRI = IN(t);
-  CHKCT_END(t);
+{ unsigned c = GETR_CHANEND();
+  unsigned destCRI = GEN_CHAN_RI(dest, CONTROL_CONNECT);
+  SETD(c, destCRI);
+  OUT(c, c);
+  OUT(c, MASTER);
+  OUT(c, connId);
+  OUTCT_END(c);
+  destCRI = IN(c);
+  CHKCT_END(c);
   SETD(c, destCRI);
   return c;
 }
@@ -60,38 +81,50 @@ unsigned _connectMaster(int connId, int dest)
  *  5. Set local channel destination of c and return it.
  */
 unsigned _connectSlave(int connId, int origin)
-{ int tid = THREAD_ID();
-  unsigned t = thread_chans[tid];
-  unsigned c = GETR_CHANEND();
-  unsigned destCRI = (c & 0xFFFF0000) | (GEN_CHAN_RI(0, 1) & 0xFFFF);
-  SETD(t, destCRI);
-  OUT(t, t);
-  OUT(t, SLAVE);
-  OUT(t, tid);
-  OUT(t, c);
-  OUT(t, connId);
-  OUT(t, origin);
-  OUTCT_END(t);
-  destCRI = IN(t);
-  CHKCT_END(t);
+{ unsigned c = GETR_CHANEND();
+  unsigned destCRI = LOCAL_CONNECT_CHAN;
+  SETD(c, destCRI);
+  OUT(c, c);
+  OUT(c, SLAVE);
+  OUT(c, connId);
+  OUT(c, origin);
+  OUT(c, THREAD_ID());
+  OUTCT_END(c);
+  destCRI = IN(c);
+  CHKCT_END(c);
   SETD(c, destCRI);
   return c;
 }
 
 /*
- *
+ * Open a server connection for clients to connect to.
  */
 unsigned _connectServer(int connId)
 { unsigned c = GETR_CHANEND();
-  // Obtain server's CRI and SETD(c, cri)
+  unsigned destCRI = LOCAL_CONNECT_CHAN;
+  SETD(c, destCRI);
+  OUT(c, c);
+  OUT(c, SERVER);
+  OUT(c, connId);
+  OUTCT_END(c);
+  CHKCT_END(c);
   return c;
 }
 
 /*
- *
+ * Connect a client to an open server connection.
  */
 unsigned _connectClient(int connId, int dest)
 { unsigned c = GETR_CHANEND();
+  unsigned destCRI = GEN_CHAN_RI(dest, CONTROL_CONNECT);
+  SETD(c, destCRI);
+  OUT(c, c);
+  OUT(c, CLIENT);
+  OUT(c, connId);
+  OUTCT_END(c);
+  destCRI = IN(c);
+  CHKCT_END(c);
+  SETD(c, destCRI);
   return c;
 }
 
@@ -112,56 +145,70 @@ unsigned _connectClient(int connId, int dest)
  *  [queue or complete]
  */
 void serveConnReq()
-{ unsigned threadCRI = IN(conn_master);
-  SETD(conn_master, threadCRI);
+{ unsigned chanCRI = IN(conn_master);
+  SETD(conn_master, chanCRI);
   
   switch (IN(conn_master))
-  { default: assert 0;
+  { default: 
+      ASSERT(0); 
+      break;
     case MASTER:
-      { unsigned mChanCRI = IN(conn_master);
-        int connId = IN(conn_master);
-        int origin = GET_GLOBAL_CORE_ID(mChanCRI); 
+      { int connId = IN(conn_master);
+        int origin = GET_GLOBAL_CORE_ID(chanCRI);
         conn_req sReq;
         CHKCT_END(conn_master);
         if (!dequeueSlaveReq(sReq, connId, origin))
-          queueMasterReq(connId, origin, threadCRI, mChanCRI);
+          queueMasterReq(connId, origin, chanCRI);
         else
-        { COMPLETE(conn_master, threadCRI, sReq.chanCRI);
-          COMPLETE(conn_master, sReq.threadCRI, mChanCRI);
+        { COMPLETE(conn_master, chanCRI, sReq.chanCRI);
+          COMPLETE(conn_master, sReq.chanCRI, chanCRI);
         }
       }
       break;
     case SLAVE:
-      { unsigned tid = IN(conn_master);
-        unsigned sChanCRI = IN(conn_master);
-        int connId = IN(conn_master);
+      { int connId = IN(conn_master);
         int origin = IN(conn_master);
+        int tid = IN(conn_master);
         conn_req mReq;
         CHKCT_END(conn_master);
         if (!dequeueMasterReq(mReq, connId, origin))
-          queueSlaveReq(tid, connId, origin, threadCRI, sChanCRI);
+          queueSlaveReq(tid, connId, origin, chanCRI);
         else
-        { COMPLETE(conn_master, mReq.threadCRI, sChanCRI);
-          COMPLETE(conn_master, threadCRI, mReq.chanCRI);
+        { COMPLETE(conn_master, mReq.chanCRI, chanCRI);
+          COMPLETE(conn_master, chanCRI, mReq.chanCRI);
+        }
+      }
+      break;
+    case SERVER:
+      { int connId = IN(conn_master);
+        conn_req cReq;
+        openConn(connId, chanCRI);
+        CHKCT_END(conn_master);
+        OUTCT_END(conn_master);
+        //printstrln("Opened server connection");
+        while(dequeueClientReq(cReq, connId)) 
+        { OUT(conn_master, cReq.chanCRI);
+          OUTCT_END(conn_master);
+          //printstrln("Dequeued client request");
         }
       }
       break;
     case CLIENT:
-      break;
-    case SERVER:
+      { int connId = IN(conn_master);
+        conn_srv cOpen;
+        CHKCT_END(conn_master);
+        if (getOpenConn(cOpen, connId))
+        { OUT(conn_master, cOpen.chanCRI);
+          OUTCT_END(conn_master);
+          //printstrln("Completed client request");
+        }
+        else
+        { queueClientReq(connId, chanCRI);
+          //printstrln("Queued client request");
+        }
+      }
       break;
   }
-}
-
-/*
- * Initialise the conn_buffer and conn_local arrays.
- */
-#pragma unsafe arrays
-void initConnections()
-{ for (int i=0; i<CONN_BUFFER_SIZE; i++)
-    conn_buffer[i].connId = NONE;
-  for (int i=0; i<MAX_THREADS; i++)
-    conn_locals[i].connId = NONE;
 }
 
 /*
@@ -172,7 +219,6 @@ bool dequeueMasterReq(conn_req &r, int connId, int origin)
   { if (conn_buffer[i].connId == connId 
       && conn_buffer[i].origin == origin)
     { conn_buffer[i].connId = NONE;
-      r.threadCRI = conn_buffer[i].threadCRI;
       r.chanCRI = conn_buffer[i].chanCRI;
       return true;
     }
@@ -188,7 +234,6 @@ bool dequeueSlaveReq(conn_req &r, int connId, int origin)
   { if (conn_locals[i].connId == connId
       && conn_locals[i].origin == origin)
     { conn_locals[i].connId = NONE;
-      r.threadCRI = conn_locals[i].threadCRI;
       r.chanCRI = conn_locals[i].chanCRI;
       return true;
     }
@@ -200,33 +245,83 @@ bool dequeueSlaveReq(conn_req &r, int connId, int origin)
  * Queue a master connection request: insert it in the next available slot in
  * the buffer.
  */
-void queueMasterReq(int connId, int origin, 
-    unsigned threadCRI, unsigned chanCRI)
-{ int i = 0;
-  char b = 0;
-  while (i<CONN_BUFFER_SIZE && !b)
+void queueMasterReq(int connId, int origin, unsigned chanCRI)
+{ for (int i=0; i<CONN_BUFFER_SIZE; i++)
   { if (conn_buffer[i].connId == NONE)
     { conn_buffer[i].connId = connId;
       conn_buffer[i].origin = origin;
-      conn_buffer[i].threadCRI = threadCRI;
       conn_buffer[i].chanCRI = chanCRI;
-      b = 1;
+      return;
     }
-    i = i + 1;
   }
-  // Check if the buffer is full
-  //TODO: if (!b) assert 0;
+  ASSERT(0);
 }
 
 /*
  * Queue a slave connection request: insert it in the slot given by the thread
  * id.
  */
-void queueSlaveReq(unsigned tid, int connId, int origin,
-    unsigned threadCRI, unsigned chanCRI)
+void queueSlaveReq(unsigned tid, int connId, int origin, unsigned chanCRI)
 { conn_locals[tid].connId = connId;
   conn_locals[tid].origin = origin;
-  conn_locals[tid].threadCRI = threadCRI;
   conn_locals[tid].chanCRI = chanCRI;
+}
+
+/*
+ * Open a server connection.
+ */
+void openConn(int connId, unsigned chanCRI)
+{ for (int i=0; i<MAX_OPEN_CONNS; i++)
+  { if (conn_server[i].connId == NONE)
+    { conn_server[i].connId = connId;
+      conn_server[i].chanCRI = chanCRI;
+      return;
+    }
+  }
+  ASSERT(0);
+}
+
+/*
+ * Return the CRI of an open conneciton with a matching conneciton id.
+ */
+bool getOpenConn(conn_srv &c, int connId)
+{ for (int i=0; i<MAX_OPEN_CONNS; i++)
+  { if (conn_server[i].connId == connId)
+    { c.connId = connId;
+      c.chanCRI = conn_server[i].chanCRI;
+      return true;
+    }
+  }
+  return false;
+}
+
+/*
+ * Queue a client conneciton request. This will occur only when a client tries
+ * to connect to a server channel before it has opened.
+ */
+void queueClientReq(int connId, unsigned chanCRI)
+{ for (int i=0; i<CONN_BUFFER_SIZE; i++)
+  { if (conn_buffer[i].connId == NONE)
+    { conn_buffer[i].connId = connId;
+      conn_buffer[i].chanCRI = chanCRI;
+      return;
+    }
+  }
+  ASSERT(0);
+}
+
+/*
+ * Dequeue and complete any outstanding client-to-server connection requests.
+ */
+bool dequeueClientReq(conn_req &r, int connId)
+{ for (int i=0; i<CONN_BUFFER_SIZE; i++)
+  { if (conn_buffer[i].connId == connId) 
+    { conn_buffer[i].connId = NONE;
+      r.connId = connId;
+      r.chanCRI = conn_buffer[i].chanCRI;
+      return true;
+    }
+  }
+  return false;
 }
 

@@ -179,7 +179,7 @@ class TranslateXS1(NodeWalker):
     self.out('')
   
   def jumptable(self, names):
-    self.out('\n/*')
+    self.out('/*')
     self.out(' * Jump table')
     self.out(' * ==========')
     self.out(' *')
@@ -312,27 +312,34 @@ class TranslateXS1(NodeWalker):
       self.out('{} = {};'.format(
         self.elem(node.left), self.expr(node.expr)))
 
-  def stmt_in(self, node, chans):
-    if chans[node.left.name] == defs.CONNECT_SERVER:
-      self.out('//server in')
-    elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      self.out('//client in')
-    else:
-      self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
-      self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
-      self.out('    "in    %0, res[%1];"')
-      self.out('    : "=r"({}) : "r"({}));'
-          .format(self.expr(node.expr), self.elem(node.left)))
-      self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-      self.out('    "outct res[%0]," S(XS1_CT_END)')
-      self.out('    :: "r"({}));'
-          .format(self.elem(node.left)))
-    
   def stmt_out(self, node, chans):
     if chans[node.left.name] == defs.CONNECT_SERVER:
-      self.out('//server out')
+      self.out('// Server out')
+      self.blocker.begin()
+      self.out('unsigned _clientCRI;')
+      self.out('asm("in %0, res[%1];"')
+      self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
+          .format(self.elem(node.left)))
+      self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "out   res[%0], %1;"')
+      self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}), "r"({}));'
+          .format(self.elem(node.left), self.expr(node.expr)))
+      self.blocker.end()
+
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      self.out('//client out')
+      self.out('// Client out')
+      self.out('asm("out   res[%0], %0;"')
+      self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "out   res[%0], %1;"')
+      self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}), "r"({}));'
+          .format(self.elem(node.left), self.expr(node.expr)))
+
     else:
       self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
@@ -342,6 +349,46 @@ class TranslateXS1(NodeWalker):
       self.out('    :: "r"({}), "r"({}));'
           .format(self.elem(node.left), self.expr(node.expr)))
 
+  def stmt_in(self, node, chans):
+    if chans[node.left.name] == defs.CONNECT_SERVER:
+      self.out('// Server in')
+      self.blocker.begin()
+      self.out('unsigned _clientCRI;')
+      self.out('asm("in %0, res[%1];"')
+      self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
+          .format(self.elem(node.left)))
+      self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
+          .format(self.expr(node.expr), self.elem(node.left)))
+      self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}));'
+          .format(self.elem(node.left)))
+      self.blocker.end()
+
+    elif chans[node.left.name] == defs.CONNECT_CLIENT:
+      self.out('// Client in')
+      self.out('asm("out   res[%1], %1;"')
+      self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "chkct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
+          .format(self.expr(node.expr), self.elem(node.left)))
+      self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}));'
+          .format(self.elem(node.left)))
+
+    else:
+      self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
+      self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
+          .format(self.expr(node.expr), self.elem(node.left)))
+      self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
+      self.out('    "outct res[%0]," S(XS1_CT_END)')
+      self.out('    :: "r"({}));'
+          .format(self.elem(node.left)))
+    
   def stmt_alias(self, node, chans):
     """ 
     Generate an alias statement. If the slice target is an array we must use
@@ -358,22 +405,27 @@ class TranslateXS1(NodeWalker):
         self.expr(node.slice.base), BYTES_PER_WORD))
 
   def stmt_connect(self, node, chans):
+    
     if node.type == defs.CONNECT_MASTER:
       self.out('{} = {}({}, {});'.format(self.elem(node.left), 
         defs.LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
       chans[node.left.name] = defs.CONNECT_MASTER
+    
     elif node.type == defs.CONNECT_SLAVE:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
       chans[node.left.name] = defs.CONNECT_SLAVE
+    
     elif node.type == defs.CONNECT_SERVER:
       self.out('{} = {}({});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_SERVER, self.expr(node.id)))
       chans[node.left.name] = defs.CONNECT_SERVER
+    
     elif node.type == defs.CONNECT_CLIENT:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_CLIENT, self.expr(node.id), self.expr(node.expr)))
       chans[node.left.name] = defs.CONNECT_CLIENT
+    
     else:
       assert 0
 

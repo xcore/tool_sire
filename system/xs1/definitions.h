@@ -39,6 +39,7 @@
 // When adding new entries ensure the following are consistent:
 //  - compiler/target/xs1/build.py (jumptable)
 //  - compiler/builtin.py (list of builtins)
+//  - runtime/xs1/slavetables.S
 #define JUMPI_CREATE_REMOTE      0
 #define JUMPI_PROC_ID            1
 #define JUMPI_CONNECT_MASTER     2
@@ -48,6 +49,10 @@
 
 // Index offset of program jump indicies
 #define JUMP_INDEX_OFFSET        6 
+
+// Control thread channels
+#define CONTROL_CREATE           0
+#define CONTROL_CONNECT          1
 
 // Hardware parameters
 #define RAM_BASE                 0x10000
@@ -66,6 +71,7 @@
 #define THREAD_STACK_SPACE       0x1000
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
 #define CONN_BUFFER_SIZE         10
+#define MAX_OPEN_CONNS           8
                                 
 // Closure elements             
 #define CLOSURE_NUM_ARGS         0

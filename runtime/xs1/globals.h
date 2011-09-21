@@ -21,22 +21,32 @@ extern void _main(void);
 extern unsigned _sp;
 extern unsigned _seed;
 
-// Processor allocation
-extern unsigned spawn_master;
+/* Processor allocation ================================*/
+
+// CRI of control spawn channel
+extern unsigned spawn_master; 
 extern unsigned thread_chans[MAX_THREADS];
 
-// Connection setup and management
+/* Connection setup and management =====================*/
 
+// Master-slave connection request record.
 typedef struct
-{ unsigned connId;
-  unsigned origin;
-  unsigned threadCRI;
+{ int connId;
+  int origin;
   unsigned chanCRI;
 } conn_req;
 
-extern unsigned conn_master;
+// Open server channel connection record.
+typedef struct
+{ int connId;
+  unsigned chanCRI;
+} conn_srv;
+
+// CRI of control connection channel
+extern unsigned conn_master; 
 extern conn_req conn_buffer[CONN_BUFFER_SIZE];
 extern conn_req conn_locals[MAX_THREADS];
+extern conn_srv conn_server[MAX_OPEN_CONNS];
 
 #endif
 

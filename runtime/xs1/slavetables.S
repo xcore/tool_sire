@@ -24,6 +24,8 @@ _jumptab:
   .word _procId
   .word _connectMaster
   .word _connectSlave
+  .word _connectServer
+  .word _connectClient
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================
