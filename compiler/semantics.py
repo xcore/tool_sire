@@ -342,11 +342,13 @@ class Semantics(NodeWalker):
     self.sym.begin_scope(T_SCOPE_PROGRAM)
     [self.decl(x) for x in node.decls]
     [self.defn(x) for x in node.defs]
-    self.sym.end_scope()
 
     # Remove any unused procedures from the signature table. This is to stop
     # unused builtin functions from appearing unneccesarily in the jumptable.
     self.sig.remove_unused()
+
+    # Leave the program scope open so values remain in scope of transformed
+    # procedures.
     
   # Variable declarations ===============================
 
@@ -476,6 +478,26 @@ class Semantics(NodeWalker):
     self.stmt(node.client)
     self.sym.end_scope()
 
+  def stmt_rep(self, node):
+    
+    # Children
+    [self.elem(x) for x in node.indicies]
+    self.elem(node.stmt)
+    
+    # Check all index elements are ElemIndexRanges
+    for x in node.indicies:
+      if not isinstance(x, ast.ElemIndexRange):
+        self.index_range_error(x, node.coord)
+      
+    # Determine the values of the base and count expressions and mark the index
+    # ranges as distributed.
+    for x in node.indicies:
+      x.distributed = True
+      x.base_value = self.eval_expr(x.base)
+      x.count_value = self.eval_expr(x.count)
+      if x.count_value <= 0:
+        self.index_count_error(x.count_value, node.coord)
+
   def stmt_skip(self, node):
     pass
 
@@ -595,24 +617,15 @@ class Semantics(NodeWalker):
     # Check the index is an ElemIndexRange
     if not isinstance(node.index, ast.ElemIndexRange):
       self.index_range_error(node.index, node.coord)
+   
+    # Mark the index range as non-distributed
+    node.index.distributed = False
 
-  def stmt_rep(self, node):
-    
-    # Children
-    [self.elem(x) for x in node.indicies]
-    self.elem(node.stmt)
-    
-    # Check all index elements are ElemIndexRanges
-    for x in node.indicies:
-      if not isinstance(x, ast.ElemIndexRange):
-        self.index_range_error(x, node.coord)
-      
     # Determine the values of the base and count expressions
-    for x in node.indicies:
-      x.base_value = self.eval_expr(x.base)
-      x.count_value = self.eval_expr(x.count)
-      if x.count_value <= 0:
-        self.index_count_error(x.count_value, node.coord)
+    node.index.base_value = self.eval_expr(node.index.base)
+    node.index.count_value = self.eval_expr(node.index.count)
+    if node.index.count_value <= 0:
+      self.index_count_error(node.index.count_value, node.coord)
 
   def stmt_on(self, node):
 

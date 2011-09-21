@@ -1,0 +1,14 @@
+val N := 3;
+
+proc main() is
+  var i;
+  var v;
+{ server(chan c)
+  { for i in [0 for N] do 
+    { c ? v; 
+      assert v = i
+    }
+  }
+  { par i in [0 for N] do c ! i }
+}
+

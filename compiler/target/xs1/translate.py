@@ -341,6 +341,7 @@ class TranslateXS1(NodeWalker):
           .format(self.elem(node.left), self.expr(node.expr)))
 
     else:
+      self.out('// Out')
       self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "out   res[%0], %1;"')
@@ -380,6 +381,7 @@ class TranslateXS1(NodeWalker):
           .format(self.elem(node.left)))
 
     else:
+      self.out('// In')
       self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'

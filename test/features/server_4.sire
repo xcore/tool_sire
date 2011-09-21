@@ -1,0 +1,17 @@
+val N := 3;
+
+% NOTE: this example will not yet work because serial replication of channel
+% arrays is not dealt with properly. 
+
+proc main() is
+  var i;
+  var v;
+{ server(chan c[N])
+  { for i in [0 for N] do 
+    { c[i] ? v; 
+      assert v = i
+    }
+  }
+  { par i in [0 for N] do c[i] ! i }
+}
+

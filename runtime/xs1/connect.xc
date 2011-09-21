@@ -185,11 +185,9 @@ void serveConnReq()
         openConn(connId, chanCRI);
         CHKCT_END(conn_master);
         OUTCT_END(conn_master);
-        //printstrln("Opened server connection");
         while(dequeueClientReq(cReq, connId)) 
         { OUT(conn_master, cReq.chanCRI);
           OUTCT_END(conn_master);
-          //printstrln("Dequeued client request");
         }
       }
       break;
@@ -200,11 +198,9 @@ void serveConnReq()
         if (getOpenConn(cOpen, connId))
         { OUT(conn_master, cOpen.chanCRI);
           OUTCT_END(conn_master);
-          //printstrln("Completed client request");
         }
         else
         { queueClientReq(connId, chanCRI);
-          //printstrln("Queued client request");
         }
       }
       break;

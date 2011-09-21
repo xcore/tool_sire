@@ -1,0 +1,10 @@
+val N := 4;
+
+proc main() is
+  var i;
+  var v;
+{ server(chan c)
+  { for i in [0 for N] do c ? v }
+  { for i in [0 for N] do c ! i }
+}
+

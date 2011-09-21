@@ -276,6 +276,7 @@ class LabelChans(NodeWalker):
     return self.stmt(node.stmt, indicies, tab)
 
   def stmt_for(self, node, indicies, tab):
+    indicies.append(node.index)
     return self.stmt(node.stmt, indicies, tab)
 
   # Statements not containing processes or channels uses

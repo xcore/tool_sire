@@ -1,0 +1,13 @@
+val N := 10;
+
+proc main() is
+  var i;
+  var v;
+{ server(chan c)
+  { for i in [0 for N*3] do c ? v }
+  { par i in [0 for N] do c ! i;
+    par i in [0 for N] do c ! i;
+    par i in [0 for N] do c ! i
+  }
+}
+

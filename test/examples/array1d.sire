@@ -13,7 +13,6 @@ proc node_(chanend left, chanend right) is
 
 proc main() is
   var i;
-  var v;
   chan c[N+1];
 { master_(c[0], c[N]) || 
   par i in [0 for N] do node_(c[i], c[i+1])
