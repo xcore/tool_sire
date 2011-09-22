@@ -1,0 +1,17 @@
+val N := 4;
+
+proc main() is
+  var i;
+  var j;
+  var v;
+{ server(chan c[N])
+  { par i in [0 for N] do 
+      for j in [0 for 3] do
+        c[i] ? v
+  }
+  { par i in [0 for N] do c[i] ! i;
+    par i in [0 for N] do c[i] ! i;
+    par i in [0 for N] do c[i] ! i
+  }
+}
+

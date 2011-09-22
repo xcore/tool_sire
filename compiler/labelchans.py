@@ -28,7 +28,7 @@ class LabelChans(NodeWalker):
   iterators and tag each with its location. Then label each channel with the 
   relative offset from the master to the slave.
   """
-  def __init__(self, device, errorlog, print_debug=False):
+  def __init__(self, device, errorlog, print_debug=True):
     self.device = device
     self.errorlog = errorlog
     self.print_debug = print_debug
@@ -276,7 +276,7 @@ class LabelChans(NodeWalker):
     return self.stmt(node.stmt, indicies, tab)
 
   def stmt_for(self, node, indicies, tab):
-    indicies.append(node.index)
+    #indicies.append(node.index)
     return self.stmt(node.stmt, indicies, tab)
 
   # Statements not containing processes or channels uses
