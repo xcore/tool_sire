@@ -19,12 +19,6 @@ class Children(NodeVisitor):
     for x in sig.mobile_proc_names:
       self.children[x] = []
 
-  def up(self, tag):
-    pass
-
-  def down(self, tag):
-    pass
-
   def add_child(self, name):
     """ 
     Add a child procedure call of the program:

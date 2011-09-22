@@ -28,7 +28,7 @@ class ExpandProcs(NodeWalker):
      - each ocurrance of a formal parameter is substituted by an expression if
        a value otherwise replaced by the new named actual.
     """
-    if isinstance(stmt, ast.StmtPcall):
+    if isinstance(stmt, ast.StmtPcall) and self.sig.is_mobile(stmt.name):
       defn = [x for x in self.ast.defs if x.name == stmt.name][0]
       proc = copy.deepcopy(defn.stmt)
       decls = []

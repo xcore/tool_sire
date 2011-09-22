@@ -624,8 +624,6 @@ class Semantics(NodeWalker):
     # Determine the values of the base and count expressions
     node.index.base_value = self.eval_expr(node.index.base)
     node.index.count_value = self.eval_expr(node.index.count)
-    if node.index.count_value <= 0:
-      self.index_count_error(node.index.count_value, node.coord)
 
   def stmt_on(self, node):
 
@@ -731,6 +729,9 @@ class Semantics(NodeWalker):
     
     node.symbol = self.check_decl(node.name, node.coord)
     self.check_def(node)
+
+    # Mark the procedure as used in the signature table
+    self.sig.mark(node.name)
 
   def elem_number(self, node):
     pass

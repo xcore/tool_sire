@@ -47,16 +47,8 @@ class InsertOns(NodeWalker):
 
   # Statements ==========================================
 
-  # We want to walk over the program by following process calls.
-
+  # Main is flattened so this won't be called
   def stmt_pcall(self, node, parent, d):
-    # Don't follow recursive calls
-    if node.name != parent:
-      # Return the count for a declared process
-      for x in self.defs:
-        if x.name == node.name:
-          return self.stmt(x.stmt, x.name, d)
-    # Otherwise return 1 for builtin functions
     return 1
 
   # Statements containing statements

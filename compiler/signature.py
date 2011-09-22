@@ -65,8 +65,13 @@ class SignatureTable(object):
       return False
 
   def mark(self, name):
-    assert name in self.mobile_proc_marks
-    self.mobile_proc_marks[name] = True
+    """
+    Mark a procedure. It will not appear in the table if it is a non-mobile
+    builtin such as the printing functions.
+    """
+    assert name in self.tab
+    if name in self.mobile_proc_marks:
+      self.mobile_proc_marks[name] = True
 
   def remove_unused(self):
     used = []
@@ -93,6 +98,13 @@ class SignatureTable(object):
     
     return None
 
+  def is_mobile(self, name):
+    """
+    Return if a procedure name is mobile, i.e. it is defined in the source of
+    the program.
+    """
+    return name in self.mobile_proc_names
+  
   def sig_exists(self, name):
     """
     Return the list of formal parameter declarations for a named procedure.

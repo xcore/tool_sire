@@ -28,7 +28,7 @@ class LabelChans(NodeWalker):
   iterators and tag each with its location. Then label each channel with the 
   relative offset from the master to the slave.
   """
-  def __init__(self, device, errorlog, print_debug=True):
+  def __init__(self, device, errorlog, print_debug=False):
     self.device = device
     self.errorlog = errorlog
     self.print_debug = print_debug
@@ -121,7 +121,7 @@ class LabelChans(NodeWalker):
   # Program ============================================
 
   def walk_program(self, node):
-    self.defn(node.defs[-1])
+    [self.defn(x) for x in node.defs]
   
   # Procedure definitions ===============================
   
