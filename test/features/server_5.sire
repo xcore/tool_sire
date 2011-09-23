@@ -2,12 +2,16 @@ val N := 4;
 
 proc main() is
   var i;
+  var j;
   var v;
-{ server(chan c)
-  { for i in [0 for N*3] do c ? v }
-  { par i in [0 for N] do c ! i;
-    par i in [0 for N] do c ! i;
-    par i in [0 for N] do c ! i
+{ server(chan c[N])
+  { par i in [0 for N] do 
+      for j in [0 for 3] do
+        c[i] ? v
+  }
+  { par i in [0 for N] do c[i] ! i;
+    par i in [0 for N] do c[i] ! i;
+    par i in [0 for N] do c[i] ! i
   }
 }
 

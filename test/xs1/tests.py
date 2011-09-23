@@ -68,19 +68,19 @@ xs1_example_tests = [
 xs1_feature_tests = [
 
   # Miscellaneous
-  Test('assert', f=D),
-  Test('for', f=D),
-  Test('while', f=D),
+  Test('assert',        f=D),
+  Test('for',           f=D),
+  Test('while',         f=D),
   Test('array_elemref', f=D),
-  Test('array_alias', f=D),
-  Test('array_slice1', f=D),
-  Test('array_slice2', f=D),
+  Test('array_alias',   f=D),
+  Test('array_slice1',  f=D),
+  Test('array_slice2',  f=D),
   
   # Builtins
   Test('builtin_fixedpoint', f=D),
-  Test('builtin_printing', f=D),
-  Test('builtin_crc', f=D),
-  Test('builtin_rand', f=D),
+  Test('builtin_printing',   f=D),
+  Test('builtin_crc',        f=D),
+  Test('builtin_rand',       f=D),
   Test('builtin_procid', [16], D),
 
   # Threads
@@ -127,6 +127,13 @@ xs1_feature_tests = [
   # Connect
   Test('connect_basic',      [4, 16], D),
   Test('connect_reciprocal', [4, 16], D),
+
+  # Server
+  Test('server_1', [4]),
+  Test('server_2', [4]),
+  Test('server_3', [4]),
+  Test('server_4', [16]),
+  Test('server_5', [16]),
   ]
 
 def run_test(self, name, path, num_cores, cmp_flags, param):

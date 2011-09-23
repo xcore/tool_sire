@@ -1,17 +1,13 @@
-val N := 3;
-
-% NOTE: this example will not yet work because serial replication of channel
-% arrays is not dealt with properly. 
+val N := 4;
 
 proc main() is
   var i;
   var v;
-{ server(chan c[N])
-  { for i in [0 for N] do 
-    { c[i] ? v; 
-      assert v = i
-    }
+{ server(chan c)
+  { for i in [0 for N*3] do c ? v }
+  { par i in [0 for N] do c ! i;
+    par i in [0 for N] do c ! i;
+    par i in [0 for N] do c ! i
   }
-  { par i in [0 for N] do c[i] ! i }
 }
 
