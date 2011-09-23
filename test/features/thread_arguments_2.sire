@@ -1,3 +1,7 @@
+proc foo(var r, val v0, val v1, val v2, val v3, val v4, 
+    val v5, val v6, val v7, val v8) is
+  r := v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8
+
 proc main() is
   var c0;
   var c1;
@@ -19,10 +23,9 @@ proc main() is
 ; c6 := 6
 ; c7 := 7
 ; c8 := 8
-; { x := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    y := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8
+; { foo(x, c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(y, c0, c1, c2, c3, c4, c5, c6, c7, c8)
   }
-; printvalln(x)
-; printvalln(y)
+; assert (x = 36) and (y = 36)
 }
 

@@ -1,8 +1,11 @@
+proc foo(var v) is
+  v := procid()
+
 proc main() is
   var v;
   var i;
 { for i in [0 for NUM_CORES] do
-  { on i do v := procid()
+  { on i do foo(v)
   ; printvalln(v)
   }
 }

@@ -20,30 +20,27 @@ class InsertOns(NodeWalker):
 
     { foo() || on 1 do par i in [0 for N] do bar() || on N+1 do baz() }
   """
-  def __init__(self, device, errorlog, disable):
+  def __init__(self, device, errorlog):
     self.device = device
     self.errorlog = errorlog
-    self.disable = disable
     self.defs = None
 
   # Program ============================================
 
   def walk_program(self, node, v):
   
-    if not self.disable:
-      
-      # All processes have been flattened into 'main'
-      self.defs = node.defs
-      d = self.stmt(node.defs[-1].stmt, node.defs[-1].name, 0)
-      
-      # Check the available number of processors has not been exceeded
-      if d > self.device.num_cores():
-        self.errorlog.report_error(
-        'insufficient processors: {} required, {} available'
-            .format(d, self.device.num_cores()))
+    # All processes have been flattened into 'main'
+    self.defs = node.defs
+    d = self.stmt(node.defs[-1].stmt, node.defs[-1].name, 0)
+    
+    # Check the available number of processors has not been exceeded
+    if d > self.device.num_cores():
+      self.errorlog.report_error(
+      'insufficient processors: {} required, {} available'
+          .format(d, self.device.num_cores()))
 
-      # Report processor usage
-      vmsg(v, '  {}/{} processors used'.format(d, self.device.num_cores()))
+    # Report processor usage
+    vmsg(v, '  {}/{} processors used'.format(d, self.device.num_cores()))
 
   # Statements ==========================================
 

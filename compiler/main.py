@@ -112,8 +112,8 @@ def setup_argparse():
   # Other options
 
   p.add_argument('-D', action='store_true',
-      dest='disable_distribution',
-      help='disable compile-time process distribution')
+      dest='disable_transformations',
+      help='disable AST transformations')
  
   return p
 
@@ -152,8 +152,8 @@ def setup_globals(a):
   compile_only = a.compile_only
 
   # Other
-  global disable_distribution
-  disable_distribution = a.disable_distribution
+  global disable_transformations
+  disable_transformations = a.disable_transformations
 
   # Input/output targets
   global infile
@@ -236,7 +236,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 3. Distribute processes
   vmsg(v, "Distributing processes")
-  InsertOns(device, errorlog, disable_distribution).walk_program(ast, v)
+  InsertOns(device, errorlog).walk_program(ast, v)
   if errorlog.any(): raise Error('in process disribution')
 
   # 4. Label process locations
@@ -286,21 +286,16 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   vmsg(v, "Removing unused declarations")
   RemoveDecls().walk_program(ast)
    
-  # 15. Perform child analysis
-  vmsg(v, "Performing child analysis")
-  child = child_analysis(sig, ast)
-
   # Display (pretty-print) the transformed AST
   if pprint_trans_ast: 
     Printer().walk_program(ast)
     raise SystemExit()
 
-  return child
-
 def child_analysis(sig, ast):
   """ 
   Determine children.
   """
+  vmsg(v, "Performing child analysis")
   child = Children(sig)
   ast.accept(child)
   child.build()
@@ -337,8 +332,12 @@ def main(args):
     sig = SignatureTable(errorlog)
     sem = semantic_analysis(sym, sig, ast, device, errorlog)
     
-    # Perform AST transformations
-    child = transform_ast(sem, sym, sig, ast, errorlog, device, v)
+    # Perform AST transformations for channels and reps
+    if not disable_transformations:
+      transform_ast(sem, sym, sig, ast, errorlog, device, v)
+
+    # Perform child analysis
+    child = child_analysis(sig, ast)
 
     # Generate code
     vhdr(v, 'Generating code for {}'.format(device))

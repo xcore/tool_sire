@@ -1,3 +1,7 @@
+proc foo(var r, val v0, val v1, val v2, val v3, val v4, 
+    val v5, val v6, val v7, val v8) is
+  r := v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8
+
 proc main() is
   var c0;
   var c1;
@@ -10,23 +14,25 @@ proc main() is
   var c8;
   var r[7];
   var i;
-{ c0 := 0
-; c1 := 1
-; c2 := 2
-; c3 := 3
-; c4 := 4
-; c5 := 5
-; c6 := 6
-; c7 := 7
-; c8 := 8
-; { r[0] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[1] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[2] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[3] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[4] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[5] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 ||
-    r[6] := c0 + c1 + c2 + c3 + c4 + c5 + c6 + c7 + c8 
-  }
-; for i in [0 for 7] do printvalln(r[i])
+{ c0 := 0; 
+  c1 := 1;
+  c2 := 2;
+  c3 := 3;
+  c4 := 4;
+  c5 := 5;
+  c6 := 6;
+  c7 := 7;
+  c8 := 8;
+  { foo(r[0], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[1], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[2], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[3], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[4], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[5], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[6], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+    foo(r[7], c0, c1, c2, c3, c4, c5, c6, c7, c8)
+  }; 
+  for i in [0 for 7] do
+    assert r[i] = 36
 }
 

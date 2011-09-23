@@ -21,7 +21,12 @@ proc set(var a[n], val n, val v) is
   for i in [0 for n] do 
     a[i] := v
 
-proc p0(val v, 
+proc p0(var A[l], val l, val v, val i) is
+{ check(A, l, v);
+  set(A, l, i)
+}
+
+proc p1(val v, 
     var A1[l1], var A2[l2], var A3[l3], 
     val l1, val l2, val l3) is
 { check(A1, l1, VAL);
@@ -32,7 +37,7 @@ proc p0(val v,
   set(A3, l3, v+2)
 }
 
-proc p1(val v,
+proc p2(val v,
     var A1[l1], var A2[l2], var A3[l3], var A4[l4],
     val l1, val l2, val l3, val l4) is
 { check(A1, l1, VAL);
@@ -45,7 +50,7 @@ proc p1(val v,
   set(A4, l4, v+3)
 }
 
-proc p2(val v,
+proc p3(val v,
     var A1[l1], var A2[l2], var A3[l3], var A4[l4], var A5[l4],
     val l1, val l2, val l3, val l4) is
 { check(A1, l1, VAL);
@@ -71,10 +76,7 @@ proc main() is
   % 1 value and 1 array
   for i in [0 for REPEAT] do
   { set(A4, L4, VAL);
-    on N do 
-    { check(A4, L4, VAL);
-      set(A4, L4, i)
-    };
+    on N do p0(A4, L4, VAL, i);
     check(A4, L4, i)
   };
 
@@ -83,7 +85,7 @@ proc main() is
   { set(A1, L1, VAL);
     set(A2, L2, VAL);
     set(A3, L3, VAL);
-    on N do p0(i, A1, A2, A3, L1, L2, L3);
+    on N do p1(i, A1, A2, A3, L1, L2, L3);
     check(A1, L1, i);
     check(A2, L2, i+1);
     check(A3, L3, i+2)
@@ -95,7 +97,7 @@ proc main() is
     set(A2, L2, VAL);
     set(A3, L3, VAL);
     set(A4, L4, VAL);
-    on N do p1(i, A1, A2, A3, A4, L1, L2, L3, L4);
+    on N do p2(i, A1, A2, A3, A4, L1, L2, L3, L4);
     check(A1, L1, i);
     check(A2, L2, i+1);
     check(A3, L3, i+2);
@@ -109,7 +111,7 @@ proc main() is
     set(A3, L3, VAL);
     set(A4, L4, VAL);
     set(A5, L4, VAL);
-    on N do p2(i, A1, A2, A3, A4, A5, L1, L2, L3, L4);
+    on N do p3(i, A1, A2, A3, A4, A5, L1, L2, L3, L4);
     check(A1, L1, i);
     check(A2, L2, i+1);
     check(A3, L3, i+2);

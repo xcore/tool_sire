@@ -1,7 +1,10 @@
+proc foo(var v) is
+  v := 0xDEADBEEF
+
 proc main() is
   var a;
-{ on 0 do a := 0xDEADBEEF
-; printhexln(a)
+{ on 0 do foo(a)
+; assert a = 0xDEADBEEF
 }
 
 

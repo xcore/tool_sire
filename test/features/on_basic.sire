@@ -1,6 +1,9 @@
+proc foo(var v) is
+  v := 0xDEADBEEF
+
 proc main() is
   var a;
-{ on NUM_CORES-1 do a := 0xDEADBEEF
-; printhexln(a)
+{ on NUM_CORES-1 do foo(a);
+  printhexln(a)
 }
 

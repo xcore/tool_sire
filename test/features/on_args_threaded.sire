@@ -24,6 +24,10 @@ proc p0(val a, val b, val c, val d,
   set(A, n, a+b+c+d+i)
 }
 
+proc foo(val a, val b, val c, val d,
+    val i, var A[n], val n, var v) is
+  on N do p0(a, b, c, d, i, A, n, v)
+
 proc main() is
   var A1[LEN];
   var A2[LEN];
@@ -57,13 +61,13 @@ proc main() is
     set(A5, LEN, VAL);
     set(A6, LEN, VAL);
     set(A7, LEN, VAL);
-    { on N do p0(0, 0, 0, 0, i,   A1, LEN, v1) ||
-      on N do p0(0, 0, 0, 0, i+1, A2, LEN, v2) ||
-      on N do p0(0, 0, 0, 0, i+2, A3, LEN, v4) ||
-      on N do p0(0, 0, 0, 0, i+3, A4, LEN, v5) ||
-      on N do p0(0, 0, 0, 0, i+4, A5, LEN, v6) ||
-      on N do p0(0, 0, 0, 0, i+5, A6, LEN, v7) ||
-      on N do p0(0, 0, 0, 0, i+6, A7, LEN, v7)
+    { foo(0, 0, 0, 0, i,   A1, LEN, v1) ||
+      foo(0, 0, 0, 0, i+1, A2, LEN, v2) ||
+      foo(0, 0, 0, 0, i+2, A3, LEN, v4) ||
+      foo(0, 0, 0, 0, i+3, A4, LEN, v5) ||
+      foo(0, 0, 0, 0, i+4, A5, LEN, v6) ||
+      foo(0, 0, 0, 0, i+5, A6, LEN, v7) ||
+      foo(0, 0, 0, 0, i+6, A7, LEN, v7)
     };
     check(A1, LEN, i);
     check(A2, LEN, i+1);
