@@ -56,7 +56,7 @@ class LabelProcs(NodeWalker):
     node.location = l
     # Try and evaluate this 'target' expression
     v = EvalExpr().expr(node.expr)
-    k = ast.ExprSingle(ast.ElemNumber(v)) if v != None else k
+    k = ast.ExprSingle(ast.ElemNumber(v)) if v != None else l
     self.stmt(node.stmt, k)
 
   # Statements containing statements

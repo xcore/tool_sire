@@ -622,8 +622,8 @@ class Semantics(NodeWalker):
     node.index.distributed = False
 
     # Determine the values of the base and count expressions
-    node.index.base_value = self.eval_expr(node.index.base)
-    node.index.count_value = self.eval_expr(node.index.count)
+    #node.index.base_value = self.eval_expr(node.index.base)
+    #node.index.count_value = self.eval_expr(node.index.count)
 
   def stmt_on(self, node):
 

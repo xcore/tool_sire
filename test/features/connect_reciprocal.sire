@@ -5,8 +5,8 @@ proc p0(val origin, val dest) is
   chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to dest;
-  connect c2:1 from origin;
+{ connect c1:0 to master dest;
+  connect c2:1 to slave origin;
   c1 ! X;
   c1 ? v;
   c2 ? v;
@@ -17,8 +17,8 @@ proc p1(val origin, val dest) is
   chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 from origin;
-  connect c2:1 to dest;
+{ connect c1:0 to slave origin;
+  connect c2:1 to master dest;
   c1 ? v;
   c1 ! v;
   c2 ! v;
@@ -30,8 +30,8 @@ proc p2(val origin, val dest) is
   chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 from origin;
-  connect c2:1 to dest;
+{ connect c1:0 to slave origin;
+  connect c2:1 to master dest;
   c1 ? v;
   c1 ! v;
   c2 ! v;
@@ -43,8 +43,8 @@ proc p3(val origin, val dest) is
   chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to dest;
-  connect c2:1 from origin;
+{ connect c1:0 to master dest;
+  connect c2:1 to slave origin;
   c1 ! X;
   c1 ? v;
   c2 ? v;

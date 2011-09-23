@@ -20,7 +20,7 @@ SIMULATE = 'axe'
 SIM_FLAGS = []
 #SIMULATE = 'xsim'
 #SIM_FLAGS = ['--no-warn-registers']
-NO_DIST = ['-D']
+NO_TRANS = ['-D'] # Disable all AST transformations
 
 # Examples =====================================================
 
@@ -28,24 +28,24 @@ xs1_example_tests = [
   
   # Sequential
   Test('hello', [1, 4, 16, 32, 64]),
-  Test('power'),
-  Test('ackermann'),
-  Test('primetest'),
-  Test('euclid-loop'),
-  Test('euclid-rec'),
-  Test('factorial-loop'),
-  Test('factorial-rec'),
-  Test('fibonacci-loop'),
-  Test('fibonacci-rec'),
-  Test('bubblesort'),
-  Test('quicksort'),
-  Test('mandlebrot-seq'),
-  Test('nqueens-seq'),
-  Test('mergesort-seq'),
+  Test('power',          NO_TRANS),
+  Test('ackermann',      NO_TRANS),
+  Test('primetest',      NO_TRANS),
+  Test('euclid-loop',    NO_TRANS),
+  Test('euclid-rec',     NO_TRANS),
+  Test('factorial-loop', NO_TRANS),
+  Test('factorial-rec',  NO_TRANS),
+  Test('fibonacci-loop', NO_TRANS),
+  Test('fibonacci-rec',  NO_TRANS),
+  Test('bubblesort',     NO_TRANS),
+  Test('quicksort',      NO_TRANS),
+  Test('mandlebrot-seq', NO_TRANS),
+  Test('nqueens-seq',    NO_TRANS),
+  Test('mergesort-seq',  NO_TRANS),
   
   # Parallel (explicit on)
-  Test('mergesort-par', [4, 16],         NO_DIST),
-  Test('distribute',    [4, 16, 32, 64], NO_DIST),
+  Test('mergesort-par', [4, 16],         NO_TRANS),
+  Test('distribute',    [4, 16, 32, 64], NO_TRANS),
 
   # Parallel (replicators and channels)
   Test('array1d', [4, 16, 64]),

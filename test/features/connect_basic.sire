@@ -3,28 +3,28 @@ val X := 0xDEADBEEF;
 
 proc p0(val dest) is
   chanend c;
-{ connect c:0 to dest;
+{ connect c:0 to master dest;
   c ! X
 }
 
 proc p1(val origin) is
   chanend c;
   var v;
-{ connect c:0 from origin;
+{ connect c:0 to slave origin;
   c ? v;
   assert v = X
 }
 
 proc p2(val origin) is
   chanend c;
-{ connect c:0 from origin;
+{ connect c:0 to slave origin;
   c ! X
 }
 
 proc p3(val dest) is
   chanend c;
   var v;
-{ connect c:0 to dest;
+{ connect c:0 to master dest;
   c ? v;
   assert v = X
 }
