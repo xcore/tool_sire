@@ -1,0 +1,85 @@
+% An implementation of Cannon's algorithm for matrix multiplication.
+
+val N := 4; % Dimension of square matrix
+val R := 2; % Num partitions per dimension
+val X := R*R
+val S := (N/R)*(N/R)
+
+proc submatrix(chanend c) is
+  var A[S];
+  var B[S];
+  var C[S];
+  var i;
+{ for i in [0 for S] do c ? A[i];
+  for i in [0 for S] do c ? B[i];
+  for i in [0 for S] do C[i] := 0;
+}
+
+proc load(chanend c[X]) is
+  var i;
+  var j;
+  var k;
+{ 
+  for i in [0 for 2] do
+    for j in [0 for N] do
+      for k in [0 for N] do
+        c ! rand();
+}
+
+proc subalign(val i, val j, chanend n, chanend s, chanend e, chanend w) is
+{ if i > 0 then
+    % w ! A_{i,j} ; e ? A_{i,j+1 rem R}
+  else skip
+  if j > 0 then
+    % n ! A_{i,j} ; s ? A_{i+1 rem R,j}
+  else skip
+}
+
+proc subalign(val i, val j, chanend n, chanend s, chanend e, chanend w) is
+{
+}
+
+proc align(chanend c[X]) is
+  chan x[X];
+  chan y[X];
+  var i;
+  var j;
+{ par i in [0 for R] do
+    subalign(0, i, y[0], y[1], x[i], x[i+1 rem R]) ||
+  par i in [1 for R] do 
+    subalign(i, 0, y[0], y[1], x[i], x[i+1 rem R]) ||
+  par i in [0 for R-1], j in [0 for R-1] do
+    subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
+}
+
+proc submul(val i, val j, chanend n, chanend s, chanend e, chanend w) is
+{
+}
+
+proc multiply(chanend c[X]) is
+  chan x[X];
+  chan y[X];
+  var i;
+  var j;
+{ par i in [0 for R] do submul(0, i) ||
+  par i in [1 for R-1] do submul(i, 0) ||
+  par i in [0 for R-1], j in [0 for R-1] do
+    submul(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
+}
+
+proc output(chanend c[X]) is
+{
+}
+
+proc main() is
+  var i;
+{ server (chan c[X])
+  { par i in [0 for X] do
+      submatrix(c[i])
+  }
+  { load(c);
+    align(c);
+    shiftmuladd(c);
+    output(c)
+  }
+}
