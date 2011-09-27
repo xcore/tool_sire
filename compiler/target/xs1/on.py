@@ -69,16 +69,16 @@ def argument(t, n, celem, proc_name, args, index, arg, param):
         inops=['('+arg.elem.name+', unsigned[])'])
     n = celem(n, tmp)
 
-  # Value
-  elif param.symbol.type == T_VAL_SINGLE:
-    t.comment('Value')
-    n = celem(n, 't_arg_VAL')
-    n = celem(n, t.expr(arg))
-
   # Channel end
   elif param.symbol.type == T_CHANEND_SINGLE:
     t.comment('Channel end')
     n = celem(n, 't_arg_CHANEND')
+    n = celem(n, t.expr(arg))
+
+  # Value
+  elif param.symbol.type == T_VAL_SINGLE:
+    t.comment('Value')
+    n = celem(n, 't_arg_VAL')
     n = celem(n, t.expr(arg))
 
   else:

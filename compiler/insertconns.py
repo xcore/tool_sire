@@ -29,17 +29,32 @@ class InsertConns(NodeWalker):
     if self.print_debug:
       print(s)
 
+  def chanend_type(self, chan):
+    """
+    Given a 'chan' ChanElemSet return the corresponding chanend type.
+    """
+    if chan.symbol.scope == T_SCOPE_PROC or chan.symbol.scope == T_SCOPE_FUNC:
+      return T_CHANEND_SINGLE
+    elif chan.symbol.scope == T_SCOPE_SERVER:
+      return T_CHANEND_SERVER_SINGLE
+    elif chan.symbol.scope == T_SCOPE_CLIENT:
+      return T_CHANEND_CLIENT_SINGLE
+    else:
+      assert 0
+
   def connect_type(self, chan, master):
     """
     Given a 'chan' ChanElemSet, scope type and whether the connect is a master
     or slave, return the resulting type of the connect statement.
     """
-    if chan.symbol.scope == T_SCOPE_SERVER:
+    if chan.symbol.scope == T_SCOPE_PROC or chan.symbol.scope == T_SCOPE_FUNC:
+      return CONNECT_MASTER if master else CONNECT_SLAVE
+    elif chan.symbol.scope == T_SCOPE_SERVER:
         return CONNECT_SERVER
     elif chan.symbol.scope == T_SCOPE_CLIENT:
         return CONNECT_CLIENT
     else:
-      return CONNECT_MASTER if master else CONNECT_SLAVE
+      assert 0
 
   def gen_single_conn(self, tab, chanids, chan):
     """
@@ -56,7 +71,7 @@ class InsertConns(NodeWalker):
       location = ast.ExprSingle(ast.ElemNumber(
           tab.lookup_master_location(chan.name, elem.index)))
     chanend = ast.ElemId(chan.chanend)
-    chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
+    chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
         None, scope=T_SCOPE_PROC)
     chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
     return ast.StmtConnect(chanend, chanid, location, 
@@ -79,7 +94,7 @@ class InsertConns(NodeWalker):
         location = ast.ExprSingle(ast.ElemNumber(
             tab.lookup_master_location(chan.name, index)))
       chanend = ast.ElemId(chan.chanend)
-      chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
+      chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
       cond = ast.ExprBinop('=', ast.ElemGroup(indicies_expr), 
@@ -98,7 +113,7 @@ class InsertConns(NodeWalker):
       else:
         location = indicies_expr
       chanend = ast.ElemId(chan.chanend)
-      chanend.symbol = Symbol(chan.chanend, T_CHANEND_SINGLE, 
+      chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
       chanid = ast.ExprSingle(ast.ElemNumber(chanids[chan.name]))
       cond = ast.ExprBinop('and', 
@@ -172,16 +187,51 @@ class InsertConns(NodeWalker):
     """
     if len(chans) > 0:
       conns = []
-      for x in sorted(chans, key=lambda x: x.chanend):
+      for x in chans:
         if len(x.elems) == 1:
           conns.append(self.gen_single_conn(tab, chanids, x))
         else:
           conns.append(self.gen_array_conn(tab, chanids, x))
-      s = ast.StmtSeq(conns + [stmt])
-      s.location = stmt.location
-      return s
+      if len(conns) > 1:
+        s1 = ast.StmtPar(conns) 
+        s1.location = stmt.location
+        s1.chans = []
+        s2 = ast.StmtSeq([s1, stmt])
+        s2.location = stmt.location
+        s2.chans = []
+        return s2
+      else:
+        s = ast.StmtSeq(conns+[stmt])
+        s.location = stmt.location
+        s.chans = []
+        return s
     else:
       return stmt
+
+  def create_decls(self, chans):
+    decls = []
+    for x in chans:
+      
+      if x.symbol.scope == T_SCOPE_PROC or x.symbol.scope == T_SCOPE_FUNC:
+        d = ast.Decl(x.chanend, T_CHANEND_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+        decls.append(d)
+      
+      elif x.symbol.scope == T_SCOPE_SERVER:
+        d = ast.Decl(x.chanend, T_CHANEND_SERVER_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_SERVER_SINGLE, None,
+            scope=T_SCOPE_SERVER)
+        decls.append(d)
+      
+      elif x.symbol.scope == T_SCOPE_CLIENT:
+        d = ast.Decl(x.chanend, T_CHANEND_CLIENT_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_CLIENT_SINGLE, None,
+            scope=T_SCOPE_CLIENT)
+        decls.append(d)
+      
+      else:
+        assert 0
+    return decls
 
   # Program ============================================
 
@@ -192,17 +242,17 @@ class InsertConns(NodeWalker):
 
   def defn(self, node):
     self.debug('Inserting connections for: '+node.name)
-    decls = []
-    decls.extend([x.chanend for x in node.chans])
+    decls = self.create_decls(node.chans)
     self.stmt(node.stmt, node.chantab, node.chanids, decls)
     node.stmt = self.insert_connections(node.chantab, node.chanids, 
         node.stmt, node.chans)
 
     # Insert the channel end declarations
-    for x in decls:
-      d = ast.Decl(x, T_CHANEND_SINGLE, None)
-      d.symbol = Symbol(x, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
-      node.decls.append(d)
+    #for x in decls:
+    #  d = ast.Decl(x, T_CHANEND_SINGLE, None)
+    #  d.symbol = Symbol(x, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+    #  node.decls.append(d)
+    node.decls += decls
 
     if self.print_debug:
       self.debug('[def connections]:')
@@ -218,7 +268,7 @@ class InsertConns(NodeWalker):
       self.display_chans(node.chans)
     self.stmt(node.stmt, tab, chanids, decls)
     node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans)
-    decls.extend([x.chanend for x in node.chans])
+    decls += self.create_decls(node.chans)
 
   def stmt_par(self, node, tab, chanids, decls):
     self.debug('[par connections]:')
@@ -226,7 +276,7 @@ class InsertConns(NodeWalker):
       self.debug('[process {}]: '.format(i))
       self.stmt(x, tab, chanids, decls) 
       node.stmt[i] = self.insert_connections(tab, chanids, node.stmt[i], y)
-      decls.extend([z.chanend for z in y])
+      decls += self.create_decls(y)
       if self.print_debug:
         self.display_chans(y)
 
@@ -236,14 +286,14 @@ class InsertConns(NodeWalker):
     self.stmt(node.server, tab, node.chanids, decls)
     node.server = self.insert_connections(tab, node.chanids, node.server,
         node.chans[0])
-    decls.extend([x.chanend for x in node.chans[0]])
+    decls += self.create_decls(node.chans[0])
     if self.print_debug:
       self.display_chans(node.chans[0])
     self.debug('[client connections]:')
     self.stmt(node.client, tab, node.chanids, decls)
     node.client = self.insert_connections(tab, node.chanids, node.client,
         node.chans[1])
-    decls.extend([x.chanend for x in node.chans[1]])
+    decls += self.create_decls(node.chans[1])
     if self.print_debug:
       self.display_chans(node.chans[1])
 
@@ -253,7 +303,7 @@ class InsertConns(NodeWalker):
       self.display_chans(node.chans)
     self.stmt(node.stmt, tab, chanids, decls)
     node.stmt = self.insert_connections(tab, chanids, node.stmt, node.chans)
-    decls.extend([x.chanend for x in node.chans])
+    decls += self.create_decls(node.chans)
 
   # Other statements containing processes
 

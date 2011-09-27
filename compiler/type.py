@@ -14,7 +14,8 @@ specifier_names = [
   'ref', 
   'chan', 
   'chanend', 
-  'core', 
+  'chanend_server', 
+  'chanend_client', 
   'tag'
   ]
 specifiers = indexed_dict(specifier_names)

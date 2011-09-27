@@ -51,7 +51,18 @@ param_conversions = {
 
   T_CHANEND_SINGLE : [
     T_CHANEND_SINGLE,
-    T_CHANEND_SUB,
+    T_CHAN_SINGLE,
+    T_CHAN_SUB,
+    ],
+
+  T_CHANEND_SERVER_SINGLE : [
+    T_CHANEND_SERVER_SINGLE,
+    T_CHAN_SINGLE,
+    T_CHAN_SUB,
+    ],
+
+  T_CHANEND_CLIENT_SINGLE : [
+    T_CHANEND_CLIENT_SINGLE,
     T_CHAN_SINGLE,
     T_CHAN_SUB,
     ],
@@ -64,29 +75,32 @@ param_conversions = {
 
 # Relation of variable types to formal parameter types for parallel composition.
 par_var_to_param = {
-  T_VAL_SINGLE     : T_VAL_SINGLE,
-  T_VAR_SINGLE     : T_REF_SINGLE, 
-  T_REF_SINGLE     : T_REF_SINGLE,
-  T_VAR_SUB        : T_VAL_SINGLE,
-  T_REF_SUB        : T_VAL_SINGLE,
-  T_VAR_ARRAY      : T_REF_ARRAY, 
-  T_REF_ARRAY      : T_REF_ARRAY,
-  T_CHANEND_SINGLE : T_CHANEND_SINGLE,
-  T_CHANEND_ARRAY  : T_CHANEND_ARRAY,
+  T_VAL_SINGLE            : T_VAL_SINGLE,
+  T_VAR_SINGLE            : T_REF_SINGLE, 
+  T_REF_SINGLE            : T_REF_SINGLE,
+  T_VAR_SUB               : T_VAL_SINGLE,
+  T_REF_SUB               : T_VAL_SINGLE,
+  T_VAR_ARRAY             : T_REF_ARRAY, 
+  T_REF_ARRAY             : T_REF_ARRAY,
+  T_CHANEND_SINGLE        : T_CHANEND_SINGLE,
+  T_CHANEND_SERVER_SINGLE : T_CHANEND_SERVER_SINGLE,
+  T_CHANEND_CLIENT_SINGLE : T_CHANEND_CLIENT_SINGLE,
 }
 
 # Relation of variable types to formal parameter types for parallel replication.
 # All singles map to values as there can be no single assignment in a
 # replicator.
 rep_var_to_param = {
-  T_VAL_SINGLE     : T_VAL_SINGLE,
-  T_VAR_SINGLE     : T_VAL_SINGLE, 
-  T_REF_SINGLE     : T_VAL_SINGLE,
-  T_VAR_SUB        : T_VAL_SINGLE,
-  T_REF_SUB        : T_VAL_SINGLE,
-  T_VAR_ARRAY      : T_REF_ARRAY, 
-  T_REF_ARRAY      : T_REF_ARRAY,
-  T_CHANEND_SINGLE : T_CHANEND_SINGLE,
+  T_VAL_SINGLE            : T_VAL_SINGLE,
+  T_VAR_SINGLE            : T_VAL_SINGLE, 
+  T_REF_SINGLE            : T_VAL_SINGLE,
+  T_VAR_SUB               : T_VAL_SINGLE,
+  T_REF_SUB               : T_VAL_SINGLE,
+  T_VAR_ARRAY             : T_REF_ARRAY, 
+  T_REF_ARRAY             : T_REF_ARRAY,
+  T_CHANEND_SINGLE        : T_CHANEND_SINGLE,
+  T_CHANEND_SERVER_SINGLE : T_CHANEND_SERVER_SINGLE,
+  T_CHANEND_CLIENT_SINGLE : T_CHANEND_CLIENT_SINGLE,
 }
 
 class Semantics(NodeWalker):
@@ -540,6 +554,8 @@ class Semantics(NodeWalker):
          T_CHAN_SINGLE, 
          T_CHAN_SUB,
          T_CHANEND_SINGLE, 
+         T_CHANEND_SERVER_SINGLE, 
+         T_CHANEND_CLIENT_SINGLE, 
          T_CHANEND_SUB,]):
       self.type_error('input channel', node.left.name, node.coord)
 
@@ -566,6 +582,8 @@ class Semantics(NodeWalker):
          T_CHAN_SINGLE, 
          T_CHAN_SUB,
          T_CHANEND_SINGLE, 
+         T_CHANEND_SERVER_SINGLE, 
+         T_CHANEND_CLIENT_SINGLE, 
          T_CHANEND_SUB,]):
       self.type_error('output channel', node.left.name, node.coord)
 
@@ -591,8 +609,12 @@ class Semantics(NodeWalker):
     self.expr(node.expr)
 
     # Check the type of the chan element
-    if not self.check_elem_types(node.left, 
-        [T_CHAN_SINGLE, T_CHAN_SUB, T_CHANEND_SINGLE]):
+    if not self.check_elem_types(node.left, [
+        T_CHAN_SINGLE, 
+        T_CHAN_SUB, 
+        T_CHANEND_SINGLE, 
+        T_CHANEND_SERVER_SINGLE, 
+        T_CHANEND_CLIENT_SINGLE]):
       self.type_error('connect source channel', node.left, node.coord)
 
   def stmt_if(self, node):

@@ -33,8 +33,8 @@ def num_ref_singles(params):
   """
   Return the number of referenced single variables in a param list.
   """
-  return reduce(lambda x,y: x+(1 if y.symbol.type==T_REF_SINGLE else 0), 
-      params, 0)
+  return reduce(lambda x,y: x+(1 if y.symbol.type==T_REF_SINGLE 
+      or y.symbol.type==T_CHANEND_SINGLE else 0), params, 0)
 
 def num_stack_args(pcall):
   """
@@ -101,6 +101,11 @@ def thread_set(t, index, pcall, slave_exit_labels):
       stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
       j = j + 1
+    elif y.symbol.type == T_CHANEND_SINGLE:
+      assert isinstance(x, ast.ExprSingle)
+      stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+      a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
+      j = j + 1
     ref_addr_exprs.append(a)
 
   # Write arguments to registers and stack
@@ -108,6 +113,8 @@ def thread_set(t, index, pcall, slave_exit_labels):
 
     # For references, we pass the address
     if y.symbol.type == T_REF_SINGLE:
+      value = ref_addr_exprs[i]
+    elif y.symbol.type == T_CHANEND_SINGLE:
       value = ref_addr_exprs[i]
     # Otherwise we set this directly
     else:
@@ -131,6 +138,9 @@ def master_unset(t, index, pcall):
   j = 0
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     if y.symbol.type == T_REF_SINGLE:
+      ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+      j = j + 1
+    elif y.symbol.type == T_CHANEND_SINGLE:
       ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       j = j + 1
  

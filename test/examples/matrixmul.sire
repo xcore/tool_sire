@@ -44,10 +44,6 @@ proc align(chanend c[X]) is
   chan y[X];
   var i;
   var j;
-{ par i in [0 for R] do
-    subalign(0, i, y[0], y[1], x[i], x[i+1 rem R]) ||
-  par i in [1 for R] do 
-    subalign(i, 0, y[0], y[1], x[i], x[i+1 rem R]) ||
   par i in [0 for R-1], j in [0 for R-1] do
     subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
 }
@@ -78,7 +74,8 @@ proc main() is
       submatrix(c[i])
   }
   { load(c);
-    align(c);
+    align_ns(c);
+    align_ew(c);
     shiftmuladd(c);
     output(c)
   }

@@ -96,11 +96,16 @@ class LabelChans(NodeWalker):
       if x.expr == None:
         elems = [self.single_channel(tab, stmt, x.name)]
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies,
+          chanend))
       else:
         elems = self.subscript_channel(indicies, tab, stmt, x.name, x.expr)
         chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies, chanend))
+        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies,
+          chanend))
+
+    # Sort them by chanend
+    chans = sorted(chans, key=lambda x: x.chanend)
     return chans
   
   def check_chan(self, name, index, locations):

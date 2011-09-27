@@ -71,10 +71,20 @@ class BuildCFG(NodeWalker):
       #s = [node.stmt[i+1]] if i<len(node.stmt)-1 else succ
     return p
 
+  # NOTE: we can treat parallel composition the same as sequential composition
+  # for liveness analysis because each process is independent.
   def stmt_par(self, node, pred, succ):
-    self.init_sets(node, pred, succ)
-    p = []
-    [p.extend(self.stmt(x, pred, succ)) for x in node.stmt]
+    # This is the old approach
+    ##self.init_sets(node, pred, succ)
+    #self.init_sets(node, pred, node.stmt)
+    #p = []
+    #[p.extend(self.stmt(x, pred, succ)) for x in node.stmt]
+    #return p
+    self.init_sets(node, pred, [node.stmt[0]])
+    p = [node]
+    for (i, x) in enumerate(node.stmt):
+      s = [node.stmt[i+1]] if i<(len(node.stmt)-1) else succ
+      p = self.stmt(x, p, s)
     return p
 
   def stmt_server(self, node, pred, succ):
@@ -162,8 +172,7 @@ class BuildCFG(NodeWalker):
 
   def stmt_connect(self, node, pred, succ):
     self.init_sets(node, pred, succ)
-    if not node.expr == None: 
-      node.use |= self.expr(node.expr)
+    node.use |= self.expr(node.expr)
     node.defs |= set([node.left])
     return [node]
 

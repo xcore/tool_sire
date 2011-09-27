@@ -27,34 +27,62 @@ class RenameChans(NodeWalker):
     if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHAN_SINGLE:
       for x in chans:
         if elem.name == x.name:
-          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+          t = T_CHANEND_SINGLE
+          if x.symbol.scope == T_SCOPE_SERVER:
+            t = T_CHANEND_SERVER_SINGLE
+          elif x.symbol.scope == T_SCOPE_CLIENT:
+            t = T_CHANEND_CLIENT_SINGLE
+          s = Symbol(x.chanend, t, T_SCOPE_PROC)
           e = ast.ElemId(x.chanend)
           e.symbol = s
+          #print('renamed {} to {} as type {}'.format(x.name, x.chanend, t))
           return ast.ExprSingle(e)
 
     elif isinstance(elem, ast.ElemSub) and elem.symbol.type == T_CHAN_ARRAY:
       for x in chans:
         if elem.name == x.name and CmpExpr().expr(elem.expr, x.expr):
-          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+          t = T_CHANEND_SINGLE
+          if x.symbol.scope == T_SCOPE_SERVER:
+            t = T_CHANEND_SERVER_SINGLE
+          elif x.symbol.scope == T_SCOPE_CLIENT:
+            t = T_CHANEND_CLIENT_SINGLE
+          s = Symbol(x.chanend, t, T_SCOPE_PROC)
           e = ast.ElemId(x.chanend)
           e.symbol = s
+          #print('renamed {} to {} as type {}'.format(x.name, x.chanend, t))
           return ast.ExprSingle(e)
     
-    if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_SINGLE:
-      for x in chans:
-        if elem.name == x.name:
-          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
-          e = ast.ElemId(x.chanend)
-          e.symbol = s
-          return ast.ExprSingle(e)
+    #if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_SINGLE:
+    #  for x in chans:
+    #    if elem.name == x.name:
+    #      s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+    #      e = ast.ElemId(x.chanend)
+    #      e.symbol = s
+    #      return ast.ExprSingle(e)
 
-    elif isinstance(elem, ast.ElemSub) and elem.symbol.type == T_CHANEND_ARRAY:
-      for x in chans:
-        if elem.name == x.name and CmpExpr().expr(elem.expr, x.expr):
-          s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
-          e = ast.ElemId(x.chanend)
-          e.symbol = s
-          return ast.ExprSingle(e)
+    #if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_SERVER_SINGLE:
+    #  for x in chans:
+    #    if elem.name == x.name:
+    #      s = Symbol(x.chanend, T_CHANEND_SERVER_SINGLE, T_SCOPE_PROC)
+    #      e = ast.ElemId(x.chanend)
+    #      e.symbol = s
+    #      return ast.ExprSingle(e)
+
+    #if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_CLIENT_SINGLE:
+    #  for x in chans:
+    #    if elem.name == x.name:
+    #      s = Symbol(x.chanend, T_CHANEND_CLIENT_SINGLE, T_SCOPE_PROC)
+    #      e = ast.ElemId(x.chanend)
+    #      e.symbol = s
+    #      return ast.ExprSingle(e)
+
+    #elif isinstance(elem, ast.ElemSub) and elem.symbol.type == T_CHANEND_ARRAY:
+    #  for x in chans:
+    #    if elem.name == x.name and CmpExpr().expr(elem.expr, x.expr):
+    #      s = Symbol(x.chanend, T_CHANEND_SINGLE, T_SCOPE_PROC)
+    #      e = ast.ElemId(x.chanend)
+    #      e.symbol = s
+    #      return ast.ExprSingle(e)
     else:
       assert 0
 
@@ -105,6 +133,8 @@ class RenameChans(NodeWalker):
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)
         or (isinstance(c, ast.ElemId) and t == T_CHANEND_SINGLE)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_SERVER_SINGLE)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_CLIENT_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHANEND_ARRAY)):
       node.left = self.rename_chan(c, chans).elem
 
@@ -114,6 +144,8 @@ class RenameChans(NodeWalker):
     if ((isinstance(c, ast.ElemId) and t == T_CHAN_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHAN_ARRAY)
         or (isinstance(c, ast.ElemId) and t == T_CHANEND_SINGLE)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_SERVER_SINGLE)
+        or (isinstance(c, ast.ElemId) and t == T_CHANEND_CLIENT_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHANEND_ARRAY)):
       node.left = self.rename_chan(c, chans).elem
 
@@ -131,6 +163,14 @@ class RenameChans(NodeWalker):
 
         elif (isinstance(x.elem, ast.ElemId)
             and x.elem.symbol.type == T_CHANEND_SINGLE):
+          node.args[i] = self.rename_chan(x.elem, chans)
+
+        elif (isinstance(x.elem, ast.ElemId)
+            and x.elem.symbol.type == T_CHANEND_SERVER_SINGLE):
+          node.args[i] = self.rename_chan(x.elem, chans)
+
+        elif (isinstance(x.elem, ast.ElemId)
+            and x.elem.symbol.type == T_CHANEND_CLIENT_SINGLE):
           node.args[i] = self.rename_chan(x.elem, chans)
 
         elif (isinstance(x.elem, ast.ElemSub)

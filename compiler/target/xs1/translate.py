@@ -224,7 +224,7 @@ class TranslateXS1(NodeWalker):
   
   # Variable declarations ===============================
 
-  def decl(self, node):
+  def decl(self, node, chans):
     if node.type == T_VAR_ARRAY:
       return 'int {}[{}];'.format(node.name, self.expr(node.expr))
     elif node.type == T_REF_ARRAY:
@@ -234,6 +234,13 @@ class TranslateXS1(NodeWalker):
     elif node.type == T_VAL_SINGLE:
       return '#define {} ({})'.format(node.name, self.expr(node.expr))
     elif node.type == T_CHANEND_SINGLE:
+      chans[node.name] = defs.CONNECT_MASTER
+      return 'unsigned '+node.name+';'
+    elif node.type == T_CHANEND_SERVER_SINGLE:
+      chans[node.name] = defs.CONNECT_SERVER
+      return 'unsigned '+node.name+';'
+    elif node.type == T_CHANEND_CLIENT_SINGLE:
+      chans[node.name] = defs.CONNECT_CLIENT
       return 'unsigned '+node.name+';'
     else:
       assert 0
@@ -258,9 +265,10 @@ class TranslateXS1(NodeWalker):
     self.out(s)
     
     if node.stmt:
+      chans = {}
       self.blocker.begin()
-      [self.out(self.decl(x)) for x in node.decls]
-      self.stmt_block(node.stmt, {})
+      [self.out(self.decl(x, chans)) for x in node.decls]
+      self.stmt_block(node.stmt, chans)
       self.blocker.end()
     
     self.out('')
@@ -275,6 +283,10 @@ class TranslateXS1(NodeWalker):
     elif node.type == T_REF_ARRAY:
       return 'unsigned '+node.name
     elif node.type == T_CHANEND_SINGLE:
+      return 'unsigned '+node.name
+    elif node.type == T_CHANEND_SERVER_SINGLE:
+      return 'unsigned '+node.name
+    elif node.type == T_CHANEND_CLIENT_SINGLE:
       return 'unsigned '+node.name
     else:
       assert 0
@@ -293,10 +305,6 @@ class TranslateXS1(NodeWalker):
 
   def stmt_par(self, node, chans):
     gen_par(self, node, chans)
-
-  def stmt_pcall(self, node, chans):
-    self.out('{}({});'.format(
-      self.procedure_name(node.name), self.arguments(node.args)))
 
   def stmt_ass(self, node, chans):
   
@@ -411,22 +419,18 @@ class TranslateXS1(NodeWalker):
     if node.type == defs.CONNECT_MASTER:
       self.out('{} = {}({}, {});'.format(self.elem(node.left), 
         defs.LABEL_CONNECT_MASTER, self.expr(node.id), self.expr(node.expr)))
-      chans[node.left.name] = defs.CONNECT_MASTER
     
     elif node.type == defs.CONNECT_SLAVE:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_SLAVE, self.expr(node.id), self.expr(node.expr)))
-      chans[node.left.name] = defs.CONNECT_SLAVE
     
     elif node.type == defs.CONNECT_SERVER:
       self.out('{} = {}({});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_SERVER, self.expr(node.id)))
-      chans[node.left.name] = defs.CONNECT_SERVER
     
     elif node.type == defs.CONNECT_CLIENT:
       self.out('{} = {}({}, {});'.format(self.elem(node.left),
         defs.LABEL_CONNECT_CLIENT, self.expr(node.id), self.expr(node.expr)))
-      chans[node.left.name] = defs.CONNECT_CLIENT
     
     else:
       assert 0
@@ -450,6 +454,10 @@ class TranslateXS1(NodeWalker):
 
   def stmt_on(self, node, chans):
     gen_on(self, node, chans)
+
+  def stmt_pcall(self, node, chans):
+    self.out('{}({});'.format(
+      self.procedure_name(node.name), self.arguments(node.args)))
 
   def stmt_assert(self, node, chans):
     self.out('ASSERT({});'.format(self.expr(node.expr)))

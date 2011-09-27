@@ -151,6 +151,16 @@ class Parser(object):
     'var_decl : CHANEND name'
     p[0] = ast.Decl(p[2], T_CHANEND_SINGLE, None, self.coord(p))
 
+  # Single server channel declaration
+  def p_var_decl_chanend_server(self, p):
+    'var_decl : SERVER CHANEND name'
+    p[0] = ast.Decl(p[2], T_CHANEND_SERVER_SINGLE, None, self.coord(p))
+
+  # Single client channel declaration
+  def p_var_decl_chanend_client(self, p):
+    'var_decl : CLIENT CHANEND name'
+    p[0] = ast.Decl(p[2], T_CHANEND_CLIENT_SINGLE, None, self.coord(p))
+
   # Single value declaration
   def p_var_decl_val(self, p):
     'var_decl : VAL name ASS expr'

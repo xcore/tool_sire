@@ -85,7 +85,8 @@ class TransformPar(NodeWalker):
     #[print(y.out) for y in succ.pred]
     
     free = FreeVars().allvars(stmt) 
-    live = (stmt.inp | (stmt.inp & out)) & free
+    #live = (stmt.inp | (stmt.inp & out)) & free
+    live = (stmt.inp | out) & free
     local_decls = free - live
     #print('Free: {}'.format(free))
     #print('Live-in: {}'.format(stmt.inp))
@@ -162,6 +163,12 @@ class TransformPar(NodeWalker):
       
       elif x.symbol.type == T_CHANEND_SINGLE:
         decls.append(ast.Decl(x.name, T_CHANEND_SINGLE, None))
+
+      elif x.symbol.type == T_CHANEND_SERVER_SINGLE:
+        decls.append(ast.Decl(x.name, T_CHANEND_SERVER_SINGLE, None))
+
+      elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
+        decls.append(ast.Decl(x.name, T_CHANEND_CLIENT_SINGLE, None))
 
       else:
         assert 0

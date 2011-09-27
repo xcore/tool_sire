@@ -41,7 +41,7 @@ class DisplayConns(NodeWalker):
   def aggregate(self, chans, tab):
     """
     Iterate over ChanElemSets and aggregate the expanded channels with their
-    locations by locaiton into the 'd' array.
+    locations by location into the 'd' array.
     """
     for x in chans:
       for y in x.elems:
