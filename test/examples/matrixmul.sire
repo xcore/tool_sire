@@ -46,6 +46,10 @@ proc align(chanend c[X]) is
   var j;
   par i in [0 for R-1], j in [0 for R-1] do
     subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
+ 
+
+  par i in [0 for R], j in [0 for R] do
+    subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
 }
 
 proc submul(val i, val j, chanend n, chanend s, chanend e, chanend w) is
