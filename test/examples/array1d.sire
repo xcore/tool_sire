@@ -1,20 +1,22 @@
-val N := NUM_CORES-1;
-  
-proc master_(chanend begin, chanend end) is
-  var v;
-{ begin ! 0; 
-  end ? v;
-  assert v = N 
-}
+val N:=2;
 
-proc node_(chanend left, chanend right) is
+proc foo(val i, chanend a, chanend b) is
   var v;
-{ left ? v ; right ! v + 1 }
+{ if i = 0 
+  then
+  { b ! 1; 
+    a ? v;
+    assert v = 2
+  }
+  else
+  { a ? v; 
+    b ! v+1;
+  }
+}
 
 proc main() is
+  chan c[N];
   var i;
-  chan c[N+1];
-{ master_(c[0], c[N]) || 
-  par i in [0 for N] do node_(c[i], c[i+1])
-}
+  par i in [0 for N] do
+    foo(i, c[i], c[(i+1) rem N])
 

@@ -1,31 +1,47 @@
-val N := 3;
-val M := N + 1;
+val N:=2;
 
-proc src_sink(chanend input, chanend output) is
+proc foo(val i, val j, chanend lf, chanend rt, chanend up, chanend dn) is 
+  var u;
   var v;
-{ input ! 0;
-  output ? v;
-  assert v = N 
-}
-
-proc cell(chanend n, chanend s, chanend w, chanend e) is
-  var nin;
-  var win;
-{ n ? nin;
-  w ? win;
-  s ! nin + 1;
-  e ! win + 1
+{ if i = 0 and j = 0
+  then
+  { rt ! 1;
+    dn ! 1;
+    lf ? u;
+    up ? v;
+    assert u = N;
+    assert v = N
+  }
+  else if i = 0
+  then
+  { rt ! 1;
+    up ? u;
+    dn ! u + 1;
+    lf ? v;
+    assert v = N
+  }
+  else if j = 0
+  then
+  { dn ! 1;
+    lf ? u;
+    rt ! u + 1;
+    up ? v;
+    assert v = N
+  }
+  else
+  { lf ? u;
+    up ? v;
+    dn ! v + 1;
+    rt ! u + 1
+  }
 }
 
 proc main() is
-  chan y[N*(N+1)];
-  chan x[N*(N+1)];
+  chan x[N*N];
+  chan y[N*N];
   var i;
   var j;
-{ par i in [0 for N] do src_sink(y[i*M], y[(i*M)+N]) ||
-  par i in [0 for N] do src_sink(x[i*M], x[(i*M)+N]) ||
-  par i in [0 for N], j in [0 for N] do
-    cell(y[(i*M)+j], y[(i*M)+j+1],
-         x[(j*M)+i], x[(j*M)+i+1]) 
-}
+  par i in [0 for N], j in [0 for N] do 
+    foo(i, j, x[(i*N)+j], x[(i*N)+((j+1) rem N)],
+              y[(j*N)+i], y[(j*N)+((i+1) rem N)])
 

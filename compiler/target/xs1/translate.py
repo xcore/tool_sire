@@ -283,11 +283,11 @@ class TranslateXS1(NodeWalker):
     elif node.type == T_REF_ARRAY:
       return 'unsigned '+node.name
     elif node.type == T_CHANEND_SINGLE:
-      return 'unsigned '+node.name
+      return 'unsigned &'+node.name
     elif node.type == T_CHANEND_SERVER_SINGLE:
-      return 'unsigned '+node.name
+      return 'unsigned &'+node.name
     elif node.type == T_CHANEND_CLIENT_SINGLE:
-      return 'unsigned '+node.name
+      return 'unsigned &'+node.name
     else:
       assert 0
 
