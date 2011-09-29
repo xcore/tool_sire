@@ -210,7 +210,7 @@ class TranslateXS1(NodeWalker):
     self.builtins()
     
     # Declarations
-    [self.out(self.decl(x)) for x in node.decls]
+    [self.out(self.decl(x, {})) for x in node.decls]
     if len(node.decls) > 0:
       self.out('')
      

@@ -146,7 +146,7 @@ class TransformRep(NodeWalker):
 
     # The context of the procedure call is each variable occurance in the
     # set of arguments.
-    context = FreeVars().allvars(pcall)
+    context = FreeVars().compute(pcall)
     
     assert not stmt.m == None
     #assert not stmt.f == None

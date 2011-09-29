@@ -14,6 +14,9 @@ class BuildCFG(NodeWalker):
      def, in and out sets for liveness analysis.
    - For expressions return a set of used variable elements.
 
+  Successor lists are ordered, the first elemen will be be a 'forwards' flow
+  anf the second a 'backwards' one such as a look branch.
+
   Each statement returns a list of statements which exit it. For non-compound
   statements this is just the statement itself, for compound statements such as
   if, this is the 'then' and 'else' statements. These lists are then given as
@@ -49,7 +52,12 @@ class BuildCFG(NodeWalker):
     is the entire procedure.
     """
     if node.stmt:
-      node.pred = self.stmt(node.stmt, [], [])
+      # Add a dummy 'skip' statement following a definition to kill any
+      # live-out variables in the last statement. This will occur only with a
+      # while or for loop.
+      dummy = ast.StmtSkip()
+      self.init_sets(dummy, [node.stmt], [])
+      node.pred = self.stmt(node.stmt, [], [dummy])
 
     # Display the successors of each node
     if self.debug:
@@ -115,7 +123,7 @@ class BuildCFG(NodeWalker):
   def stmt_while(self, node, pred, succ):
     self.init_sets(node, pred, [node.stmt])
     node.use |= self.expr(node.cond)
-    p = self.stmt(node.stmt, [node], [node]+succ)
+    p = self.stmt(node.stmt, [node], succ+[node]) # Ordered succ
     return [node] + p
 
   def stmt_for(self, node, pred, succ):
@@ -123,7 +131,7 @@ class BuildCFG(NodeWalker):
     node.defs |= set([node.index])
     node.use |= self.expr(node.index.base)
     node.use |= self.expr(node.index.count)
-    p = self.stmt(node.stmt, [node], [node]+succ)
+    p = self.stmt(node.stmt, [node], succ+[node]) # Ordered succ
     return [node] + p
 
   # Statements not containing statements

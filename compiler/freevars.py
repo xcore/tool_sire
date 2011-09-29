@@ -16,13 +16,13 @@ class FreeVars(NodeWalker):
   def __init__(self):
     pass
 
-  def allvars(self, node):
+  def compute(self, node):
     self.collect = 'all'
     return self.stmt(node)
 
-  def defs(self, node):
-    self.collect = 'defs'
-    return self.stmt(node)
+  #def defs(self, node):
+  #  self.collect = 'defs'
+  #  return self.stmt(node)
 
   # Statements ==========================================
 

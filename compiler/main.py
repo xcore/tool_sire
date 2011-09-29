@@ -269,7 +269,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 10. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
   TransformPar(sem, sig).walk_program(ast)
-  
+ 
   # 11. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
   TransformRep(sym, sem, sig, device).walk_program(ast)

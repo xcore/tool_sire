@@ -16,14 +16,16 @@ from evalexpr import EvalExpr
 from printer import Printer
 
 elem_types = {
-  'elem_sub'     : None,
-  'elem_id'      : None,
-  'elem_group'   : None,
-  'elem_fcall'   : T_VAR_SINGLE,
-  'elem_string'  : T_VAR_ARRAY,
-  'elem_number'  : T_VAL_SINGLE,
-  'elem_boolean' : T_VAL_SINGLE,
-  'elem_char'    : T_VAL_SINGLE,
+  'elem_id'          : None,
+  'elem_sub'         : None,
+  'elem_slice'       : None,
+  'elem_index_range' : None,
+  'elem_group'       : None,
+  'elem_fcall'       : T_VAR_SINGLE,
+  'elem_number'      : T_VAL_SINGLE,
+  'elem_boolean'     : T_VAL_SINGLE,
+  'elem_string'      : T_VAR_ARRAY,
+  'elem_char'        : T_VAL_SINGLE,
   }
 
 # Valid actual parameter types that can be taken by each formal type.

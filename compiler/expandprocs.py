@@ -44,7 +44,7 @@ class ExpandProcs(NodeWalker):
       # Rename actual parameters for ocurrances of formals
       for (x, y) in zip(defn.formals, stmt.args):
         if x.type == T_VAL_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), ast.ElemGroup(y)))
+          proc.accept(SubElem(ast.ElemId(x.name), y))
         elif x.type == T_REF_SINGLE:
           proc.accept(SubElem(ast.ElemId(x.name), y.elem))
         elif x.type == T_REF_ARRAY:

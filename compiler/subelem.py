@@ -9,8 +9,8 @@ from ast import NodeVisitor
 class SubElem(NodeVisitor):
   """
   Am AST walker to replace a particular element. Replace all instances of
-  'old' element with 'new' element in the list of arguments. Elements are
-  replaced by name.
+  'old' element with 'new' element or expression in the list of arguments.
+  Elements are replaced by name.
   """
   def __init__(self, old, new):
     self.old = old
@@ -18,9 +18,23 @@ class SubElem(NodeVisitor):
     #print('Replacing: {}, with {}'.format(old, new))
 
   def substitute(self, elem):
-    if (isinstance(elem, type(self.old)) 
-        and elem.name == self.old.name):
-      return self.new
+    
+    # If we've found a match
+    if (isinstance(elem, type(self.old)) and elem.name == self.old.name):
+          
+      # If new is an ExprSingle replace the element from it
+      if isinstance(self.new, ast.ExprSingle):
+        return self.new.elem
+
+      # If the replacement is any other expression then group it
+      elif isinstance(self.new, ast.Expr):
+        return ast.ElemGroup(self.new)
+
+      # Otherwise it is an element and we replace directly
+      else:
+        assert isinstance(self.new, ast.Elem)
+        return self.new
+    
     else:
       return elem
 

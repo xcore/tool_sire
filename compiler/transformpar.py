@@ -6,6 +6,7 @@
 import copy
 import ast
 from walker import NodeWalker
+from liveout import LiveOut
 from freevars import FreeVars
 from typedefs import *
 from semantics import par_var_to_param
@@ -55,37 +56,36 @@ class TransformPar(NodeWalker):
     self.sig = sig
     self.debug = debug
 
-  def stmt_to_process(self, stmt, succ, indicies=[]):
+  def stmt_to_process(self, stmt, indicies=[]):
     """
     Convert a statement into a process definition.
      - Create the definition node.
      - Create the corresponding Pcall node.
      - Insert the definition into the signature table.
      - Return the tuple (process-def, process-call)
-  
     We pass process definitions recursively up the AST.
 
-    succ is the (single) next statement (or the definiton which has a
-    predecessor list) if there is not.
+    Sets for live-in and local decls (for non-live, non-array targets). We want
+    to add formal parameters for any live-in variable and for any variable that
+    is both live-in and live-out, for a statement s::
 
+      Live-over(s) = (live-in(s) | live-out(s)) & free(s)
+    
+    where | is set union and & is set intersection.
+    
     Also, the index varible (rep_var) of replicator statements must be
     treated as a value and not a variable in its use as a parameter
     (transform replicator stage) and passed-by-reference.
     """
     assert isinstance(stmt, ast.Stmt)
-    # Sets for live-in and local decls (for non-live, non-array targets). We
-    # want to add formal parameters for any live-in variable and for any
-    # variable that is both live-in and live-out:
-    #   Live-over = (live-in | (live-in & live-out)) & free
-    # where | is set union and & is set intersection.
 
-    out = set()
-    [out.update(y.out) for y in succ.pred]
+    #out = set()
+    #[out.update(y.inp) for y in succ.pred]
     #print('Successors: {}'.format(' '.join(['{}'.format(x.pred) for x in succ])))
     #[print(y.out) for y in succ.pred]
     
-    free = FreeVars().allvars(stmt) 
-    #live = (stmt.inp | (stmt.inp & out)) & free
+    out = LiveOut().compute(stmt)
+    free = FreeVars().compute(stmt) 
     live = (stmt.inp | out) & free
     local_decls = free - live
     #print('Free: {}'.format(free))
@@ -201,100 +201,101 @@ class TransformPar(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    return self.stmt(node.stmt, node) if node.stmt else None
+    return self.stmt(node.stmt) if node.stmt else []
   
   # Statements ==========================================
 
-  def stmt_seq(self, node, succ):
-    p = []
-    for (i, x) in enumerate(node.stmt):
-      s = node.stmt[i+1] if i<len(node.stmt)-1 else succ
-      p.extend(self.stmt(x, s)) 
-    return p
+  # Statements with paralellism
 
   # Parallel composition
-  def stmt_par(self, node, succ):
+  def stmt_par(self, node):
     p = []
-    [p.extend(self.stmt(x, succ)) for x in node.stmt]
     # We only need to transform statements [1:].
     for (i, x) in enumerate(node.stmt[1:]):
       if not isinstance(x, ast.StmtPcall):
         if(self.debug):
           print('Transforming par {}'.format(i))
-        (proc, node.stmt[i+1]) = self.stmt_to_process(x, succ)
-        p.insert(0, proc)
-        self.defn(proc).extend(p)
+        (proc, node.stmt[i+1]) = self.stmt_to_process(x)
+        p.append(proc)
+        p += self.stmt(proc.stmt)
     return p
 
   # Server
-  def stmt_server(self, node, succ):
-    p = self.stmt(node.server, succ)
-    p += self.stmt(node.client, succ)
+  def stmt_server(self, node):
+    p = []
+    p += self.stmt(node.server)
     if not isinstance(node.client, ast.StmtPcall):
       if(self.debug):
         print('Transforming server client')
-      (proc, node.client) = self.stmt_to_process(node.client, succ)
-      p.insert(0, proc)
-      self.defn(proc).extend(p)
+      (proc, node.client) = self.stmt_to_process(node.client)
+      p.append(proc)
+      p += self.stmt(proc.stmt)
     return p
 
   # Parallel replication
-  def stmt_rep(self, node, succ):
-    p = self.stmt(node.stmt, succ)
+  def stmt_rep(self, node):
+    p = []
     if not isinstance(node.stmt, ast.StmtPcall):
       if(self.debug):
         print('Transforming rep')
-      (proc, node.stmt) = self.stmt_to_process(node.stmt, succ, node.indicies)
-      p.insert(0, proc)
-      self.defn(proc).extend(p)
+      (proc, node.stmt) = self.stmt_to_process(node.stmt, node.indicies)
+      p.append(proc)
+      p += self.stmt(proc.stmt)
     return p
 
   # On
-  def stmt_on(self, node, succ):
-    p = self.stmt(node.stmt, succ)
+  def stmt_on(self, node):
+    p = []
     if not isinstance(node.stmt, ast.StmtPcall):
       if(self.debug):
         print('Transforming on')
-      (proc, node.stmt) = self.stmt_to_process(node.stmt, succ)
-      p.insert(0, proc)
-      self.defn(proc).extend(p)
+      (proc, node.stmt) = self.stmt_to_process(node.stmt)
+      p.append(proc)
+      p += self.stmt(proc.stmt)
     return p
 
-  def stmt_if(self, node, succ):
-    p = self.stmt(node.thenstmt, succ)
-    p += self.stmt(node.elsestmt, succ)
+  # Regular statements
+
+  def stmt_seq(self, node):
+    p = []
+    [p.extend(self.stmt(x)) for x in node.stmt]
     return p
 
-  def stmt_while(self, node, succ):
-    return self.stmt(node.stmt, succ)
+  def stmt_if(self, node):
+    p = self.stmt(node.thenstmt)
+    p += self.stmt(node.elsestmt)
+    return p
 
-  def stmt_for(self, node, succ):
-    return self.stmt(node.stmt, succ)
+  def stmt_while(self, node):
+    return self.stmt(node.stmt)
 
-  def stmt_skip(self, node, succ):
+  def stmt_for(self, node):
+    return self.stmt(node.stmt)
+
+  def stmt_skip(self, node):
     return []
 
-  def stmt_pcall(self, node, succ):
+  def stmt_pcall(self, node):
     return []
 
-  def stmt_ass(self, node, succ):
+  def stmt_ass(self, node):
     return []
 
-  def stmt_in(self, node, succ):
+  def stmt_in(self, node):
     return []
 
-  def stmt_out(self, node, succ):
+  def stmt_out(self, node):
     return []
 
-  def stmt_alias(self, node, succ):
+  def stmt_alias(self, node):
     return []
 
-  def stmt_connect(self, node, succ):
+  def stmt_connect(self, node):
     return []
 
-  def stmt_assert(self, node, succ):
+  def stmt_assert(self, node):
     return []
 
-  def stmt_return(self, node, succ):
+  def stmt_return(self, node):
     return []
 
