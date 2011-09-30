@@ -1,16 +1,16 @@
-val N:=2;
+val N := 2;
 
-proc foo(val i, chanend a, chanend b) is
+proc foo(val i, chanend l, chanend r) is
   var v;
 { if i = 0 
   then
-  { b ! 1; 
-    a ? v;
-    assert v = 2
+  { r ! 1; 
+    l ? v;
+    assert v = N
   }
   else
-  { a ? v; 
-    b ! v+1;
+  { l ? v; 
+    r ! v + 1
   }
 }
 

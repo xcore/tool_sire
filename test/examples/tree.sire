@@ -1,4 +1,4 @@
-val D := 3;      % Tree depth
+val D := 2;      % Tree depth
 val N := 1 << D; % Number of leaves
 
 % Send a token down, then sum values up.

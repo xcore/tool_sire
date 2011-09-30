@@ -1,38 +1,42 @@
-val N:=2;
+val N := 2;
 
-proc foo(val i, val j, chanend lf, chanend rt, chanend up, chanend dn) is 
+proc foo(val i, val j, chanend n, chanend s, chanend w, chanend e) is 
   var u;
   var v;
-{ if i = 0 and j = 0
+{ % Top left
+  if (i = 0) and (j = 0)
   then
-  { rt ! 1;
-    dn ! 1;
-    lf ? u;
-    up ? v;
+  { s ! 1;
+    e ! 1;
+    n ? u;
+    w ? v;
     assert u = N;
     assert v = N
   }
+  % Row 0
   else if i = 0
   then
-  { rt ! 1;
-    up ? u;
-    dn ! u + 1;
-    lf ? v;
-    assert v = N
+  { s ! 1;
+    n ? u;
+    w ? v;
+    e ! v + 1;
+    assert u = N
   }
+  % Column 0
   else if j = 0
   then
-  { dn ! 1;
-    lf ? u;
-    rt ! u + 1;
-    up ? v;
-    assert v = N
+  { e ! 1;
+    w ? u;
+    n ? v;
+    s ! v + 1;
+    assert u = N
   }
+  % Everything else
   else
-  { lf ? u;
-    up ? v;
-    dn ! v + 1;
-    rt ! u + 1
+  { n ? u;
+    w ? v;
+    s ! u + 1;
+    e ! v + 1
   }
 }
 
@@ -42,6 +46,6 @@ proc main() is
   var i;
   var j;
   par i in [0 for N], j in [0 for N] do 
-    foo(i, j, x[(i*N)+j], x[(i*N)+((j+1) rem N)],
-              y[(j*N)+i], y[(j*N)+((i+1) rem N)])
+    foo(i, j, y[(j*N)+i], y[(j*N)+((i+1) rem N)],
+              x[(i*N)+j], x[(i*N)+((j+1) rem N)])
 

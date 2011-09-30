@@ -210,11 +210,12 @@ class TransformPar(NodeWalker):
   # Parallel composition
   def stmt_par(self, node):
     p = []
+    p += self.stmt(node.stmt[0])
     # We only need to transform statements [1:].
     for (i, x) in enumerate(node.stmt[1:]):
       if not isinstance(x, ast.StmtPcall):
         if(self.debug):
-          print('Transforming par {}'.format(i))
+          print('Transforming par {} from {}'.format(i, x))
         (proc, node.stmt[i+1]) = self.stmt_to_process(x)
         p.append(proc)
         p += self.stmt(proc.stmt)

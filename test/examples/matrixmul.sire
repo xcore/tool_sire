@@ -1,11 +1,15 @@
 % An implementation of Cannon's algorithm for matrix multiplication.
+% Notation: 
+%  - (i, j) denotes (row, col)
+%  - A, B, C and N*N matrices
+%  - Matrices are distributed with submatrices of size (N/R)^2
 
 val N := 4; % Dimension of square matrix
 val R := 2; % Num partitions per dimension
 val X := R*R
 val S := (N/R)*(N/R)
 
-proc submatrix(chanend c) is
+proc submatrices(chanend c) is
   var A[S];
   var B[S];
   var C[S];
@@ -15,72 +19,150 @@ proc submatrix(chanend c) is
   for i in [0 for S] do C[i] := 0;
 }
 
+% A process representing the matrices
+proc matrices(chanend c[N]) is
+  var i;
+  par i in [0 for X] do
+    submatrices(c[i])
+
+% Populate A and B with random values
 proc load(chanend c[X]) is
   var i;
   var j;
   var k;
-{ 
-  for i in [0 for 2] do
+{ for i in [0 for 2] do
     for j in [0 for N] do
       for k in [0 for N] do
         c ! rand();
 }
 
-proc subalign(val i, val j, chanend n, chanend s, chanend e, chanend w) is
-{ if i > 0 then
-    % w ! A_{i,j} ; e ? A_{i,j+1 rem R}
-  else skip
-  if j > 0 then
-    % n ! A_{i,j} ; s ? A_{i+1 rem R,j}
-  else skip
+proc read_submatrix(chanend c, var M[S]) is
+  var i;
+  for i in [0 for S] do
+    skip
+
+proc write_submatrix(chanend c, var M[S]) is
+  var i;
+  for i in [0 for S] do
+    skip
+
+proc send_submatrix(chanend c, var M[S]) is
+  var i;
+  for i in [0 for S] do c ! M[i]
+
+proc recv_submatrix(chanend c, var M[S]) is
+  var i;
+  for i in [0 for S] do c ? M[i]
+
+% Circularly shift west each matrix A_{i,j} by i columns
+proc subalign_cols(val i, val j, chanend c, chanend e, chanend w) is
+  var A[S];
+  var k;
+{ read_matrix(c, A);
+  for k in [0 for i] do
+    if j = 0
+    then
+    { send_submatrix(w, A);
+      recv_submatrix(e, A)
+    }
+    else
+    { recv_submatrix(e, A);
+      send_submatrix(w, A)
+    }
+  write_submatrix(c, A)
 }
 
-proc subalign(val i, val j, chanend n, chanend s, chanend e, chanend w) is
-{
+% Circularly shift north each matrix B_{i,j} by j rows
+proc subalign_rows(val i, val j, chanend c, chanend n, chanend s) is
+  var B[S];
+  var k;
+{ read_matrix(c, B);
+  for k in [0 for j] do
+    if i = 0
+    then
+    { send_submatrix(s, B);
+      recv_submatrix(n, B)
+    }
+    else
+    { recv_submatrix(n, B);
+      send_submatrix(s, B)
+    };
+  write_submatrix(c, B)
 }
 
-proc align(chanend c[X]) is
+proc align_cols(chanend c[X]) is
   chan x[X];
+  var i;
+  var j;
+  par i in [0 for R], j in [0 for R] do
+    subalign_cols(i, j, c[(i*R)+j], 
+        x[(i*R)+j], x[(i*R)+((j+1) rem R)])
+}
+
+proc align_rows(chanend c[X]) is
   chan y[X];
   var i;
   var j;
-  par i in [0 for R-1], j in [0 for R-1] do
-    subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
- 
-
   par i in [0 for R], j in [0 for R] do
-    subalign(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
+    subalign_rows(i, j, c[(i*R)+j], 
+        y[(j*R)+i], y[(j*R)+((i+1) rem R)])
 }
 
 proc submul(val i, val j, chanend n, chanend s, chanend e, chanend w) is
-{
+  var k;
+{ for k in [0 for R] do
+    if (i = 0) and (j = 0)
+    then
+    { muladd(); % C = C + A*B
+      send_submatrix(s, A);
+      send_submatrix(e, B);
+      recv_submatrix(n, A);
+      recv_submatrix(w, B)
+    }
+    else if i = 0
+    then
+    { muladd(); % C = C + A*B
+      send_submatrix(s, A);
+      recv_submatrix(n, A);
+      recv_submatrix(w, B);
+      send_submatrix(s, B)
+    }
+    else if j = 0
+    then
+    { muladd(); % C = C + A*B
+      send_submatrix(e, B);
+      recv_submatrix(w, B);
+      recv_submatrix(n, A);
+      send_submatrix(s, A)
+    }
+    else
+    { muladd(); % C = C + A*B
+      recv_submatrix(n, A);
+      recv_submatrix(w, B);
+      send_submatrix(s, A);
+      send_submatrix(e, B)
+    }
 }
 
+% Compute C_{i,j}=A_{i,j}*B_{i,j}+C_{i,j}, then circularly shift left A_{i,j} 
+% and north B_{i,j} by one.
 proc multiply(chanend c[X]) is
   chan x[X];
   chan y[X];
   var i;
   var j;
-{ par i in [0 for R] do submul(0, i) ||
-  par i in [1 for R-1] do submul(i, 0) ||
-  par i in [0 for R-1], j in [0 for R-1] do
-    submul(i, j, y[j], y[j+1 rem R], x[i], x[i+1 rem R])
-}
-
-proc output(chanend c[X]) is
-{
+{ par i in [0 for R], j in [0 for R] do
+    submul(i, j, y[(j*R)+i], y[(j*R)+((i+1) rem R)], 
+                 x[(i*R)+j], x[(i*R)+((j+1) rem R)])
 }
 
 proc main() is
   var i;
 { server (chan c[X])
-  { par i in [0 for X] do
-      submatrix(c[i])
-  }
+  matrices(c) 
   { load(c);
-    align_ns(c);
-    align_ew(c);
-    shiftmuladd(c);
-    output(c)
+    align_row(c);
+    align_col(c);
+    multiply(c);
   }
 }
