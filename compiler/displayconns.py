@@ -10,27 +10,29 @@ class DisplayConns(NodeWalker):
   Display channel connections per-core.
   """
   class ConnMaster(object):
-    def __init__(self, name, chanend, index, target):
+    def __init__(self, name, chanend, connid, index, target):
       self.name = name
       self.chanend = chanend
+      self.connid = connid
       self.index = index
       self.target = target
 
     def __repr__(self):
-      return 'connect {} ({}{}) to {}'.format(self.chanend, self.name, 
-          '[{}]'.format(self.index) if self.index!=None else '', 
+      return 'connect {}:{} ({}{}) to {}'.format(self.chanend, self.connid, 
+          self.name, '[{}]'.format(self.index) if self.index!=None else '', 
           self.target)
 
   class ConnSlave(object):
-    def __init__(self, name, chanend, index, origin):
+    def __init__(self, name, chanend, connid, index, origin):
       self.name = name
       self.chanend = chanend
+      self.connid = connid
       self.index = index
       self.origin = origin
 
     def __repr__(self):
-      return 'connect {} ({}{}) from {}'.format(self.chanend, self.name, 
-          '[{}]'.format(self.index) if self.index!=None else '', 
+      return 'connect {}:{} ({}{}) from {}'.format(self.chanend, self.connid, 
+          self.name, '[{}]'.format(self.index) if self.index!=None else '', 
           self.origin)
 
   def __init__(self, device):
@@ -46,14 +48,15 @@ class DisplayConns(NodeWalker):
     for x in chans:
       for y in x.elems:
         master = tab.is_master(x.name, y.index, y.location)
+        connid = tab.lookup(x.name, y.index).connid
         if master:
           slave_loc = tab.lookup_slave_location(x.name, y.index)
           self.d[y.location].append(self.ConnMaster(
-            x.name, x.chanend, y.index, slave_loc))
+            x.name, x.chanend, connid, y.index, slave_loc))
         else:
           master_loc = tab.lookup_master_location(x.name, y.index)
           self.d[y.location].append(self.ConnSlave(
-            x.name, x.chanend, y.index, master_loc))
+            x.name, x.chanend, connid, y.index, master_loc))
  
   def display(self):
     for (i, x) in enumerate(self.d):

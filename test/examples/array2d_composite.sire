@@ -1,4 +1,4 @@
-val N := 1;
+val N := 2;
 val M := N + 1;
 
 proc src_sink(chanend input, chanend output) is

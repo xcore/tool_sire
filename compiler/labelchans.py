@@ -37,17 +37,17 @@ class LabelChans(NodeWalker):
     if self.print_debug:
       print(s)
   
-  def single_channel(self, tab, stmt, name):
+  def single_channel(self, tab, stmt, name, chan_set):
     """
     Process a single (non-subscripted) channel use by evaluating its location
     and then adding it to the channel table and returning it as an element. 
     """
     location_value = EvalExpr().expr(stmt.location)
-    tab.insert(name, None, location_value)
+    tab.insert(name, None, location_value, chan_set)
     self.debug('  {} at {}'.format(name, location_value))
     return ChanElem(None, location_value, None, None)
 
-  def subscript_channel(self, indicies, tab, stmt, name, expr):
+  def subscript_channel(self, indicies, tab, stmt, name, expr, chan_set):
     """
     Expand the use of a channel subscript over a set of iterators and determine
     for each the value of its index and location, and then add this to the
@@ -77,9 +77,9 @@ class LabelChans(NodeWalker):
       location_value = EvalExpr().expr(location_expr)
 
       # Add to the table
-      tab.insert(name, index_value, location_value)
+      tab.insert(name, index_value, location_value, chan_set)
 
-      # Add the expanded channel use (name, index) to a list
+      # Add the expanded channel use to a list
       chan_elems.append(ChanElem(index_value, location_value, 
           indicies, index_values))
 
@@ -94,30 +94,29 @@ class LabelChans(NodeWalker):
     chans = []
     for x in chan_uses.uses:
       if x.expr == None:
-        elems = [self.single_channel(tab, stmt, x.name)]
-        chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies,
-          chanend))
+        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, tab.new_chanend())
+        chan_set.elems = [self.single_channel(tab, stmt, x.name, chan_set)]
+        chans.append(chan_set)
       else:
-        elems = self.subscript_channel(indicies, tab, stmt, x.name, x.expr)
-        chanend = tab.new_chanend()
-        chans.append(ChanElemSet(x.name, x.expr, x.symbol, elems, indicies,
-          chanend))
+        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, tab.new_chanend())
+        chan_set.elems = self.subscript_channel(indicies, tab, stmt, 
+            x.name, x.expr, chan_set)
+        chans.append(chan_set)
 
     # Sort them by chanend
     chans = sorted(chans, key=lambda x: x.chanend)
     return chans
   
-  def check_chan(self, name, index, locations):
+  def check_chan(self, name, index, chan_elem):
     """
-    Check each entry in the table is valid: contains both master and one slave
-    location.
+    Check each ChanItem entry in the table is valid: contains both master and 
+    one slave location. 
     """
     #print('Checking chan '+name+' {}'.format(index))
     c = '{}{}'.format(name, '' if index==None else '[{}]'.format(index) )
-    if not locations:
+    if not chan_elem.locations:
       self.errorlog.report_warning('channel '+c+' is not used')
-    elif len(locations) == 1:
+    elif len(chan_elem.locations) == 1:
       self.errorlog.report_error('channel '+c+' has no slave connection')
     # NOTE: this is valid with server connections
     #elif len(locations) > 2:
@@ -305,15 +304,23 @@ class LabelChans(NodeWalker):
     return ChanUseSet()
 
 
-MASTER = 0
-SLAVE  = 1
-
 class ChanTable(object):
   """
   A table to record the location of channel ends and their names. Each key maps
   to list of locations where the first location is that of the master, and a 
   unique identifier for the specific connection instance.
   """
+  
+  class ChanItem(object):
+    def __init__(self):
+      self.connid = None
+      self.locations = []
+      self.chan_sets = []
+    
+    def __repr__(self):
+      return 'locations: {}'.format(
+          ', '.join(['{}'.format(x) for x in self.locations]))
+
   def __init__(self, name):
     self.name = name
     self.tab = {}
@@ -325,14 +332,17 @@ class ChanTable(object):
     """
     return '{}{}'.format(name, '' if index==None else index)
 
-  def insert(self, name, index, location):
+  def insert(self, name, index, location, chan_set):
     """
-    Add a channel element with an index and location to the table.
+    Add a channel element with a particular index into the table recording the
+    location and the ChanElemSet it is a member of (this is necessary for
+    performing colouring to assign connection ids).
     """
     key = self.key(name, index)
     if not key in self.tab:
-      self.tab[key] = []
-    self.tab[key].append(location)
+      self.tab[key] = self.ChanItem()
+    self.tab[key].locations.append(location)
+    self.tab[key].chan_sets.append(chan_set)
     #print('inserted '+name+'[{}] @ {}'.format(index, location))
 
   def lookup(self, name, index):
@@ -340,32 +350,31 @@ class ChanTable(object):
     Lookup a channel's master and slave location.
     """
     key = self.key(name, index)
-    if not key in self.tab:
-      return None
-    return self.tab[key]
+    return self.tab[key] if key in self.tab else None
 
   def lookup_master_location(self, name, index):
     key = self.key(name, index)
     if key in self.tab:
-      return self.tab[key][MASTER]
+      return self.tab[key].locations[0]
     return None
 
   def lookup_slave_location(self, name, index):
     key = self.key(name, index)
     if key in self.tab:
-      return self.tab[key][SLAVE]
+      return self.tab[key].locations[1]
+    return None
+
+  def lookup_chanset(self, name, index, master):
+    key = self.key(name, index)
+    if key in self.tab:
+      return self.tab[key].chan_sets[0 if master else 1]
     return None
 
   def is_master(self, name, index, location):
     key = self.key(name, index)
     if key in self.tab:
-      return self.tab[key][MASTER] == location
+      return self.tab[key].locations[0] == location
     return None
-
-  def swap(self, name, index):
-    key = self.key(name, index)
-    if key in self.tab:
-      self.tab[key].reverse()
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -375,8 +384,7 @@ class ChanTable(object):
   def display(self):
     print('Channel table for procedure '+self.name+':')
     for x in self.tab.keys():
-      print('  {} has {}'.format(x, ', '.join(
-        ['{}'.format(y) for y in self.tab[x]])))
+      print('  channel {} is {}'.format(x, self.tab[x]))
 
 
 # These classes represent uses of channels as they occur in the program
@@ -447,11 +455,12 @@ class ChanElemSet(object):
    - The iterators used in the subscript.
    - The name of the channel end associated with this subscript.
   """
-  def __init__(self, name, expr, symbol, elems, indicies, chanend):
+  def __init__(self, name, expr, symbol, indicies, chanend):
     self.name = name
     self.expr = expr
     self.symbol = symbol
-    self.elems = elems
     self.indicies = indicies
     self.chanend = chanend
+    self.elems = None
+    self.connid = None
 
