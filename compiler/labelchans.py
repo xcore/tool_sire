@@ -144,7 +144,8 @@ class LabelChans(NodeWalker):
         node.chanids[x.name] = len(node.chanids)
       elif x.type == T_CHAN_ARRAY:
         for y in range(x.symbol.value):
-          self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
+          if node.chantab.contains(x.name, y): 
+            self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
         node.chanids[x.name] = len(node.chanids)
       else:
         pass
@@ -345,11 +346,18 @@ class ChanTable(object):
     self.tab[key].chan_sets.append(chan_set)
     #print('inserted '+name+'[{}] @ {}'.format(index, location))
 
+  def contains(self, name, index):
+    """
+    Check if the table contains a channel element.
+    """
+    return self.key(name, index) in self.tab
+
   def lookup(self, name, index):
     """
     Lookup a channel's master and slave location.
     """
     key = self.key(name, index)
+    assert key in self.tab
     return self.tab[key] if key in self.tab else None
 
   def lookup_master_location(self, name, index):

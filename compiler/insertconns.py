@@ -283,16 +283,15 @@ class InsertConns(NodeWalker):
 
   def stmt_server(self, node, tab, decls):
     self.debug('[server connections]:')
-    node.chanids.update(chanids)
     self.stmt(node.server, tab, node.decls)
-    node.server = self.insert_connections(tab, node.node.server,
+    node.server = self.insert_connections(tab, node.server,
         node.chans[0])
     decls += self.create_decls(node.chans[0])
     if self.print_debug:
       self.display_chans(node.chans[0])
     self.debug('[client connections]:')
     self.stmt(node.client, tab, node.decls)
-    node.client = self.insert_connections(tab, node.node.client,
+    node.client = self.insert_connections(tab, node.client,
         node.chans[1])
     decls += self.create_decls(node.chans[1])
     if self.print_debug:

@@ -1,18 +1,44 @@
 val D := 4;
 val N := 1 << D;
 
-proc master_(chanend d0, chanend d1, chanend d2, chanend d3) is
-  skip
+proc master_(val i, chanend d0, chanend d1, chanend d2, chanend d3) is
+  var v;
+{ if i > (i xor 1)
+  then d0 ! 0
+  else d0 ? v;
+  if i > (i xor 2)
+  then d1 ! 0
+  else d1 ? v;
+  if i > (i xor 4)
+  then d2 ! 0
+  else d2 ? v;
+  if i > (i xor 8)
+  then d3 ! 0
+  else d3 ? v
+}
 
-proc slave_(chanend d0, chanend d1, chanend d2, chanend d4) is
-  skip
+proc slave_(val i, chanend d0, chanend d1, chanend d2, chanend d3) is
+  var v;
+{ if i > (i xor 1)
+  then d0 ! 0
+  else d0 ? v;
+  if i > (i xor 2)
+  then d1 ! 0
+  else d1 ? v;
+  if i > (i xor 4)
+  then d2 ! 0
+  else d2 ? v;
+  if i > (i xor 8)
+  then d3 ! 0
+  else d3 ? v
+}
 
 proc main() is
   var i;
   chan c[N*D];
-{ master_(c[0], c[1], c[2], c[3]) ||
+{ master_(0, c[0], c[1], c[2], c[3]) ||
   par i in [1 for N-1] do
-    slave_(
+    slave_(i,
       c[(((i xor 1) xor ((i xor (i xor 1)) and (-(i < (i xor 1)))))*D) + 0], 
       c[(((i xor 2) xor ((i xor (i xor 2)) and (-(i < (i xor 2)))))*D) + 1], 
       c[(((i xor 4) xor ((i xor (i xor 4)) and (-(i < (i xor 4)))))*D) + 2], 

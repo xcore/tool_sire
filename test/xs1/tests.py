@@ -57,7 +57,6 @@ xs1_example_tests = [
   Test('tree',              [16], p=[('D','2')]),
   Test('cube2d',            [4]),
   Test('cube3d',            [16]),
-  Test('cube4d',            [64]),
 
   # These exceed 8 threads on some nodes.
   #Test('array2d',           [16], p=[('N','4')]),
@@ -66,6 +65,7 @@ xs1_example_tests = [
   #Test('tree',              [16], p=[('D','3')]), 
   #Test('tree',              [64], p=[('D','4')]), 
   #Test('tree',              [64], p=[('D','5')]), 
+  #Test('cube4d',            [64]),
   ]
   
 # Features =====================================================
