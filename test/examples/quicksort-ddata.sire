@@ -1,0 +1,215 @@
+val LENGTH := 1000;
+val STORAGE := 100;
+val N := LENGTH/STORAGE;
+val READ := 0;
+val WRITE := 1;
+
+proc leaf(val i, chanend c) is
+  var base;
+  var data[STORAGE];
+  var query;
+  var i;
+  var v;
+{ % Ignore configuration messages
+  c ? v;
+  c ? base;
+  c ? v;
+
+  % Run
+  while true do
+  { c ? query;
+    if query = READ
+    then
+    { c ? i;
+      c ! data[i-base]
+    }
+    else
+    { c ? i;
+      c ? v;
+      data[i-base] := v
+    }
+  }
+}
+
+proc branch(chanend root, chanend left, chanend right) is
+  var depth;
+  var base;
+  var interval;
+  var query;
+  var u;
+  var v;
+{ % Configure
+  c ? depth;
+  c ? base;
+  c ? interval;
+  left  ! depth + 1;
+  right ! depth + 1;
+  left  ! base;
+  right ! base + (interval/2);
+  left  ! interval/2;
+  right ! interval/2;
+
+  % Run
+  while true do
+  { c ? query;
+    if query = READ
+    then 
+    { root  ? i;
+      if i < base+(interval/2)
+      then
+      { left ! READ;
+        left ! i;
+        left ? v
+      }
+      else
+      { right ! READ;
+        right ! i;
+        right ? v
+      }
+    }
+    else
+    { root  ? i;
+      root  ? v;
+      if i < base+(interval/2)
+      then
+      { left ! READ;
+        left ! i;
+        left ! v
+      }
+      else
+      { right ! READ;
+        right ! i;
+        right ! v
+      }
+    }
+  }
+}
+
+proc serve(chanend c, chanend root) is
+  var query;
+  var i;
+  var v;
+{ % Configure the structure
+  root ! 0;
+  root ! 0;
+  root ! LENGTH;
+  
+  % Run
+  while true do
+  { c ? query;
+    if query = READ
+    then 
+    { c ? i;
+      root ! READ;
+      root ! i;
+      root ? v;
+      c ! v
+    }
+    else 
+    { c ? i;
+      c ? v;
+      root ! WRITE;
+      root ! i;
+      root ! v;
+    }
+  }
+}
+
+proc array(chanend cin) is
+  chan c[(2*N)-1];
+  var i;
+{ server() 
+    par i in [0 for N] do 
+      leaf(c[(N-1)+i])
+  { serve(cin, c[0]) ||
+    par i in [0 for N-1] do
+      branch(c[i], c[(2*i)+1], c[(2*i)+2])
+  }
+}
+
+proc read(chanend c, val i, var v) is
+{ c ! READ;
+  c ! i;
+  c ? v
+}
+
+proc write(chanend c, val i, val v) is
+{ c ! WRITE
+  c ! i;
+  c ! v
+}
+
+proc partition(chanend r, chanend w, val begin, val end, var pivot) is
+  var storeIndex;
+  var pivot;
+  var pivotValue;
+  var hold;
+  var v;
+  var i;
+{ pivot := (end-begin) / 2;
+  pivotValue := read(c, pivot);
+  storeIndex := pivotValue;
+
+  % Move pivot to end
+  read(r, (end-begin)-1, v);
+  write(w, pivot, v);
+  write(w, (end-begin)-1, pivotValue);
+
+  % Reorder list upto pivot
+  for i in [0 for (end-begin)-1] do
+  { read(r, i, v);
+    if v <= pivotValue
+    then
+    { read(r, i, hold);
+      read(r, storeIndex, v);
+      write(w, i, v);
+      write(w, storeIndex, hold);
+      storeIndex := storeIndex + 1
+    }
+    else skip
+  }
+
+  % Move pivot to final position: swap(storeIndex, pivot)
+  read(r, storeIndex, hold);
+  read(r, (end-begin)-1, v);
+  write(w, storeIndex, v);
+  write(w, (end-begin)-1, hold)
+
+  % Return the new pivot
+  pivot := storeIndex
+}
+
+proc quicksort(chanend c, val begin, val end) is
+  var pivot;
+{ if (end-begin) > 1
+  then
+  { partition(c, begin, end, pivot);
+    quicksort(c, 0, pivot);
+    quicksort(c, pivot+1, end)
+  }
+  else skip
+}
+
+proc initialise(chanend w) is
+  var i;
+  for i in [0 for LENGTH] do
+    write(w, i, LENGTH-(i+1))
+  
+proc dump(chanend r) is
+  var i;
+  var v;
+  for i in [0 for LENGTH] do
+  { read(r, i, v);
+    printvalln(v)
+  }
+
+proc main() is
+{ server(chan r, chanend w)
+    array(r, w)
+  { initialise(w);
+    dump(r)
+    quicksort(r, w);
+    dump(r)
+  }
+}
+
