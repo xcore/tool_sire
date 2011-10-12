@@ -49,6 +49,20 @@ void CHKCT_END(unsigned c) {
   asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
 }
 
+// OUTCT CT_ACK
+inline
+void OUTCT_ACK(unsigned c) {
+  //asm("outct res[%0], 0x5" :: "r"(c));
+  asm("outct res[%0], " S(XS1_CT_ACK) :: "r"(c));
+}
+
+// CHKCT CT_ACK
+inline
+void CHKCT_ACK(unsigned c) {
+  //asm("chkct res[%0], 0x5" :: "r"(c));
+  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
+}
+
 // Asynchronous out
 inline
 void OUT(unsigned c, unsigned v) {

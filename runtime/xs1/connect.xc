@@ -7,12 +7,18 @@
 #define LOCAL_CONNECT_CHAN \
   ((c & 0xFFFF0000) | (GEN_CHAN_RI(0, CONTROL_CONNECT) & 0xFFFF))
 #define COMPLETE(c, cri, v) \
-  { SETD(c, cri); OUT(c, v); OUTCT_END(c); }
+  { SETD(c, cri);\
+    OUT(c, v);\
+    OUTCT_END(c);\
+  }
 #define NONE (-1)
-#define MASTER 0
-#define SLAVE  1
-#define SERVER 2
-#define CLIENT 3 
+
+typedef enum {
+  MASTER = 0,
+  SLAVE = 1,
+  SERVER = 2,
+  CLIENT = 3
+} ReqType;
 
 // Master-slave connection handling
 bool dequeueMasterReq(conn_req &r, int connId, int origin);
@@ -61,10 +67,19 @@ unsigned _connectMaster(int connId, int dest)
 { unsigned c = GETR_CHANEND();
   unsigned destCRI = GEN_CHAN_RI(dest, CONTROL_CONNECT);
   SETD(c, destCRI);
+  
   OUT(c, c);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, MASTER);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, connId);
   OUTCT_END(c);
+  CHKCT_END(c);
+
   destCRI = IN(c);
   CHKCT_END(c);
   SETD(c, destCRI);
@@ -84,12 +99,27 @@ unsigned _connectSlave(int connId, int origin)
 { unsigned c = GETR_CHANEND();
   unsigned destCRI = LOCAL_CONNECT_CHAN;
   SETD(c, destCRI);
+  
   OUT(c, c);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, SLAVE);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, connId);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, origin);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, THREAD_ID());
   OUTCT_END(c);
+  CHKCT_END(c);
+  
   destCRI = IN(c);
   CHKCT_END(c);
   SETD(c, destCRI);
@@ -103,8 +133,15 @@ unsigned _connectServer(int connId)
 { unsigned c = GETR_CHANEND();
   unsigned destCRI = LOCAL_CONNECT_CHAN;
   SETD(c, destCRI);
+  
   OUT(c, c);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, SERVER);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, connId);
   OUTCT_END(c);
   CHKCT_END(c);
@@ -118,10 +155,19 @@ unsigned _connectClient(int connId, int dest)
 { unsigned c = GETR_CHANEND();
   unsigned destCRI = GEN_CHAN_RI(dest, CONTROL_CONNECT);
   SETD(c, destCRI);
+  
   OUT(c, c);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, CLIENT);
+  OUTCT_ACK(c);
+  CHKCT_ACK(c);
+  
   OUT(c, connId);
   OUTCT_END(c);
+  CHKCT_END(c);
+
   destCRI = IN(c);
   CHKCT_END(c);
   SETD(c, destCRI);
@@ -143,20 +189,31 @@ unsigned _connectClient(int connId, int dest)
  *  3. Receive master address (origin)
  *  4. Receive slave CRI
  *  [queue or complete]
+ *
+ * Or a server or client request.
  */
 void serveConnReq()
-{ unsigned chanCRI = IN(conn_master);
+{ ReqType type;
+  unsigned chanCRI = IN(conn_master);
+  CHKCT_ACK(conn_master);
   SETD(conn_master, chanCRI);
+  OUTCT_ACK(conn_master);
   
-  switch (IN(conn_master))
+  type = IN(conn_master);
+  CHKCT_ACK(conn_master);
+  OUTCT_ACK(conn_master);
+  
+  switch (type)
   { default: 
       ASSERT(0); 
       break;
     case MASTER:
-      { int connId = IN(conn_master);
-        int origin = GET_GLOBAL_CORE_ID(chanCRI);
-        conn_req sReq;
+      { conn_req sReq; 
+        int origin;
+        int connId = IN(conn_master);
         CHKCT_END(conn_master);
+        OUTCT_END(conn_master);
+        origin = GET_GLOBAL_CORE_ID(chanCRI);
         if (!dequeueSlaveReq(sReq, connId, origin))
           queueMasterReq(connId, origin, chanCRI);
         else
@@ -166,11 +223,18 @@ void serveConnReq()
       }
       break;
     case SLAVE:
-      { int connId = IN(conn_master);
-        int origin = IN(conn_master);
-        int tid = IN(conn_master);
-        conn_req mReq;
+      { conn_req mReq;
+        int origin;
+        int tid;
+        int connId = IN(conn_master);
+        CHKCT_ACK(conn_master);
+        OUTCT_ACK(conn_master);
+        origin = IN(conn_master);
+        CHKCT_ACK(conn_master);
+        OUTCT_ACK(conn_master);
+        tid = IN(conn_master);
         CHKCT_END(conn_master);
+        OUTCT_END(conn_master);
         if (!dequeueMasterReq(mReq, connId, origin))
           queueSlaveReq(tid, connId, origin, chanCRI);
         else
@@ -180,28 +244,30 @@ void serveConnReq()
       }
       break;
     case SERVER:
-      { int connId = IN(conn_master);
-        conn_req cReq;
-        openConn(connId, chanCRI);
+      { conn_req cReq;
+        int connId = IN(conn_master);
         CHKCT_END(conn_master);
         OUTCT_END(conn_master);
-        while(dequeueClientReq(cReq, connId)) 
-        { OUT(conn_master, cReq.chanCRI);
+        openConn(connId, chanCRI);
+        // Complete each client waiting on this connection id
+        while (dequeueClientReq(cReq, connId)) 
+        { SETD(conn_master, cReq.chanCRI);
+          OUT(conn_master, chanCRI);
           OUTCT_END(conn_master);
         }
       }
       break;
     case CLIENT:
-      { int connId = IN(conn_master);
-        conn_srv cOpen;
+      { conn_srv cOpen;
+        int connId = IN(conn_master);
         CHKCT_END(conn_master);
-        if (getOpenConn(cOpen, connId))
-        { OUT(conn_master, cOpen.chanCRI);
+        OUTCT_END(conn_master);
+        if (getOpenConn(cOpen, connId)) {
+          OUT(conn_master, cOpen.chanCRI);
           OUTCT_END(conn_master);
         }
         else
-        { queueClientReq(connId, chanCRI);
-        }
+          queueClientReq(connId, chanCRI);
       }
       break;
   }

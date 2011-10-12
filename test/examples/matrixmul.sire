@@ -163,6 +163,7 @@ proc main() is
   { load(c);
     align_row(c);
     align_col(c);
-    multiply(c);
+    multiply(c)
   }
 }
+
