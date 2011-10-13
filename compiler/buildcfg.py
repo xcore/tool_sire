@@ -148,8 +148,8 @@ class BuildCFG(NodeWalker):
 
     # Writes to arrays, include them as a use so they are live until this
     # point.
-    if isinstance(node.left, ast.ElemSub):
-      node.use |= node.defs
+    #if isinstance(node.left, ast.ElemSub):
+    #  node.use |= node.defs
     return [node]
 
   def stmt_in(self, node, pred, succ):
@@ -165,8 +165,8 @@ class BuildCFG(NodeWalker):
 
     # Writes to arrays, include them as a use so they are live until this
     # point.
-    if isinstance(node.left, ast.ElemSub):
-      node.use |= node.defs
+    #if isinstance(node.left, ast.ElemSub):
+    #  node.use |= node.defs
     return [node]
 
   def stmt_alias(self, node, pred, succ):

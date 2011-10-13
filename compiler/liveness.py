@@ -36,7 +36,7 @@ class Liveness(NodeWalker):
     print('Out: {}'.format(stmt.out))
     print('')
 
-  def run(self, node, debug=False):
+  def run(self, node, debug=True):
     """
     Iteratively perform liveness analysis until there is no change in the in
     and out sets.
