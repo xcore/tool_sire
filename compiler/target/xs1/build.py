@@ -182,7 +182,7 @@ def compile_str(name, string, show_calls, v, cleanup=True):
   vmsg(v, 'Compiling '+srcfile+' -> '+outfile)
   util.write_file(srcfile, string)
   util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS, 
-    display_stdout=show_calls)
+    verbose=show_calls)
   if cleanup:
     os.remove(srcfile)
 
@@ -196,10 +196,10 @@ def assemble_str(name, ext, string, show_calls, v, cleanup=True):
   util.write_file(srcfile, string)
   if ext == 'xc':
     util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS,
-      display_stdout=show_calls)
+      verbose=show_calls)
   elif ext == 'S':
     util.call([XAS, srcfile, '-o', outfile], 
-      display_stdout=show_calls)
+      verbose=show_calls)
   if cleanup: 
     os.remove(srcfile)
 
@@ -210,7 +210,7 @@ def assemble_runtime(device, show_calls, v):
     vmsg(v, '  '+x+' -> '+objfile)
     util.call([XCC, target(device), config.XS1_RUNTIME_PATH+'/'+x, 
       '-o', objfile] + ASSEMBLE_FLAGS, 
-      display_stdout=show_calls)
+      verbose=show_calls)
 
 def link_master(device, show_calls, v):
   """ 
@@ -237,7 +237,7 @@ def link_master(device, show_calls, v):
     'memory.c.o', 
     'util.xc.o', 
     '-o', MASTER_XE] + LINK_FLAGS,
-    display_stdout=show_calls)
+    verbose=show_calls)
 
 def link_slave(device, show_calls, v):
   """
@@ -261,14 +261,14 @@ def link_slave(device, show_calls, v):
     'memory.c.o', 
     'util.xc.o', 
     '-o', SLAVE_XE] + LINK_FLAGS,
-    display_stdout=show_calls)
+    verbose=show_calls)
 
 def replace_slaves(show_calls, v):
   vmsg(v, 'Replacing master image in node 0, core 0')
   util.call([XOBJDUMP, '--split', MASTER_XE], 
-    display_stdout=show_calls)
+    verbose=show_calls, display_stdout=False)
   util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], 
-    display_stdout=show_calls)
+    verbose=show_calls, display_stdout=False)
 
 def modify_assembly(sig, lines, v):
   """ 

@@ -110,9 +110,6 @@ class Decl(Node):
       c.accept(visitor)
     visitor.up(tag)
 
-  def __eq__(self, other):
-    return self.name == other.name
-
   def __hash__(self):
     return self.name.__hash__()
 
@@ -147,9 +144,6 @@ class Def(Node):
       c.accept(visitor)
     visitor.up(tag)
 
-  def __eq__(self, other):
-    return self.name == other.name
-
   def __hash__(self):
     return self.name.__hash__()
 
@@ -178,9 +172,6 @@ class Param(Node):
     for c in self.children():
       c.accept(visitor)
     visitor.up(tag)
-
-  def __eq__(self, other):
-    return self.name == other.name
 
   def __hash__(self):
     return self.name.__hash__()
@@ -557,9 +548,6 @@ class StmtPcall(Stmt):
     for c in self.children():
       c.accept(visitor)
     visitor.up(tag)
-
-  def __eq__(self, other):
-    return self.name == other.name
 
   def __hash__(self):
     return self.name.__hash__()

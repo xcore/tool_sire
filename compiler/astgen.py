@@ -181,7 +181,7 @@ class NodeCfg(object):
     We base equality on identifiers.
     """
     src = ''
-    if 'name' in self.all_entries:
+    if self.parent=='Elem' and 'name' in self.all_entries:
       src =  '  def __eq__(self, other):\n'
       src += '    return self.name == other.name\n\n'
       #src += '    return (\n' 

@@ -4,7 +4,7 @@ val N := LENGTH/STORAGE;
 val READ := 0;
 val WRITE := 1;
 
-proc leaf(val i, chanend c) is
+proc leaf(chanend c) is
   var base;
   var data[STORAGE];
   var query;
@@ -36,12 +36,12 @@ proc branch(chanend root, chanend left, chanend right) is
   var base;
   var interval;
   var query;
-  var u;
+  var i;
   var v;
 { % Configure
-  c ? depth;
-  c ? base;
-  c ? interval;
+  root ? depth;
+  root ? base;
+  root ? interval;
   left  ! depth + 1;
   right ! depth + 1;
   left  ! base;
@@ -51,10 +51,10 @@ proc branch(chanend root, chanend left, chanend right) is
 
   % Run
   while true do
-  { c ? query;
+  { root ? query;
     if query = READ
     then 
-    { root  ? i;
+    { root ? i;
       if i < base+(interval/2)
       then
       { left ! READ;
@@ -110,7 +110,7 @@ proc serve(chanend c, chanend root) is
       c ? v;
       root ! WRITE;
       root ! i;
-      root ! v;
+      root ! v
     }
   }
 }
@@ -134,60 +134,26 @@ proc read(chanend c, val i, var v) is
 }
 
 proc write(chanend c, val i, val v) is
-{ c ! WRITE
+{ c ! WRITE;
   c ! i;
   c ! v
 }
 
-proc partition(chanend r, chanend w, val begin, val end, var pivot) is
-  var storeIndex;
-  var pivot;
-  var pivotValue;
-  var hold;
-  var v;
+proc bubblesort(chanend c, val n) is
   var i;
-{ pivot := (end-begin) / 2;
-  pivotValue := read(c, pivot);
-  storeIndex := pivotValue;
-
-  % Move pivot to end
-  read(r, (end-begin)-1, v);
-  write(w, pivot, v);
-  write(w, (end-begin)-1, pivotValue);
-
-  % Reorder list upto pivot
-  for i in [0 for (end-begin)-1] do
-  { read(r, i, v);
-    if v <= pivotValue
-    then
-    { read(r, i, hold);
-      read(r, storeIndex, v);
-      write(w, i, v);
-      write(w, storeIndex, hold);
-      storeIndex := storeIndex + 1
+  var j;
+  var tmp1;
+  var tmp2;
+{ for i in [0 for n] do
+    for j in [0 for n-i-1] do
+    { read(c, j, tmp1);
+      read(c, j+1, tmp2);
+      if tmp1 > tmp2 then 
+      { write(c, j, tmp2);
+        write(c, j+1, tmp1)
+      }
+      else skip
     }
-    else skip
-  }
-
-  % Move pivot to final position: swap(storeIndex, pivot)
-  read(r, storeIndex, hold);
-  read(r, (end-begin)-1, v);
-  write(w, storeIndex, v);
-  write(w, (end-begin)-1, hold)
-
-  % Return the new pivot
-  pivot := storeIndex
-}
-
-proc quicksort(chanend c, val begin, val end) is
-  var pivot;
-{ if (end-begin) > 1
-  then
-  { partition(c, begin, end, pivot);
-    quicksort(c, 0, pivot);
-    quicksort(c, pivot+1, end)
-  }
-  else skip
 }
 
 proc initialise(chanend w) is
@@ -204,12 +170,12 @@ proc dump(chanend r) is
   }
 
 proc main() is
-{ server(chan r, chanend w)
-    array(r, w)
-  { initialise(w);
-    dump(r)
-    quicksort(r, w);
-    dump(r)
+{ server(chan c)
+    array(c)
+  { initialise(c);
+    dump(c);
+    bubblesort(c, LENGTH);
+    dump(c)
   }
 }
 
