@@ -5,40 +5,43 @@ val READ := 0;
 val WRITE := 1;
 
 proc leaf(chanend c) is
-  var base;
+{ var base;
   var data[STORAGE];
   var query;
   var i;
   var v;
-{ % Ignore configuration messages
+  
+  % Ignore configuration messages
   c ? v;
   c ? base;
   c ? v;
 
   % Run
-  while true do
+  %while true do
   { c ? query;
     if query = READ
     then
     { c ? i;
-      c ! data[i-base]
+      c ? data[i-base] % should be !
     }
     else
     { c ? i;
       c ? v;
       data[i-base] := v
     }
-  }
+  };
+  skip
 }
 
 proc branch(chanend root, chanend left, chanend right) is
-  var depth;
+{ var depth;
   var base;
   var interval;
   var query;
   var i;
   var v;
-{ % Configure
+ 
+  % Configure
   root ? depth;
   root ? base;
   root ? interval;
@@ -86,10 +89,11 @@ proc branch(chanend root, chanend left, chanend right) is
 }
 
 proc serve(chanend c, chanend root) is
-  var query;
+{ var query;
   var i;
   var v;
-{ % Configure the structure
+  
+  % Configure the structure
   root ! 0;
   root ! 0;
   root ! LENGTH;
@@ -116,9 +120,9 @@ proc serve(chanend c, chanend root) is
 }
 
 proc array(chanend cin) is
-  chan c[(2*N)-1];
+{ chan c[(2*N)-1];
   var i;
-{ server() 
+  server() 
     par i in [0 for N] do 
       leaf(c[(N-1)+i])
   { serve(cin, c[0]) ||
@@ -140,11 +144,11 @@ proc write(chanend c, val i, val v) is
 }
 
 proc bubblesort(chanend c, val n) is
-  var i;
+{ var i;
   var j;
   var tmp1;
   var tmp2;
-{ for i in [0 for n] do
+  for i in [0 for n] do
     for j in [0 for n-i-1] do
     { read(c, j, tmp1);
       read(c, j+1, tmp2);
@@ -157,17 +161,19 @@ proc bubblesort(chanend c, val n) is
 }
 
 proc initialise(chanend w) is
-  var i;
+{ var i;
   for i in [0 for LENGTH] do
     write(w, i, LENGTH-(i+1))
+}
   
 proc dump(chanend r) is
-  var i;
+{ var i;
   var v;
   for i in [0 for LENGTH] do
   { read(r, i, v);
     printvalln(v)
   }
+}
 
 proc main() is
 { server(chan c)

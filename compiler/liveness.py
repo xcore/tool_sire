@@ -1,7 +1,7 @@
 # Copyright (c) 2011, James Hanlon, All rights reserved
-## This software is freely distributable under a derivative of the
-## University of Illinois/NCSA Open Source License posted in
-## LICENSE.txt and at <http://github.xcore.com/>
+# This software is freely distributable under a derivative of the
+# University of Illinois/NCSA Open Source License posted in
+# LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
 import ast
@@ -36,7 +36,7 @@ class Liveness(NodeWalker):
     print('Out: {}'.format(stmt.out))
     print('')
 
-  def run(self, node, debug=True):
+  def run(self, node, debug=False):
     """
     Iteratively perform liveness analysis until there is no change in the in
     and out sets.

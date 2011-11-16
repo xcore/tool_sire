@@ -170,7 +170,11 @@ class TransformPar(NodeWalker):
       elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
         decls.append(ast.Decl(x.name, T_CHANEND_CLIENT_SINGLE, None))
 
+      elif x.symbol.type == T_VAR_ARRAY:
+        decls.append(ast.Decl(x.name, T_VAR_ARRAY, x.expr))
+      
       else:
+        print (x.symbol.type)
         assert 0
     
     # Create the new process definition
