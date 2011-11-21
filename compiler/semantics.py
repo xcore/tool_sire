@@ -374,18 +374,20 @@ class Semantics(NodeWalker):
     if node.expr:
       self.expr(node.expr)
     
+    # TODO
+
     # Check the symbol doesn't already exist in scope
-    if not self.sym.lookup_scoped(node.name):
-      s = self.sym.insert(node.name, node.type, node.expr, node.coord)
-      node.symbol = s
-    else:
-      self.redecl_error(node.name, node.coord)
+    #if not self.sym.lookup_scoped(node.name):
+    #  s = self.sym.insert(node.name, node.type, node.expr, node.coord)
+    #  node.symbol = s
+    #else:
+    #  self.redecl_error(node.name, node.coord)
 
     # If it's a value or array, then determine the value of the expr 
-    if (node.type == T_VAL_SINGLE 
-        or node.type == T_VAR_ARRAY
-        or node.type == T_CHAN_ARRAY):
-      node.symbol.value = self.eval_expr(node.expr)
+    #if (node.type == T_VAL_SINGLE 
+    #    or node.type == T_VAR_ARRAY
+    #    or node.type == T_CHAN_ARRAY):
+    #  node.symbol.value = self.eval_expr(node.expr)
 
   # Procedure definitions ===============================
 
@@ -427,9 +429,6 @@ class Semantics(NodeWalker):
       # Add the procedure name to the list
       self.parent = node.name
     
-      # Declarations
-      [self.decl(x) for x in node.decls]
-
       # Body statement
       self.stmt(node.stmt)
     
@@ -467,9 +466,11 @@ class Semantics(NodeWalker):
   # Statements ==========================================
 
   def stmt_seq(self, node):
+    [self.decl(x) for x in node.decls]
     [self.stmt(x) for x in node.stmt]
 
   def stmt_par(self, node):
+    [self.decl(x) for x in node.decls]
     [self.stmt(x) for x in node.stmt]
 
   def stmt_server(self, node):

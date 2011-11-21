@@ -90,14 +90,14 @@ def setup_argparse():
   p.add_argument('-r', action='store_true', dest='parse_only', 
       help='parse the input file and quit')
 
-  p.add_argument('-s', action='store_true', dest='sem_only', 
-      help='perform semantic analysis and quit')
-  
   p.add_argument('-p', action='store_true', dest='print_ast',
       help='display the AST and quit')
     
   p.add_argument('-P', action='store_true', dest='pprint_raw_ast',
       help='pretty-print the raw AST and quit')
+  
+  p.add_argument('-s', action='store_true', dest='sem_only', 
+      help='perform semantic analysis and quit')
   
   p.add_argument('-Q', action='store_true', dest='pprint_trans_ast',
       help='pretty-print the transformed AST and quit')

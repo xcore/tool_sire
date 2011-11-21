@@ -4,12 +4,10 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import os
-
 import ply.yacc as yacc
 from lexer import Lexer
 from definitions import *
 from typedefs import *
-
 import error
 import ast
 
@@ -101,7 +99,7 @@ class Parser(object):
   # Program declaration ======================================
   
   def p_program(self, p):
-    'program : var_decls proc_defs'
+    'program : val_defs proc_defs'
     p[0] = ast.Program(p[1], p[2], self.coord(p, 1))
 
   # Program declaration error
@@ -109,6 +107,37 @@ class Parser(object):
     'program : error'
     self.parse_error('Syntax error', p, 1)
     p[0] = None
+
+  # Value definitions ========================================
+
+  def p_val_defs_empty(self, p):
+    'val_defs : empty'
+    p[0] = []
+
+  def p_val_defs(self, p):
+    'val_defs : val_def_seq'
+    p[0] = p[1]
+
+  # Variable declaration sequence (return a single list)
+  def p_val_def_seq(self, p):
+    'val_def_seq : val_def SEQSEP'
+    p[0] = [p[1]]
+
+  # Variable declaration sequence (return a single list)
+  def p_val_def_seq_(self, p):
+    'val_def_seq : val_def SEQSEP val_def_seq'
+    p[0] = [p[1]] + p[3] if p[3] else [p[1]]
+
+  # Variable declaration sequence error
+  def p_val_def_seq_err(self, p):
+    '''val_def_seq : error SEQSEP
+                   | error SEQSEP val_def_seq'''
+    self.parse_error('value definitions', self.coord(p))
+
+  # Single variable declaration
+  def p_val_def(self, p):
+    'val_def : VAL name IS expr'
+    p[0] = ast.Decl(p[2], T_VAL_SINGLE, p[4], self.coord(p))
 
   # Variable declarations ====================================
 
@@ -133,7 +162,7 @@ class Parser(object):
   # Variable declaration sequence error
   def p_var_decl_seq_err(self, p):
     '''var_decl_seq : error SEQSEP
-            | error SEQSEP var_decl_seq'''
+                    | error SEQSEP var_decl_seq'''
     self.parse_error('declarations', self.coord(p))
 
   # Single variable declaration
@@ -160,11 +189,6 @@ class Parser(object):
   def p_var_decl_chanend_client(self, p):
     'var_decl : CLIENT CHANEND name'
     p[0] = ast.Decl(p[2], T_CHANEND_CLIENT_SINGLE, None, self.coord(p))
-
-  # Single value declaration
-  def p_var_decl_val(self, p):
-    'var_decl : VAL name ASS expr'
-    p[0] = ast.Decl(p[2], T_VAL_SINGLE, p[4], self.coord(p))
 
   # Array reference declaration
   def p_var_decl_array_ref(self, p):
@@ -201,40 +225,36 @@ class Parser(object):
     'proc_def_seq : proc_def proc_def_seq'
     p[0] = [p[1]] + p[2] if p[2] else [p[1]]
 
-  # Process
-  def p_proc_def_proc(self, p):
-    'proc_def : PROC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.Def(p[2], T_PROC, 
-        p[4], p[7], p[8], self.coord(p)) 
-
-  # Function
-  def p_proc_def_func(self, p):
-    'proc_def : FUNC name LPAREN formals RPAREN IS var_decls stmt'
-    p[0] = ast.Def(p[2], T_FUNC,
-        p[4], p[7], p[8], self.coord(p)) 
-
   # Process prototype
   def p_proc_prototype_proc(self, p):
     'proc_def : PROC name LPAREN formals RPAREN SEQSEP'
-    p[0] = ast.Def(p[2], T_PROC, 
-        p[4], None, None, self.coord(p)) 
+    p[0] = ast.Def(p[2], T_PROC, p[4], None, None, self.coord(p)) 
 
   # Function prototype
   def p_proc_prototype_func(self, p):
     'proc_def : FUNC name LPAREN formals RPAREN SEQSEP'
-    p[0] = ast.Def(p[2], T_FUNC,
-        p[4], None, None, self.coord(p)) 
+    p[0] = ast.Def(p[2], T_FUNC, p[4], None, None, self.coord(p)) 
+
+  # Process
+  def p_proc_def_proc(self, p):
+    'proc_def : PROC name LPAREN formals RPAREN IS stmt'
+    p[0] = ast.Def(p[2], T_PROC, p[4], p[7], self.coord(p)) 
+
+  # Function
+  def p_proc_def_func(self, p):
+    'proc_def : FUNC name LPAREN formals RPAREN IS stmt'
+    p[0] = ast.Def(p[2], T_FUNC, p[4], p[7], self.coord(p)) 
 
   # Procedure errors
   def p_proc_def_proc_err(self, p):
-    '''proc_def : PROC error IS var_decls stmt
-           | PROC name LPAREN formals RPAREN IS error stmt'''
+    '''proc_def : PROC error IS stmt
+                | PROC name LPAREN formals RPAREN IS error'''
     self.parse_error('process declaration', self.coord(p))
 
   # Function errors
   def p_proc_def_func_err(self, p):
-    '''proc_def : FUNC error IS var_decls stmt
-           | FUNC name LPAREN formals RPAREN IS error stmt'''
+    '''proc_def : FUNC error IS stmt
+                | FUNC name LPAREN formals RPAREN IS error'''
     self.parse_error('function declaration', self.coord(p))
 
   # Formal declarations ======================================
@@ -291,15 +311,15 @@ class Parser(object):
   # TODO: record where the reference is 'var' or 'val'.
   def p_param_decl_array_ref(self, p):
     '''param_decl : VAL name LBRACKET expr RBRACKET
-            | VAR name LBRACKET expr RBRACKET'''
+                  | VAR name LBRACKET expr RBRACKET'''
     p[0] = ast.Param(p[2], T_REF_ARRAY, p[4], self.coord(p))
 
   # Statement blocks =========================================
   
   # Seq block
   def p_stmt_seq_block(self, p):
-    'stmt : START stmt_seq END'
-    p[0] = ast.StmtSeq(p[2], self.coord(p))
+    'stmt : START var_decls stmt_seq END'
+    p[0] = ast.StmtSeq(p[2], p[3], self.coord(p))
 
   # Seq
   def p_stmt_seq(self, p):
@@ -313,8 +333,8 @@ class Parser(object):
 
   # Par block
   def p_stmt_par_block(self, p):
-    'stmt : START stmt_par END'
-    p[0] = ast.StmtPar(p[2], self.coord(p))
+    'stmt : START var_decls stmt_par END'
+    p[0] = ast.StmtPar(p[2], p[3], self.coord(p))
 
   # Par
   def p_stmt_par(self, p):
@@ -431,7 +451,7 @@ class Parser(object):
 
   def p_expr_seq(self, p):
     '''expr_seq : expr
-          | expr COMMA expr_seq'''
+                | expr COMMA expr_seq'''
     p[0] = [p[1]] if len(p)==2 else [p[1]] + p[3]
 
   def p_expr_single(self, p):
@@ -440,29 +460,29 @@ class Parser(object):
 
   def p_expr_unary(self, p):
     '''expr : MINUS elem %prec UMINUS
-        | NOT elem %prec UNOT'''
+            | NOT elem %prec UNOT'''
     p[0] = ast.ExprUnary(p[1], p[2] if len(p)>2 else None, self.coord(p))
 
   def p_expr_binary_arithmetic(self, p):
     '''expr : elem PLUS right
-        | elem MINUS right
-        | elem MULT right
-        | elem DIV right
-        | elem REM right
-        | elem OR right
-        | elem AND right
-        | elem XOR right
-        | elem LSHIFT right
-        | elem RSHIFT right'''
+            | elem MINUS right
+            | elem MULT right
+            | elem DIV right
+            | elem REM right
+            | elem OR right
+            | elem AND right
+            | elem XOR right
+            | elem LSHIFT right
+            | elem RSHIFT right'''
     p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
   def p_expr_binary_relational(self, p):
     '''expr : elem LT right
-        | elem GT right
-        | elem LE right
-        | elem GE right
-        | elem EQ right
-        | elem NE right'''
+            | elem GT right
+            | elem LE right
+            | elem GE right
+            | elem EQ right
+            | elem NE right'''
     p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
   def p_right_sinle(self, p):
@@ -472,13 +492,13 @@ class Parser(object):
   # Associative
   def p_right(self, p):
     '''right : elem AND right
-         | elem OR right
-         | elem XOR right
-         | elem PLUS right
-         | elem MINUS right
-         | elem REM right
-         | elem DIV right
-         | elem MULT right'''
+             | elem OR right
+             | elem XOR right
+             | elem PLUS right
+             | elem MINUS right
+             | elem REM right
+             | elem DIV right
+             | elem MULT right'''
     p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
   # Elements =================================================
@@ -519,8 +539,8 @@ class Parser(object):
 
   def p_elem_number(self, p):
     '''elem : HEXLITERAL
-        | DECLITERAL
-        | BINLITERAL'''
+            | DECLITERAL
+            | BINLITERAL'''
     p[0] = ast.ElemNumber(p[1], self.coord(p))
 
   def p_elem_boolean_true(self, p):

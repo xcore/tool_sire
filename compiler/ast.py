@@ -121,11 +121,10 @@ class Decl(Node):
 
 
 class Def(Node):
-  def __init__(self, name, type, formals, decls, stmt, coord=None):
+  def __init__(self, name, type, formals, stmt, coord=None):
     self.name = name
     self.type = type
     self.formals = formals
-    self.decls = decls
     self.stmt = stmt
     self.coord = coord
     self.symbol = None
@@ -134,7 +133,6 @@ class Def(Node):
     c = []
     if self.stmt is not None: c.append(self.stmt)
     if self.formals is not None: c.extend(self.formals)
-    if self.decls is not None: c.extend(self.decls)
     return tuple(c)
 
   def accept(self, visitor):
@@ -202,12 +200,14 @@ class Stmt(Node):
 
 
 class StmtSeq(Stmt):
-  def __init__(self, stmt, coord=None):
+  def __init__(self, decls, stmt, coord=None):
+    self.decls = decls
     self.stmt = stmt
     self.coord = coord
 
   def children(self):
     c = []
+    if self.decls is not None: c.extend(self.decls)
     if self.stmt is not None: c.extend(self.stmt)
     return tuple(c)
 
@@ -225,12 +225,14 @@ class StmtSeq(Stmt):
 
 
 class StmtPar(Stmt):
-  def __init__(self, stmt, coord=None):
+  def __init__(self, decls, stmt, coord=None):
+    self.decls = decls
     self.stmt = stmt
     self.coord = coord
 
   def children(self):
     c = []
+    if self.decls is not None: c.extend(self.decls)
     if self.stmt is not None: c.extend(self.stmt)
     return tuple(c)
 

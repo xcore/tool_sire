@@ -71,7 +71,7 @@ class Printer(NodeWalker):
   def decl(self, node):
     
     if node.type == T_VAL_SINGLE:
-      return 'val {} := {}'.format(node.name, self.expr(node.expr))
+      return 'val {} is {}'.format(node.name, self.expr(node.expr))
     
     if node.type == T_VAR_SINGLE:
       return 'var {}'.format(node.name)
@@ -116,13 +116,13 @@ class Printer(NodeWalker):
       self.buf.write(' is\n')
       
       # Procedure declarations
-      self.indent.append(INDENT)
-      self.var_decls(node.decls)
+      #self.indent.append(INDENT)
+      #self.var_decls(node.decls)
 
       # Statement block
       if (isinstance(node.stmt, ast.StmtPar) 
           or isinstance(node.stmt, ast.StmtSeq)):
-        self.indent.pop()
+        #self.indent.pop()
         self.display_location(node.stmt)
         self.stmt(node.stmt)
         self.buf.write('\n\n')
@@ -172,6 +172,7 @@ class Printer(NodeWalker):
     """
     self.out('{\n')
     self.indent.append(INDENT)
+    self.var_decls(node.decls)
     for (i, x) in enumerate(node.stmt): 
       if sep=='||':
         self.stmt(x)
