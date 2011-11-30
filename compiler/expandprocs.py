@@ -22,138 +22,94 @@ class ExpandProcs(NodeWalker):
 
   def substitute(self, stmt):
     """
-    Given a procedure call statement, return the process body for the procedure
-    and a set of variabled declarations such that:
-     - each variable declaration is renamed to make it unique
-     - each ocurrance of a formal parameter is substituted by an expression if
-       a value otherwise replaced by the new named actual.
+    Given a procedure call statement, return the process body for the
+    procedure.
     """
     if isinstance(stmt, ast.StmtPcall) and self.sig.is_mobile(stmt.name):
       defn = [x for x in self.ast.defs if x.name == stmt.name][0]
       proc = copy.deepcopy(defn.stmt)
-      decls = []
-      
-      # Rename local declarations for inclusion in parent scope
-      for x in defn.decls:
-        name = '_'+defn.name+'{}'.format(self.subs[defn.name])+'_'+x.name
-        proc.accept(Rename(x.name, name))
-        decl = ast.Decl(name, x.type, x.expr)
-        decl.symbol = x.symbol 
-        decls.append(decl)
-
-      # Rename actual parameters for ocurrances of formals
-      for (x, y) in zip(defn.formals, stmt.args):
-        if x.type == T_VAL_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), y))
-        elif x.type == T_REF_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
-        elif x.type == T_REF_ARRAY:
-          proc.accept(Rename(x.name, y.elem.name, y.elem.symbol))
-        elif x.type == T_CHANEND_SINGLE:
-          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
-        elif x.type == T_CHANEND_ARRAY:
-          proc.accept(Rename(x.name, y.elem.name, y.elem.symbol))
-        else:
-          assert 0
-
-      # Increment the substitution count
-      self.subs[stmt.name] += 1
-
-      return (decls, proc)
+      return proc
     else:
-      return ([], stmt)
+      return stmt
 
   # Program ============================================
 
   def walk_program(self, node):
     
     # Expand all procedure calls
-    node.defs[-1].decls.extend(self.stmt(node.defs[-1].stmt))
+    self.stmt(node.defs[-1].stmt)
 
     # Remove all (now redundant) procedure definitions
     [self.sig.remove(x.name) for x in node.defs[:-1] if x.type == T_PROC]
-    node.defs = [x for x in node.defs if x.type == T_FUNC] + [node.defs[-1]]
+    node.defs = ([x for x in node.defs if x.type == T_FUNC] 
+        + [node.defs[-1]])
   
   # Statements containing statements ====================
   
   def stmt_seq(self, node):
-    decls = []
     for (i, x) in enumerate(node.stmt):
-      (d, node.stmt[i]) = self.substitute(x)
-      decls.extend(d)
-      decls.extend(self.stmt(node.stmt[i]))
-    return decls
+      node.stmt[i] = self.substitute(x)
+      self.stmt(node.stmt[i])
 
   def stmt_par(self, node):
-    decls = []
     for (i, x) in enumerate(node.stmt):
-      (d, node.stmt[i]) = self.substitute(x)
-      decls.extend(d)
-      decls.extend(self.stmt(node.stmt[i]))
-    return decls
+      node.stmt[i] = self.substitute(x)
+      self.stmt(node.stmt[i])
 
   def stmt_server(self, node):
-    (decls, node.server) = self.substitute(node.server)
-    (d, node.client) = self.substitute(node.client)
-    decls.extend(d)
-    decls.extend(self.stmt(node.server))
-    decls.extend(self.stmt(node.client))
-    return decls
+    node.server = self.substitute(node.server)
+    node.client = self.substitute(node.client)
+    self.stmt(node.server)
+    self.stmt(node.client)
 
   def stmt_if(self, node):
-    (decls, node.thenstmt) = self.substitute(node.thenstmt)
-    (d, node.elsestmt) = self.substitute(node.elsestmt)
-    decls.extend(d)
-    decls.extend(self.stmt(node.thenstmt))
-    decls.extend(self.stmt(node.elsestmt))
-    return decls
+    node.thenstmt = self.substitute(node.thenstmt)
+    node.elsestmt = self.substitute(node.elsestmt)
+    self.stmt(node.thenstmt)
+    self.stmt(node.elsestmt)
 
   def stmt_while(self, node):
-    (decls, node.stmt) = self.substitute(node.stmt)
-    decls.extend(self.stmt(node.stmt))
-    return decls
+    node.stmt = self.substitute(node.stmt)
+    self.stmt(node.stmt)
 
   def stmt_for(self, node):
-    (decls, node.stmt) = self.substitute(node.stmt)
-    decls.extend(self.stmt(node.stmt))
-    return decls
+    node.stmt = self.substitute(node.stmt)
+    self.stmt(node.stmt)
 
   def stmt_rep(self, node):
-    (decls, node.stmt) = self.substitute(node.stmt)
-    decls.extend(self.stmt(node.stmt))
-    return decls
-    
+    node.stmt = self.substitute(node.stmt)
+    self.stmt(node.stmt)
+
   def stmt_on(self, node):
-    (decls, node.stmt) = self.substitute(node.stmt)
-    decls.extend(self.stmt(node.stmt))
-    return decls
+    node.stmt = self.substitute(node.stmt)
+    self.stmt(node.stmt)
 
   # Statements ==========================================
 
   def stmt_pcall(self, node):
-    return []
+    pass
 
   def stmt_ass(self, node):
-    return []
+    pass
 
   def stmt_in(self, node):
-    return []
+    pass
 
   def stmt_out(self, node):
-    return []
+    pass
 
   def stmt_alias(self, node):
-    return []
+    pass
 
   def stmt_connect(self, node):
-    return []
+    pass
 
   def stmt_assert(self, node):
-    return []
+    pass
 
   def stmt_return(self, node):
-    return []
+    pass
 
   def stmt_skip(self, node):
-    return []
+    pass
 

@@ -5,7 +5,7 @@
 
 from walker import NodeWalker
 from cmpexpr import CmpExpr
-from symbol import Symbol
+from symboltab import Symbol
 from typedefs import *
 import ast
 

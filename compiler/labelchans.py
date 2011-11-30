@@ -11,6 +11,7 @@ from itertools import product
 import ast
 from walker import NodeWalker
 from typedefs import *
+from chantab import ChanTable
 from subelem import SubElem
 from evalexpr import EvalExpr
 from cmpexpr import CmpExpr
@@ -130,76 +131,71 @@ class LabelChans(NodeWalker):
   # Procedure definitions ===============================
   
   def defn(self, node):
-    self.debug('New channel scope: '+node.name)
     node.chantab = ChanTable(node.name)
     chan_uses = self.stmt(node.stmt, [], node.chantab)
     node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
-    node.chanids = {}
-    
-    # Check each channel is used correctly by inspecting the entries in the
-    # channel table and label channel variables with unique identifiers.
-    for x in node.decls:
-      if x.type == T_CHAN_SINGLE:
-        self.check_chan(x.name, None, node.chantab.lookup(x.name, None))
-        node.chanids[x.name] = len(node.chanids)
-      elif x.type == T_CHAN_ARRAY:
-        for y in range(x.symbol.value):
-          if node.chantab.contains(x.name, y): 
-            self.check_chan(x.name, y, node.chantab.lookup(x.name, y))
-        node.chanids[x.name] = len(node.chanids)
-      else:
-        pass
-    
+
     # Display the channel table
     if DISPLAY_CHANTAB:
       node.chantab.display()
-  
+
   # Statements ==========================================
 
   # Top-level statements where connections are inserted as we distribute on
   # these boundaries. The set use_instances contains all the unique occurances
   # of channels in the contained process.
 
-  def stmt_rep(self, node, indicies, tab):
-    indicies = indicies + node.indicies
-    chan_uses = self.stmt(node.stmt, indicies, tab)
-    node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
-
-    # Return no uses 
-    return ChanUseSet()
-      
   def stmt_par(self, node, indicies, tab):
+    tab.begin_scope()
     
     # For each statement in the par, group the expansions
     node.chans = []
     for x in node.stmt:
       chan_uses = self.stmt(x, indicies, tab)
       node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
+
+    # Check each channel is used correctly by inspecting the entries in the
+    # channel table and label channel variables with unique identifiers.
+    #node.chanids = {}
+    for x in node.decls:
+      if x.type == T_CHAN_SINGLE:
+        self.check_chan(x.name, None, tab.lookup(x.name, None))
+        #node.chanids[x.name] = len(node.chanids)
+      elif x.type == T_CHAN_ARRAY:
+        for y in range(x.symbol.value):
+          if tab.contains(x.name, y): 
+            self.check_chan(x.name, y, tab.lookup(x.name, y))
+        #node.chanids[x.name] = len(node.chanids)
+
+    tab.end_scope()
     
     # Return no uses 
     return ChanUseSet()
  
   def stmt_server(self, node, indicies, tab):
+    tab.begin_scope()
     node.chans = []
     chan_uses = self.stmt(node.server, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
     chan_uses = self.stmt(node.client, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
-    node.chanids = {}
    
     # Check each channel is used correctly by inspecting the entries in the
     # channel table and label channel variables with unique identifiers.
+    #node.chanids = {}
     for x in node.decls:
       if x.type == T_CHAN_SINGLE:
         self.check_chan(x.name, None, tab.lookup(x.name, None))
-        node.chanids[x.name] = len(node.chanids)
+        #node.chanids[x.name] = len(node.chanids)
       elif x.type == T_CHAN_ARRAY:
         for y in range(x.symbol.value):
           self.check_chan(x.name, y, tab.lookup(x.name, y))
-        node.chanids[x.name] = len(node.chanids)
+        #node.chanids[x.name] = len(node.chanids)
       else:
         assert 0
 
+    tab.end_scope()
+    
     # Return no uses 
     return ChanUseSet()
 
@@ -268,8 +264,25 @@ class LabelChans(NodeWalker):
   # Other statements containing processes
 
   def stmt_seq(self, node, indicies, tab):
+
+    tab.begin_scope()
     uses = ChanUseSet()
     [uses.update(self.stmt(x, indicies, tab)) for x in node.stmt]
+
+    # Check each channel is used correctly by inspecting the entries in the
+    # channel table and label channel variables with unique identifiers.
+    #node.chanids = {}
+    for x in node.decls:
+      if x.type == T_CHAN_SINGLE:
+        self.check_chan(x.name, None, tab.lookup(x.name, None))
+        #node.chanids[x.name] = len(node.chanids)
+      elif x.type == T_CHAN_ARRAY:
+        for y in range(x.symbol.value):
+          if tab.contains(x.name, y): 
+            self.check_chan(x.name, y, tab.lookup(x.name, y))
+        #node.chanids[x.name] = len(node.chanids)
+    
+    tab.end_scope()
     return uses
 
   def stmt_if(self, node, indicies, tab):
@@ -303,96 +316,6 @@ class LabelChans(NodeWalker):
 
   def stmt_return(self, node, indicies, tab):
     return ChanUseSet()
-
-
-class ChanTable(object):
-  """
-  A table to record the location of channel ends and their names. Each key maps
-  to list of locations where the first location is that of the master, and a 
-  unique identifier for the specific connection instance.
-  """
-  
-  class ChanItem(object):
-    def __init__(self):
-      self.connid = None
-      self.locations = []
-      self.chan_sets = []
-    
-    def __repr__(self):
-      return 'locations: {}'.format(
-          ', '.join(['{}'.format(x) for x in self.locations]))
-
-  def __init__(self, name):
-    self.name = name
-    self.tab = {}
-    self.chanend_count = 0
-    
-  def key(self, name, index):
-    """
-    Given a channel name and its index return a key concatenating these.
-    """
-    return '{}{}'.format(name, '' if index==None else index)
-
-  def insert(self, name, index, location, chan_set):
-    """
-    Add a channel element with a particular index into the table recording the
-    location and the ChanElemSet it is a member of (this is necessary for
-    performing colouring to assign connection ids).
-    """
-    key = self.key(name, index)
-    if not key in self.tab:
-      self.tab[key] = self.ChanItem()
-    self.tab[key].locations.append(location)
-    self.tab[key].chan_sets.append(chan_set)
-    #print('inserted '+name+'[{}] @ {}'.format(index, location))
-
-  def contains(self, name, index):
-    """
-    Check if the table contains a channel element.
-    """
-    return self.key(name, index) in self.tab
-
-  def lookup(self, name, index):
-    """
-    Lookup a channel's master and slave location.
-    """
-    key = self.key(name, index)
-    assert key in self.tab
-    return self.tab[key] if key in self.tab else None
-
-  def lookup_master_location(self, name, index):
-    key = self.key(name, index)
-    if key in self.tab:
-      return self.tab[key].locations[0]
-    return None
-
-  def lookup_slave_location(self, name, index):
-    key = self.key(name, index)
-    if key in self.tab:
-      return self.tab[key].locations[1]
-    return None
-
-  def lookup_chanset(self, name, index, master):
-    key = self.key(name, index)
-    if key in self.tab:
-      return self.tab[key].chan_sets[0 if master else 1]
-    return None
-
-  def is_master(self, name, index, location):
-    key = self.key(name, index)
-    if key in self.tab:
-      return self.tab[key].locations[0] == location
-    return None
-
-  def new_chanend(self):
-    name = '_c{}'.format(self.chanend_count)
-    self.chanend_count += 1
-    return name
-
-  def display(self):
-    print('Channel table for procedure '+self.name+':')
-    for x in self.tab.keys():
-      print('  channel {} is {}'.format(x, self.tab[x]))
 
 
 # These classes represent uses of channels as they occur in the program

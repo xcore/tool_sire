@@ -10,45 +10,49 @@ val X := R*R
 val S := (N/R)*(N/R)
 
 proc submatrices(chanend c) is
-  var A[S];
+{ var A[S];
   var B[S];
   var C[S];
   var i;
-{ for i in [0 for S] do c ? A[i];
+  for i in [0 for S] do c ? A[i];
   for i in [0 for S] do c ? B[i];
   for i in [0 for S] do C[i] := 0;
 }
 
 % A process representing the matrices
 proc matrices(chanend c[N]) is
-  var i;
+{ var i;
   par i in [0 for X] do
     submatrices(c[i])
+}
 
 % Populate A and B with random values
 proc load(chanend c[X]) is
-  var i;
+{ var i;
   var j;
   var k;
-{ for i in [0 for 2] do
+  for i in [0 for 2] do
     for j in [0 for N] do
       for k in [0 for N] do
         c ! rand();
 }
 
 proc read_submatrix(chanend c, var M[S]) is
-  var i;
+{ var i;
   for i in [0 for S] do
     skip
+}
 
 proc write_submatrix(chanend c, var M[S]) is
-  var i;
+{ var i;
   for i in [0 for S] do
     skip
+}
 
 proc send_submatrix(chanend c, var M[S]) is
-  var i;
+{ var i;
   for i in [0 for S] do c ! M[i]
+}
 
 proc recv_submatrix(chanend c, var M[S]) is
   var i;
@@ -56,9 +60,9 @@ proc recv_submatrix(chanend c, var M[S]) is
 
 % Circularly shift west each matrix A_{i,j} by i columns
 proc subalign_cols(val i, val j, chanend c, chanend e, chanend w) is
-  var A[S];
+{ var A[S];
   var k;
-{ read_matrix(c, A);
+  read_matrix(c, A);
   for k in [0 for i] do
     if j = 0
     then
@@ -74,9 +78,9 @@ proc subalign_cols(val i, val j, chanend c, chanend e, chanend w) is
 
 % Circularly shift north each matrix B_{i,j} by j rows
 proc subalign_rows(val i, val j, chanend c, chanend n, chanend s) is
-  var B[S];
+{ var B[S];
   var k;
-{ read_matrix(c, B);
+  read_matrix(c, B);
   for k in [0 for j] do
     if i = 0
     then
@@ -91,7 +95,7 @@ proc subalign_rows(val i, val j, chanend c, chanend n, chanend s) is
 }
 
 proc align_cols(chanend c[X]) is
-  chan x[X];
+{ chan x[X];
   var i;
   var j;
   par i in [0 for R], j in [0 for R] do
@@ -100,7 +104,7 @@ proc align_cols(chanend c[X]) is
 }
 
 proc align_rows(chanend c[X]) is
-  chan y[X];
+{ chan y[X];
   var i;
   var j;
   par i in [0 for R], j in [0 for R] do
@@ -157,8 +161,8 @@ proc multiply(chanend c[X]) is
 }
 
 proc main() is
-  var i;
-{ server (chan c[X])
+{ var i;
+  server (chan c[X])
   matrices(c) 
   { load(c);
     align_row(c);

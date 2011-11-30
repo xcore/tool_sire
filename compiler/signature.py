@@ -45,7 +45,7 @@ class SignatureTable(object):
         #print('Added mobile '+node.name)
       
       if(self.debug):
-        print("Inserted sig for '{}' ({})".format(node.name, type))
+        print("Inserted sig for '{}' {}".format(node.name, type))
       
     return True
 

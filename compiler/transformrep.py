@@ -17,7 +17,7 @@ from semantics import rep_var_to_param
 from typedefs import *
 from subelem import SubElem
 from evalexpr import EvalExpr
-from symbol import Symbol
+from symboltab import Symbol
 
 from printer import Printer
 

@@ -267,7 +267,6 @@ class TranslateXS1(NodeWalker):
     if node.stmt:
       chans = {}
       self.blocker.begin()
-      [self.out(self.decl(x, chans)) for x in node.decls]
       self.stmt_block(node.stmt, chans)
       self.blocker.end()
     
@@ -299,12 +298,16 @@ class TranslateXS1(NodeWalker):
 
   def stmt_seq(self, node, chans):
     self.blocker.begin()
+    [self.out(self.decl(x, chans)) for x in node.decls]
     for x in node.children(): 
       self.stmt(x, chans)
     self.blocker.end()
 
   def stmt_par(self, node, chans):
+    self.blocker.begin()
+    [self.out(self.decl(x, chans)) for x in node.decls]
     gen_par(self, node, chans)
+    self.blocker.end()
 
   def stmt_ass(self, node, chans):
   

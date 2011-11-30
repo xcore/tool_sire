@@ -28,8 +28,8 @@ class NodeVisitor(object):
   def up(self, tag): pass
   def down(self, tag): pass
   def visit_program(self, node): pass
-  def visit_decl(self, node): pass
-  def visit_def(self, node): pass
+  def visit_var_decl(self, node): pass
+  def visit_proc_def(self, node): pass
   def visit_param(self, node): pass
   def visit_stmt(self, node): pass
   def visit_stmt_seq(self, node): pass
@@ -91,7 +91,7 @@ class Program(Node):
     return s
 
 
-class Decl(Node):
+class VarDecl(Node):
   def __init__(self, name, type, expr, coord=None):
     self.name = name
     self.type = type
@@ -104,7 +104,7 @@ class Decl(Node):
     return tuple(c)
 
   def accept(self, visitor):
-    tag = visitor.visit_decl(self)
+    tag = visitor.visit_var_decl(self)
     visitor.down(tag)
     for c in self.children():
       c.accept(visitor)
@@ -114,13 +114,13 @@ class Decl(Node):
     return self.name.__hash__()
 
   def __repr__(self):
-    s =  'Decl('
+    s =  'VarDecl('
     s += ', '.join('%s' % v for v in [self.name, self.type, self.expr])
     s += ')'
     return s
 
 
-class Def(Node):
+class ProcDef(Node):
   def __init__(self, name, type, formals, stmt, coord=None):
     self.name = name
     self.type = type
@@ -136,7 +136,7 @@ class Def(Node):
     return tuple(c)
 
   def accept(self, visitor):
-    tag = visitor.visit_def(self)
+    tag = visitor.visit_proc_def(self)
     visitor.down(tag)
     for c in self.children():
       c.accept(visitor)
@@ -146,7 +146,7 @@ class Def(Node):
     return self.name.__hash__()
 
   def __repr__(self):
-    s =  'Def('
+    s =  'ProcDef('
     s += ', '.join('%s' % v for v in [self.name, self.type])
     s += ')'
     return s

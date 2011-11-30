@@ -137,7 +137,7 @@ class Parser(object):
   # Single variable declaration
   def p_val_def(self, p):
     'val_def : VAL name IS expr'
-    p[0] = ast.Decl(p[2], T_VAL_SINGLE, p[4], self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_VAL_SINGLE, p[4], self.coord(p))
 
   # Variable declarations ====================================
 
@@ -168,42 +168,70 @@ class Parser(object):
   # Single variable declaration
   def p_var_decl_var(self, p):
     'var_decl : VAR name'
-    p[0] = ast.Decl(p[2], T_VAR_SINGLE, None, self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_VAR_SINGLE, None, self.coord(p))
 
   # Single channel declaration
   def p_var_decl_chan(self, p):
     'var_decl : CHAN name'
-    p[0] = ast.Decl(p[2], T_CHAN_SINGLE, None, self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_CHAN_SINGLE, None, self.coord(p))
 
   # Single channel declaration
   def p_var_decl_chanend(self, p):
     'var_decl : CHANEND name'
-    p[0] = ast.Decl(p[2], T_CHANEND_SINGLE, None, self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_CHANEND_SINGLE, None, self.coord(p))
 
   # Single server channel declaration
   def p_var_decl_chanend_server(self, p):
-    'var_decl : SERVER CHANEND name'
-    p[0] = ast.Decl(p[2], T_CHANEND_SERVER_SINGLE, None, self.coord(p))
+    'var_decl : CHANEND SERVER name'
+    p[0] = ast.VarDecl(p[2], T_CHANEND_SERVER_SINGLE, None, self.coord(p))
 
   # Single client channel declaration
   def p_var_decl_chanend_client(self, p):
-    'var_decl : CLIENT CHANEND name'
-    p[0] = ast.Decl(p[2], T_CHANEND_CLIENT_SINGLE, None, self.coord(p))
+    'var_decl : CHANEND CLIENT name'
+    p[0] = ast.VarDecl(p[2], T_CHANEND_CLIENT_SINGLE, None, self.coord(p))
 
   # Array reference declaration
   def p_var_decl_array_ref(self, p):
     'var_decl : VAR name LBRACKET RBRACKET'
-    p[0] = ast.Decl(p[2], T_REF_ARRAY, None, self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_REF_ARRAY, None, self.coord(p))
 
   # Array declaration
   def p_var_decl_array(self, p):
     'var_decl : VAR name LBRACKET expr RBRACKET'
-    p[0] = ast.Decl(p[2], T_VAR_ARRAY, p[4], self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_VAR_ARRAY, p[4], self.coord(p))
 
   # Channel array declaration
   def p_var_decl_chan_array(self, p):
     'var_decl : CHAN name LBRACKET expr RBRACKET'
-    p[0] = ast.Decl(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
+    p[0] = ast.VarDecl(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
+
+  # Server declarations ======================================
+
+  def p_server_decls_empty(self, p):
+    'server_decls : empty'
+    p[0] = []
+
+  def p_server_decls(self, p):
+    'server_decls : server_decls_seq'
+    p[0] = p[1]
+
+  def p_server_decls_seq(self, p):
+    'server_decls_seq : server_decl'
+    p[0] = [p[1]]
+
+  def p_server_decls_seq_(self, p):
+    'server_decls_seq : server_decl COMMA server_decls_seq'
+    p[0] = [p[1]] + p[3]
+
+  # Single chanend parameter
+  def p_server_decl_chan(self, p):
+    'server_decl : CHAN name'
+    p[0] = ast.Param(p[2], T_CHAN_SINGLE, None, self.coord(p))
+
+  # Array reference parameter
+  def p_server_decl_chan_array(self, p):
+    'server_decl : CHAN name LBRACKET expr RBRACKET'
+    p[0] = ast.Param(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
 
   # Procedure declarations ===================================
 
@@ -228,22 +256,22 @@ class Parser(object):
   # Process prototype
   def p_proc_prototype_proc(self, p):
     'proc_def : PROC name LPAREN formals RPAREN SEQSEP'
-    p[0] = ast.Def(p[2], T_PROC, p[4], None, None, self.coord(p)) 
+    p[0] = ast.ProcDef(p[2], T_PROC, p[4], None, None, self.coord(p)) 
 
   # Function prototype
   def p_proc_prototype_func(self, p):
     'proc_def : FUNC name LPAREN formals RPAREN SEQSEP'
-    p[0] = ast.Def(p[2], T_FUNC, p[4], None, None, self.coord(p)) 
+    p[0] = ast.ProcDef(p[2], T_FUNC, p[4], None, None, self.coord(p)) 
 
   # Process
   def p_proc_def_proc(self, p):
     'proc_def : PROC name LPAREN formals RPAREN IS stmt'
-    p[0] = ast.Def(p[2], T_PROC, p[4], p[7], self.coord(p)) 
+    p[0] = ast.ProcDef(p[2], T_PROC, p[4], p[7], self.coord(p)) 
 
   # Function
   def p_proc_def_func(self, p):
     'proc_def : FUNC name LPAREN formals RPAREN IS stmt'
-    p[0] = ast.Def(p[2], T_FUNC, p[4], p[7], self.coord(p)) 
+    p[0] = ast.ProcDef(p[2], T_FUNC, p[4], p[7], self.coord(p)) 
 
   # Procedure errors
   def p_proc_def_proc_err(self, p):
@@ -398,7 +426,7 @@ class Parser(object):
     p[0] = ast.StmtConnect(p[2], p[4], None, CONNECT_SERVER, self.coord(p))
 
   def p_stmt_server(self, p):
-    'stmt : SERVER LPAREN formals RPAREN stmt stmt'
+    'stmt : SERVER LPAREN server_decls RPAREN stmt stmt'
     p[0] = ast.StmtServer(p[3], p[5], p[6], self.coord(p))
 
   def p_stmt_if(self, p):
@@ -485,7 +513,7 @@ class Parser(object):
             | elem NE right'''
     p[0] = ast.ExprBinop(p[2], p[1], p[3], self.coord(p))
 
-  def p_right_sinle(self, p):
+  def p_right_single(self, p):
     'right : elem'
     p[0] = ast.ExprSingle(p[1])
   

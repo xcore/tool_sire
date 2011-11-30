@@ -356,8 +356,8 @@ class Semantics(NodeWalker):
     symbols for any declared values remain accessible. 
     """
     self.sym.begin_scope(T_SCOPE_PROGRAM)
-    [self.decl(x) for x in node.decls]
-    [self.defn(x) for x in node.defs]
+    [self.val_def(x) for x in node.decls]
+    [self.proc_def(x) for x in node.defs]
 
     # Remove any unused procedures from the signature table. This is to stop
     # unused builtin functions from appearing unneccesarily in the jumptable.
@@ -366,6 +366,23 @@ class Semantics(NodeWalker):
     # Leave the program scope open so values remain in scope of transformed
     # procedures.
     
+  # Value definitons  ===============================
+
+  def val_def(self, node):
+
+    # Children
+    self.expr(node.expr)
+    
+    # Check the symbol doesn't already exist in scope
+    if not self.sym.lookup_scoped(node.name):
+      s = self.sym.insert(node.name, node.type, node.expr, node.coord)
+      node.symbol = s
+    else:
+      self.redecl_error(node.name, node.coord)
+
+    # Determine the value of the expr
+    node.symbol.value = self.eval_expr(node.expr)
+
   # Variable declarations ===============================
 
   def decl(self, node):
@@ -374,24 +391,21 @@ class Semantics(NodeWalker):
     if node.expr:
       self.expr(node.expr)
     
-    # TODO
-
     # Check the symbol doesn't already exist in scope
-    #if not self.sym.lookup_scoped(node.name):
-    #  s = self.sym.insert(node.name, node.type, node.expr, node.coord)
-    #  node.symbol = s
-    #else:
-    #  self.redecl_error(node.name, node.coord)
+    if not self.sym.lookup_scoped(node.name):
+      s = self.sym.insert(node.name, node.type, node.expr, node.coord)
+      node.symbol = s
+    else:
+      self.redecl_error(node.name, node.coord)
 
     # If it's a value or array, then determine the value of the expr 
-    #if (node.type == T_VAL_SINGLE 
-    #    or node.type == T_VAR_ARRAY
-    #    or node.type == T_CHAN_ARRAY):
-    #  node.symbol.value = self.eval_expr(node.expr)
+    if (node.type == T_VAR_ARRAY
+       or node.type == T_CHAN_ARRAY):
+      node.symbol.value = self.eval_expr(node.expr)
 
   # Procedure definitions ===============================
 
-  def defn(self, node):
+  def proc_def(self, node):
     
     # Rename main to avoid conflicts in linking
     if node.name == 'main':
@@ -412,13 +426,12 @@ class Semantics(NodeWalker):
     if node.name == '_main':
       self.sig.mark('_main')
       
-    # Begin a new scope for decls and stmt components
-    self.sym.begin_scope(T_SCOPE_PROC)
+    self.sym.begin_scope(T_SCOPE_PROGRAM)
     
     # First obtain all the symbols so that we can resolve all array length
     # specifiers, i.e. where the specifier appears before the array parameter.
-    [self.param_(x) for x in node.formals]
-    [self.param(x) for x in node.formals]
+    [self.param_pass1(x) for x in node.formals]
+    [self.param_pass2(x) for x in node.formals]
      
     # Check if this is a prototype or the actual definition
     if node.stmt:
@@ -431,14 +444,12 @@ class Semantics(NodeWalker):
     
       # Body statement
       self.stmt(node.stmt)
-    
-    # End the scope
-    self.sym.end_scope(warn_unused=True if node.stmt else False)
-      
   
+    self.sym.end_scope()
+
   # Formals =============================================
   
-  def param_(self, node):
+  def param_pass1(self, node):
 
     # Check the declaration and add create the symbol
     if not self.sym.lookup_scoped(node.name):
@@ -447,7 +458,7 @@ class Semantics(NodeWalker):
     else:
       self.redecl_error(node.name, node.coord)
 
-  def param(self, node):
+  def param_pass2(self, node):
 
     # Children
     if node.type == T_REF_ARRAY or node.type == T_CHANEND_ARRAY:
@@ -466,13 +477,17 @@ class Semantics(NodeWalker):
   # Statements ==========================================
 
   def stmt_seq(self, node):
+    self.sym.begin_scope(T_SCOPE_BLOCK)
     [self.decl(x) for x in node.decls]
     [self.stmt(x) for x in node.stmt]
-
+    self.sym.end_scope()
+      
   def stmt_par(self, node):
+    self.sym.begin_scope(T_SCOPE_BLOCK)
     [self.decl(x) for x in node.decls]
     [self.stmt(x) for x in node.stmt]
-
+    self.sym.end_scope()
+      
   def stmt_server(self, node):
 
     # Check each declaration is a channel and *is not declared in any other
@@ -499,7 +514,7 @@ class Semantics(NodeWalker):
     
     # Children
     [self.elem(x) for x in node.indicies]
-    self.elem(node.stmt)
+    self.stmt(node.stmt)
     
     # Check all index elements are ElemIndexRanges
     for x in node.indicies:
@@ -723,6 +738,10 @@ class Semantics(NodeWalker):
 
     node.symbol = self.check_decl(node.name, node.coord)
 
+    # Check the symbol type
+    if not self.sym.check_form(node.name, ['array']):
+      self.type_error('array', node.name, node.coord)
+    
   def elem_slice(self, node):
     
     # Children

@@ -5,7 +5,7 @@
 
 from walker import NodeWalker
 from typedefs import *
-from symbol import Symbol
+from symboltab import Symbol
 import ast
 
 class InsertIds(NodeWalker):

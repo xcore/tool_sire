@@ -6,131 +6,103 @@
 import sys
 
 import definitions as defs
+from util import debug
 from typedefs import *
 
 scopes = [
   T_SCOPE_SYSTEM, 
   T_SCOPE_PROGRAM,
   T_SCOPE_PROC,
-  T_SCOPE_FUNC,
+  T_SCOPE_BLOCK,
+  T_SCOPE_SERVER,
+  T_SCOPE_CLIENT,
   ]
+
+TAG = 0
+TAB = 1
 
 class SymbolTable(object):
   """ 
-  Symbol table.
+  Symbol table. 'scopes' maintains a list of tables, one for each scope.
   """
   def __init__(self, error, debug=False):
     self.error = error
     self.debug = debug
-    self.scope = []
-    self.tab = {}
+    self.scopes = []
 
   def begin_scope(self, tag):
-    """ 
-    Begin a new scope.
-    """
-    s = ScopeTag(tag)
-    self.scope.append(s)
-    self.curr_scope = tag
-    if(self.debug): 
-      print("New scope '{}'".format(s.name))
+    self.scopes.append((tag, {}))
+    debug(self.debug, "New scope '{}'".format(tag))
 
   def end_scope(self, warn_unused=True):
-    """ 
-    End a scope.
     """
-    s = None
-    while not (self.scope[-1].type.isTag()):
-      s = self.scope.pop()
-      #del self.tab[s.name]
-      if(self.debug): 
-        print("Popped sym '{}' with type {}".format(s.name, s.type))
+    End a scope, check for unused variables.
+    """
+    for x in self.scopes[-1][TAB].keys():
+      s = self.scopes[-1][TAB][x]
+      debug(self.debug, "  Popped '{}' type {}".format(s.name, s.type))
 
       # If symbol hasn't been used, give a warning
-      if not s.mark and not s.name == defs.LABEL_MAIN and warn_unused:
-        self.error.report_warning(
-            "variable '{}' declared but not used"
-            .format(s.name))
-    
-    s = self.scope.pop()
-    self.curr_scope = self.get_curr_scope()
-    if(self.debug): 
-      print("Ended scope '{}', new scope '{}'"
-        .format(s.name, self.curr_scope))
+      if not s.mark and warn_unused:
+        self.error.report_warning("'{}' declared but not used".format(s.name))
    
-  def get_curr_scope(self):
-    """ 
-    Traverse scope stack from top to bottom to find first scope tag.
-    """
-    for x in reversed(self.scope):
-      if x.type.isTag():
-        return x.name
-
+    tab = self.scopes.pop()
+    del tab 
+    debug(self.debug, "Ended scope, new scope '{}'".format(self.scopes[-1][0]))
+   
   def insert(self, name, type, expr=None, coord=None):
     """ 
     Insert a new symbol in the table.
     """
-    s = Symbol(name, type, expr, coord, self.curr_scope)
-    self.tab[name] = s 
-    self.scope.append(self.tab[name])
-    if(self.debug):
-      print("Inserted sym '{}' {} in scope '{}'"
-          .format(name, type, self.curr_scope))
-    return s
+    sym = Symbol(name, type, expr, coord, self.scopes[-1][TAG])
+    self.scopes[-1][TAB][name] = sym
+    debug(self.debug, "  Insert: '{}' {} in scope '{}'"
+          .format(name, type, self.scopes[-1][TAG]))
+    return sym
 
-  #def insert_scoped(self, name, type, expr=None, coord=None):
-  #  """ Insert a new symbol in the table if it doesn't already exist in the
-  #    current scope.
-  #  """
-  #  if not self.lookup_scoped(name):
-  #    return self.insert(name, type, expr, coord)
-  #  return None
-
-  # TODO: ideally, symbol lookup should be O(1) by creating new tables for
-  # each new scope
   def lookup(self, key):
     """ 
     Lookup a symbol in scope order.
     """
-    for x in reversed(self.scope):
-      if x.name == key: 
-        return x
-    #if self.debug:
-    #  print('Lookup: '+key+' found {}'.format(symbol))
-    #print('didnt find symbol: '+key)
+    for (tag, tab) in reversed(self.scopes):
+      if key in tab:
+        debug(self.debug,"  Lookup: "+key+" in scope '{}'".format(tag))
+        return tab[key]
     return None
 
   def lookup_scoped(self, key):
     """ 
     Lookup a symbol in the current scope.
     """
-    for x in reversed(self.scope):
-      if x.type.isTag(): return None
-      if x.name == key: return x
+    if key in self.scopes[-1][TAB]: 
+      return self.scopes[-1][TAB][key]
+    else:
+      return None
 
   def check_decl(self, key):
     """ 
     Check a symbol has been declared.
     """
     s = self.lookup(key) 
-    #print("check decl: "+key+" is {}".format(not s == None))
     return not s == None
 
   def check_form(self, key, forms):
     """ 
     Check a symbol has been declared with the correct form.
     """
-    if key in self.tab:
-      return any(x == self.tab[key].type.form for x in forms)
-    return False
+    sym = self.lookup(key)
+    if sym == None:
+      return False
+    return any(x == sym.type.form for x in forms)
 
   def check_type(self, key, types):
     """ 
     Check a symbol has been declared with the correct form.
     """
-    if key in self.tab:
-      return any(x == self.tab[key].type for x in types)
-    return False
+    sym = self.lookup(key)
+    if sym == None:
+      return False
+    return any(x == sym.type for x in types)
 
   def dump(self, buf=sys.stdout):
     """ 

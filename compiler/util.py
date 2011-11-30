@@ -119,3 +119,7 @@ def vmsg(verbose, msg, end='\n'):
     sys.stdout.write(msg+end)
     sys.stdout.flush()
 
+def debug(display, msg):
+  if display:
+    print(msg)
+

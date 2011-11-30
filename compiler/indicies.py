@@ -5,7 +5,7 @@
 
 from functools import reduce
 from math import floor
-from symbol import Symbol
+from symboltab import Symbol
 from typedefs import *
 import ast
 

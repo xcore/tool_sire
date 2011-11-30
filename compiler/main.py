@@ -20,7 +20,7 @@ import definitions as defs
 from parser import Parser
 from dump import Dump
 from printer import Printer
-from symbol import SymbolTable
+from symboltab import SymbolTable
 from signature import SignatureTable
 from semantics import Semantics
 from buildcfg import BuildCFG
@@ -251,45 +251,45 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 6. Label connections
   vmsg(v, "Labelling connections")
-  LabelConns().walk_program(ast)
+  #LabelConns().walk_program(ast)
   
   #DisplayConns(device).walk_program(ast)
 
   # 7. Insert channel ends
   vmsg(v, "Inserting connections")
-  InsertConns(sym).walk_program(ast)
+  #InsertConns(sym).walk_program(ast)
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  RenameChans().walk_program(ast)
+  #RenameChans().walk_program(ast)
  
   # 9. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
-  BuildCFG().run(ast)
+  #BuildCFG().run(ast)
 
   # 10. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
-  Liveness().run(ast)
+  #Liveness().run(ast)
 
   # 11. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  TransformPar(sem, sig).walk_program(ast)
+  #TransformPar(sem, sig).walk_program(ast)
  
   # 12. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  TransformRep(sym, sem, sig, device).walk_program(ast)
+  #TransformRep(sym, sem, sig, device).walk_program(ast)
   
   # 13. Transform server processes
   vmsg(v, "Transforming server processes")
-  TransformServer().walk_program(ast)
+  #TransformServer().walk_program(ast)
 
   # 14. Flatten nested calls
   vmsg(v, "Flattening nested calls")
-  FlattenCalls(sig).walk_program(ast)
+  #FlattenCalls(sig).walk_program(ast)
    
   # 15. Remove unused declarations
   vmsg(v, "Removing unused declarations")
-  RemoveDecls().walk_program(ast)
+  #RemoveDecls().walk_program(ast)
    
   # Display (pretty-print) the transformed AST
   if pprint_trans_ast: 

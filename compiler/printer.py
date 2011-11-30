@@ -144,9 +144,9 @@ class Printer(NodeWalker):
     elif node.type == T_CHANEND_SINGLE:
       return 'chanend {}'.format(node.name)
     elif node.type == T_CHANEND_SERVER_SINGLE:
-      return 'server chanend {}'.format(node.name)
+      return 'chanend server {}'.format(node.name)
     elif node.type == T_CHANEND_CLIENT_SINGLE:
-      return 'client chanend {}'.format(node.name)
+      return 'chanend client {}'.format(node.name)
     elif node.type == T_CHANEND_ARRAY:
       return 'chanend {}[{}]'.format(node.name, self.expr(node.expr))
     elif node.type == T_CHAN_SINGLE:

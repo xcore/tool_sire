@@ -63,5 +63,5 @@ class Type(object):
     return self == other
 
   def __repr__(self):
-    return "Type({}, {})".format(self.specifier, self.form)
+    return "<{} {}>".format(self.specifier, self.form)
 

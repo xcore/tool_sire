@@ -159,7 +159,6 @@ def gen_par(t, node, chans):
   sync_label = t.get_label()
   exit_label = t.get_label()
   slave_exit_labels = [t.get_label() for x in range(num_slaves)]
-  t.blocker.begin()
 
   # Declare sync variable and array to store thread identifiers
   t.out('unsigned _sync;')
@@ -206,6 +205,4 @@ def gen_par(t, node, chans):
   
   # Free synchroniser resource
   t.out('FREER(_sync);')
-
-  t.blocker.end()
 

@@ -7,7 +7,7 @@
 # language. Those marked as mobile will be added to the jump table and will be
 # executable remotely.
 
-from ast import Def, Param
+from ast import ProcDef, Param
 from typedefs import * 
 
 SVAL_PARAM = Param('v', T_VAL_SINGLE, None) 
@@ -23,11 +23,11 @@ class Builtin(object):
 
 # Create a process declaration (prototype).
 def proc_decl(name, params, mobile=False):
-  return Builtin(Def(name, T_PROC, params, None, None), mobile)
+  return Builtin(ProcDef(name, T_PROC, params, None, None), mobile)
 
 # Create a function declaration (prototype).
 def func_decl(name, params, mobile=False):
-  return Builtin(Def(name, T_FUNC, params, None, None), mobile)
+  return Builtin(ProcDef(name, T_FUNC, params, None, None), mobile)
 
 # Printing builtins
 printchar   = proc_decl('printchar',   [SVAL_PARAM])

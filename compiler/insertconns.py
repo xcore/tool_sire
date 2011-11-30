@@ -9,7 +9,7 @@ import ast
 from walker import NodeWalker
 from definitions import *
 from typedefs import *
-from symbol import Symbol
+from symboltab import Symbol
 from formlocation import form_location
 from printer import Printer
 from indicies import indicies_value, indicies_expr
