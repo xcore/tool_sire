@@ -9,6 +9,7 @@ import collections
 from itertools import product
 
 import ast
+from util import debug
 from walker import NodeWalker
 from typedefs import *
 from chantab import ChanTable
@@ -19,7 +20,7 @@ from indicies import *
 
 from printer import Printer
 
-DISPLAY_CHANTAB = False
+DISPLAY_CHANTAB = True 
 
 class LabelChans(NodeWalker):
   """
@@ -29,23 +30,20 @@ class LabelChans(NodeWalker):
   iterators and tag each with its location. Then label each channel with the 
   relative offset from the master to the slave.
   """
-  def __init__(self, device, errorlog, print_debug=False):
+  def __init__(self, device, errorlog, debug=False):
     self.device = device
     self.errorlog = errorlog
-    self.print_debug = print_debug
+    self.debug = debug
 
-  def debug(self, s):
-    if self.print_debug:
-      print(s)
-  
   def single_channel(self, tab, stmt, name, chan_set):
     """
     Process a single (non-subscripted) channel use by evaluating its location
     and then adding it to the channel table and returning it as an element. 
     """
+    #print(Printer().expr(stmt.location))
     location_value = EvalExpr().expr(stmt.location)
     tab.insert(name, None, location_value, chan_set)
-    self.debug('  {} at {}'.format(name, location_value))
+    debug(self.debug, '  {} at {}'.format(name, location_value))
     return ChanElem(None, location_value, None, None)
 
   def subscript_channel(self, indicies, tab, stmt, name, expr, chan_set):
@@ -84,7 +82,7 @@ class LabelChans(NodeWalker):
       chan_elems.append(ChanElem(index_value, location_value, 
           indicies, index_values))
 
-      self.debug('  {}[{}] at {}'.format(name, index_value, location_value))
+      debug(self.debug, '  {}[{}] at {}'.format(name, index_value, location_value))
     
     return chan_elems
 
@@ -107,7 +105,19 @@ class LabelChans(NodeWalker):
     # Sort them by chanend
     chans = sorted(chans, key=lambda x: x.chanend)
     return chans
-  
+ 
+  def insert_chan_decls(self, tab, decls):
+    """
+    Insert the names of channels from a set of declarations in the current scope.
+    """
+    for x in decls:
+      if x.type == T_CHAN_SINGLE:
+        tab.insert(x.name, None, None, None, decl=True)
+      elif x.type == T_CHAN_ARRAY:
+        tab.insert(x.name, None, None, None, decl=True)
+      else:
+        pass
+
   def check_chan(self, name, index, chan_elem):
     """
     Check each ChanItem entry in the table is valid: contains both master and 
@@ -122,6 +132,24 @@ class LabelChans(NodeWalker):
     # NOTE: this is valid with server connections
     #elif len(locations) > 2:
     #  self.errorlog.report_error('channel '+c+' has multiple slaves') 
+    
+  def check_chans(self, tab, decls):
+    """
+    Check each channel is used correctly by inspecting the entries in the
+    channel table and label channel variables with unique identifiers.
+    """
+    #node.chanids = {}
+    for x in decls:
+      if x.type == T_CHAN_SINGLE:
+        self.check_chan(x.name, None, tab.lookup(x.name, None))
+        #node.chanids[x.name] = len(node.chanids)
+      elif x.type == T_CHAN_ARRAY:
+        for y in range(x.symbol.value):
+          if tab.contains(x.name, y): 
+            self.check_chan(x.name, y, tab.lookup(x.name, y))
+        #node.chanids[x.name] = len(node.chanids)
+      else:
+        pass
 
   # Program ============================================
 
@@ -135,18 +163,26 @@ class LabelChans(NodeWalker):
     chan_uses = self.stmt(node.stmt, [], node.chantab)
     node.chans = self.expand_uses(node.chantab, [], chan_uses, node.stmt)
 
-    # Display the channel table
-    if DISPLAY_CHANTAB:
-      node.chantab.display()
-
   # Statements ==========================================
 
   # Top-level statements where connections are inserted as we distribute on
   # these boundaries. The set use_instances contains all the unique occurances
   # of channels in the contained process.
 
+  def stmt_rep(self, node, indicies, tab):
+    indicies = indicies + node.indicies
+    chan_uses = self.stmt(node.stmt, indicies, tab)
+    node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
+
+    # Display the channel table
+    #tab.display()
+    
+    # Return no uses
+    return ChanUseSet() 
+  
   def stmt_par(self, node, indicies, tab):
     tab.begin_scope()
+    self.insert_chan_decls(tab, node.decls)
     
     # For each statement in the par, group the expansions
     node.chans = []
@@ -154,47 +190,28 @@ class LabelChans(NodeWalker):
       chan_uses = self.stmt(x, indicies, tab)
       node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
 
-    # Check each channel is used correctly by inspecting the entries in the
-    # channel table and label channel variables with unique identifiers.
-    #node.chanids = {}
-    for x in node.decls:
-      if x.type == T_CHAN_SINGLE:
-        self.check_chan(x.name, None, tab.lookup(x.name, None))
-        #node.chanids[x.name] = len(node.chanids)
-      elif x.type == T_CHAN_ARRAY:
-        for y in range(x.symbol.value):
-          if tab.contains(x.name, y): 
-            self.check_chan(x.name, y, tab.lookup(x.name, y))
-        #node.chanids[x.name] = len(node.chanids)
-
+    self.check_chans(tab, node.decls)
     tab.end_scope()
+
+    # Display the channel table
+    #tab.display()
     
     # Return no uses 
     return ChanUseSet()
  
   def stmt_server(self, node, indicies, tab):
     tab.begin_scope()
+    self.insert_chan_decls(tab, node.decls)
     node.chans = []
     chan_uses = self.stmt(node.server, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
     chan_uses = self.stmt(node.client, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
-   
-    # Check each channel is used correctly by inspecting the entries in the
-    # channel table and label channel variables with unique identifiers.
-    #node.chanids = {}
-    for x in node.decls:
-      if x.type == T_CHAN_SINGLE:
-        self.check_chan(x.name, None, tab.lookup(x.name, None))
-        #node.chanids[x.name] = len(node.chanids)
-      elif x.type == T_CHAN_ARRAY:
-        for y in range(x.symbol.value):
-          self.check_chan(x.name, y, tab.lookup(x.name, y))
-        #node.chanids[x.name] = len(node.chanids)
-      else:
-        assert 0
-
+    self.check_chans(tab, node.decls)
     tab.end_scope()
+    
+    # Display the channel table
+    #tab.display()
     
     # Return no uses 
     return ChanUseSet()
@@ -203,15 +220,18 @@ class LabelChans(NodeWalker):
     chan_uses = self.stmt(node.stmt, indicies, tab)
     node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
     
+    # Display the channel table
+    #tab.display()
+    
     # Return no uses 
     return ChanUseSet()
 
-  # Statements containing uses of channels.
+  # Statements containing uses of channels ================
 
   def stmt_in(self, node, indicies, tab):
     c = node.left
     t = c.symbol.type
-    self.debug('out channel {}:'.format(c.name))
+    debug(self.debug, 'out channel {}:'.format(c.name))
     
     if (isinstance(c, ast.ElemId) 
         and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
@@ -227,7 +247,7 @@ class LabelChans(NodeWalker):
   def stmt_out(self, node, indicies, tab):
     c = node.left
     t = c.symbol.type
-    self.debug('in channel {}:'.format(c.name))
+    debug(self.debug, 'in channel {}:'.format(c.name))
 
     if (isinstance(c, ast.ElemId) 
         and (t == T_CHAN_SINGLE or t == T_CHANEND_SINGLE)):
@@ -248,12 +268,12 @@ class LabelChans(NodeWalker):
 
         if (isinstance(x.elem, ast.ElemId)
             and x.elem.symbol.type == T_CHAN_SINGLE):
-          self.debug('single arg channel {}:'.format(x.elem.name))
+          debug(self.debug, 'single arg channel {}:'.format(x.elem.name))
           uses.add(ChanUse(x.elem.name, None, c.elem.symbol))
 
         elif (isinstance(x.elem, ast.ElemSub)
             and x.elem.symbol.type == T_CHAN_ARRAY):
-          self.debug('subscript arg channel {}:'.format(x.elem.name))
+          debug(self.debug, 'subscript arg channel {}:'.format(x.elem.name))
           uses.add(ChanUse(x.elem.name, x.elem.expr, c.elem.symbol))
 
         else:
@@ -261,27 +281,14 @@ class LabelChans(NodeWalker):
 
     return uses
     
-  # Other statements containing processes
+  # Other statements containing processes =================
 
   def stmt_seq(self, node, indicies, tab):
-
     tab.begin_scope()
+    self.insert_chan_decls(tab, node.decls)
     uses = ChanUseSet()
     [uses.update(self.stmt(x, indicies, tab)) for x in node.stmt]
-
-    # Check each channel is used correctly by inspecting the entries in the
-    # channel table and label channel variables with unique identifiers.
-    #node.chanids = {}
-    for x in node.decls:
-      if x.type == T_CHAN_SINGLE:
-        self.check_chan(x.name, None, tab.lookup(x.name, None))
-        #node.chanids[x.name] = len(node.chanids)
-      elif x.type == T_CHAN_ARRAY:
-        for y in range(x.symbol.value):
-          if tab.contains(x.name, y): 
-            self.check_chan(x.name, y, tab.lookup(x.name, y))
-        #node.chanids[x.name] = len(node.chanids)
-    
+    self.check_chans(tab, node.decls)
     tab.end_scope()
     return uses
 
@@ -297,7 +304,7 @@ class LabelChans(NodeWalker):
     #indicies.append(node.index)
     return self.stmt(node.stmt, indicies, tab)
 
-  # Statements not containing processes or channels uses
+  # Statements not containing processes or channels uses ==
 
   def stmt_ass(self, node, indicies, tab):
     return ChanUseSet()

@@ -251,7 +251,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 6. Label connections
   vmsg(v, "Labelling connections")
-  #LabelConns().walk_program(ast)
+  LabelConns().walk_program(ast)
   
   #DisplayConns(device).walk_program(ast)
 

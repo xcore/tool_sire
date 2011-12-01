@@ -9,6 +9,7 @@ import error
 import util
 import definitions as defs
 import ast
+from util import debug
 from walker import NodeWalker
 from builtin import builtins
 from typedefs import *
@@ -53,6 +54,7 @@ param_conversions = {
 
   T_CHANEND_SINGLE : [
     T_CHANEND_SINGLE,
+    T_CHANEND_SUB,
     T_CHAN_SINGLE,
     T_CHAN_SUB,
     ],
@@ -195,8 +197,7 @@ class Semantics(NodeWalker):
     """
     
     # Compare each param type to the type of each expr argument
-    if self.debug:
-       print('Checking args for {}'.format(node.name))
+    debug(self.debug, 'Checking args for {}'.format(node.name))
     
     # Check the signature exists.
     if not self.sig.sig_exists(node.name):
@@ -211,9 +212,7 @@ class Semantics(NodeWalker):
     # Check the type of each actual matches the formal
     for (x, y) in zip(self.sig.get_params(node.name), node.args):
       t = self.get_expr_type(y)
-      if self.debug:
-        print('  Arg type: {}'.format(t))
-        print('  Param type: {}'.format(x.type))
+      debug(self.debug, '  Arg type: {}, param type: {}'.format(t, x.type))
 
       # If argument y has no type, i.e. not defined
       if not t:

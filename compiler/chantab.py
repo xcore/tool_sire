@@ -11,7 +11,7 @@ class ChanTable(object):
   to list of locations where the first location is that of the master, and a 
   unique identifier for the specific connection instance.
   """
-  def __init__(self, name, debug=True):
+  def __init__(self, name, debug=False):
     self.name = name
     self.debug = debug
     self.scopes = []
@@ -30,19 +30,30 @@ class ChanTable(object):
   def key(self, name, index):
     return '{}{}'.format(name, '' if index==None else index)
 
-  def insert(self, name, index, location, chan_set):
+  def insert(self, name, index, location, chan_set, decl=False):
     """
-    Add a channel element with a particular index into the table recording the
+    Add channel declarations (with just names) so channel uses can be added to
+    the correct scope.
+    Or add a channel element with a particular index into the table recording the
     location and the ChanElemSet it is a member of (this is necessary for
     performing colouring to assign connection ids).
     """
-    key = self.key(name, index)
-    if not key in self.scopes[-1]:
-      self.scopes[-1][key] = Channel()
-    self.scopes[-1][key].locations.append(location)
-    self.scopes[-1][key].chan_sets.append(chan_set)
-    debug(self.debug, '  Insert: '+name+'{} @ {}'.format(
-      '[{}]'.format(index) if index else '', location))
+    if decl:
+      self.scopes[-1][name] = Channel()
+      debug(self.debug, '  Insert decl: '+name)
+      return
+    else:
+      for x in reversed(self.scopes):
+        if name in x:
+          key = self.key(name, index)
+          if not key in x:
+            x[key] = Channel()
+          x[key].locations.append(location)
+          x[key].chan_sets.append(chan_set)
+          debug(self.debug, '  Insert: '+name+'{} @ {}'.format(
+              '[{}]'.format(index) if index!=None else '', location))
+          return
+    assert 0
 
   def contains(self, name, index):
     """
@@ -88,9 +99,12 @@ class ChanTable(object):
     return name
 
   def display(self):
+    print('---------------------------')
     print('Channel table for procedure '+self.name+':')
-    for x in self.tab.keys():
-      print('  channel {} is {}'.format(x, self.tab[x]))
+    for x in reversed(self.scopes):
+      for y in x.keys():
+        print('  channel {} is {}'.format(y, x[y]))
+    print('---------------------------')
 
 
 class Channel(object):

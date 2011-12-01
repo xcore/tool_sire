@@ -190,14 +190,34 @@ class Printer(NodeWalker):
     self.stmt_block(node, '||')
 
   def stmt_server(self, node):
+    #self.display_location(node)
     self.out('server({})\n'.format(', '.join(
         [self.param(x) for x in node.decls])))
     self.indent.append(INDENT)
+    #self.display_location(node.server)
     self.stmt(node.server)
     self.indent.pop()
     self.out('\n')
     self.indent.append(INDENT)
+    #self.display_location(node.client)
     self.stmt(node.client)
+    self.indent.pop()
+
+  def stmt_rep(self, node):
+    self.out('par {} do\n'.format(
+      ', '.join([self.elem(x) for x in node.indicies]))) 
+    self.indent.append(INDENT)
+    self.display_location(node.stmt)
+    self.stmt(node.stmt)
+    self.indent.pop()
+
+  def stmt_on(self, node):
+    self.out('on {} do\n'.format(self.expr(node.expr)))
+    self.indent.append(INDENT)
+    # NOTE: This location won't show where we have made substitutions in 
+    # transform par and rep and we hav'nt updated the location labels.
+    self.display_location(node.stmt)
+    self.stmt(node.stmt)
     self.indent.pop()
 
   def stmt_skip(self, node):
@@ -259,23 +279,6 @@ class Printer(NodeWalker):
   def stmt_for(self, node):
     self.out('for {} do\n'.format(self.elem(node.index)))
     self.indent.append(INDENT)
-    self.stmt(node.stmt)
-    self.indent.pop()
-
-  def stmt_rep(self, node):
-    self.out('par {} do\n'.format(
-      ', '.join([self.elem(x) for x in node.indicies]))) 
-    self.indent.append(INDENT)
-    self.display_location(node.stmt)
-    self.stmt(node.stmt)
-    self.indent.pop()
-
-  def stmt_on(self, node):
-    self.out('on {} do\n'.format(self.expr(node.expr)))
-    self.indent.append(INDENT)
-    # NOTE: This location won't show where we have made substitutions in 
-    # transform par and rep and we hav'nt updated the location labels.
-    self.display_location(node.stmt)
     self.stmt(node.stmt)
     self.indent.pop()
 

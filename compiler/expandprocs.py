@@ -28,6 +28,22 @@ class ExpandProcs(NodeWalker):
     if isinstance(stmt, ast.StmtPcall) and self.sig.is_mobile(stmt.name):
       defn = [x for x in self.ast.defs if x.name == stmt.name][0]
       proc = copy.deepcopy(defn.stmt)
+
+       # Rename actual parameters for ocurrances of formals
+      for (x, y) in zip(defn.formals, stmt.args):
+        if x.type == T_VAL_SINGLE:
+          proc.accept(SubElem(ast.ElemId(x.name), y))
+        elif x.type == T_REF_SINGLE:
+          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
+        elif x.type == T_REF_ARRAY:
+          proc.accept(Rename(x.name, y.elem.name, y.elem.symbol))
+        elif x.type == T_CHANEND_SINGLE:
+          proc.accept(SubElem(ast.ElemId(x.name), y.elem))
+        elif x.type == T_CHANEND_ARRAY:
+          proc.accept(Rename(x.name, y.elem.name, y.elem.symbol))
+        else:
+          assert 0
+
       return proc
     else:
       return stmt
