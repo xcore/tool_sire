@@ -138,16 +138,13 @@ class LabelChans(NodeWalker):
     Check each channel is used correctly by inspecting the entries in the
     channel table and label channel variables with unique identifiers.
     """
-    #node.chanids = {}
     for x in decls:
       if x.type == T_CHAN_SINGLE:
         self.check_chan(x.name, None, tab.lookup(x.name, None))
-        #node.chanids[x.name] = len(node.chanids)
       elif x.type == T_CHAN_ARRAY:
         for y in range(x.symbol.value):
           if tab.contains(x.name, y): 
             self.check_chan(x.name, y, tab.lookup(x.name, y))
-        #node.chanids[x.name] = len(node.chanids)
       else:
         pass
 
@@ -191,7 +188,7 @@ class LabelChans(NodeWalker):
       node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
 
     self.check_chans(tab, node.decls)
-    tab.end_scope()
+    node.scope = tab.end_scope()
 
     # Display the channel table
     #tab.display()
@@ -208,7 +205,7 @@ class LabelChans(NodeWalker):
     chan_uses = self.stmt(node.client, indicies, tab)
     node.chans.append(self.expand_uses(tab, indicies, chan_uses, node))
     self.check_chans(tab, node.decls)
-    tab.end_scope()
+    node.scope = tab.end_scope()
     
     # Display the channel table
     #tab.display()
@@ -289,7 +286,7 @@ class LabelChans(NodeWalker):
     uses = ChanUseSet()
     [uses.update(self.stmt(x, indicies, tab)) for x in node.stmt]
     self.check_chans(tab, node.decls)
-    tab.end_scope()
+    node.scope = tab.end_scope()
     return uses
 
   def stmt_if(self, node, indicies, tab):

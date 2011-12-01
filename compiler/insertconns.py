@@ -6,6 +6,7 @@
 import math
 
 import ast
+from util import debug
 from walker import NodeWalker
 from definitions import *
 from typedefs import *
@@ -21,25 +22,24 @@ class InsertConns(NodeWalker):
   channel or subscripted array) allocate a new channel end which is declared in
   the procedure scope.
   """
-  def __init__(self, sym, print_debug=False):
+  def __init__(self, sym, debug=False):
     self.sym = sym
-    self.print_debug = print_debug
-
-  def debug(self, s):
-    if self.print_debug:
-      print(s)
+    self.debug = debug
 
   def chanend_type(self, chan):
     """
     Given a 'chan' ChanElemSet return the corresponding chanend type.
     """
-    if chan.symbol.scope == T_SCOPE_PROC or chan.symbol.scope == T_SCOPE_FUNC:
+    if chan.symbol.scope == T_SCOPE_PROC:
+      return T_CHANEND_SINGLE
+    if chan.symbol.scope == T_SCOPE_BLOCK:
       return T_CHANEND_SINGLE
     elif chan.symbol.scope == T_SCOPE_SERVER:
       return T_CHANEND_SERVER_SINGLE
     elif chan.symbol.scope == T_SCOPE_CLIENT:
       return T_CHANEND_CLIENT_SINGLE
     else:
+      print(chan.symbol.scope)
       assert 0
 
   def connect_type(self, chan, master):
@@ -47,30 +47,33 @@ class InsertConns(NodeWalker):
     Given a 'chan' ChanElemSet, scope type and whether the connect is a master
     or slave, return the resulting type of the connect statement.
     """
-    if chan.symbol.scope == T_SCOPE_PROC or chan.symbol.scope == T_SCOPE_FUNC:
+    if chan.symbol.scope == T_SCOPE_PROC:
+      return CONNECT_MASTER if master else CONNECT_SLAVE
+    if chan.symbol.scope == T_SCOPE_BLOCK:
       return CONNECT_MASTER if master else CONNECT_SLAVE
     elif chan.symbol.scope == T_SCOPE_SERVER:
         return CONNECT_SERVER
     elif chan.symbol.scope == T_SCOPE_CLIENT:
         return CONNECT_CLIENT
     else:
+      print(chan.symbol.scope)
       assert 0
 
-  def gen_single_conn(self, tab, chan):
+  def gen_single_conn(self, tab, scope, chan):
     """
     Generate a connection for a single channel declaration. 'chan' is a
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    master = tab.is_master(chan.name, elem.index, elem.location)
-    connid = tab.lookup(chan.name, elem.index).connid
+    master = tab.lookup_is_master(chan.name, elem.index, elem.location, scope)
+    connid = tab.lookup(chan.name, elem.index, scope).connid
     location = None
     if master:
       location = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_slave_location(chan.name, elem.index)))
+          tab.lookup_slave_location(chan.name, elem.index, scope)))
     else:
       location = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_master_location(chan.name, elem.index)))
+          tab.lookup_master_location(chan.name, elem.index, scope)))
     chanend = ast.ElemId(chan.chanend)
     chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
         None, scope=T_SCOPE_PROC)
@@ -78,7 +81,7 @@ class InsertConns(NodeWalker):
     return ast.StmtConnect(chanend, chanid, location, 
         self.connect_type(chan, master))
 
-  def gen_array_conn(self, tab, chan):
+  def gen_array_conn(self, tab, scope, chan):
     """
     Generate a conncection for an array channel declaration. We must analyse
     the subscript by generating nested conditional statements. 'chan' is a
@@ -87,13 +90,13 @@ class InsertConns(NodeWalker):
     
     def create_single_connection(s, chan, indicies_expr, 
         range_begin, index, master, connid):
-      self.debug('New connection for index {}'.format(index))
+      debug(self.debug, 'New connection for index {}'.format(index))
       if master:
         location = ast.ExprSingle(ast.ElemNumber(
-            tab.lookup_slave_location(chan.name, index)))
+            tab.lookup_slave_location(chan.name, index, scope)))
       else:
         location = ast.ExprSingle(ast.ElemNumber(
-            tab.lookup_master_location(chan.name, index)))
+            tab.lookup_master_location(chan.name, index, scope)))
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
@@ -106,7 +109,7 @@ class InsertConns(NodeWalker):
 
     def create_range_connection(s, chan, indicies_expr, begin, end, master,
         diff, connid):
-      self.debug('New connection over range {} to {}'.format(begin, end))
+      debug(self.debug, 'New connection over range {} to {}'.format(begin, end))
       if diff != 0:
         location = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(diff))))
         location = ast.ExprUnary('-', location) if diff<0 else location
@@ -128,25 +131,25 @@ class InsertConns(NodeWalker):
 
     def target_loc(name, index, master):
       if master:
-        return tab.lookup_slave_location(name, index)
+        return tab.lookup_slave_location(name, index, scope)
       else:
-        return tab.lookup_master_location(name, index)
+        return tab.lookup_master_location(name, index, scope)
 
     # Sort the channel elements into increasing order of indicies
     chan.elems = sorted(chan.elems, key=lambda x: x.indicies_value)
 
     # Build a list of channel index ranges
-    self.debug('=====')
+    debug(self.debug, '=====')
     x = chan.elems[0] 
     l = [[x, x]]
-    master = tab.is_master(chan.name, x.index, x.location)
+    master = tab.lookup_is_master(chan.name, x.index, x.location, scope)
     diff = target_loc(chan.name, x.index, master) - x.indicies_value
-    self.debug('{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
+    debug(self.debug, '{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
         chan.name, x.index, target_loc(chan.name, x.index, master), diff))
     for x in chan.elems[1:]:
-      cmaster = tab.is_master(chan.name, x.index, x.location)
+      cmaster = tab.lookup_is_master(chan.name, x.index, x.location, scope)
       cdiff = target_loc(chan.name, x.index, cmaster) - x.indicies_value
-      self.debug('{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
+      debug(self.debug, '{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
           chan.name, x.index, target_loc(chan.name, x.index, cmaster), cdiff))
       if diff == cdiff and master == cmaster:
         l[-1][1] = x
@@ -156,17 +159,16 @@ class InsertConns(NodeWalker):
         l.append([x, x])
   
     # Print them
-    if self.print_debug:
+    if self.debug:
       for x in l:
-        self.debug('Range: {}'.format(
-          ' '.join(['{}'.format(y.index) for y in x])))
+        print('Range: {}'.format(' '.join(['{}'.format(y.index) for y in x])))
 
     # Construct the connection syntax
     s = None
     i_expr = indicies_expr(chan.indicies)
     for x in reversed(l):
-      master = tab.is_master(chan.name, x[0].index, x[0].location)
-      connid = tab.lookup(chan.name, x[0].index).connid
+      master = tab.lookup_is_master(chan.name, x[0].index, x[0].location, scope)
+      connid = tab.lookup(chan.name, x[0].index, scope).connid
       if x[0] == x[1]:
         s = create_single_connection(s, chan, i_expr, x[0].indicies_value, 
             x[0].index, master, connid)
@@ -178,7 +180,7 @@ class InsertConns(NodeWalker):
 
     return s
 
-  def insert_connections(self, tab, stmt, chans):
+  def insert_connections(self, tab, scope, stmt, chans):
     """
     Insert connections for a process from a list of channel uses (name, index)
     by composing them in sequence, prior to the process. If there are no
@@ -191,49 +193,66 @@ class InsertConns(NodeWalker):
       conns = []
       for x in chans:
         if len(x.elems) == 1:
-          conns.append(self.gen_single_conn(tab, x))
+          conns.append(self.gen_single_conn(tab, scope, x))
         else:
-          conns.append(self.gen_array_conn(tab, x))
+          conns.append(self.gen_array_conn(tab, scope, x))
       if len(conns) > 1:
-        s1 = ast.StmtPar(conns) 
+        s1 = ast.StmtPar([], conns) 
         s1.location = stmt.location
         s1.chans = []
-        s2 = ast.StmtSeq([s1, stmt])
+        s2 = ast.StmtSeq([], [s1, stmt])
         s2.location = stmt.location
         s2.chans = []
         return s2
       else:
-        s = ast.StmtSeq(conns+[stmt])
+        s = ast.StmtSeq([], conns+[stmt])
         s.location = stmt.location
         s.chans = []
         return s
     else:
       return stmt
 
-  def create_decls(self, chans):
+  def create_decl(self, chanset):
+    if chanset.symbol.scope == T_SCOPE_PROC:
+      d = ast.VarDecl(chanset.chanend, T_CHANEND_SINGLE, None)
+      d.symbol = Symbol(chanset.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+      return d
+    
+    elif chanset.symbol.scope == T_SCOPE_BLOCK:
+      d = ast.VarDecl(chanset.chanend, T_CHANEND_SINGLE, None)
+      d.symbol = Symbol(chanset.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_BLOCK)
+      return d
+    
+    elif chanset.symbol.scope == T_SCOPE_SERVER:
+      d = ast.VarDecl(chanset.chanend, T_CHANEND_SERVER_SINGLE, None)
+      d.symbol = Symbol(chanset.chanend, T_CHANEND_SERVER_SINGLE, None,
+          scope=T_SCOPE_SERVER)
+      return d
+    
+    elif chanset.symbol.scope == T_SCOPE_CLIENT:
+      d = ast.VarDecl(chanset.chanend, T_CHANEND_CLIENT_SINGLE, None)
+      d.symbol = Symbol(chanset.chanend, T_CHANEND_CLIENT_SINGLE, None,
+          scope=T_SCOPE_CLIENT)
+      return d
+    
+    else:
+      assert 0
+
+  def take_decls(self, tab, scope, chansets):
+    """
+    In a given scope, given 'chansets' (a list of 'ChanElemSet's) take the ones
+    belonging to the scope and convert them into declarations.
+    """
+    # TODO: remove the items as well.
     decls = []
-    for x in chans:
-      
-      if x.symbol.scope == T_SCOPE_PROC or x.symbol.scope == T_SCOPE_FUNC:
-        d = ast.Decl(x.chanend, T_CHANEND_SINGLE, None)
-        d.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
-        decls.append(d)
-      
-      elif x.symbol.scope == T_SCOPE_SERVER:
-        d = ast.Decl(x.chanend, T_CHANEND_SERVER_SINGLE, None)
-        d.symbol = Symbol(x.chanend, T_CHANEND_SERVER_SINGLE, None,
-            scope=T_SCOPE_SERVER)
-        decls.append(d)
-      
-      elif x.symbol.scope == T_SCOPE_CLIENT:
-        d = ast.Decl(x.chanend, T_CHANEND_CLIENT_SINGLE, None)
-        d.symbol = Symbol(x.chanend, T_CHANEND_CLIENT_SINGLE, None,
-            scope=T_SCOPE_CLIENT)
-        decls.append(d)
-      
-      else:
-        assert 0
+    for x in chansets:
+      if tab.lookup(x.name, None, base=scope, scoped=True) != None:
+        decls.append(self.create_decl(x))
     return decls
+
+  def display_chans(self, chans):
+    if self.debug:
+      pass
 
   # Program ============================================
 
@@ -243,107 +262,103 @@ class InsertConns(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    self.debug('Inserting connections for: '+node.name)
-    decls = self.create_decls(node.chans)
-    self.stmt(node.stmt, node.chantab, decls)
-    node.stmt = self.insert_connections(node.chantab, node.stmt, node.chans)
-
-    # Insert the channel end declarations
-    #for x in decls:
-    #  d = ast.Decl(x, T_CHANEND_SINGLE, None)
-    #  d.symbol = Symbol(x, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
-    #  node.decls.append(d)
-    node.decls += decls
-
-    if self.print_debug:
-      self.debug('[def connections]:')
-      self.display_chans(node.chans)
+    debug(self.debug, 'Inserting connections for: '+node.name)
+    self.stmt(node.stmt, node.chantab, None)
+    debug(self.debug, '[def connections]:')
+    self.display_chans(node.chans)
   
   # Statements ==========================================
 
   # Top-level statements where connections are inserted
 
-  def stmt_rep(self, node, tab, decls):
-    if self.print_debug:
-      self.debug('[rep connections]:')
-      self.display_chans(node.chans)
-    self.stmt(node.stmt, tab, decls)
-    node.stmt = self.insert_connections(tab, node.stmt, node.chans)
-    decls += self.create_decls(node.chans)
-
-  def stmt_par(self, node, tab, decls):
-    self.debug('[par connections]:')
+  # New scope
+  def stmt_par(self, node, tab, scope):
+    chansets = []
+    debug(self.debug, '[par connections]:')
     for (i, (x, y)) in enumerate(zip(node.stmt, node.chans)):
-      self.debug('[process {}]: '.format(i))
-      self.stmt(x, tab, decls) 
-      node.stmt[i] = self.insert_connections(tab, node.stmt[i], y)
-      decls += self.create_decls(y)
-      if self.print_debug:
-        self.display_chans(y)
+      debug(self.debug, '[process {}]: '.format(i))
+      chansets += self.stmt(x, tab, node.scope)
+      node.stmt[i] = self.insert_connections(tab, node.scope, node.stmt[i], y)
+      self.display_chans(y)
+    [chansets.extend(x) for x in node.chans]
+    node.decls += self.take_decls(tab, node.scope, chansets)
+    return chansets
 
-  def stmt_server(self, node, tab, decls):
-    self.debug('[server connections]:')
-    self.stmt(node.server, tab, decls)
-    node.server = self.insert_connections(tab, node.server, node.chans[0])
-    decls += self.create_decls(node.chans[0])
-    if self.print_debug:
-      self.display_chans(node.chans[0])
-    self.debug('[client connections]:')
-    self.stmt(node.client, tab, decls)
-    node.client = self.insert_connections(tab, node.client, node.chans[1])
-    decls += self.create_decls(node.chans[1])
-    if self.print_debug:
-      self.display_chans(node.chans[1])
+  # New scope
+  def stmt_server(self, node, tab, scope):
+    chansets = []
+    debug(self.debug, '[server connections]:')
+    chansets += self.stmt(node.server, tab, node.scope)
+    node.server = self.insert_connections(tab, node.scope, node.server, node.chans[0])
+    self.display_chans(node.chans[0])
+    debug(self.debug, '[client connections]:')
+    chansets += self.stmt(node.client, tab, node.scope)
+    node.client = self.insert_connections(tab, node.scope, node.client, node.chans[1])
+    self.display_chans(node.chans[1])
+    [chansets.extend(x) for x in node.chans]
+    node.decls += self.take_decls(tab, node.scope, chansets)
+    return chansets
 
-  def stmt_on(self, node, tab, decls):
-    if self.print_debug:
-      self.debug('[on connections]:')
-      self.display_chans(node.chans)
-    self.stmt(node.stmt, tab, decls)
-    node.stmt = self.insert_connections(tab, node.stmt, node.chans)
-    decls += self.create_decls(node.chans)
+  def stmt_rep(self, node, tab, scope):
+    debug(self.debug, '[rep connections]:')
+    self.display_chans(node.chans)
+    chansets = self.stmt(node.stmt, tab, scope)
+    node.stmt = self.insert_connections(tab, scope, node.stmt, node.chans)
+    return chansets + node.chans
+
+  def stmt_on(self, node, tab, scope):
+    debug(self.debug, '[on connections]:')
+    self.display_chans(node.chans)
+    chansets = self.stmt(node.stmt, tab, scope)
+    node.stmt = self.insert_connections(tab, scope, node.stmt, node.chans)
+    return chansets + node.chans
 
   # Other statements containing processes
 
-  def stmt_seq(self, node, tab, decls):
-    [self.stmt(x, tab, decls) for x in node.stmt]
+  # New scope
+  def stmt_seq(self, node, tab, scope):
+    chansets = []
+    [chansets.extend(self.stmt(x, tab, node.scope)) for x in node.stmt]
+    node.decls += self.take_decls(tab, node.scope, chansets)
+    return chansets
 
-  def stmt_if(self, node, tab, decls):
-    self.stmt(node.thenstmt, tab, decls)
-    self.stmt(node.elsestmt, tab, decls)
+  def stmt_if(self, node, tab, scope):
+    chansets = self.stmt(node.thenstmt, tab, scope)
+    chansets += self.stmt(node.elsestmt, tab, scope)
+    return chansets
 
-  def stmt_while(self, node, tab, decls):
-    self.stmt(node.stmt, tab, decls)
+  def stmt_while(self, node, tab, scope):
+    return self.stmt(node.stmt, tab, scope)
 
-  def stmt_for(self, node, tab, decls):
-    self.stmt(node.stmt, tab, decls)
+  def stmt_for(self, node, tab, scope):
+    return self.stmt(node.stmt, tab, scope)
 
   # Other statements
 
-  def stmt_in(self, node, tab, decls):
-    pass
+  def stmt_in(self, node, tab, scope):
+    return []
 
-  def stmt_out(self, node, tab, decls):
-    pass
+  def stmt_out(self, node, tab, scope):
+    return []
 
-  def stmt_pcall(self, node, tab, decls):
-    pass
+  def stmt_pcall(self, node, tab, scope):
+    return []
     
-  def stmt_ass(self, node, tab, decls):
-    pass
+  def stmt_ass(self, node, tab, scope):
+    return []
 
-  def stmt_alias(self, node, tab, decls):
-    pass
+  def stmt_alias(self, node, tab, scope):
+    return []
 
-  def stmt_skip(self, node, tab, decls):
-    pass
+  def stmt_skip(self, node, tab, scope):
+    return []
 
-  def stmt_connect(self, node, tab, decls):
-    pass
+  def stmt_connect(self, node, tab, scope):
+    return []
 
-  def stmt_assert(self, node, tab, decls):
-    pass
+  def stmt_assert(self, node, tab, scope):
+    return []
 
-  def stmt_return(self, node, tab, decls):
-    pass
+  def stmt_return(self, node, tab, scope):
+    return []
 

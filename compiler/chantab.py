@@ -15,17 +15,16 @@ class ChanTable(object):
     self.name = name
     self.debug = debug
     self.scopes = []
-    self.chan_count = 0
     self.chanend_count = 0
   
   def begin_scope(self):
-    self.scopes.append({})
+    self.scopes.append(Scope(self.scopes[-1] if len(self.scopes)>1 else None))
     debug(self.debug, 'New scope')
 
   def end_scope(self):
     tab = self.scopes.pop()
-    del tab
     debug(self.debug, 'Ended scope')
+    return tab
 
   def key(self, name, index):
     return '{}{}'.format(name, '' if index==None else index)
@@ -39,59 +38,59 @@ class ChanTable(object):
     performing colouring to assign connection ids).
     """
     if decl:
-      self.scopes[-1][name] = Channel()
+      self.scopes[-1].tab[name] = Channel()
       debug(self.debug, '  Insert decl: '+name)
       return
     else:
-      for x in reversed(self.scopes):
-        if name in x:
+      scope = self.scopes[-1]
+      while scope != None:
+        if name in scope.tab:
           key = self.key(name, index)
-          if not key in x:
-            x[key] = Channel()
-          x[key].locations.append(location)
-          x[key].chan_sets.append(chan_set)
+          if not key in scope.tab:
+            scope.tab[key] = Channel()
+          scope.tab[key].locations.append(location)
+          scope.tab[key].chan_sets.append(chan_set)
           debug(self.debug, '  Insert: '+name+'{} @ {}'.format(
               '[{}]'.format(index) if index!=None else '', location))
           return
+        scope = scope.prev
     assert 0
 
   def contains(self, name, index):
     """
     Check if the table contains a channel element.
     """
-    return any(self.key(name, index) in x for x in self.scopes)
+    return any(self.key(name, index) in x.tab for x in self.scopes)
 
-  def lookup(self, name, index):
+  def lookup(self, name, index, base=None, scoped=False):
     """
-    Lookup a channel's master and slave location.
+    Lookup a channel's master and slave location. If base is set, a lookup can
+    be made from any scope.
     """
     key = self.key(name, index)
-    for x in reversed(self.scopes):
-      if key in x:
+    scope = self.scopes[-1] if base==None else base
+    while scope != None:
+      if key in scope.tab:
         debug(self.debug,"  Lookup: "+key)
-        return x[key] 
+        return scope.tab[key]
+      scope = scope.prev
     return None
 
-  def lookup_master_location(self, name, index):
-    x = lookup(name, index)
+  def lookup_master_location(self, name, index, base=None):
+    x = self.lookup(name, index, base)
     return x.locations[0] if x != None else None
 
-  def lookup_slave_location(self, name, index):
-    x = lookup(name, index)
+  def lookup_slave_location(self, name, index, base=None):
+    x = self.lookup(name, index, base)
     return x.locations[1] if x != None else None
 
-  def lookup_chanset(self, name, index, master):
-    x = lookup(name, index)
+  def lookup_chanset(self, name, index, master, base=None):
+    x = self.lookup(name, index, base)
     return x.chan_sets[0 if master else 1] if x != None else None
 
-  def is_master(self, name, index, location):
-    x = lookup(name, index)
-    return self.tab[key].locations[0] == location if x != None else None
-
-  def get_next_chan_id(self):
-    x = self.chanend_count
-    self.chanend_count += 1
-    return x
+  def lookup_is_master(self, name, index, location, base=None):
+    x = self.lookup(name, index, base)
+    return x.locations[0] == location if x != None else None
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -102,9 +101,19 @@ class ChanTable(object):
     print('---------------------------')
     print('Channel table for procedure '+self.name+':')
     for x in reversed(self.scopes):
-      for y in x.keys():
-        print('  channel {} is {}'.format(y, x[y]))
+      for y in x.tab.keys():
+        print('  channel {} is {}'.format(y, x.tab[y]))
     print('---------------------------')
+
+
+class Scope(object):
+  """
+  A scope represented by a table of channel identifiers with a pointer to the
+  previous scope.
+  """
+  def __init__(self, prev):
+    self.tab = {}
+    self.prev = prev
 
 
 class Channel(object):

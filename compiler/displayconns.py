@@ -40,21 +40,21 @@ class DisplayConns(NodeWalker):
     self.d = []
     [self.d.append([]) for x in range(self.device.num_cores())]
 
-  def aggregate(self, chans, tab):
+  def aggregate(self, chans, tab, scope):
     """
     Iterate over ChanElemSets and aggregate the expanded channels with their
     locations by location into the 'd' array.
     """
     for x in chans:
       for y in x.elems:
-        master = tab.is_master(x.name, y.index, y.location)
-        connid = tab.lookup(x.name, y.index).connid
+        master = tab.lookup_is_master(x.name, y.index, y.location, scope)
+        connid = tab.lookup(x.name, y.index, scope).connid
         if master:
-          slave_loc = tab.lookup_slave_location(x.name, y.index)
+          slave_loc = tab.lookup_slave_location(x.name, y.index, scope)
           self.d[y.location].append(self.ConnMaster(
             x.name, x.chanend, connid, y.index, slave_loc))
         else:
-          master_loc = tab.lookup_master_location(x.name, y.index)
+          master_loc = tab.lookup_master_location(x.name, y.index, scope)
           self.d[y.location].append(self.ConnSlave(
             x.name, x.chanend, connid, y.index, master_loc))
  
@@ -70,69 +70,72 @@ class DisplayConns(NodeWalker):
     self.display()
   
   def defn(self, node):
-    self.aggregate(node.chans, node.chantab)
-    self.stmt(node.stmt, node.chantab)
+    self.aggregate(node.chans, node.chantab, None)
+    self.stmt(node.stmt, node.chantab, None)
 
   # Boundary statements (which get distributed)
 
-  def stmt_rep(self, node, tab):
-    self.aggregate(node.chans, tab)
-    self.stmt(node.stmt, tab)
+  def stmt_rep(self, node, tab, scope):
+    self.aggregate(node.chans, tab, scope)
+    self.stmt(node.stmt, tab, scope)
 
-  def stmt_par(self, node, tab):
-    [self.aggregate(x, tab) for x in node.chans]
-    [self.stmt(x, tab) for x in node.stmt]
+  # New scope
+  def stmt_par(self, node, tab, scope):
+    [self.aggregate(x, tab, node.scope) for x in node.chans]
+    [self.stmt(x, tab, node.scope) for x in node.stmt]
   
-  def stmt_server(self, node, tab):
-    [self.aggregate(x, tab) for x in node.chans]
-    self.stmt(node.server, tab)
-    self.stmt(node.client, tab)
+  # New scope
+  def stmt_server(self, node, tab, scope):
+    [self.aggregate(x, tab, node.scope) for x in node.chans]
+    self.stmt(node.server, tab, node.scope)
+    self.stmt(node.client, tab, node.scope)
   
-  def stmt_on(self, node, tab):
-    self.aggregate(node.chans, tab)
-    self.stmt(node.stmt, tab)
+  def stmt_on(self, node, tab, scope):
+    self.aggregate(node.chans, tab, scope)
+    self.stmt(node.stmt, tab, scope)
 
   # Compound statements
 
-  def stmt_seq(self, node, tab):
-    [self.stmt(x, tab) for x in node.stmt]
+  # New scope
+  def stmt_seq(self, node, tab, scope):
+    [self.stmt(x, tab, node.scope) for x in node.stmt]
 
-  def stmt_if(self, node, tab):
-    self.stmt(node.thenstmt, tab)
-    self.stmt(node.elsestmt, tab)
+  def stmt_if(self, node, tab, scope):
+    self.stmt(node.thenstmt, tab, scope)
+    self.stmt(node.elsestmt, tab, scope)
 
-  def stmt_while(self, node, tab):
-    self.stmt(node.stmt, tab)
+  def stmt_while(self, node, tab, scope):
+    self.stmt(node.stmt, tab, scope)
 
-  def stmt_for(self, node, tab):
-    self.stmt(node.stmt, tab)
+  def stmt_for(self, node, tab, scope):
+    self.stmt(node.stmt, tab, scope)
 
   # Statements not containing statements
 
-  def stmt_skip(self, node, tab):
+  def stmt_skip(self, node, tab, scope):
     pass
 
-  def stmt_pcall(self, node, tab):
+  def stmt_pcall(self, node, tab, scope):
     pass
 
-  def stmt_ass(self, node, tab):
+  def stmt_ass(self, node, tab, scope):
     pass
 
-  def stmt_in(self, node, tab):
+  def stmt_in(self, node, tab, scope):
     pass
 
-  def stmt_out(self, node, tab):
+  def stmt_out(self, node, tab, scope):
     pass
 
-  def stmt_alias(self, node, tab):
+  def stmt_alias(self, node, tab, scope):
     pass
 
-  def stmt_connect(self, node, tab):
+  def stmt_connect(self, node, tab, scope):
     pass
     
-  def stmt_assert(self, node, tab):
+  def stmt_assert(self, node, tab, scope):
     pass
 
-  def stmt_return(self, node, tab):
+  def stmt_return(self, node, tab, scope):
     pass
 
