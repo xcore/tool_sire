@@ -130,7 +130,7 @@ class Printer(NodeWalker):
         self.display_location(node.stmt)
         self.stmt(node.stmt)
         self.buf.write('\n\n')
-        self.indent.pop()
+        #self.indent.pop()
   
   # Formals =============================================
   

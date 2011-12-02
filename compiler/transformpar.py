@@ -159,26 +159,27 @@ class TransformPar(NodeWalker):
         pass
         
       elif x.symbol.type == T_VAR_SINGLE:
-        decls.append(ast.Decl(x.name, T_VAR_SINGLE, None))
+        decls.append(ast.VarDecl(x.name, T_VAR_SINGLE, None))
       
       elif x.symbol.type == T_CHANEND_SINGLE:
-        decls.append(ast.Decl(x.name, T_CHANEND_SINGLE, None))
+        decls.append(ast.VarDecl(x.name, T_CHANEND_SINGLE, None))
 
       elif x.symbol.type == T_CHANEND_SERVER_SINGLE:
-        decls.append(ast.Decl(x.name, T_CHANEND_SERVER_SINGLE, None))
+        decls.append(ast.VarDecl(x.name, T_CHANEND_SERVER_SINGLE, None))
 
       elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
-        decls.append(ast.Decl(x.name, T_CHANEND_CLIENT_SINGLE, None))
+        decls.append(ast.VarDecl(x.name, T_CHANEND_CLIENT_SINGLE, None))
 
       elif x.symbol.type == T_VAR_ARRAY:
-        decls.append(ast.Decl(x.name, T_VAR_ARRAY, x.expr))
+        decls.append(ast.VarDecl(x.name, T_VAR_ARRAY, x.expr))
       
       else:
         print (x.symbol.type)
         assert 0
     
     # Create the new process definition
-    d = ast.Def(name, T_PROC, formals, decls, stmt)
+    stmt.decls = decls
+    d = ast.ProcDef(name, T_PROC, formals, stmt)
 
     # perform semantic analysis to update symbol bindings. 
     #Printer().defn(d, 0)

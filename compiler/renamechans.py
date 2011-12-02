@@ -104,7 +104,6 @@ class RenameChans(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    node.decls = self.remove_chan_decls(node.decls)
     self.stmt(node.stmt, node.chans)
   
   # Statements ==========================================
@@ -114,9 +113,12 @@ class RenameChans(NodeWalker):
   def stmt_rep(self, node, chans):
     self.stmt(node.stmt, node.chans)
     
+  # New scope
   def stmt_par(self, node, chans):
+    node.decls = self.remove_chan_decls(node.decls)
     [self.stmt(x, y) for (x, y) in zip(node.stmt, node.chans)]
 
+  # New scope
   def stmt_server(self, node, chans):
     node.decls = self.remove_chan_decls(node.decls)
     self.stmt(node.server, node.chans[0])
@@ -180,7 +182,9 @@ class RenameChans(NodeWalker):
   
   # Other statements containing statements
 
+  # New scope
   def stmt_seq(self, node, chans):
+    node.decls = self.remove_chan_decls(node.decls)
     [self.stmt(x, chans) for x in node.stmt]
 
   def stmt_if(self, node, chans):

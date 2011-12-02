@@ -261,19 +261,19 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 8. Rename channel uses
   vmsg(v, "Renaming channel uses")
-  #RenameChans().walk_program(ast)
+  RenameChans().walk_program(ast)
  
   # 9. Build the control-flow graph and initialise sets for liveness analysis
   vmsg(v, "Building the control flow graph")
-  #BuildCFG().run(ast)
+  BuildCFG().run(ast)
 
   # 10. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
-  #Liveness().run(ast)
+  Liveness().run(ast)
 
   # 11. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
-  #TransformPar(sem, sig).walk_program(ast)
+  TransformPar(sem, sig).walk_program(ast)
  
   # 12. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
