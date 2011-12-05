@@ -1,26 +1,26 @@
 % Test slices by printing traversals of subsections.
 
-val N := 10;
+val N is 10;
 
 % Print the contents of an array on a single line.
 proc print_array(var a[n], val n) is
-  var i;
-{ for i in [0 for n] do 
-  { printval(a[i]) 
-  ; printstr(" ") 
-  }
-; println()
+{ var i;
+  for i in [0 for n] do 
+  { printval(a[i]);
+    printstr(" ") 
+  };
+  println()
 }
 
 % Slice an array of length n into m sections of length n/m.
 proc print_slices(var a[n], val n, val m) is
-  var i;
+{ var i;
   var l;
   var b[];
-{ l := n / m
-; for i in [0 for m] do
-  { b aliases a[l*i for l] 
-  ; print_array(b, l)
+  l := n / m;
+  for i in [0 for m] do
+  { b aliases a[l*i for l]; 
+    print_array(b, l)
   }
 }
 
@@ -28,12 +28,12 @@ proc print_slices(var a[n], val n, val m) is
 proc main() is
   var a[N];
   var i;
-{ for i in [0 for N] do a[i] := i 
-; print_array(a, N)
-; print_slices(a, N, 1)
-; print_slices(a, N, 2)
-; print_slices(a, N, 3)
-; print_slices(a, N, 4)
-; print_slices(a, N, 5)
+{ for i in [0 for N] do a[i] := i; 
+  print_array(a, N);
+  print_slices(a, N, 1);
+  print_slices(a, N, 2);
+  print_slices(a, N, 3);
+  print_slices(a, N, 4);
+  print_slices(a, N, 5)
 }
 

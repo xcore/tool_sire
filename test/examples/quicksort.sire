@@ -1,56 +1,56 @@
-val LENGTH:=10;
-var a[LENGTH];
+val LENGTH is 10;
 
 % Partition
 func partition(var array[len], val len) is
-  var storeIndex;
+{ var storeIndex;
   var pivot;
   var pivotValue;
   var hold;
   var i;
-{ pivot      := len/2
-; pivotValue := array[pivot]
-; storeIndex := 0
+  pivot      := len/2;
+  pivotValue := array[pivot];
+  storeIndex := 0;
   
   % Move pivot to end
-; array[pivot] := array[len-1]
-; array[len-1] := pivotValue
+  array[pivot] := array[len-1];
+  array[len-1] := pivotValue;
 
   % Reorder list (upto the pivot)
-; for i in [0 for len-1] do 
+  for i in [0 for len-1] do 
     if array[i] <= pivotValue then 
-    { hold := array[i]
-    ; array[i] := array[storeIndex]
-    ; array[storeIndex] := hold
-    ; storeIndex := storeIndex + 1
+    { hold := array[i];
+      array[i] := array[storeIndex];
+      array[storeIndex] := hold;
+      storeIndex := storeIndex + 1
     }
-    else skip
+    else skip;
 
   % Move pivot to its final place: swap(storeIndex,pivot)
-; hold := array[storeIndex]
-; array[storeIndex] := array[len-1]
-; array[len-1] := hold
+  hold := array[storeIndex];
+  array[storeIndex] := array[len-1];
+  array[len-1] := hold;
 
-; return storeIndex
+  return storeIndex
 }
 
 % Quicksort
 proc quick(var array[len], val len) is
-  var pivot;
-{ if len > 1 then 
-  { pivot := partition(array, len)
-  ; quick(array[0 for pivot+1], pivot)
-  ; quick(array[pivot+1 for len-(pivot+1)], len-(pivot+1))
+{ var pivot;
+  if len > 1 then 
+  { pivot := partition(array, len);
+    quick(array[0 for pivot+1], pivot);
+    quick(array[pivot+1 for len-(pivot+1)], len-(pivot+1))
   }
   else skip
 }
 
 % Ouput: 0123456789
 proc main() is
-  var i;
-{ for i in [0 for LENGTH] do a[i] := LENGTH-(i+1)
-; quick(a, LENGTH)
-; for i in [0 for LENGTH] do printval(a[i])
-; printstrln("")
+{ var i;
+  var a[LENGTH];
+  for i in [0 for LENGTH] do a[i] := LENGTH-(i+1);
+  quick(a, LENGTH);
+  for i in [0 for LENGTH] do printval(a[i]);
+  printstrln("")
 }
 

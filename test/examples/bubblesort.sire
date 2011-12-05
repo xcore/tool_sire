@@ -1,10 +1,10 @@
-val N:=10;
+val N is 10;
 
 proc bsort(var a[n], val n) is
-  var i;
+{ var i;
   var j;
   var tmp;
-{ for i in [0 for n] do 
+  for i in [0 for n] do 
     for j in [0 for n-i-1] do
       if a[j] > a[j+1] then 
       { tmp := a[j]
@@ -16,10 +16,12 @@ proc bsort(var a[n], val n) is
 
 % Ouput: 0123456789
 proc main() is
-  var a[N];
+{ var a[N];
   var i;
-{ for i in [0 for N] do a[i] := N-(i+1)
-; bsort(a, N)
-; for i in [0 for N] do printval(a[i])
-; printstrln("")
+  for i in [0 for N] do 
+    a[i] := N-(i+1);
+  bsort(a, N);
+  for i in [0 for N] do 
+    printval(a[i]);
+  printstrln("")
 }

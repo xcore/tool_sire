@@ -1,53 +1,53 @@
-val N := 10;
+val N is 10;
 
 % Merge
 proc merge(val a[x], val b[y], var array[n], var scratch[n], 
     val x, val y, val n) is
-  var i;
+{ var i;
   var j;
   var k;
-{ i := 0 
-; j := 0 
-; k := 0
-; while (i < x) and (j < y) do 
+  i := 0;
+  j := 0;
+  k := 0;
+  while (i < x) and (j < y) do 
   { if(a[i] <= b[j])
     then 
-    { scratch[k] := a[i]
-    ; i := i+1
+    { scratch[k] := a[i];
+      i := i+1
     } 
     else 
-    { scratch[k] := b[j]
-    ; j := j+1 
-    }
-    ; k := k+1
-  }
-; if i<x then
+    { scratch[k] := b[j];
+      j := j+1 
+    };
+    k := k+1
+  };
+  if i<x then
     while i<x do
-    {  scratch[k] := a[i] 
-    ; k := k+1
-    ; i := i+1
+    { scratch[k] := a[i]; 
+      k := k+1;
+      i := i+1
     }
-  else skip
-; if j<y then 
+  else skip;
+  if j<y then 
     while j<y do
-    { scratch[k] := b[j] 
-    ; k := k+1
-    ; j := j+1
+    { scratch[k] := b[j];
+      k := k+1;
+      j := j+1
     }
-  else skip
+  else skip;
 
   % Copy scratch back into the array
-; for i in [0 for n] do
+  for i in [0 for n] do
     array[i] := scratch[i]
 }
 
 % Merge sort
 proc msort(var array[n], var scratch[n], val n) is
-  var a[];
+{ var a[];
   var b[]; 
   var x;
   var y;
-{ if n > 1 then
+  if n > 1 then
   { x := n >> 1
   ; y := n - x
   ; a aliases array[0 for x]
@@ -61,12 +61,12 @@ proc msort(var array[n], var scratch[n], val n) is
 
 % Ouput: 0123456789
 proc main() is
-  var a[N];
+{ var a[N];
   var scratch[N];
   var i;
-{ for i in [0 for N] do a[i] := N-(i+1)
-; msort(a, scratch, N)
-; for i in [0 for N] do printval(a[i])
-; printstrln("")
+  for i in [0 for N] do a[i] := N-(i+1);
+  msort(a, scratch, N);
+  for i in [0 for N] do printval(a[i]);
+  printstrln("")
 }
 

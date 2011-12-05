@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from walker import NodeWalker
+from typedefs import T_SCOPE_PROGRAM
 import ast
 
 class FreeVars(NodeWalker):
@@ -12,29 +13,44 @@ class FreeVars(NodeWalker):
    - All definitions and uses.
    - All definitions.
    - All uses and definitions of array types only.
+
+  Ignore values.
   """
   def __init__(self):
     pass
 
   def compute(self, node):
-    self.collect = 'all'
     return self.stmt(node)
 
-  #def defs(self, node):
-  #  self.collect = 'defs'
-  #  return self.stmt(node)
-
+  def remove_bound(self, c, decls):
+    decl_elems = set()
+    for x in decls:
+      decl_elems.add(ast.ElemId(x.name))
+    return c - decl_elems
+  
   # Statements ==========================================
+
+  # New scope
 
   def stmt_seq(self, node):
     c = set()
     [c.update(self.stmt(x)) for x in node.stmt]
+    c = self.remove_bound(c, node.decls)
     return c
 
   def stmt_par(self, node):
     c = set()
     [c.update(self.stmt(x)) for x in node.stmt]
+    c = self.remove_bound(c, node.decls)
     return c
+
+  def stmt_server(self, node):
+    c = self.stmt(node.server)
+    c |= self.stmt(node.client)
+    c = self.remove_bound(c, node.decls)
+    return c
+
+  # No new scope
 
   def stmt_skip(self, node):
     return set()
@@ -120,7 +136,11 @@ class FreeVars(NodeWalker):
 
   # Identifier
   def elem_id(self, node):
-    return set([node])
+    # Only use it if it's not a value symbol.
+    if node.symbol!=None and node.symbol.scope!=T_SCOPE_PROGRAM:
+      return set([node])
+    else:
+      return set()
 
   # Array subscript
   def elem_sub(self, node):

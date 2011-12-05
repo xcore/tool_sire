@@ -33,25 +33,16 @@ class Dump(NodeVisitor):
 
   # Variable declarations ===============================
 
-  def visit_decls(self, node):
-    self.out(node)
-
-  def visit_decl(self, node):
+  def visit_var_decl(self, node):
     self.out(node)
 
   # Procedure declarations ==============================
 
-  def visit_defs(self, node):
-    self.out(node)
-      
-  def visit_def(self, node):
+  def visit_proc_def(self, node):
     self.out(node)
   
   # Formals =============================================
   
-  def visit_formals(self, node):
-    self.out(node)
-    
   def visit_param(self, node):
     self.out(node)
 

@@ -1,4 +1,4 @@
-val N := NUM_CORES-1;
+val N is NUM_CORES-1;
 
 proc work() is skip
 

@@ -26,52 +26,54 @@
 %safe:
 %    a[j] and b[i+j] and c[i-j]
 
-val N := 8;
+val N is 8;
 
 % Try queen i in position j
 proc try(val i, var x[N], var a[N], var b[2*N], var c[2*N], var succ) is
-  var j;
-{ %printstr("Trying i=");printvalln(i);
-  j := 0
-; succ := false
-; while (succ=false) and (j<N) do
-   { succ := false
+{ var j;
+  %printstr("Trying i=");printvalln(i);
+  j := 0;
+  succ := false;
+  while (succ=false) and (j<N) do
+   { succ := false;
    % safe
    %; printstr("Trying j=");printvalln(j)
-    ; if a[j] and b[i+j] and c[i-j+N] then
-    { % set-queen
-      %printstr("Setting queen ");printval(i);printstr(",");printvalln(j);
-      x[i]:=j ; a[j]:=false ; b[i+j]:=false ; c[i-j+N]:=false
-    ; if i < (N-1) then
-      { try(i+1, x, a, b, c, succ)
-      ; if ~succ then
-        % remove-queen
-        { %printstr("Removing queen ");printval(i);printstr(",");printvalln(j);
-          a[j]:=true ; b[i+j]:=true ; c[i-j+N]:=true 
-        }
-        else skip
+     if a[j] and b[i+j] and c[i-j+N] then
+     { % set-queen
+       %printstr("Setting queen ");printval(i);printstr(",");printvalln(j);
+       x[i]:=j ; a[j]:=false ; b[i+j]:=false ; c[i-j+N]:=false;
+       if i < (N-1) then
+       { try(i+1, x, a, b, c, succ);
+         if ~succ then
+         % remove-queen
+         { %printstr("Removing queen ");printval(i);printstr(",");printvalln(j);
+           a[j]:=true ; b[i+j]:=true ; c[i-j+N]:=true 
+         }
+         else skip
       }
       else succ := true
     }
-    else skip
-  ; j := j + 1
+    else skip;
+    j := j + 1
   }
 }
 
 proc main() is
-  var x[N];
+{ var x[N];
   var a[N];
   var b[2*N];
   var c[2*N];
   var succ;
   var i;
-{ for i in [0 for N]     do a[i] := true
-; for i in [0 for (2*N)] do b[i] := true
-; for i in [0 for (2*N)] do c[i] := true
-; try(0, x, a, b, c, succ)
-; if succ then 
+  for i in [0 for N]     do a[i] := true;
+  for i in [0 for (2*N)] do b[i] := true;
+  for i in [0 for (2*N)] do c[i] := true;
+  try(0, x, a, b, c, succ);
+  if succ then
   for i in [0 for N] do 
-  { printval(x[i]) ; printstr(" ") }
-  else skip
-; println()
+  { printval(x[i]); 
+    printstr(" ")
+  }
+  else skip;
+  println()
 }

@@ -1,10 +1,10 @@
-val N := 100;
+val N is 100;
 
 proc main() is
-  var i;
+{ var i;
   var j;
-{ j := 0
-; for i in [1 for N] do j := j + 1
-; assert(j = N)
+  j := 0;
+  for i in [1 for N] do j := j + 1;
+  assert(j = N)
 }
 

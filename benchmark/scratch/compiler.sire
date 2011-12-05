@@ -1,4 +1,4 @@
-val N := 10;
+val N is 10;
 
 proc ast(chan c[N]) is
 {

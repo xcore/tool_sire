@@ -3,7 +3,7 @@ proc foo(var r, val v0, val v1, val v2, val v3, val v4,
   r := v0 + v1 + v2 + v3 + v4 + v5 + v6 + v7 + v8
 
 proc main() is
-  var c0;
+{ var c0;
   var c1;
   var c2;
   var c3;
@@ -14,7 +14,7 @@ proc main() is
   var c8;
   var r[7];
   var i;
-{ c0 := 0; 
+  c0 := 0; 
   c1 := 1;
   c2 := 2;
   c3 := 3;

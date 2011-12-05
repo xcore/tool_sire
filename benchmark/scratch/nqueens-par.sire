@@ -1,4 +1,4 @@
-val N := 8;
+val N is 8;
 
 % Check no queens in same row or column, runs in O(N)
 func valid(val i, val q[N]) is

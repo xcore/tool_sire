@@ -1,15 +1,14 @@
 % Recursively calculate the nth Fibonacci number
 
 func fibonacci(val n) is 
-{ if n > 1 
+  if n > 1 
   then return fibonacci(n-1) + fibonacci(n-2)
   else if n = 0 then return 0 
   else return 1
-}
 
 % Output: 8, 89, 987
 proc main() is
-{  printvalln(fibonacci(6)) 
-;  printvalln(fibonacci(11))
-;  printvalln(fibonacci(16))
+{ printvalln(fibonacci(6)); 
+  printvalln(fibonacci(11));
+  printvalln(fibonacci(16))
 }

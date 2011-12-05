@@ -1,15 +1,15 @@
 % Calculate the factorial of a value
 
 func factorial(val x) is
-  var ans;
+{ var ans;
   var y;
-{ ans := 1
-; y := 1
-; while y <= x do
-  { ans := ans * y
-  ; y := y + 1
-  }
-; return ans
+  ans := 1;
+  y := 1;
+  while y <= x do
+  { ans := ans * y;
+    y := y + 1
+  };
+  return ans
 }
 
 % Ouput: 6, 120, 5040

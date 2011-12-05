@@ -1,8 +1,8 @@
 % Test that we can perform multiple ons in sequence and many times.
 
-val N := NUM_CORES-1;
-val M := 100;
-val VAL := 0xDEADBEEF;
+val N is NUM_CORES-1;
+val M is 100;
+val VAL is 0xDEADBEEF;
 
 proc foo(var v, val mask) is
   v := v or (VAL and mask)
@@ -11,22 +11,22 @@ proc bar(var v, val mask) is
   on N do foo(v, mask)
 
 proc main() is
-  var v;
+{ var v;
   var i;
   var b;
-{ b := true
-; for i in [1 for M] do
-  { v := 0
-  ; { bar(v, 0xF0000000)
-    ; bar(v, 0x0F000000)
-    ; bar(v, 0x00F00000)
-    ; bar(v, 0x000F0000)
-    ; bar(v, 0x0000F000)
-    ; bar(v, 0x00000F00)
-    ; bar(v, 0x000000F0)
-    ; bar(v, 0x0000000F)
-    }
-  ; b := (v = VAL) and b
+  b := true;
+  for i in [1 for M] do
+  { v := 0;
+    { bar(v, 0xF0000000);
+      bar(v, 0x0F000000); 
+      bar(v, 0x00F00000);
+      bar(v, 0x000F0000);
+      bar(v, 0x0000F000);
+      bar(v, 0x00000F00);
+      bar(v, 0x000000F0);
+      bar(v, 0x0000000F)
+    };
+    b := (v = VAL) and b
   };
   assert b
 }

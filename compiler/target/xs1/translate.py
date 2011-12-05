@@ -213,7 +213,7 @@ class TranslateXS1(NodeWalker):
     [self.out(self.decl(x, {})) for x in node.decls]
     if len(node.decls) > 0:
       self.out('')
-     
+  
     # Prototypes and definitions
     [self.prototype(p) for p in node.defs]
     self.out('')
@@ -224,7 +224,7 @@ class TranslateXS1(NodeWalker):
   
   # Variable declarations ===============================
 
-  def decl(self, node, chans):
+  def var_decl(self, node, chans):
     if node.type == T_VAR_ARRAY:
       return 'int {}[{}];'.format(node.name, self.expr(node.expr))
     elif node.type == T_REF_ARRAY:

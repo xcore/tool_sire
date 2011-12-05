@@ -1,18 +1,18 @@
-val D    := 2;       % Tree depth
-val N    := 1 << D;  % Number of leaves
-val LEN  := 100;     % Number of data items at each leaf.
-val SIZE := N * LEN;
-val PUT  := 0;
-val GET  := 1;
+val D     is  2;       % Tree depth
+val N     is  1 << D;  % Number of leaves
+val LEN   is  100;     % Number of data items at each leaf.
+val SIZE  is  N * LEN;
+val PUT   is  0;
+val GET   is  1;
 
 func hash(val v) is
   return crc(v) rem SIZE
 
 proc serve(chanend c, chanend t) is
-  var query;
+{ var query;
   var key;
   var value;
-{ while true do
+  while true do
   { c ? query;
     if query = PUT
     then
@@ -36,10 +36,10 @@ proc serve(chanend c, chanend t) is
 }
 
 proc branch(chanend root, chanend left, chanend right) is
-  var query;
+{ var query;
   var key;
   var value;
-{ while true do
+  while true do
   { root ? query;
     if query = PUT
     then
@@ -70,11 +70,11 @@ proc branch(chanend root, chanend left, chanend right) is
 }
 
 proc leaf(val i, chanend c) is
-  var table[LEN];
+{ var table[LEN];
   var query;
   var key;
   var value;
-{ while true do
+  while true do
   { c ? query;
     if query = PUT
     then
@@ -90,9 +90,9 @@ proc leaf(val i, chanend c) is
 }
 
 proc table(chanend query) is
-  chan c[(2*N)-1];
+{ chan c[(2*N)-1];
   var i;
-{ serve(query, c[0]) ||
+  serve(query, c[0]) ||
   par i in [0 for N-1] do
     branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
   par i in [0 for N] do 
@@ -116,9 +116,9 @@ proc get(var value, chanend c, val key) is
 proc foo(chanend c) is skip
 
 proc main() is
-  chan c;
+{ chan c;
   var value;
-{ table(c) ||
+  table(c) ||
   { put(c, 1, 0xDEADBEEF);
     %put(c, 34, 0xBADF00D);
     get(value, c, 1);

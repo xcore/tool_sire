@@ -1,9 +1,9 @@
-val N := 4;
+val N is 4;
 
 proc main() is
-  var i;
+{ var i;
   var v;
-{ server(chan c)
+  server(chan c)
   { for i in [0 for N*3] do c ? v }
   { par i in [0 for N] do c ! i;
     par i in [0 for N] do c ! i;

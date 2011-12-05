@@ -153,8 +153,8 @@ def run_test(self, name, path, num_cores, cmp_flags, param):
     if len(param) > 0:
       s = read_file(filename)
       for (var, value) in param:
-        p = re.compile('val {} := [0-9]+;'.format(var))
-        s = p.sub('val {} := {};'.format(var, value), s, count=1)
+        p = re.compile('val {} is [0-9]+;'.format(var))
+        s = p.sub('val {} is {};'.format(var, value), s, count=1)
       filename = os.getcwd()+'/'+name+'.sire.tmp'
       write_file(filename, s) 
 

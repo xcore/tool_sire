@@ -5,3 +5,4 @@ proc foo(val i) is
 
 proc main() is
   foo(0)
+

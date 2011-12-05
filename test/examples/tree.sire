@@ -1,11 +1,11 @@
-val D := 2;      % Tree depth
-val N := 1 << D; % Number of leaves
+val D is 2;      % Tree depth
+val N is 1 << D; % Number of leaves
 
 % Send a token down, then sum values up.
 proc branch(chanend c, chanend left, chanend right) is
-  var u;
+{ var u;
   var v;
-{ c ? v;
+  c ? v;
   assert v = 0;
   left ! v;
   right ! v;
@@ -16,17 +16,17 @@ proc branch(chanend c, chanend left, chanend right) is
 
 % Receive a token and send back a 1.
 proc leaf(chanend c) is
-  var v;
-{ c ? v;
+{ var v;
+  c ? v;
   assert v = 0;
   c ! 1
 }
 
 proc main() is
-  chan c[(2*N)-1];
+{ chan c[(2*N)-1];
   var v;
   var i;
-{ { c[0] ! 0; 
+  { c[0] ! 0; 
     c[0] ? v;
     assert v = N
   } ||

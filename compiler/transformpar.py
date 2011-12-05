@@ -5,6 +5,7 @@
 
 import copy
 import ast
+from util import debug
 from walker import NodeWalker
 from liveout import LiveOut
 from freevars import FreeVars
@@ -55,6 +56,26 @@ class TransformPar(NodeWalker):
     self.sem = sem
     self.sig = sig
     self.debug = debug
+      
+  def create_decl(self, elem):
+    if elem.symbol.type == T_VAR_SINGLE:
+      return ast.VarDecl(elem.name, T_VAR_SINGLE, None)
+    
+    elif elem.symbol.type == T_VAR_ARRAY:
+      return ast.VarDecl(elem.name, T_VAR_ARRAY, elem.expr)
+    
+    #elif elem.symbol.type == T_CHANEND_SINGLE:
+    # return ast.VarDecl(elem.name, T_CHANEND_SINGLE, None)
+  
+    #elif elem.symbol.type == T_CHANEND_SERVER_SINGLE:
+    #  return ast.VarDecl(elem.name, T_CHANEND_SERVER_SINGLE, None)
+  
+    #elif elem.symbol.type == T_CHANEND_CLIENT_SINGLE:
+    #  return ast.VarDecl(elem.name, T_CHANEND_CLIENT_SINGLE, None)
+  
+    else:
+      print (elem.symbol.type)
+      assert 0
 
   def stmt_to_process(self, stmt, indicies=[]):
     """
@@ -83,16 +104,17 @@ class TransformPar(NodeWalker):
     #[out.update(y.inp) for y in succ.pred]
     #print('Successors: {}'.format(' '.join(['{}'.format(x.pred) for x in succ])))
     #[print(y.out) for y in succ.pred]
-    
+
     out = LiveOut().compute(stmt)
     free = FreeVars().compute(stmt) 
-    live = (stmt.inp | out) & free
+    live = free & (stmt.inp | out)
     local_decls = free - live
-    #print('Free: {}'.format(free))
-    #print('Live-in: {}'.format(stmt.inp))
-    #print('Live-out: {}'.format(out))
-    #print('live-over: (in | (in & out)) | free: {}'.format(live))
-    #print('local decls: (U_s in succ(stmt)) s.pred: {}'.format(local_decls)) 
+    debug(self.debug, '==========================================')
+    debug(self.debug, 'Free:        {}'.format(free))
+    debug(self.debug, 'Live-in:     {}'.format(stmt.inp))
+    debug(self.debug, 'Live-out:    {}'.format(out))
+    debug(self.debug, 'live-over:   {}'.format(live))
+    debug(self.debug, 'Local decls: {}'.format(local_decls)) 
     #Printer().stmt(stmt)
 
     # Create the formal and actual paramerer and local declaration lists
@@ -154,35 +176,19 @@ class TransformPar(NodeWalker):
     name = self.sig.unique_process_name()
 
     # Create the local declarations (excluding values)
-    #for x in local_decls:
-    #  if x.symbol.type == T_VAL_SINGLE:
-    #    pass
-    #    
-    #  elif x.symbol.type == T_VAR_SINGLE:
-    #    decls.append(ast.VarDecl(x.name, T_VAR_SINGLE, None))
-    #  
-    #  elif x.symbol.type == T_CHANEND_SINGLE:
-    #    decls.append(ast.VarDecl(x.name, T_CHANEND_SINGLE, None))
-    #
-    #  elif x.symbol.type == T_CHANEND_SERVER_SINGLE:
-    #    decls.append(ast.VarDecl(x.name, T_CHANEND_SERVER_SINGLE, None))
-    #
-    #  elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
-    #    decls.append(ast.VarDecl(x.name, T_CHANEND_CLIENT_SINGLE, None))
-    #
-    #  elif x.symbol.type == T_VAR_ARRAY:
-    #    decls.append(ast.VarDecl(x.name, T_VAR_ARRAY, x.expr))
-    #  
-    #  else:
-    #    print (x.symbol.type)
-    #    assert 0
+    [decls.append(self.create_decl(x)) for x in local_decls]
     
     # Create the new process definition
-    #stmt.decls = decls
+    if isinstance(stmt, ast.StmtSeq) or isinstance(stmt, ast.StmtPar):
+      stmt.decls += decls
+    else:
+      stmt = ast.StmtSeq(decls, [stmt])
     d = ast.ProcDef(name, T_PROC, formals, stmt)
 
     # perform semantic analysis to update symbol bindings. 
-    #Printer().defn(d, 0)
+    if self.debug:
+      Printer().defn(d, 0)
+    debug(self.debug, '==========================================')
     self.sem.defn(d)
     
     # Create the corresponding call.

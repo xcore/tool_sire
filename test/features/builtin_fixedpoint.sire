@@ -1,9 +1,9 @@
-val FIX_IBITS := 8;
-val FIX_DBITS := 24;
+val FIX_IBITS is 8;
+val FIX_DBITS is 24;
 
-val FIX_HALF := 0x00800000;
-val FIX_QUAR := 0x00400000;
-val FIX_EIGH := 0x00200000;
+val FIX_HALF is 0x00800000;
+val FIX_QUAR is 0x00400000;
+val FIX_EIGH is 0x00200000;
 
 func fix(val x) is
   return x << FIX_DBITS
@@ -18,23 +18,23 @@ func div(val x, val y) is
   return divf8_24(x, y)
 
 proc printfix(val x) is
-  var v;
+{ var v;
   var n;
   var i;
-{ v := x
-; if v < 0 then
-  { printchar('-')
-  ; v := -v
+  v := x;
+  if v < 0 then
+  { printchar('-');
+    v := -v
   }
-  else skip
-; n := unfix(v)
-; printval(n)
-; printchar('.')
-; for i in [0 for FIX_IBITS] do
-  { v := v - fix(n)
-  ; v := v * 10
-  ; n := unfix(v)
-  ; printchar(n+'0')
+  else skip;
+  n := unfix(v);
+  printval(n);
+  printchar('.');
+  for i in [0 for FIX_IBITS] do
+  { v := v - fix(n);
+    v := v * 10;
+    n := unfix(v);
+    printchar(n+'0')
   }
 }
 
@@ -42,25 +42,25 @@ proc printfixln(val x) is
 { printfix(x) ; println() }
 
 proc main() is
-  var v;
-{ 
+{ var v;
+  
 % Addition
-  v := fix(3) + fix (2)       ; printfixln(v)
-; v := fix(5) + FIX_HALF      ; printfixln(v)
-; v := fix(5) + FIX_QUAR      ; printfixln(v)
+  v := fix(3) + fix (2)       ; printfixln(v);
+  v := fix(5) + FIX_HALF      ; printfixln(v);
+  v := fix(5) + FIX_QUAR      ; printfixln(v);
 
 % Subtraction
-; v := fix(3) - fix (2)       ; printfixln(v)
-; v := fix(5) - FIX_HALF      ; printfixln(v)
-; v := fix(5) - FIX_QUAR      ; printfixln(v)
+  v := fix(3) - fix (2)       ; printfixln(v);
+  v := fix(5) - FIX_HALF      ; printfixln(v);
+  v := fix(5) - FIX_QUAR      ; printfixln(v);
 
 % Multiplication
-; v := mul(fix(5),  FIX_HALF) ; printfixln(v)
-; v := mul(fix(17), FIX_QUAR) ; printfixln(v)
-; v := mul(fix(9),  FIX_EIGH) ; printfixln(v)
+  v := mul(fix(5),  FIX_HALF) ; printfixln(v);
+  v := mul(fix(17), FIX_QUAR) ; printfixln(v);
+  v := mul(fix(9),  FIX_EIGH) ; printfixln(v);
 
 % Division
-; v := div(fix(4),  fix(2))   ; printfixln(v)
-; v := div(fix(60), fix(8))   ; printfixln(v)
-; v := div(fix(15), fix(6))   ; printfixln(v)
+  v := div(fix(4),  fix(2))   ; printfixln(v);
+  v := div(fix(60), fix(8))   ; printfixln(v);
+  v := div(fix(15), fix(6))   ; printfixln(v)
 }

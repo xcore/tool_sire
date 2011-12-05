@@ -1,11 +1,11 @@
 % min(x, y) = y xor ((x xor y) and -(x < y))
 
-val D := 3;
-val N := 1 << D;
+val D is 3;
+val N is 1 << D;
 
 proc master_(val i, chanend d0, chanend d1, chanend d2) is
-  var v;
-{ if i > (i xor 1)
+{ var v;
+  if i > (i xor 1)
   then d0 ! 0
   else d0 ? v;
   if i > (i xor 2)
@@ -17,8 +17,8 @@ proc master_(val i, chanend d0, chanend d1, chanend d2) is
 }
 
 proc slave_(val i, chanend d0, chanend d1, chanend d2) is
-  var v;
-{ if i > (i xor 1)
+{ var v;
+  if i > (i xor 1)
   then d0 ! 0
   else d0 ? v;
   if i > (i xor 2)
@@ -30,9 +30,9 @@ proc slave_(val i, chanend d0, chanend d1, chanend d2) is
 }
 
 proc main() is
-  var i;
+{ var i;
   chan c[N*D];
-{ master_(0, c[0], c[1], c[2]) ||
+  master_(0, c[0], c[1], c[2]) ||
   par i in [1 for N-1] do
     slave_(i,
       c[(((i xor 1) xor ((i xor (i xor 1)) and (-(i < (i xor 1)))))*D) + 0], 

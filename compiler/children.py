@@ -5,6 +5,7 @@
 
 import sys
 
+from util import debug
 from ast import NodeVisitor
 from builtin import builtins
 
@@ -12,11 +13,13 @@ class Children(NodeVisitor):
   """
   An AST visitor to determine the children of each procedure.
   """
-  def __init__(self, sig, debug=False):
-    self.debug = debug
+  def __init__(self, sig, _debug=False):
+    self.debug = _debug
     self.parent = None
     self.children = {}
+    debug(self.debug, 'Initialising:')
     for x in sig.mobile_proc_names:
+      debug(self.debug, '  '+x)
       self.children[x] = []
 
   def add_child(self, name):
@@ -29,8 +32,7 @@ class Children(NodeVisitor):
     if ((not name in self.children[self.parent]) and name != self.parent
         and not name in filter(lambda x: not builtins[x].mobile, builtins.keys())):
       self.children[self.parent].append(name)
-      if(self.debug):
-        print('  added child '+name+' to '+self.parent)
+      debug(self.debug, '  added child '+name+' to '+self.parent)
 
   def build(self):
     """ 
@@ -62,19 +64,16 @@ class Children(NodeVisitor):
           buf.write('\t'+y+'\n')
       buf.write('\n')
 
-  def visit_def(self, node):
-    if self.debug:
-      print('Definition: '+node.name)
+  def visit_proc_def(self, node):
+    debug(self.debug, 'Definition: '+node.name)
     self.parent = node.name
     return 'proc'
   
   def visit_stmt_pcall(self, node):
-    if self.debug:
-      print('  visiting pcall '+node.name)
+    debug(self.debug, '  visiting pcall '+node.name)
     self.add_child(node.name)
 
   def visit_elem_fcall(self, node):
-    if self.debug:
-      print('  visiting fcall '+node.name)
+    debug(self.debug, '  visiting fcall '+node.name)
     self.add_child(node.name)
 

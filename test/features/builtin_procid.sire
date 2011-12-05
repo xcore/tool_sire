@@ -2,10 +2,10 @@ proc foo(var v) is
   v := procid()
 
 proc main() is
-  var v;
+{ var v;
   var i;
-{ for i in [0 for NUM_CORES] do
-  { on i do foo(v)
-  ; printvalln(v)
+  for i in [0 for NUM_CORES] do
+  { on i do foo(v);
+    printvalln(v)
   }
 }

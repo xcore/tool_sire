@@ -1,11 +1,11 @@
-%val FIX_IBITS := 8;
-val FIX_DBITS := 24;
-val FIX_HALF := 0x00800000;
-val FIX_QUAR := 0x00400000;
+%val FIX_IBITS is 8;
+val FIX_DBITS is 24;
+val FIX_HALF is 0x00800000;
+val FIX_QUAR is 0x00400000;
 
-val XDIM := 80;
-val YDIM := 40;
-val COUNT := 40;
+val XDIM is 80;
+val YDIM is 40;
+val COUNT is 40;
 
 func fix(val x) is
   return x << FIX_DBITS
@@ -27,7 +27,7 @@ func plot(val i) is
   else                printchar('#')
 
 proc compute(val xmin, val ymin, val xmax, val ymax) is
-  var dx;
+{ var dx;
   var dy;
   var xn;
   var x0;
@@ -38,28 +38,28 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
   var x;
   var y;
   var iterations;
-{ iterations := 0
-; dx := divf8_24(xmax-xmin, fix(XDIM))
-; dy := divf8_24(ymax-ymin, fix(YDIM))
-; for y in [0 for YDIM] do
+  iterations := 0;
+  dx := divf8_24(xmax-xmin, fix(XDIM));
+  dy := divf8_24(ymax-ymin, fix(YDIM)); 
+  for y in [0 for YDIM] do
   { for x in [0 for XDIM] do
-    { p := xmin + mulf8_24(fix(x), dx)
-    ; q := ymin + mulf8_24(fix(y), dy)
-    ; xn := 0
-    ; x0 := 0
-    ; y0 := 0
-    ; i := 0
-    ; while ((mulf8_24(xn,xn)+mulf8_24(y0,y0)) < fix(4)) 
+    { p := xmin + mulf8_24(fix(x), dx);
+      q := ymin + mulf8_24(fix(y), dy);
+      xn := 0;
+      x0 := 0;
+      y0 := 0;
+      i := 0;
+      while ((mulf8_24(xn,xn)+mulf8_24(y0,y0)) < fix(4)) 
         and (i < COUNT) do
       { i := i + 1
-      ; xn := mulf8_24(x0+y0, x0-y0) + p
-      ; y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q
-      ; x0 := xn
-      }
-    ; plot(i)
-    ; iterations := iterations + i
-    }
-  ; println()
+        xn := mulf8_24(x0+y0, x0-y0) + p
+        y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q
+        x0 := xn
+      };
+      plot(i);
+      iterations := iterations + i
+    };
+    println()
   }
 %; printval(iterations)
 %; printstrln(" iterations.")
@@ -75,10 +75,10 @@ proc main() is
   var ymin;
   var xmax;
   var ymax;
-{ xmin := fix(-2)
-; ymin := (fix(1) + FIX_QUAR)*(-1)
-; xmax := FIX_HALF + FIX_QUAR
-; ymax := fix(1) + FIX_QUAR
-; compute(xmin, ymin, xmax, ymax)
+{ xmin := fix(-2);
+  ymin := (fix(1) + FIX_QUAR)*(-1);
+  xmax := FIX_HALF + FIX_QUAR;
+  ymax := fix(1) + FIX_QUAR;
+  compute(xmin, ymin, xmax, ymax)
 }
 

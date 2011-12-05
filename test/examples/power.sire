@@ -1,17 +1,17 @@
 % Calculate the power of a number
 
 func power(val base, val exp) is
-  var result;
+{ var result;
   var i;
-{ result := 1
-; for i in [0 for exp] do
-    result := result * base
-; return result
+  result := 1;
+  for i in [0 for exp] do
+    result := result * base;
+  return result
 }
 
 % Output: 35, 729, 78125 
 proc main() is
-{ printvalln(power(2, 5))
-; printvalln(power(9, 3))
-; printvalln(power(5, 7))
+{ printvalln(power(2, 5));
+  printvalln(power(9, 3));
+  printvalln(power(5, 7))
 }

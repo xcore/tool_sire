@@ -1,16 +1,15 @@
 % Find the greatest common divisor of two numbers a,b
 
 func gcd(val a, val b) is
-{ if b = 0 
+  if b = 0 
   then return a
   else return gcd(b, a rem b)
-}
 
 % Ouput: 8, 7, 1
 proc main() is
-{ printvalln(gcd(16, 24))
-; printvalln(gcd(49, 84))
-; printvalln(gcd(243, 346))
+{ printvalln(gcd(16, 24));
+  printvalln(gcd(49, 84));
+  printvalln(gcd(243, 346))
 }
 
 

@@ -1,42 +1,42 @@
 % Test slicing with summations.
 
-val N := 100;
+val N is 100;
 
 % Sum an array
 func sum_array(val a[n], val n) is
-  var r;
+{ var r;
   var i;
-{ r := 0
-; for i in [0 for n] do r := r + a[i]
-; return r
+  r := 0;
+  for i in [0 for n] do r := r + a[i];
+  return r
 }
 
 % Slice an array of length n into m sections of length n/m.
 proc sum_slices(val a[n], val n, val m) is
-  var i;
+{ var i;
   var l;
-{ l := n / m
-; for i in [0 for m] do
-  { printval(sum_array(a[l*i for l], l))
-  ; printstr(" ")
-  }
-; println()
+  l := n / m;
+  for i in [0 for m] do
+  { printval(sum_array(a[l*i for l], l));
+    printstr(" ")
+  };
+  println()
 }
 
 % Simple sliced traversals of a length 10 array.
 proc main() is
-  var a[N];
+{ var a[N];
   var i;
-{ for i in [0 for N] do a[i] := 1
-; printvalln(sum_array(a, N))
-; sum_slices(a, N, 1)
-; sum_slices(a, N, 2)
-; sum_slices(a, N, 3)
-; sum_slices(a, N, 4)
-; sum_slices(a, N, 5)
-; sum_slices(a, N, 6)
-; sum_slices(a, N, 7)
-; sum_slices(a, N, 8)
-; sum_slices(a, N, 9)
+  for i in [0 for N] do a[i] := 1;
+  printvalln(sum_array(a, N));
+  sum_slices(a, N, 1);
+  sum_slices(a, N, 2);
+  sum_slices(a, N, 3);
+  sum_slices(a, N, 4);
+  sum_slices(a, N, 5);
+  sum_slices(a, N, 6);
+  sum_slices(a, N, 7);
+  sum_slices(a, N, 8);
+  sum_slices(a, N, 9)
 }
 

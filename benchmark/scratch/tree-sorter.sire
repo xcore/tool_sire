@@ -1,6 +1,6 @@
-val D := 3;      % Tree depth
-val N := 1 << D; % Number of leaves
-val LEN := 100;  % Number of data items at each leaf.
+val D is 3;      % Tree depth
+val N is 1 << D; % Number of leaves
+val LEN is 100;  % Number of data items at each leaf.
 
 func f(val v) is
   return v

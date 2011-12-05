@@ -1,9 +1,9 @@
-val N := 2;
+val N is 2;
 
 proc foo(val i, val j, chanend n, chanend s, chanend w, chanend e) is 
-  var u;
+{ var u;
   var v;
-{ % Top left
+  % Top left
   if (i = 0) and (j = 0)
   then
   { s ! 1;
@@ -41,11 +41,12 @@ proc foo(val i, val j, chanend n, chanend s, chanend w, chanend e) is
 }
 
 proc main() is
-  chan x[N*N];
+{ chan x[N*N];
   chan y[N*N];
   var i;
   var j;
   par i in [0 for N], j in [0 for N] do 
     foo(i, j, y[(j*N)+i], y[(j*N)+((i+1) rem N)],
               x[(i*N)+j], x[(i*N)+((j+1) rem N)])
+}
 

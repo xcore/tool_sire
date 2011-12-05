@@ -1,15 +1,15 @@
 % Test references of single array elements.
 
-val N := 10;
+val N is 10;
 
 % Print the contents of an array on a single line.
 proc print_array(var a[n], val n) is
-  var i;
-{ for i in [0 for n] do 
-  { printval(a[i]) 
-  ; printstr(" ") 
-  }
-; println()
+{ var i;
+  for i in [0 for n] do 
+  { printval(a[i]); 
+    printstr(" ") 
+  };
+  println()
 }
 
 % Slice an array of length n into m sections of length n/m.
@@ -18,11 +18,11 @@ proc set_value(var a, val b) is
 
 % Simple sliced traversals of a length 10 array.
 proc main() is
-  var a[N];
+{ var a[N];
   var i;
-{ for i in [0 for N] do a[i] := 0 
-; print_array(a, N)
-; for i in [0 for N] do set_value(a[i], i)
-; print_array(a, N)
+  for i in [0 for N] do a[i] := 0;
+  print_array(a, N);
+  for i in [0 for N] do set_value(a[i], i);
+  print_array(a, N)
 }
 

@@ -8,8 +8,8 @@ proc g(var v) is f(v)
 proc h(var v) is g(v)
 
 proc main() is
-  var v;
-{ on NUM_CORES-1 do h(v)
-; printhexln(v)
+{ var v;
+  on NUM_CORES-1 do h(v);
+  printhexln(v)
 }
 

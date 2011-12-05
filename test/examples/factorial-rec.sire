@@ -1,13 +1,13 @@
 % Calculate the factorial of a value
 
 func factorial(val x) is
-   if x = 0
-   then return 1 
-   else return x * factorial(x-1)
+  if x = 0
+  then return 1 
+  else return x * factorial(x-1)
 
 % Ouput: 6, 120, 5040
 proc main() is
-{ printvalln(factorial(3))
-; printvalln(factorial(5))
-; printvalln(factorial(7))
+{ printvalln(factorial(3));
+  printvalln(factorial(5));
+  printvalln(factorial(7))
 }

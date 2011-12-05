@@ -1,6 +1,6 @@
 proc main() is
-  var v;
-{ server(chan c)
+{ var v;
+  server(chan c)
   { c ? v }
   { c ! 0 }
 }

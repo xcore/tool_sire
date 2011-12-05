@@ -1,9 +1,9 @@
-val N := 100;
+val N is 100;
 
 proc main() is
-  var i;
-{ i := 0
-; while i < N do i := i + 1
-; assert(i = N)
+{ var i;
+  i := 0;
+  while i < N do i := i + 1;
+  assert(i = N)
 }
 

@@ -1,8 +1,8 @@
-val LENGTH := 1000;
-val STORAGE := 100;
-val N := LENGTH/STORAGE;
-val READ := 0;
-val WRITE := 1;
+val LENGTH is 1000;
+val STORAGE is 100;
+val N is LENGTH/STORAGE;
+val READ is 0;
+val WRITE is 1;
 
 proc leaf(chanend c) is
 { var base;

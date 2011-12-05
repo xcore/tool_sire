@@ -1,11 +1,12 @@
-val L := 1;
-val R := NUM_CORES-1;
-val M := NUM_CORES/2; 
+val L is 1;
+val R is NUM_CORES-1;
+val M is NUM_CORES/2; 
 
 proc work(val a, val b, val c, val d) is
-  var i;
+{ var i;
   var v;
   for i in [0 for 100] do v := a+b+c+d
+}
 
 proc foo(var a, var b, var c, var d) is
   on M do work(a, b, c, d) 
@@ -14,11 +15,11 @@ proc bar(val dest, var a, var b, var c, var d) is
   on dest do foo(a, b, c, d)
 
 proc main() is
-  var a;
+{ var a;
   var b;
   var c;
   var d;
-{ bar(L, a, b, c, d) ||
+  bar(L, a, b, c, d) ||
   bar(L, a, b, c, d) ||
   bar(L, a, b, c, d) ||
   bar(L, a, b, c, d) ||

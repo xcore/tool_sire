@@ -1,11 +1,11 @@
-val N := NUM_CORES-1;
-val X := 0xDEADBEEF;
+val N is NUM_CORES-1;
+val X is 0xDEADBEEF;
 
 proc p0(val origin, val dest) is
-  chanend c1;
+{ chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to master dest;
+  connect c1:0 to master dest;
   connect c2:1 to slave origin;
   c1 ! X;
   c1 ? v;
@@ -14,10 +14,10 @@ proc p0(val origin, val dest) is
 }
 
 proc p1(val origin, val dest) is
-  chanend c1;
+{ chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to slave origin;
+  connect c1:0 to slave origin;
   connect c2:1 to master dest;
   c1 ? v;
   c1 ! v;
@@ -27,10 +27,10 @@ proc p1(val origin, val dest) is
 }
 
 proc p2(val origin, val dest) is
-  chanend c1;
+{ chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to slave origin;
+  connect c1:0 to slave origin;
   connect c2:1 to master dest;
   c1 ? v;
   c1 ! v;
@@ -40,10 +40,10 @@ proc p2(val origin, val dest) is
 }
 
 proc p3(val origin, val dest) is
-  chanend c1;
+{ chanend c1;
   chanend c2;
   var v;
-{ connect c1:0 to master dest;
+  connect c1:0 to master dest;
   connect c2:1 to slave origin;
   c1 ! X;
   c1 ? v;
@@ -52,8 +52,8 @@ proc p3(val origin, val dest) is
 }
 
 proc main() is
-  var v;
-{ { on N do p0(0, 0) || p1(N, N) }
-; { on N do p2(0, 0) || p3(N, N) }
+{ var v;
+  { on N do p0(0, 0) || p1(N, N) };
+  { on N do p2(0, 0) || p3(N, N) }
 }
 

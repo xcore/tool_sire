@@ -1,4 +1,4 @@
-val N := 4;
+val N is 4;
 
 % North row: source x values
 proc produce_xj(val j, chanend south) is

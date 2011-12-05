@@ -18,7 +18,7 @@ class ChanTable(object):
     self.chanend_count = 0
   
   def begin_scope(self):
-    self.scopes.append(Scope(self.scopes[-1] if len(self.scopes)>1 else None))
+    self.scopes.append(Scope(self.scopes[-1] if len(self.scopes)>0 else None))
     debug(self.debug, 'New scope')
 
   def end_scope(self):
@@ -54,6 +54,7 @@ class ChanTable(object):
               '[{}]'.format(index) if index!=None else '', location))
           return
         scope = scope.prev
+    print('Could not insert element of channel '+name)
     assert 0
 
   def contains(self, name, index):

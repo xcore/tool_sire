@@ -2,24 +2,26 @@
 % and forth by checking array values are correct both sides of an on.
 % NOTE restriction: system/definitions: MAX_PROC_ARGS = 10
 
-val N := NUM_CORES-1;
-val REPEAT := 100;
-val VAL := 0xDEADBEEF;
-val L1 := 4;
-val L2 := 13;
-val L3 := 48;
-val L4 := 72;
-val L5 := 100;
+val N is NUM_CORES-1;
+val REPEAT is 100;
+val VAL is 0xDEADBEEF;
+val L1 is 4;
+val L2 is 13;
+val L3 is 48;
+val L4 is 72;
+val L5 is 100;
 
 proc check(var a[n], val n, val v) is
-  var i;
+{ var i;
   for i in [0 for n] do 
     assert a[i] = v
+}
 
 proc set(var a[n], val n, val v) is
-  var i;
+{ var i;
   for i in [0 for n] do 
     a[i] := v
+}
 
 proc p0(var A[l], val l, val v, val i) is
 { check(A, l, v);
@@ -66,13 +68,13 @@ proc p3(val v,
 }
 
 proc main() is
-  var A1[L1];
+{ var A1[L1];
   var A2[L2];
   var A3[L3];
   var A4[L4];
   var A5[L4];
   var i;
-{ 
+  
   % 1 value and 1 array
   for i in [0 for REPEAT] do
   { set(A4, L4, VAL);

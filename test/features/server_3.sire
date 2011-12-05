@@ -1,4 +1,4 @@
-val N := 3;
+val N is 3;
 
 proc main() is
 { var i;

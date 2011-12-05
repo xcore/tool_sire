@@ -1,8 +1,8 @@
-val N := NUM_CORES;
+val N is NUM_CORES;
 
 proc main() is
-  var i;
-{ par i in [1 for N] do 
+{ var i;
+  par i in [1 for N] do 
     skip
 }
 

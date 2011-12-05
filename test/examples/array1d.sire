@@ -1,8 +1,8 @@
-val N := 2;
+val N is 2;
 
 proc foo(val i, chanend l, chanend r) is
-  var v;
-{ if i = 0 
+{ var v;
+  if i = 0 
   then
   { r ! 1; 
     l ? v;
@@ -15,8 +15,9 @@ proc foo(val i, chanend l, chanend r) is
 }
 
 proc main() is
-  chan c[N];
+{ chan c[N];
   var i;
   par i in [0 for N] do
     foo(i, c[i], c[(i+1) rem N])
+}
 

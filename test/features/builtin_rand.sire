@@ -1,8 +1,8 @@
-val N := 100;
+val N is 100;
 
 proc main() is
-  var i;
-{ for i in [0 for N] do rand()
+{ var i;
+  for i in [0 for N] do rand()
 % for i in [0 for N] do printvalln(rand())
 }
 

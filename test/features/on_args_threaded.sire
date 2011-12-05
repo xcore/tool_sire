@@ -1,20 +1,22 @@
 % Test there is no inteference between threads when handling arguments with
 % 'on's.
 
-val N := NUM_CORES-1;
-val REPEAT := 1;
-val VAL := 0xDEADBEEF;
-val LEN := 25; % NOTE: 4*7*25=700 fits in thread stack allocation
+val N is NUM_CORES-1;
+val REPEAT is 1;
+val VAL is 0xDEADBEEF;
+val LEN is 25; % NOTE: 4*7*25=700 fits in thread stack allocation
 
 proc check(var a[n], val n, val v) is
-  var i;
+{ var i;
   for i in [0 for n] do 
     assert a[i] = v
+}
 
 proc set(var a[n], val n, val v) is
-  var i;
+{  var i;
   for i in [0 for n] do 
     a[i] := v
+}
 
 % a, b, c, d are to push the remaining parameters on and off the stack
 proc p0(val a, val b, val c, val d,
@@ -29,7 +31,7 @@ proc foo(val a, val b, val c, val d,
   on N do p0(a, b, c, d, i, A, n, v)
 
 proc main() is
-  var A1[LEN];
+{ var A1[LEN];
   var A2[LEN];
   var A3[LEN];
   var A4[LEN];
@@ -44,7 +46,7 @@ proc main() is
   var v6;
   var v7;
   var i;
-{
+
   v1 := VAL; 
   v2 := VAL; 
   v3 := VAL; 

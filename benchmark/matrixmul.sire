@@ -4,10 +4,10 @@
 %  - A, B, C and N*N matrices
 %  - Matrices are distributed with submatrices of size (N/R)^2
 
-val N := 4; % Dimension of square matrix
-val R := 2; % Num partitions per dimension
-val X := R*R
-val S := (N/R)*(N/R)
+val N is 4; % Dimension of square matrix
+val R is 2; % Num partitions per dimension
+val X is R*R;
+val S is (N/R)*(N/R);
 
 proc submatrices(chanend c) is
 { var A[S];
