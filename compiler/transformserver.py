@@ -26,7 +26,7 @@ class TransformServer(NodeWalker):
         l.extend(stmt.client.stmt)
       else:
         l.append(stmt.client)
-      return ast.StmtPar(l)
+      return ast.StmtPar([], l)
     return stmt
 
   # Program ============================================

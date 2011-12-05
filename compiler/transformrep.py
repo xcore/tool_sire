@@ -105,29 +105,30 @@ class TransformRep(NodeWalker):
         # if m > n/2
         ast.ExprBinop('>', elem_m, ast.ExprSingle(elem_x)),
         # then
-        ast.StmtPar([
+        ast.StmtPar([], [
             # on id()+t+n/2 do d(t+n/2, n/2, m-n/2, ...)
             on_stmt,
             # d(t, n/2, n/2)
-            ast.StmtPcall(name, [expr_t, expr_x, expr_x] 
-                + proc_actuals),
+            ast.StmtPcall(name, [expr_t, expr_x, expr_x] + proc_actuals),
             ]),
         # else d(t, n/2, m)
         ast.StmtPcall(name, [expr_t, expr_x, expr_m] + proc_actuals))
 
     # _x = n/2 ; s1
     n_div_2 = ast.ExprBinop('>>', elem_n, ast.ExprSingle(ast.ElemNumber(1)))
-    s2 = ast.StmtSeq([ast.StmtAss(elem_x, n_div_2), s1])
+    s2 = ast.StmtSeq([], [ast.StmtAss(elem_x, n_div_2), s1])
 
     # if n = 1 then process() else s1
     s3 = ast.StmtIf(ast.ExprBinop('=', elem_n,
       ast.ExprSingle(ast.ElemNumber(1))), pcall, s2)
   
     # Create the local declarations
-    decls = [ast.Decl(elem_x.name, T_VAR_SINGLE, None)]
+    decls = [ast.VarDecl(elem_x.name, T_VAR_SINGLE, None)]
+
+    s4 = ast.StmtSeq(decls, [s3])
 
     # Create the definition
-    d = ast.Def(name, T_PROC, formals, decls, s3)
+    d = ast.ProcDef(name, T_PROC, formals, s4)
     
     return d
 

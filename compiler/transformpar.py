@@ -91,8 +91,8 @@ class TransformPar(NodeWalker):
     #print('Free: {}'.format(free))
     #print('Live-in: {}'.format(stmt.inp))
     #print('Live-out: {}'.format(out))
-    #print('(in | (in & out)) | free: {}'.format(live))
-    #print('local decls (U_{s in succ(stmt))} s.pred: {}'.format(local_decls)) 
+    #print('live-over: (in | (in & out)) | free: {}'.format(live))
+    #print('local decls: (U_s in succ(stmt)) s.pred: {}'.format(local_decls)) 
     #Printer().stmt(stmt)
 
     # Create the formal and actual paramerer and local declaration lists
@@ -154,31 +154,31 @@ class TransformPar(NodeWalker):
     name = self.sig.unique_process_name()
 
     # Create the local declarations (excluding values)
-    for x in local_decls:
-      if x.symbol.type == T_VAL_SINGLE:
-        pass
-        
-      elif x.symbol.type == T_VAR_SINGLE:
-        decls.append(ast.VarDecl(x.name, T_VAR_SINGLE, None))
-      
-      elif x.symbol.type == T_CHANEND_SINGLE:
-        decls.append(ast.VarDecl(x.name, T_CHANEND_SINGLE, None))
-
-      elif x.symbol.type == T_CHANEND_SERVER_SINGLE:
-        decls.append(ast.VarDecl(x.name, T_CHANEND_SERVER_SINGLE, None))
-
-      elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
-        decls.append(ast.VarDecl(x.name, T_CHANEND_CLIENT_SINGLE, None))
-
-      elif x.symbol.type == T_VAR_ARRAY:
-        decls.append(ast.VarDecl(x.name, T_VAR_ARRAY, x.expr))
-      
-      else:
-        print (x.symbol.type)
-        assert 0
+    #for x in local_decls:
+    #  if x.symbol.type == T_VAL_SINGLE:
+    #    pass
+    #    
+    #  elif x.symbol.type == T_VAR_SINGLE:
+    #    decls.append(ast.VarDecl(x.name, T_VAR_SINGLE, None))
+    #  
+    #  elif x.symbol.type == T_CHANEND_SINGLE:
+    #    decls.append(ast.VarDecl(x.name, T_CHANEND_SINGLE, None))
+    #
+    #  elif x.symbol.type == T_CHANEND_SERVER_SINGLE:
+    #    decls.append(ast.VarDecl(x.name, T_CHANEND_SERVER_SINGLE, None))
+    #
+    #  elif x.symbol.type == T_CHANEND_CLIENT_SINGLE:
+    #    decls.append(ast.VarDecl(x.name, T_CHANEND_CLIENT_SINGLE, None))
+    #
+    #  elif x.symbol.type == T_VAR_ARRAY:
+    #    decls.append(ast.VarDecl(x.name, T_VAR_ARRAY, x.expr))
+    #  
+    #  else:
+    #    print (x.symbol.type)
+    #    assert 0
     
     # Create the new process definition
-    stmt.decls = decls
+    #stmt.decls = decls
     d = ast.ProcDef(name, T_PROC, formals, stmt)
 
     # perform semantic analysis to update symbol bindings. 
@@ -206,102 +206,102 @@ class TransformPar(NodeWalker):
   # Procedure definitions ===============================
 
   def defn(self, node):
-    return self.stmt(node.stmt) if node.stmt else []
+    return self.stmt(node.stmt, []) if node.stmt else []
   
   # Statements ==========================================
 
   # Statements with paralellism
 
   # Parallel composition
-  def stmt_par(self, node):
+  def stmt_par(self, node, indicies):
     p = []
-    p += self.stmt(node.stmt[0])
+    p += self.stmt(node.stmt[0], indicies)
     # We only need to transform statements [1:].
     for (i, x) in enumerate(node.stmt[1:]):
       if not isinstance(x, ast.StmtPcall):
         if(self.debug):
           print('Transforming par {} from {}'.format(i, x))
-        (proc, node.stmt[i+1]) = self.stmt_to_process(x)
+        (proc, node.stmt[i+1]) = self.stmt_to_process(x, indicies)
         p.append(proc)
-        p += self.stmt(proc.stmt)
+        p += self.stmt(proc.stmt, indicies)
     return p
 
   # Server
-  def stmt_server(self, node):
+  def stmt_server(self, node, indicies):
     p = []
-    p += self.stmt(node.server)
+    p += self.stmt(node.server, indicies)
     if not isinstance(node.client, ast.StmtPcall):
       if(self.debug):
         print('Transforming server client')
-      (proc, node.client) = self.stmt_to_process(node.client)
+      (proc, node.client) = self.stmt_to_process(node.client, indicies)
       p.append(proc)
-      p += self.stmt(proc.stmt)
+      p += self.stmt(proc.stmt, indicies)
     return p
 
   # Parallel replication
-  def stmt_rep(self, node):
+  def stmt_rep(self, node, indicies):
     p = []
     if not isinstance(node.stmt, ast.StmtPcall):
       if(self.debug):
         print('Transforming rep')
-      (proc, node.stmt) = self.stmt_to_process(node.stmt, node.indicies)
+      (proc, node.stmt) = self.stmt_to_process(node.stmt, indicies+node.indicies)
       p.append(proc)
-      p += self.stmt(proc.stmt)
+      p += self.stmt(proc.stmt, indicies+node.indicies)
     return p
 
   # On
-  def stmt_on(self, node):
+  def stmt_on(self, node, indicies):
     p = []
     if not isinstance(node.stmt, ast.StmtPcall):
       if(self.debug):
         print('Transforming on')
-      (proc, node.stmt) = self.stmt_to_process(node.stmt)
+      (proc, node.stmt) = self.stmt_to_process(node.stmt, indicies)
       p.append(proc)
-      p += self.stmt(proc.stmt)
+      p += self.stmt(proc.stmt, indicies)
     return p
 
   # Regular statements
 
-  def stmt_seq(self, node):
+  def stmt_seq(self, node, indicies):
     p = []
-    [p.extend(self.stmt(x)) for x in node.stmt]
+    [p.extend(self.stmt(x, indicies)) for x in node.stmt]
     return p
 
-  def stmt_if(self, node):
-    p = self.stmt(node.thenstmt)
-    p += self.stmt(node.elsestmt)
+  def stmt_if(self, node, indicies):
+    p = self.stmt(node.thenstmt, indicies)
+    p += self.stmt(node.elsestmt, indicies)
     return p
 
-  def stmt_while(self, node):
-    return self.stmt(node.stmt)
+  def stmt_while(self, node, indicies):
+    return self.stmt(node.stmt, indicies)
 
-  def stmt_for(self, node):
-    return self.stmt(node.stmt)
+  def stmt_for(self, node, indicies):
+    return self.stmt(node.stmt, indicies)
 
-  def stmt_skip(self, node):
+  def stmt_skip(self, node, indicies):
     return []
 
-  def stmt_pcall(self, node):
+  def stmt_pcall(self, node, indicies):
     return []
 
-  def stmt_ass(self, node):
+  def stmt_ass(self, node, indicies):
     return []
 
-  def stmt_in(self, node):
+  def stmt_in(self, node, indicies):
     return []
 
-  def stmt_out(self, node):
+  def stmt_out(self, node, indicies):
     return []
 
-  def stmt_alias(self, node):
+  def stmt_alias(self, node, indicies):
     return []
 
-  def stmt_connect(self, node):
+  def stmt_connect(self, node, indicies):
     return []
 
-  def stmt_assert(self, node):
+  def stmt_assert(self, node, indicies):
     return []
 
-  def stmt_return(self, node):
+  def stmt_return(self, node, indicies):
     return []
 

@@ -200,54 +200,52 @@ class InsertConns(NodeWalker):
         s1 = ast.StmtPar([], conns) 
         s1.location = stmt.location
         s1.chans = []
-        s2 = ast.StmtSeq([], [s1, stmt])
+        decls = self.create_decls(tab, scope, chans)
+        s2 = ast.StmtSeq(decls, [s1, stmt])
         s2.location = stmt.location
         s2.chans = []
         return s2
       else:
-        s = ast.StmtSeq([], conns+[stmt])
+        decls = self.create_decls(tab, scope, chans)
+        s = ast.StmtSeq(decls, conns+[stmt])
         s.location = stmt.location
         s.chans = []
         return s
     else:
       return stmt
 
-  def create_decl(self, chanset):
-    if chanset.symbol.scope == T_SCOPE_PROC:
-      d = ast.VarDecl(chanset.chanend, T_CHANEND_SINGLE, None)
-      d.symbol = Symbol(chanset.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
-      return d
-    
-    elif chanset.symbol.scope == T_SCOPE_BLOCK:
-      d = ast.VarDecl(chanset.chanend, T_CHANEND_SINGLE, None)
-      d.symbol = Symbol(chanset.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_BLOCK)
-      return d
-    
-    elif chanset.symbol.scope == T_SCOPE_SERVER:
-      d = ast.VarDecl(chanset.chanend, T_CHANEND_SERVER_SINGLE, None)
-      d.symbol = Symbol(chanset.chanend, T_CHANEND_SERVER_SINGLE, None,
-          scope=T_SCOPE_SERVER)
-      return d
-    
-    elif chanset.symbol.scope == T_SCOPE_CLIENT:
-      d = ast.VarDecl(chanset.chanend, T_CHANEND_CLIENT_SINGLE, None)
-      d.symbol = Symbol(chanset.chanend, T_CHANEND_CLIENT_SINGLE, None,
-          scope=T_SCOPE_CLIENT)
-      return d
-    
-    else:
-      assert 0
-
-  def take_decls(self, tab, scope, chansets):
+  def create_decls(self, tab, scope, chansets):
     """
-    In a given scope, given 'chansets' (a list of 'ChanElemSet's) take the ones
-    belonging to the scope and convert them into declarations.
+    Given 'chansets' (a list of 'ChanElemSet's) convert them into
+    chanend declarations.
     """
-    # TODO: remove the items as well.
     decls = []
     for x in chansets:
-      if tab.lookup(x.name, None, base=scope, scoped=True) != None:
-        decls.append(self.create_decl(x))
+      #if tab.lookup(x.name, None, base=scope, scoped=True) != None:
+      if x.symbol.scope == T_SCOPE_PROC:
+        d = ast.VarDecl(x.chanend, T_CHANEND_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_PROC)
+        decls.append(d)
+      
+      elif x.symbol.scope == T_SCOPE_BLOCK:
+        d = ast.VarDecl(x.chanend, T_CHANEND_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_SINGLE, None, scope=T_SCOPE_BLOCK)
+        decls.append(d)
+      
+      elif x.symbol.scope == T_SCOPE_SERVER:
+        d = ast.VarDecl(x.chanend, T_CHANEND_SERVER_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_SERVER_SINGLE, None,
+            scope=T_SCOPE_SERVER)
+        decls.append(d)
+      
+      elif x.symbol.scope == T_SCOPE_CLIENT:
+        d = ast.VarDecl(x.chanend, T_CHANEND_CLIENT_SINGLE, None)
+        d.symbol = Symbol(x.chanend, T_CHANEND_CLIENT_SINGLE, None,
+            scope=T_SCOPE_CLIENT)
+        decls.append(d)
+      
+      else:
+        assert 0
     return decls
 
   def display_chans(self, chans):
@@ -281,7 +279,7 @@ class InsertConns(NodeWalker):
       node.stmt[i] = self.insert_connections(tab, node.scope, node.stmt[i], y)
       self.display_chans(y)
     [chansets.extend(x) for x in node.chans]
-    node.decls += self.take_decls(tab, node.scope, chansets)
+    #node.decls += self.take_decls(tab, node.scope, chansets)
     return chansets
 
   # New scope
@@ -296,7 +294,7 @@ class InsertConns(NodeWalker):
     node.client = self.insert_connections(tab, node.scope, node.client, node.chans[1])
     self.display_chans(node.chans[1])
     [chansets.extend(x) for x in node.chans]
-    node.decls += self.take_decls(tab, node.scope, chansets)
+    #node.decls += self.take_decls(tab, node.scope, chansets)
     return chansets
 
   def stmt_rep(self, node, tab, scope):
@@ -304,6 +302,7 @@ class InsertConns(NodeWalker):
     self.display_chans(node.chans)
     chansets = self.stmt(node.stmt, tab, scope)
     node.stmt = self.insert_connections(tab, scope, node.stmt, node.chans)
+    #node.stmt.stmt.decls += self.take_decls(tab, scope, chansets+node.chans)
     return chansets + node.chans
 
   def stmt_on(self, node, tab, scope):
@@ -311,6 +310,7 @@ class InsertConns(NodeWalker):
     self.display_chans(node.chans)
     chansets = self.stmt(node.stmt, tab, scope)
     node.stmt = self.insert_connections(tab, scope, node.stmt, node.chans)
+    #node.stmt.stmt.decls += self.take_decls(tab, scope, chansets+node.chans)
     return chansets + node.chans
 
   # Other statements containing processes
@@ -319,7 +319,7 @@ class InsertConns(NodeWalker):
   def stmt_seq(self, node, tab, scope):
     chansets = []
     [chansets.extend(self.stmt(x, tab, node.scope)) for x in node.stmt]
-    node.decls += self.take_decls(tab, node.scope, chansets)
+    #node.decls += self.take_decls(tab, node.scope, chansets)
     return chansets
 
   def stmt_if(self, node, tab, scope):

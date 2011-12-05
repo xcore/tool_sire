@@ -12,6 +12,13 @@ class RemoveDecls(NodeWalker):
   def __init__(self):
     pass
 
+  def remove(self, s, decls):
+    new = []
+    for x in decls:
+      if x.name in s:
+        new.append(x)
+    return new
+
   # Program ============================================
 
   def walk_program(self, node):
@@ -21,28 +28,31 @@ class RemoveDecls(NodeWalker):
 
   def defn(self, node):
     s = self.stmt(node.stmt)
-    decls = []
-    for x in node.decls:
-      if x.name in s:
-        decls.append(x)
-    node.decls = decls
   
   # Statements ==========================================
+
+  # New scopes
 
   def stmt_seq(self, node):
     s = set()
     [s.update(self.stmt(x)) for x in node.stmt]
+    node.decls = self.remove(s, node.decls)
     return s
 
   def stmt_par(self, node):
     s = set()
     [s.update(self.stmt(x)) for x in node.stmt]
+    node.decls = self.remove(s, node.decls)
     return s
 
   def stmt_server(self, node):
     s = self.stmt(node.server)
-    return s | self.stmt(node.client)
+    s |= self.stmt(node.client)
+    node.decls = self.remove(s, node.decls)
+    return s
 
+  # No new scope
+  
   def stmt_skip(self, node):
     return set()
 

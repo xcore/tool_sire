@@ -115,10 +115,6 @@ class Printer(NodeWalker):
     else:
       self.buf.write(' is\n')
       
-      # Procedure declarations
-      #self.indent.append(INDENT)
-      #self.var_decls(node.decls)
-
       # Statement block
       if (isinstance(node.stmt, ast.StmtPar) 
           or isinstance(node.stmt, ast.StmtSeq)):
@@ -127,10 +123,11 @@ class Printer(NodeWalker):
         self.stmt(node.stmt)
         self.buf.write('\n\n')
       else:
+        self.indent.append(INDENT)
         self.display_location(node.stmt)
         self.stmt(node.stmt)
         self.buf.write('\n\n')
-        #self.indent.pop()
+        self.indent.pop()
   
   # Formals =============================================
   

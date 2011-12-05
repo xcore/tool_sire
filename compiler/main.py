@@ -277,19 +277,19 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
  
   # 12. Transform parallel replication
   vmsg(v, "Transforming parallel replication")
-  #TransformRep(sym, sem, sig, device).walk_program(ast)
+  TransformRep(sym, sem, sig, device).walk_program(ast)
   
   # 13. Transform server processes
   vmsg(v, "Transforming server processes")
-  #TransformServer().walk_program(ast)
+  TransformServer().walk_program(ast)
 
   # 14. Flatten nested calls
   vmsg(v, "Flattening nested calls")
-  #FlattenCalls(sig).walk_program(ast)
+  FlattenCalls(sig).walk_program(ast)
    
   # 15. Remove unused declarations
   vmsg(v, "Removing unused declarations")
-  #RemoveDecls().walk_program(ast)
+  RemoveDecls().walk_program(ast)
    
   # Display (pretty-print) the transformed AST
   if pprint_trans_ast: 
