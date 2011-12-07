@@ -36,15 +36,16 @@ class ChanTable(object):
     Or add a channel element with a particular index into the table recording the
     location and the ChanElemSet it is a member of (this is necessary for
     performing colouring to assign connection ids).
+    Declarations are prefixed with an underscore.
     """
     if decl:
-      self.scopes[-1].tab[name] = Channel()
+      self.scopes[-1].tab['_'+name] = Channel()
       debug(self.debug, '  Insert decl: '+name)
       return
     else:
       scope = self.scopes[-1]
       while scope != None:
-        if name in scope.tab:
+        if '_'+name in scope.tab:
           key = self.key(name, index)
           if not key in scope.tab:
             scope.tab[key] = Channel()
@@ -99,12 +100,14 @@ class ChanTable(object):
     return name
 
   def display(self):
-    print('---------------------------')
     print('Channel table for procedure '+self.name+':')
-    for x in reversed(self.scopes):
+    print('--------------------------')
+    for x in self.scopes:
+      if len(x.tab) == 0:
+        print('  Empty')
       for y in x.tab.keys():
-        print('  channel {} is {}'.format(y, x.tab[y]))
-    print('---------------------------')
+        print('  Channel {} is {}'.format(y, x.tab[y]))
+      print('--------------------------')
 
 
 class Scope(object):

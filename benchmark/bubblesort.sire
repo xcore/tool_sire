@@ -29,8 +29,7 @@ proc leaf(chanend c) is
       c ? v;
       data[i-base] := v
     }
-  };
-  skip
+  }
 }
 
 proc branch(chanend root, chanend left, chanend right) is
@@ -123,8 +122,8 @@ proc array(chanend cin) is
 { chan c[(2*N)-1];
   var i;
   server() 
-    par i in [0 for N] do 
-      leaf(c[(N-1)+i])
+   par i in [0 for N] do 
+    leaf(c[(N-1)+i])
   { serve(cin, c[0]) ||
     par i in [0 for N-1] do
       branch(c[i], c[(2*i)+1], c[(2*i)+2])
@@ -176,12 +175,12 @@ proc dump(chanend r) is
 }
 
 proc main() is
-{ server(chan c)
-    array(c)
-  { initialise(c);
-    dump(c);
-    bubblesort(c, LENGTH);
-    dump(c)
+{ server(chan x)
+    array(x)
+  { initialise(x);
+    dump(x);
+    bubblesort(x, LENGTH);
+    dump(x)
   }
 }
 

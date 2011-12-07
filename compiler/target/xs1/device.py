@@ -42,9 +42,10 @@ AVAILABLE_XS1_DEVICES = [
 ]
 
 def get_xs1_device(num_cores):
-  d = [x for x in AVAILABLE_XS1_DEVICES if num_cores==x.num_cores()]
-  if len(d) > 0:
-    return d[0]
-  else:
-    raise Error('invalid XS1 target ({} cores)'.format(num_cores))
+  return XS1Device(XS1_DEVICE_TYPE_L, 'XS1-L{}A'.format(num_cores), 1, num_cores)
+  #d = [x for x in AVAILABLE_XS1_DEVICES if num_cores==x.num_cores()]
+  #if len(d) > 0:
+  #  return d[0]
+  #else:
+  #  raise Error('invalid XS1 target ({} cores)'.format(num_cores))
 

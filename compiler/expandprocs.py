@@ -29,7 +29,7 @@ class ExpandProcs(NodeWalker):
       defn = [x for x in self.ast.defs if x.name == stmt.name][0]
       proc = copy.deepcopy(defn.stmt)
 
-       # Rename actual parameters for ocurrances of formals
+      # Rename actual parameters for ocurrances of formals
       for (x, y) in zip(defn.formals, stmt.args):
         if x.type == T_VAL_SINGLE:
           proc.accept(SubElem(ast.ElemId(x.name), y))

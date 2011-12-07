@@ -20,7 +20,7 @@ from indicies import *
 
 from printer import Printer
 
-DISPLAY_CHANTAB = True 
+DISPLAY_CHANTAB = False 
 
 class LabelChans(NodeWalker):
   """
@@ -172,7 +172,8 @@ class LabelChans(NodeWalker):
     node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
 
     # Display the channel table
-    #tab.display()
+    if DISPLAY_CHANTAB:
+      tab.display()
     
     # Return no uses
     return ChanUseSet() 
@@ -191,7 +192,8 @@ class LabelChans(NodeWalker):
     node.scope = tab.end_scope()
 
     # Display the channel table
-    #tab.display()
+    if DISPLAY_CHANTAB:
+      tab.display()
     
     # Return no uses 
     return ChanUseSet()
@@ -208,7 +210,8 @@ class LabelChans(NodeWalker):
     node.scope = tab.end_scope()
     
     # Display the channel table
-    #tab.display()
+    if DISPLAY_CHANTAB:
+      tab.display()
     
     # Return no uses 
     return ChanUseSet()
@@ -218,7 +221,8 @@ class LabelChans(NodeWalker):
     node.chans = self.expand_uses(tab, indicies, chan_uses, node.stmt)
     
     # Display the channel table
-    #tab.display()
+    if DISPLAY_CHANTAB:
+      tab.display()
     
     # Return no uses 
     return ChanUseSet()

@@ -9,6 +9,7 @@ import io
 import re
 import glob
 import subprocess
+import struct
 from math import floor
 
 import definitions as defs
@@ -125,11 +126,12 @@ def build_xs1(sig, device, program_buf, outfile,
     link_slave(device, show_calls, v)
     replace_slaves(show_calls, v)
     
-    # Rename the output file
+    # Append XE to header in output file
+    #outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
+    #    outfile+'.'+device.binary_file_ext())
     outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
-        outfile+'.'+device.binary_file_ext())
-    os.rename(SLAVE_XE, outfile)
-
+        outfile+'.se')
+    append_header(device, outfile, show_calls, v)
     vmsg(v, 'Produced file: '+outfile)
 
   except Error as e:
@@ -147,12 +149,15 @@ def build_xs1(sig, device, program_buf, outfile,
 def create_headers(device, v):
   vmsg(v, 'Creating device header '+DEVICE_HDR)
   s =  '#define NUM_CORES {}\n'.format(device.num_cores())
-  s += '#define NUM_NODES {}\n'.format(device.num_nodes)
-  s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
-  if device.type == XS1_DEVICE_TYPE_G:
-    s +=  '#define XS1_G\n'
-  elif device.type == XS1_DEVICE_TYPE_L:
-    s +=  '#define XS1_L\n'
+  s += '#define NUM_NODES 0\n'
+  s += '#define NUM_CORES_PER_NODE NUM_CORES\n'
+  s += '#define XS1_L\n'
+  #s += '#define NUM_NODES {}\n'.format(device.num_nodes)
+  #s += '#define NUM_CORES_PER_NODE {}\n'.format(device.num_cores_per_node)
+  #if device.type == XS1_DEVICE_TYPE_G:
+  #  s +=  '#define XS1_G\n'
+  #elif device.type == XS1_DEVICE_TYPE_L:
+  #  s +=  '#define XS1_L\n'
   util.write_file(DEVICE_HDR, s)
 
 def generate_assembly(sig, buf, show_calls, v):
@@ -269,6 +274,19 @@ def replace_slaves(show_calls, v):
     verbose=show_calls, display_stdout=False)
   util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], 
     verbose=show_calls, display_stdout=False)
+
+def append_header(device, outfile, show_calls, v):
+  vmsg(v, 'Appending binary header')
+  xe = open(SLAVE_XE, "rb")
+  se = open(outfile, "wb")
+  try:
+    se.write(bytes('SIRE', 'UTF-8'))
+    v = bytearray()
+    se.write(struct.pack('I', device.num_cores()))
+    se.write(xe.read())
+  finally:
+    xe.close()
+    se.close()
 
 def modify_assembly(sig, lines, v):
   """ 
@@ -536,7 +554,8 @@ def cleanup(v):
     util.remove_file(x)
 
 def target(device):
-  return '{}/{}.xn'.format(config.XS1_DEVICE_PATH, device.name)
+  return '-target=XS1-L2A'
+  #return '{}/{}.xn'.format(config.XS1_DEVICE_PATH, device.name)
 
 def function_label_top(name):
   return '.'+name+'.top'

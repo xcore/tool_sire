@@ -205,6 +205,12 @@ class Parser(object):
     'var_decl : CHAN name LBRACKET expr RBRACKET'
     p[0] = ast.VarDecl(p[2], T_CHAN_ARRAY, p[4], self.coord(p))
 
+  # Abbreviations
+  #VAL name is name
+  #VAR name ([])? is name
+  #CHAN name ([])? is name
+  #CHANEND name ([])? is name
+
   # Server declarations ======================================
 
   def p_server_decls_empty(self, p):
