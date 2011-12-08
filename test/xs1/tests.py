@@ -58,6 +58,8 @@ xs1_example_tests = [
   Test('cube2d',            [4]),
   Test('cube3d',            [16]),
 
+  Test('distributed-array', [5], p=['N', '4'])
+
   # These exceed 8 threads on some nodes.
   #Test('array2d',           [16], p=[('N','4')]),
   #Test('array2d_composite', [64], p=[('N','3')]),

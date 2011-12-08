@@ -1,5 +1,5 @@
-val STORAGE     is 4; % Storage per leaf
-val N           is 16; % Number of leaves (storage units)
+val STORAGE     is 4;  % Storage per leaf
+val N           is 4; % Number of leaves (storage units)
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
@@ -177,5 +177,4 @@ proc main() is
   } ||
   array(x)
 }
-
 

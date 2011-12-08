@@ -22,7 +22,7 @@ proc leaf(chanend c) is
     if query = READ
     then
     { c ? i;
-      c ? data[i-base] % should be !
+      c ! data[i-base]
     }
     else
     { c ? i;
