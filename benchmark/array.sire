@@ -1,0 +1,158 @@
+val LENGTH      is 16;
+val STORAGE     is 4;
+val N           is LENGTH/STORAGE;
+val READ        is 0;
+val WRITE       is 1;
+val NUM_QUERIES is 1;
+
+proc leaf(chanend c) is
+{ var base;
+  var data[STORAGE];
+  var query;
+  var i;
+  var k;
+  var v;
+  
+  % Ignore configuration messages
+  c ? v;
+  c ? base;
+  c ? v;
+
+  % Run
+  for i in [0 for NUM_QUERIES] do 
+  { c ? query;
+    if query = READ
+    then
+    { c ? k;
+      c ? data[k-base] % should be !
+    }
+    else
+    { c ? k;
+      c ? v;
+      data[k-base] := v
+    }
+  }
+}
+
+proc branch(chanend root, chanend left, chanend right) is
+{ var depth;
+  var base;
+  var interval;
+  var query;
+  var i;
+  var k;
+  var v;
+ 
+  % Configure
+  root ? depth;
+  root ? base;
+  root ? interval;
+  left  ! depth + 1;
+  right ! depth + 1;
+  left  ! base;
+  right ! base + (interval/2);
+  left  ! interval/2;
+  right ! interval/2;
+
+  % Run
+  for i in [0 for NUM_QUERIES] do 
+  { root ? query;
+    if query = READ
+    then 
+    { root ? k;
+      if k < base+(interval/2)
+      then
+      { left ! READ;
+        left ! k;
+        left ? v
+      }
+      else
+      { right ! READ;
+        right ! k;
+        right ? v
+      }
+    }
+    else
+    { root  ? k;
+      root  ? v;
+      if k < base+(interval/2)
+      then
+      { left ! READ;
+        left ! k;
+        left ! v
+      }
+      else
+      { right ! READ;
+        right ! k;
+        right ! v
+      }
+    }
+  }
+}
+
+proc serve(chanend c, chanend root) is
+{ var query;
+  var i;
+  var k;
+  var v;
+  
+  % Configure the structure
+  root ! 0;
+  root ! 0;
+  root ! LENGTH;
+  
+  % Run
+  for i in [0 for NUM_QUERIES] do 
+  { c ? query;
+    if query = READ
+    then 
+    { c ? k;
+      root ! READ;
+      root ! k;
+      root ? v;
+      c ! v
+    }
+    else 
+    { c ? k;
+      c ? v;
+      root ! WRITE;
+      root ! k;
+      root ! v
+    }
+  }
+}
+
+proc array(chanend cin) is
+{ chan c[(2*N)-1];
+  var i;
+  server() 
+   par i in [0 for N] do 
+    leaf(c[(N-1)+i])
+  { serve(cin, c[0]) ||
+    par i in [0 for N-1] do
+      branch(c[i], c[(2*i)+1], c[(2*i)+2])
+  }
+}
+
+proc read(chanend c, val i, var v) is
+{ c ! READ;
+  c ! i;
+  c ? v
+}
+
+proc write(chanend c, val i, val v) is
+{ c ! WRITE;
+  c ! i;
+  c ! v
+}
+
+proc main() is
+{ server(chan x)
+    array(x)
+  { var v;
+    write(x, 3, 0xDEADBEEF);
+    %read(x, 3, v);
+    printvalln(v)
+  }
+}
+

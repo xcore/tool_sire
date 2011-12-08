@@ -35,18 +35,18 @@ class LabelChans(NodeWalker):
     self.errorlog = errorlog
     self.debug = debug
 
-  def single_channel(self, tab, stmt, name, chan_set):
+  def single_channel(self, tab, stmt, name, chanend, chan_set):
     """
     Process a single (non-subscripted) channel use by evaluating its location
     and then adding it to the channel table and returning it as an element. 
     """
     #print(Printer().expr(stmt.location))
     location_value = EvalExpr().expr(stmt.location)
-    tab.insert(name, None, location_value, chan_set)
+    tab.insert(name, None, location_value, chanend, chan_set)
     debug(self.debug, '  {} at {}'.format(name, location_value))
     return ChanElem(None, location_value, None, None)
 
-  def subscript_channel(self, indicies, tab, stmt, name, expr, chan_set):
+  def subscript_channel(self, indicies, tab, stmt, name, expr, chanend, chan_set):
     """
     Expand the use of a channel subscript over a set of iterators and determine
     for each the value of its index and location, and then add this to the
@@ -76,7 +76,7 @@ class LabelChans(NodeWalker):
       location_value = EvalExpr().expr(location_expr)
 
       # Add to the table
-      tab.insert(name, index_value, location_value, chan_set)
+      tab.insert(name, index_value, location_value, chanend, chan_set)
 
       # Add the expanded channel use to a list
       chan_elems.append(ChanElem(index_value, location_value, 
@@ -92,14 +92,16 @@ class LabelChans(NodeWalker):
     """
     chans = []
     for x in chan_uses.uses:
+      chanend = tab.new_chanend()
       if x.expr == None:
-        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, tab.new_chanend())
-        chan_set.elems = [self.single_channel(tab, stmt, x.name, chan_set)]
+        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, chanend)
+        chan_set.elems = [self.single_channel(
+            tab, stmt, x.name, chanend, chan_set)]
         chans.append(chan_set)
       else:
-        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, tab.new_chanend())
-        chan_set.elems = self.subscript_channel(indicies, tab, stmt, 
-            x.name, x.expr, chan_set)
+        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indicies, chanend)
+        chan_set.elems = self.subscript_channel(
+            indicies, tab, stmt, x.name, x.expr, chanend, chan_set)
         chans.append(chan_set)
 
     # Sort them by chanend
@@ -112,9 +114,9 @@ class LabelChans(NodeWalker):
     """
     for x in decls:
       if x.type == T_CHAN_SINGLE:
-        tab.insert(x.name, None, None, None, decl=True)
+        tab.insert(x.name, None, None, None, None, decl=True)
       elif x.type == T_CHAN_ARRAY:
-        tab.insert(x.name, None, None, None, decl=True)
+        tab.insert(x.name, None, None, None, None, decl=True)
       else:
         pass
 

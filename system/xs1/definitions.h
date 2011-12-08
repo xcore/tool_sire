@@ -58,8 +58,10 @@
 #define RAM_BASE                 0x10000
 #define RAM_SIZE                 0x10000
 #define BYTES_PER_WORD           4
-#define MAX_THREADS              8
+#define MAX_THREADS              12
 #define MAX_CHANNELS             32
+
+// Architectural constants
 #define SWITCH_SCRATCH_REG       3
 #define NUM_PARAM_REGS           4
                                 

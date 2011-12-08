@@ -29,7 +29,7 @@ class ChanTable(object):
   def key(self, name, index):
     return '{}{}'.format(name, '' if index==None else index)
 
-  def insert(self, name, index, location, chan_set, decl=False):
+  def insert(self, name, index, location, chanend, chan_set, decl=False):
     """
     Add channel declarations (with just names) so channel uses can be added to
     the correct scope.
@@ -50,6 +50,7 @@ class ChanTable(object):
           if not key in scope.tab:
             scope.tab[key] = Channel()
           scope.tab[key].locations.append(location)
+          scope.tab[key].chanends.append(chanend)
           scope.tab[key].chan_sets.append(chan_set)
           debug(self.debug, '  Insert: '+name+'{} @ {}'.format(
               '[{}]'.format(index) if index!=None else '', location))
@@ -90,9 +91,9 @@ class ChanTable(object):
     x = self.lookup(name, index, base)
     return x.chan_sets[0 if master else 1] if x != None else None
 
-  def lookup_is_master(self, name, index, location, base=None):
+  def lookup_is_master(self, name, index, chanend, base=None):
     x = self.lookup(name, index, base)
-    return x.locations[0] == location if x != None else None
+    return x.chanends[0] == chanend if x != None else None
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -127,9 +128,11 @@ class Channel(object):
   def __init__(self):
     self.connid = None
     self.locations = []
+    self.chanends = []
     self.chan_sets = []
   
   def __repr__(self):
-    return 'locations: {}'.format(
-        ', '.join(['{}'.format(x) for x in self.locations]))
+    return 'locations: {}, chanends: {}'.format(
+        ', '.join(['{}'.format(x) for x in self.locations]),
+        ', '.join(['{}'.format(x) for x in self.chanends]))
 

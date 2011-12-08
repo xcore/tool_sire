@@ -17,7 +17,7 @@ class Printer(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, buf=sys.stdout, labels=False):
+  def __init__(self, buf=sys.stdout, labels=True):
     super(Printer, self).__init__()
     self.buf = buf
     self.labels = labels

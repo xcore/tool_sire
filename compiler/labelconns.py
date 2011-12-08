@@ -27,7 +27,7 @@ class LabelConns(NodeWalker):
       for y in x.elems:
         chan_item = tab.lookup(x.name, y.index, scope)
         if chan_item.connid != x.connid:
-          master = tab.lookup_is_master(x.name, y.index, y.location, scope)
+          master = tab.lookup_is_master(x.name, y.index, x.chanend, scope)
           chanset = tab.lookup_chanset(x.name, y.index, master, scope)
           self.fill(tab, scope, chanset, x.connid)
 

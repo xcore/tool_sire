@@ -65,7 +65,7 @@ class InsertConns(NodeWalker):
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    master = tab.lookup_is_master(chan.name, elem.index, elem.location, scope)
+    master = tab.lookup_is_master(chan.name, elem.index, chan.chanend, scope)
     connid = tab.lookup(chan.name, elem.index, scope).connid
     location = None
     if master:
@@ -142,21 +142,21 @@ class InsertConns(NodeWalker):
     debug(self.debug, '=====')
     x = chan.elems[0] 
     l = [[x, x]]
-    master = tab.lookup_is_master(chan.name, x.index, x.location, scope)
+    master = tab.lookup_is_master(chan.name, x.index, chan.chanend, scope)
     diff = target_loc(chan.name, x.index, master) - x.indicies_value
     debug(self.debug, '{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
         chan.name, x.index, target_loc(chan.name, x.index, master), diff))
     for x in chan.elems[1:]:
-      cmaster = tab.lookup_is_master(chan.name, x.index, x.location, scope)
+      cmaster = tab.lookup_is_master(chan.name, x.index, chan.chanend, scope)
       cdiff = target_loc(chan.name, x.index, cmaster) - x.indicies_value
       debug(self.debug, '{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
           chan.name, x.index, target_loc(chan.name, x.index, cmaster), cdiff))
-      if diff == cdiff and master == cmaster:
-        l[-1][1] = x
-      else:
-        diff = cdiff
-        master = cmaster
-        l.append([x, x])
+      #if diff == cdiff and master == cmaster:
+      #  l[-1][1] = x
+      #else:
+      diff = cdiff
+      master = cmaster
+      l.append([x, x])
   
     # Print them
     if self.debug:
@@ -167,7 +167,7 @@ class InsertConns(NodeWalker):
     s = None
     i_expr = indicies_expr(chan.indicies)
     for x in reversed(l):
-      master = tab.lookup_is_master(chan.name, x[0].index, x[0].location, scope)
+      master = tab.lookup_is_master(chan.name, x[0].index, chan.chanend, scope)
       connid = tab.lookup(chan.name, x[0].index, scope).connid
       if x[0] == x[1]:
         s = create_single_connection(s, chan, i_expr, x[0].indicies_value, 

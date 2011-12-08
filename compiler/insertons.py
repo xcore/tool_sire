@@ -5,7 +5,7 @@
 
 from functools import reduce
 
-from util import vmsg
+from util import vmsg, debug
 from walker import NodeWalker
 import ast
 
@@ -20,9 +20,10 @@ class InsertOns(NodeWalker):
 
     { foo() || on 1 do par i in [0 for N] do bar() || on N+1 do baz() }
   """
-  def __init__(self, device, errorlog):
+  def __init__(self, device, errorlog, debug=False):
     self.device = device
     self.errorlog = errorlog
+    self.debug = debug
     self.defs = None
 
   # Program ============================================
@@ -31,7 +32,9 @@ class InsertOns(NodeWalker):
   
     # All processes have been flattened into 'main'
     self.defs = node.defs
+    debug(self.debug, 'd before program = {}'.format(0))
     d = self.stmt(node.defs[-1].stmt, node.defs[-1].name, 0)
+    debug(self.debug, 'd after program = {}'.format(d))
     
     # Check the available number of processors has not been exceeded
     if d > self.device.num_cores():
@@ -60,30 +63,37 @@ class InsertOns(NodeWalker):
       self.errorlog.report_error("parallel composition contains 'on's")
       return 0
     e = self.stmt(node.stmt[0], parent, d)
-    #print('par before d = {}'.format(e))
+    debug(self.debug, 'd before par = {}'.format(d))
     for (i, x) in enumerate(node.stmt[1:]):
       node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d+e)), x)
       e += self.stmt(x, parent, d+e)
-    #print('par after d = {}'.format(e))
+    debug(self.debug, 'd after par = {}'.format(d))
     return e
 
   def stmt_server(self, node, parent, d):
-    #print('d before = {}'.format(d))
-    d += self.stmt(node.server, parent, d)
-    #print('d after = {}'.format(d))
-    node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
-    d += self.stmt(node.client, parent, d)
-    return d
+    """
+    For server statements the server and client processes are overlaid.
+    """
+    debug(self.debug, 'd before server = {}'.format(d))
+    #d += self.stmt(node.server, parent, d)
+    x = self.stmt(node.server, parent, d)
+    debug(self.debug, 'd after server = {}'.format(x))
+    #node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
+    y = self.stmt(node.client, parent, d)
+    debug(self.debug, 'd after client = {}'.format(y))
+    return max(x, y)
 
   def stmt_rep(self, node, parent, d):
     """
     For replicated parallel statements, compute the offset as the product of
     index count values.
     """
+    debug(self.debug, 'd before rep = {}'.format(d))
     offset = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
     e = self.stmt(node.stmt, parent, d)
-    d += e
-    return e * offset
+    e = (e * offset)
+    debug(self.debug, 'd after rep = {}'.format(e))
+    return e
     
   def stmt_on(self, node, parent, d):
     #assert 0
@@ -93,9 +103,9 @@ class InsertOns(NodeWalker):
     return max([self.stmt(x, parent, d) for x in node.stmt])
 
   def stmt_if(self, node, parent, d):
-    d = self.stmt(node.thenstmt, parent, d)
-    d = max(d, self.stmt(node.elsestmt, parent, d))
-    return d
+    x = self.stmt(node.thenstmt, parent, d)
+    y = self.stmt(node.elsestmt, parent, d)
+    return max(x, y)
 
   def stmt_while(self, node, parent, d):
     return self.stmt(node.stmt, parent, d)
