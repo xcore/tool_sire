@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import math
+import sys
 
 import ast
 from util import debug
@@ -14,6 +15,8 @@ from symboltab import Symbol
 from formlocation import form_location
 from printer import Printer
 from indicies import indicies_value, indicies_expr
+
+COMPRESS = True
 
 class InsertConns(NodeWalker):
   """
@@ -88,9 +91,9 @@ class InsertConns(NodeWalker):
     ChanElemSet with multiple elements.
     """
     
-    def create_single_connection(s, chan, indicies_expr, 
-        range_begin, index, master, connid):
+    def create_single_conn(s, chan, scope, indicies_expr, range_begin, index):
       debug(self.debug, 'New connection for index {}'.format(index))
+      master = tab.lookup_is_master(chan.name, index, chan.chanend, scope)
       if master:
         location = ast.ExprSingle(ast.ElemNumber(
             tab.lookup_slave_location(chan.name, index, scope)))
@@ -100,6 +103,7 @@ class InsertConns(NodeWalker):
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
+      connid = tab.lookup(chan.name, index, scope).connid
       chanid = ast.ExprSingle(ast.ElemNumber(connid))
       cond = ast.ExprBinop('=', ast.ElemGroup(indicies_expr), 
           ast.ElemNumber(range_begin))
@@ -107,76 +111,164 @@ class InsertConns(NodeWalker):
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def create_range_connection(s, chan, indicies_expr, begin, end, master,
-        diff, connid):
-      debug(self.debug, 'New connection over range {} to {}'.format(begin, end))
-      if diff != 0:
-        location = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(diff))))
-        location = ast.ExprUnary('-', location) if diff<0 else location
-        location = ast.ExprBinop('+', ast.ElemGroup(indicies_expr), location)
-      else:
-        location = indicies_expr
+    #def create_range_connection(s, chan, indicies_expr, begin, end, master,
+    #    diff, connid):
+    #  debug(self.debug, 'New connection over range {} to {}'.format(begin, end))
+    #  if diff != 0:
+    #    location = ast.ExprSingle(ast.ElemNumber(math.floor(math.fabs(diff))))
+    #    location = ast.ExprUnary('-', location) if diff<0 else location
+    #    location = ast.ExprBinop('+', ast.ElemGroup(indicies_expr), location)
+    #  else:
+    #    location = indicies_expr
+    #  chanend = ast.ElemId(chan.chanend)
+    #  chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
+    #      None, scope=T_SCOPE_PROC)
+    #  chanid = ast.ExprSingle(ast.ElemNumber(connid))
+    #  cond = ast.ExprBinop('and', 
+    #      ast.ElemGroup(ast.ExprBinop('>=', ast.ElemGroup(indicies_expr),
+    #        ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
+    #      ast.ExprBinop('<=', ast.ElemGroup(indicies_expr),
+    #        ast.ExprSingle(ast.ElemNumber(max(begin, end)))))
+    #  conn = ast.StmtConnect(chanend, chanid, location,
+    #      self.connect_type(chan, master))
+    #  return ast.StmtIf(cond, conn, s) if s else conn
+
+    def create_range_conn(s, chan, indicies_expr, group):
+      # TODO: do single values of master and connid apply to whole range?
+      diff2 = group[0]
+      elem0 = group[1][0][0] 
+      offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
+      location = ast.ExprBinop('-', ast.ElemGroup(indicies_expr),
+          ast.ElemNumber(elem0.indicies_value))
+      location = ast.ExprBinop('*', ast.ElemNumber(diff2+1),
+          ast.ElemGroup(location))
+      location = ast.ExprBinop('+', ast.ElemGroup(location), ast.ElemNumber(offset))
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
+      connid = tab.lookup(chan.name, elem0.index, scope).connid
       chanid = ast.ExprSingle(ast.ElemNumber(connid))
+      begin = elem0.index
+      end = group[1][-1][0].index
       cond = ast.ExprBinop('and', 
           ast.ElemGroup(ast.ExprBinop('>=', ast.ElemGroup(indicies_expr),
             ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
           ast.ExprBinop('<=', ast.ElemGroup(indicies_expr),
             ast.ExprSingle(ast.ElemNumber(max(begin, end)))))
+      master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
       conn = ast.StmtConnect(chanend, chanid, location,
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def target_loc(name, index, master):
-      if master:
-        return tab.lookup_slave_location(name, index, scope)
-      else:
-        return tab.lookup_master_location(name, index, scope)
+    def target_loc(name, index, chanend, scope):
+      master = tab.lookup_is_master(name, index, chanend, scope)
+      return (tab.lookup_slave_location(name, index, scope) if master else
+          tab.lookup_master_location(name, index, scope))
 
     # Sort the channel elements into increasing order of indicies
     chan.elems = sorted(chan.elems, key=lambda x: x.indicies_value)
 
     # Build a list of channel index ranges
     debug(self.debug, '=====')
-    x = chan.elems[0] 
-    l = [[x, x]]
-    master = tab.lookup_is_master(chan.name, x.index, chan.chanend, scope)
-    diff = target_loc(chan.name, x.index, master) - x.indicies_value
-    debug(self.debug, '{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
-        chan.name, x.index, target_loc(chan.name, x.index, master), diff))
-    for x in chan.elems[1:]:
-      cmaster = tab.lookup_is_master(chan.name, x.index, chan.chanend, scope)
-      cdiff = target_loc(chan.name, x.index, cmaster) - x.indicies_value
-      debug(self.debug, '{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
-          chan.name, x.index, target_loc(chan.name, x.index, cmaster), cdiff))
+    #x = chan.elems[0] 
+    #l = [[x, x]]
+    #master = tab.lookup_is_master(chan.name, x.index, chan.chanend, scope)
+    #diff = target_loc(chan.name, x.index, master) - x.indicies_value
+    #debug(self.debug, '{}: -> {}[{}]: target {} diff {}'.format(x.indicies_value, 
+    #    chan.name, x.index, target_loc(chan.name, x.index, master), diff))
+    #for x in chan.elems:
+      #debug(self.debug, '{}: {}[{}] -> target {} diff {}'.format(x.indicies_value, 
+      #    chan.name, x.index, target_loc(chan.name, x.index, cmaster), cdiff))
       #if diff == cdiff and master == cmaster:
       #  l[-1][1] = x
       #else:
-      diff = cdiff
-      master = cmaster
-      l.append([x, x])
-  
+      #diff = cdiff
+      #master = cmaster
+      #l.append([x, x])
+
+    # Build a list of channel elements and index-dest differences
+    diffs = []
+    for x in chan.elems:
+      diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indicies_value
+      diffs.append((x, diff))
+
+    print('Differences for chan {}:'.format(chan.name))
+    for (elem, diff) in diffs:
+      print('  {:>3}: [{}] : {}'.format(elem.indicies_value, elem.index, diff))
+
+    # Group consecutive elements with a constant second difference
+    # TODO: groups should share the same connection id
+    groups = []
+    if COMPRESS:
+      newgroup = True
+      skip = False
+      for ((elemA, diffA), (elemB, diffB)) in zip(diffs[:-1], diffs[1:]):
+        diff2 = diffB - diffA
+        if skip:
+          skip = False
+          continue
+        if newgroup:
+          groups.append((diff2, [(elemA, diffA)]))
+          groupdiff2 = diff2
+          newgroup = False
+        if groupdiff2 == diff2:
+          groups[-1][1].append((elemB, diffB))
+        else:
+          newgroup = True
+      if newgroup:
+        groups.append((None, [diffs[-1]]))
+    else:
+      [groups.append((None, [x])) for x in diffs]
+      
     # Print them
-    if self.debug:
-      for x in l:
-        print('Range: {}'.format(' '.join(['{}'.format(y.index) for y in x])))
+    #if self.debug:
+    print('Groups:')
+    for x in groups:
+      diff2 = x[0]
+      elem0 = x[1][0][0]
+      offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
+      print('  diff2:  {}'.format(diff2))
+      print('  offset: {}'.format(offset))
+      print('  base:   {}'.format(elem0.indicies_value))
+      if len(x[1]) > 1:
+        for (i, (elem, diff)) in enumerate(x[1]):
+          loc = target_loc(chan.name, elem.index, chan.chanend, scope)
+          computed = ((diff2+1) * (elem.indicies_value-elem0.indicies_value)) + offset
+          assert computed == loc
+          print('    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
+              elem.indicies_value, elem.index, loc, diff, computed))
+      else:
+        print('    {:>3}: [{:>3}]->{:>3}'.format(
+            elem0.indicies_value, elem0.index, offset))
 
     # Construct the connection syntax
     s = None
     i_expr = indicies_expr(chan.indicies)
-    for x in reversed(l):
-      master = tab.lookup_is_master(chan.name, x[0].index, chan.chanend, scope)
-      connid = tab.lookup(chan.name, x[0].index, scope).connid
-      if x[0] == x[1]:
-        s = create_single_connection(s, chan, i_expr, x[0].indicies_value, 
-            x[0].index, master, connid)
+    for x in groups:
+      elem0 = x[1][0][0]
+      if len(x[1]) == 1:
+        s = create_single_conn(s, chan, scope, i_expr, 
+            elem.indicies_value, elem0.index)
       else:
-        diff = (target_loc(chan.name, x[0].index, master) -
-            x[0].indicies_value)
-        s = create_range_connection(s, chan, i_expr, x[0].indicies_value,
-            x[1].indicies_value, master, diff, connid)
+        s = create_range_conn(s, chan, i_expr, x)
+
+    # Construct the connection syntax
+    #l = []
+    #for x in chan.elems:
+    #  l.append([x, x])
+    #s = None
+    #i_expr = indicies_expr(chan.indicies)
+    #for x in reversed(l):
+    #  master = tab.lookup_is_master(chan.name, x[0].index, chan.chanend, scope)
+    #  connid = tab.lookup(chan.name, x[0].index, scope).connid
+    #  if x[0] == x[1]:
+    #    s = create_single_connection(s, chan, i_expr, x[0].indicies_value, 
+    #        x[0].index, master, connid)
+    #  else:
+    #    diff = (target_loc(chan.name, x[0].index, chan.chanend, scope) -
+    #        x[0].indicies_value)
+    #    s = create_range_connection(s, chan, i_expr, x[0].indicies_value,
+    #        x[1].indicies_value, master, diff, connid)
 
     return s
 
@@ -185,9 +277,6 @@ class InsertConns(NodeWalker):
     Insert connections for a process from a list of channel uses (name, index)
     by composing them in sequence, prior to the process. If there are no
     connecitons to be made, just return the process.
-
-    The location expression is formed with a compression factor of 1 because we
-    have already applied this when we evaluated the offset.
     """
     if len(chans) > 0:
       conns = []
