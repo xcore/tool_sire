@@ -14,7 +14,7 @@ from typedefs import *
 from symboltab import Symbol
 from formlocation import form_location
 from printer import Printer
-from indicies import indicies_value, indicies_expr
+from indices import indices_value, indices_expr
 
 COMPRESS = True
 
@@ -117,9 +117,9 @@ class InsertConns(NodeWalker):
       offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
 
       # Form the location expression
-      if elem0.indicies_value > 0:
+      if elem0.indices_value > 0:
         location = ast.ElemGroup(ast.ExprBinop('-', i_elem,
-          ast.ElemNumber(elem0.indicies_value)))
+          ast.ElemNumber(elem0.indices_value)))
       else:
         location = i_elem
       location = ast.ExprBinop('*', ast.ElemNumber(diff2+1),
@@ -150,19 +150,19 @@ class InsertConns(NodeWalker):
       return (tab.lookup_slave_location(name, index, scope) if master else
           tab.lookup_master_location(name, index, scope))
 
-    # Sort the channel elements into increasing order of indicies
-    chan.elems = sorted(chan.elems, key=lambda x: x.indicies_value)
+    # Sort the channel elements into increasing order of indices
+    chan.elems = sorted(chan.elems, key=lambda x: x.indices_value)
 
     # Build a list of channel elements and index-dest differences
     diffs = []
     for x in chan.elems:
-      diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indicies_value
+      diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indices_value
       diffs.append((x, diff))
 
     #print('Differences for chan {}:'.format(chan.name))
     #for (elem, diff) in diffs:
     #  connid = tab.lookup_connid(chan.name, elem.index, scope)
-    #  print('  {:>3}: [{}]:{} - {}'.format(elem.indicies_value, elem.index,
+    #  print('  {:>3}: [{}]:{} - {}'.format(elem.indices_value, elem.index,
     #    connid, diff))
 
     # Group consecutive elements with a constant second difference
@@ -198,20 +198,20 @@ class InsertConns(NodeWalker):
       offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
       #print('  diff2:  {}'.format(diff2))
       #print('  offset: {}'.format(offset))
-      #print('  base:   {}'.format(elem0.indicies_value))
+      #print('  base:   {}'.format(elem0.indices_value))
       if len(x[1]) > 1:
         for (i, (elem, diff)) in enumerate(x[1]):
           loc = target_loc(chan.name, elem.index, chan.chanend, scope)
-          computed = ((diff2+1) * (elem.indicies_value-elem0.indicies_value)) + offset
+          computed = ((diff2+1) * (elem.indices_value-elem0.indices_value)) + offset
           assert computed == loc
       #    print('    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
-      #        elem.indicies_value, elem.index, loc, diff, computed))
+      #        elem.indices_value, elem.index, loc, diff, computed))
       #else:
       #  print('    {:>3}: [{:>3}]->{:>3}'.format(
-      #      elem0.indicies_value, elem0.index, offset))
+      #      elem0.indices_value, elem0.index, offset))
 
     # Construct the connection syntax
-    i_expr = indicies_expr(chan.indicies)
+    i_expr = indices_expr(chan.indices)
     i_elem = ast.ElemId('_i')
     i_elem.symbol = Symbol(i_elem.name, T_VAR_SINGLE, scope=T_SCOPE_BLOCK)
     s = None
@@ -219,7 +219,7 @@ class InsertConns(NodeWalker):
       elem0 = x[1][0][0]
       if len(x[1]) == 1:
         s = create_single_conn(s, chan, scope, i_elem, 
-            elem0.indicies_value, elem0.index)
+            elem0.indices_value, elem0.index)
       else:
         s = create_range_conn(s, chan, i_elem, x)
     s = [ast.StmtAss(i_elem, i_expr), s]

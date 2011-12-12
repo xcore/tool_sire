@@ -202,7 +202,7 @@ class Printer(NodeWalker):
 
   def stmt_rep(self, node):
     self.out('par {} do\n'.format(
-      ', '.join([self.elem(x) for x in node.indicies]))) 
+      ', '.join([self.elem(x) for x in node.indices]))) 
     self.indent.append(INDENT)
     self.display_location(node.stmt)
     self.stmt(node.stmt)

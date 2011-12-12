@@ -9,25 +9,25 @@ from symboltab import Symbol
 from typedefs import *
 import ast
 
-def indicies_value(indicies, values):
+def indices_value(indices, values):
   """
-  Given a set of indicies and values for them, compute the combined value.
+  Given a set of indices and values for them, compute the combined value.
   """
-  assert len(indicies) == len(values)
-  mult = reduce(lambda x, y: x*y.count_value, indicies, 1)
+  assert len(indices) == len(values)
+  mult = reduce(lambda x, y: x*y.count_value, indices, 1)
   r = 0
-  for (x, y) in zip(indicies, values):
+  for (x, y) in zip(indices, values):
     mult = floor(mult / x.count_value)
     r += y * mult
   return r
 
-def indicies_expr(indicies):
+def indices_expr(indices):
   """
-  Given a set of indicies, return an expression computing their combined value.
+  Given a set of indices, return an expression computing their combined value.
   """
-  dims = [x.count_value for x in indicies]
+  dims = [x.count_value for x in indices]
   r = None
-  for (i, x) in enumerate(indicies):
+  for (i, x) in enumerate(indices):
     c = reduce(lambda x, y: x*y, dims[i+1:], 1)
     c_expr = ast.ExprSingle(ast.ElemNumber(c))
     eid = ast.ElemId(x.name)

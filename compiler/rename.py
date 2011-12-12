@@ -46,7 +46,7 @@ class Rename(NodeVisitor):
     node.index = self.rename(node.index)
 
   def visit_stmt_rep(self, node):
-    node.indicies = [self.rename(x) for x in node.indicies]
+    node.indices = [self.rename(x) for x in node.indices]
 
   # Expressions containing elements =====================
 

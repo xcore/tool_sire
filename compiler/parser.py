@@ -457,7 +457,7 @@ class Parser(object):
     'index_list : elem'
     p[0] = [p[1]]
 
-  def p_rep_indicies_(self, p):
+  def p_rep_indices_(self, p):
     'index_list : elem COMMA index_list'
     p[0] = [p[1]] + p[3]
 

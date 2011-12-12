@@ -9,7 +9,7 @@ import ast
 from walker import NodeWalker
 from evalexpr import EvalExpr
 from printer import Printer
-from indicies import indicies_expr
+from indices import indices_expr
 
 class LabelProcs(NodeWalker):
   """
@@ -41,10 +41,10 @@ class LabelProcs(NodeWalker):
     node.location = l
     
     # Calculate total # processes (m) and the next power of two of this (n)
-    node.m = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
+    node.m = reduce(lambda x, y: x*y.count_value, node.indices, 1)
  
     # Determine f and then set l = g(d_1, d_2, ..., d_k, f)
-    k = indicies_expr(node.indicies)
+    k = indices_expr(node.indices)
     
     # Add to base (if non-zero) and take modulo
     if not (isinstance(l, ast.ElemNumber) and l.value==0):

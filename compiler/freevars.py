@@ -98,7 +98,7 @@ class FreeVars(NodeWalker):
 
   def stmt_rep(self, node):
     c = set()
-    [c.update(self.elem(x)) for x in node.indicies]
+    [c.update(self.elem(x)) for x in node.indices]
     c |= self.stmt(node.stmt)
     return c
 

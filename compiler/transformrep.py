@@ -59,7 +59,7 @@ class TransformRep(NodeWalker):
     self.debug = debug
 
   def distribute_stmt(self, m, elem_t, elem_n, elem_m, base, 
-        indicies, proc_actuals, formals, pcall):
+        indices, proc_actuals, formals, pcall):
     """
     Create the distribution process body statement.
     """
@@ -76,7 +76,7 @@ class TransformRep(NodeWalker):
 
     # Replace ocurrances of index variables i with i = f(_t)
     divisor = m
-    for x in indicies:
+    for x in indices:
       divisor = floor(divisor / x.count_value)
       # Calculate the index i as a function of _t and the dimensions.
       e = ast.ExprBinop('rem', ast.ElemGroup(ast.ExprBinop('/', elem_t,
@@ -163,7 +163,7 @@ class TransformRep(NodeWalker):
     #print(Printer().expr(stmt.location))
     base = stmt.location.elem.value
 
-    # Populate the distribution and replicator indicies
+    # Populate the distribution and replicator indices
     formals.append(ast.Param('_t', T_VAL_SINGLE, None))
     formals.append(ast.Param('_n', T_VAL_SINGLE, None))
     formals.append(ast.Param('_m', T_VAL_SINGLE, None))
@@ -172,7 +172,7 @@ class TransformRep(NodeWalker):
     actuals.append(ast.ExprSingle(ast.ElemNumber(stmt.m)))
    
     # For each non-index free-variable of the process call
-    for x in context - set([x for x in stmt.indicies]):
+    for x in context - set([x for x in stmt.indices]):
     
       # Add each unique variable ocurrance from context as a formal param
       formals.append(ast.Param(x.name, rep_var_to_param[x.symbol.type], 
@@ -192,7 +192,7 @@ class TransformRep(NodeWalker):
     # Create the process definition and perform semantic analysis to 
     # update symbol bindings. 
     d = self.distribute_stmt(stmt.m, elem_t, elem_n, elem_m, base,
-                stmt.indicies, proc_actuals, formals, pcall)
+                stmt.indices, proc_actuals, formals, pcall)
     #Printer().defn(d, 0)
     self.sem.defn(d)
     

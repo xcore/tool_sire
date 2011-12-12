@@ -456,15 +456,15 @@ class StmtFor(Stmt):
 
 
 class StmtRep(Stmt):
-  def __init__(self, indicies, stmt, coord=None):
-    self.indicies = indicies
+  def __init__(self, indices, stmt, coord=None):
+    self.indices = indices
     self.stmt = stmt
     self.coord = coord
 
   def children(self):
     c = []
     if self.stmt is not None: c.append(self.stmt)
-    if self.indicies is not None: c.extend(self.indicies)
+    if self.indices is not None: c.extend(self.indices)
     return tuple(c)
 
   def accept(self, visitor):

@@ -89,7 +89,7 @@ class InsertOns(NodeWalker):
     index count values.
     """
     debug(self.debug, 'd before rep = {}'.format(d))
-    offset = reduce(lambda x, y: x*y.count_value, node.indicies, 1)
+    offset = reduce(lambda x, y: x*y.count_value, node.indices, 1)
     e = self.stmt(node.stmt, parent, d)
     e = (e * offset)
     debug(self.debug, 'd after rep = {}'.format(e))

@@ -512,17 +512,17 @@ class Semantics(NodeWalker):
   def stmt_rep(self, node):
     
     # Children
-    [self.elem(x) for x in node.indicies]
+    [self.elem(x) for x in node.indices]
     self.stmt(node.stmt)
     
     # Check all index elements are ElemIndexRanges
-    for x in node.indicies:
+    for x in node.indices:
       if not isinstance(x, ast.ElemIndexRange):
         self.index_range_error(x, node.coord)
       
     # Determine the values of the base and count expressions and mark the index
     # ranges as distributed.
-    for x in node.indicies:
+    for x in node.indices:
       x.distributed = True
       x.base_value = self.eval_expr(x.base)
       x.count_value = self.eval_expr(x.count)

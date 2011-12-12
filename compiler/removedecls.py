@@ -96,7 +96,7 @@ class RemoveDecls(NodeWalker):
 
   def stmt_rep(self, node):
     s = set()
-    [s.update(self.elem(x)) for x in node.indicies]
+    [s.update(self.elem(x)) for x in node.indices]
     return s | self.stmt(node.stmt)
     
   def stmt_on(self, node):
