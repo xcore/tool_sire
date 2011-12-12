@@ -48,7 +48,7 @@ class DisplayConns(NodeWalker):
     for x in chans:
       for y in x.elems:
         master = tab.lookup_is_master(x.name, y.index, x.chanend, scope)
-        connid = tab.lookup(x.name, y.index, scope).connid
+        connid = tab.lookup_connid(x.name, y.index, scope)
         if master:
           slave_loc = tab.lookup_slave_location(x.name, y.index, scope)
           self.d[y.location].append(self.ConnMaster(

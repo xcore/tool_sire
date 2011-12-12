@@ -403,5 +403,4 @@ class ChanElemSet(object):
     self.indicies = indicies
     self.chanend = chanend
     self.elems = None
-    self.connid = None
 

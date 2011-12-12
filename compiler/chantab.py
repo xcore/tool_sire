@@ -29,7 +29,7 @@ class ChanTable(object):
   def key(self, name, index):
     return '{}{}'.format(name, '' if index==None else index)
 
-  def insert(self, name, index, location, chanend, chan_set, decl=False):
+  def insert(self, name, index, location, chanend, chanset, decl=False):
     """
     Add channel declarations (with just names) so channel uses can be added to
     the correct scope.
@@ -51,7 +51,7 @@ class ChanTable(object):
             scope.tab[key] = Channel()
           scope.tab[key].locations.append(location)
           scope.tab[key].chanends.append(chanend)
-          scope.tab[key].chan_sets.append(chan_set)
+          scope.tab[key].chansets.append(chanset)
           debug(self.debug, '  Insert: '+name+'{} @ {}'.format(
               '[{}]'.format(index) if index!=None else '', location))
           return
@@ -87,13 +87,20 @@ class ChanTable(object):
     x = self.lookup(name, index, base)
     return x.locations[1] if x != None else None
 
-  def lookup_chanset(self, name, index, master, base=None):
+  def lookup_chanset(self, name, index, chanend, base=None):
+    master = self.lookup_is_master(name, index, chanend, base)
     x = self.lookup(name, index, base)
-    return x.chan_sets[0 if master else 1] if x != None else None
+    return x.chansets[0 if master else 1] if x != None else None
 
   def lookup_is_master(self, name, index, chanend, base=None):
     x = self.lookup(name, index, base)
     return x.chanends[0] == chanend if x != None else None
+
+  def set_connid(self, name, index, scope, connid):
+    self.lookup(name, index, scope).connid = connid
+
+  def lookup_connid(self, name, index, scope):
+    return self.lookup(name, index, scope).connid
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -126,10 +133,10 @@ class Channel(object):
   A channel entity.
   """
   def __init__(self):
-    self.connid = None
+    self.connid = 0
     self.locations = []
     self.chanends = []
-    self.chan_sets = []
+    self.chansets = []
   
   def __repr__(self):
     return 'locations: {}, chanends: {}'.format(

@@ -15,10 +15,7 @@ class LabelConns(NodeWalker):
 
   def fill(self, tab, scope, chanset, connid):
     # Assign connid to all elements of the ChanElemSet
-    chanset.connid = connid
-    for y in chanset.elems:
-      chan_item = tab.lookup(chanset.name, y.index, scope)
-      chan_item.connid = connid
+    [tab.set_connid(chanset.name, y.index, scope, connid) for y in chanset.elems]
 
   def assign(self, tab, scope, chans):
     for x in chans:
@@ -42,7 +39,7 @@ class LabelConns(NodeWalker):
   
   # Statements ==========================================
 
-  # Statements with ChanElemSets
+  # Statements with lists of ChanElemSets
 
   # New scope
   def stmt_par(self, node, tab, scope):
