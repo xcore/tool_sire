@@ -131,8 +131,8 @@ class InsertConns(NodeWalker):
           None, scope=T_SCOPE_PROC)
       connid = tab.lookup_connid(chan.name, elem0.index, scope)
       chanid = ast.ExprSingle(ast.ElemNumber(connid))
-      begin = elem0.index
-      end = group[1][-1][0].index
+      begin = elem0.indices_value
+      end = group[1][-1][0].indices_value
       #cond = ast.ExprBinop('and', 
       #    ast.ElemGroup(ast.ExprBinop('>=', i_elem,
       #      ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
