@@ -48,16 +48,15 @@ def write_file(filename, s):
     raise Exception('Unexpected error: {}'
         .format(sys.exc_info()[0]))
 
-def call(args, verbose=False, display_stdout=True):
+def call(args, v=False):
   """ 
-  Try to execute a shell command.
+  Try to execute a shell command, return stdout as a string.
   """
   try:
-    if verbose:
+    if v:
       print(' '.join(args))
     s = subprocess.check_output(args, stderr=subprocess.STDOUT)
-    if display_stdout:
-      sys.stdout.write(s.decode("utf-8").replace("\\n", "\n"))
+    return s.decode("utf-8").replace("\\n", "\n")
   
   except subprocess.CalledProcessError as e:
     s = e.output.decode('utf-8').replace("\\n", "\n")

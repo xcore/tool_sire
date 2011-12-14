@@ -48,7 +48,8 @@ def translate(ast, sig, child, device, outfile, translate_only, v):
 
   return buf
 
-def build(sig, buf, device, outfile, compile_only, show_calls, v):
+def build(sig, buf, device, outfile, 
+    compile_only, display_memory, show_calls, v):
   """ 
   Compile the translated AST for the target system.
   """
@@ -56,12 +57,13 @@ def build(sig, buf, device, outfile, compile_only, show_calls, v):
 
   # Create a Build object
   if device.system == SYSTEM_TYPE_XS1:
-    build_xs1(sig, device, buf, outfile, compile_only, show_calls, v)
+    build_xs1(sig, device, buf, outfile, 
+        compile_only, display_memory, show_calls, v)
   elif device.system == SYSTEM_TYPE_MPI:
     build_mpi(device, buf, outfile, compile_only, show_calls, v)
 
 def generate(ast, sig, child, device, outfile, 
-    translate_only, compile_only, show_calls, v):
+    translate_only, compile_only, display_memory, show_calls, v):
   """ 
   Generate code intermediate/machine/binary from AST.
   """
@@ -76,5 +78,5 @@ def generate(ast, sig, child, device, outfile,
   buf = translate(ast, sig, child, device, outfile, translate_only, v)
   
   # Compile, assemble and link with the runtime
-  build(sig, buf, device, outfile, compile_only, show_calls, v)
+  build(sig, buf, device, outfile, compile_only, display_memory, show_calls, v)
 

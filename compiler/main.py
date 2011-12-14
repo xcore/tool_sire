@@ -116,6 +116,10 @@ def setup_argparse():
       dest='disable_transformations',
       help='disable AST transformations')
  
+  p.add_argument('-m', action='store_true',
+      dest='display_memory',
+      help='display memory usage information')
+ 
   return p
 
 def setup_globals(a):
@@ -154,7 +158,9 @@ def setup_globals(a):
 
   # Other
   global disable_transformations
+  global display_memory
   disable_transformations = a.disable_transformations
+  display_memory = a.display_memory
 
   # Input/output targets
   global infile
@@ -347,7 +353,7 @@ def main(args):
     # Generate code
     vhdr(v, 'Generating code for {}'.format(device))
     generate(ast, sig, child, device, outfile, 
-        translate_only, compile_only, show_calls, v)
+        translate_only, compile_only, display_memory, show_calls, v)
 
   # Handle (expected) system exits
   except SystemExit:

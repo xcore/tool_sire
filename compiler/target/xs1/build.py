@@ -65,7 +65,7 @@ RUNTIME_FILES = [
   ]
   
 def build_xs1(sig, device, program_buf, outfile, 
-    compile_only, show_calls=False, v=False):
+    compile_only, display_memory, show_calls=False, v=False):
   """ 
   Run the build process to create either the assembly output or the complete
   binary.
@@ -126,6 +126,10 @@ def build_xs1(sig, device, program_buf, outfile,
     link_slave(device, show_calls, v)
     replace_slaves(show_calls, v)
     
+    # Dump memory usage information
+    if display_memory:
+      dump_memory_use()
+
     # Append XE to header in output file
     #outfile = (outfile if outfile!=defs.DEFAULT_OUT_FILE else
     #    outfile+'.'+device.binary_file_ext())
@@ -186,8 +190,7 @@ def compile_str(name, string, show_calls, v, cleanup=True):
   outfile = name + '.S'
   vmsg(v, 'Compiling '+srcfile+' -> '+outfile)
   util.write_file(srcfile, string)
-  util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS, 
-    verbose=show_calls)
+  util.call([XCC, srcfile, '-o', outfile] + COMPILE_FLAGS, v=show_calls)
   if cleanup:
     os.remove(srcfile)
 
@@ -200,11 +203,11 @@ def assemble_str(name, ext, string, show_calls, v, cleanup=True):
   vmsg(v, 'Assembling '+srcfile+' -> '+outfile)
   util.write_file(srcfile, string)
   if ext == 'xc':
-    util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS,
-      verbose=show_calls)
+    s = util.call([XCC, srcfile, '-o', outfile] + ASSEMBLE_FLAGS, v=show_calls)
+    print(s, end='')
   elif ext == 'S':
-    util.call([XAS, srcfile, '-o', outfile], 
-      verbose=show_calls)
+    s = util.call([XAS, srcfile, '-o', outfile], v=show_calls)
+    print(s, end='')
   if cleanup: 
     os.remove(srcfile)
 
@@ -213,9 +216,9 @@ def assemble_runtime(device, show_calls, v):
   for x in RUNTIME_FILES:
     objfile = x+'.o'
     vmsg(v, '  '+x+' -> '+objfile)
-    util.call([XCC, target(device), config.XS1_RUNTIME_PATH+'/'+x, 
-      '-o', objfile] + ASSEMBLE_FLAGS, 
-      verbose=show_calls)
+    s = util.call([XCC, target(device), config.XS1_RUNTIME_PATH+'/'+x, 
+      '-o', objfile] + ASSEMBLE_FLAGS, v=show_calls)
+    print(s, end='')
 
 def link_master(device, show_calls, v):
   """ 
@@ -224,7 +227,7 @@ def link_master(device, show_calls, v):
   _dp in the master and slave images.
   """
   vmsg(v, 'Linking master -> '+MASTER_XE)
-  util.call([XCC, target(device), 
+  s = util.call([XCC, target(device), 
     '-first', MASTER_JUMPTAB+'.o', MASTER_TABLES+'.o',
     '-first', CONST_POOL+'.o',
     'globals.S.o',
@@ -241,15 +244,16 @@ def link_master(device, show_calls, v):
     'program.o',
     'memory.c.o', 
     'util.xc.o', 
-    '-o', MASTER_XE] + LINK_FLAGS,
-    verbose=show_calls)
+    '-o', MASTER_XE] + LINK_FLAGS, 
+    v=show_calls)
+  print(s, end='')
 
 def link_slave(device, show_calls, v):
   """
   As above.
   """
   vmsg(v, 'Linking slave -> '+SLAVE_XE)
-  util.call([XCC, target(device), 
+  s = util.call([XCC, target(device), 
     '-first', 'slavetables.S.o',
     '-first', CONST_POOL+'.o',
     'globals.S.o',
@@ -266,14 +270,13 @@ def link_slave(device, show_calls, v):
     'memory.c.o', 
     'util.xc.o', 
     '-o', SLAVE_XE] + LINK_FLAGS,
-    verbose=show_calls)
+    v=show_calls)
+  print(s, end='')
 
 def replace_slaves(show_calls, v):
   vmsg(v, 'Replacing master image in node 0, core 0')
-  util.call([XOBJDUMP, '--split', MASTER_XE], 
-    verbose=show_calls, display_stdout=False)
-  util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], 
-    verbose=show_calls, display_stdout=False)
+  util.call([XOBJDUMP, '--split', MASTER_XE], v=show_calls)
+  util.call([XOBJDUMP, SLAVE_XE, '-r', '0,0,image_n0c0.elf'], v=show_calls)
 
 def append_header(device, outfile, show_calls, v):
   vmsg(v, 'Appending binary header')
@@ -530,6 +533,61 @@ def build_sizetab(sig, buf, v):
 #  remaining = defs.FRAME_TABLE_SIZE - (defs.JUMP_INDEX_OFFSET+
 #      len(sig.mobile_proc_names))
 #  buf.write('\t.space {}\n'.format(remaining*defs.BYTES_PER_WORD))
+
+def dump_memory_use():
+  TEXT  = 0
+  DATA  = 1
+  BSS   = 2
+  TOTAL = 3
+
+  def size(v):
+    return '{:>6} {:>8}'.format(v, '({:,.2f}KB)'.format(v/1000))
+
+  s = util.call([XOBJDUMP, '--size', SLAVE_XE])
+  m = re.findall(r' *([0-9]+) *([0-9]+) *([0-9]+) *([0-9]+)', s)
+  assert len(m) == 2
+  master_sizes = [int(x) for x in m[0]]
+  slave_sizes = [int(x) for x in m[1]]
+  print('Total memory:           '+size(defs.RAM_SIZE))
+  print()
+  
+  print('Kernel stack space:     '+size(defs.KERNEL_SPACE))
+  print('Thread stack space:     '+size(defs.THREAD_STACK_SPACE))
+  print('Number of threads:      {:>6}'.format(defs.MAX_THREADS))
+  thread_stack_use = defs.MAX_THREADS*defs.THREAD_STACK_SPACE
+  total_stack_use = thread_stack_use+defs.KERNEL_SPACE
+  print('Total thread stack use: '+size(thread_stack_use))
+  print('Total stack use:        '+size(total_stack_use))
+  print()
+
+  runtime_size = slave_sizes[TEXT]+slave_sizes[DATA]
+  program_size = master_sizes[TEXT]+master_sizes[DATA]-runtime_size
+  print('Runtime size:           '+size(runtime_size))
+  print('Program size:           '+size(program_size))
+  print()
+
+  print('Master memory use: ')
+  print('  text:                 '+size(master_sizes[TEXT]))
+  print('  data:                 '+size(master_sizes[DATA]))
+  print('  bss:                  '+size(master_sizes[BSS]))
+  print('  stack:                '+size(total_stack_use))
+  print('  '+('-'*39))
+  master_total = master_sizes[TOTAL]+total_stack_use
+  master_remaining = defs.RAM_SIZE - master_total
+  print('  Total:                '+size(master_total))
+  print('  Remaining:            '+size(master_remaining))
+  print()
+  
+  print('Slave memory use: ')
+  print('  text:                 '+size(slave_sizes[TEXT]))
+  print('  data:                 '+size(slave_sizes[DATA]))
+  print('  bss:                  '+size(slave_sizes[BSS]))
+  print('  stack:                '+size(total_stack_use))
+  print('  '+('-'*39))
+  slave_total = slave_sizes[TOTAL]+total_stack_use
+  slave_remaining = defs.RAM_SIZE - slave_total
+  print('  Total:                '+size(slave_total))
+  print('  Remaining:            '+size(slave_remaining))
 
 def cleanup(v):
   """ 
