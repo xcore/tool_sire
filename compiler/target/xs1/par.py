@@ -28,13 +28,18 @@ def init_slaves(t, sync_label, num_slaves):
       inops=['_threads[_i]'], clobber=['r11'])
 
   t.blocker.end()
-  
+
+def is_ref(t):
+  return (t == T_REF_SINGLE
+      or t == T_CHANEND_SINGLE
+      or t == T_CHANEND_SERVER_SINGLE
+      or t == T_CHANEND_CLIENT_SINGLE)
+
 def num_ref_singles(params):
   """
   Return the number of referenced single variables in a param list.
   """
-  return reduce(lambda x,y: x+(1 if y.symbol.type==T_REF_SINGLE 
-      or y.symbol.type==T_CHANEND_SINGLE else 0), params, 0)
+  return reduce(lambda x,y: x+(1 if is_ref(y.symbol.type) else 0), params, 0)
 
 def num_stack_args(pcall):
   """
@@ -96,12 +101,7 @@ def thread_set(t, index, pcall, slave_exit_labels):
   j = 0
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     a = None
-    if y.symbol.type == T_REF_SINGLE:
-      assert isinstance(x, ast.ExprSingle)
-      stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
-      a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
-      j = j + 1
-    elif y.symbol.type == T_CHANEND_SINGLE:
+    if is_ref(y.symbol.type):
       assert isinstance(x, ast.ExprSingle)
       stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
@@ -112,9 +112,7 @@ def thread_set(t, index, pcall, slave_exit_labels):
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
 
     # For references, we pass the address
-    if y.symbol.type == T_REF_SINGLE:
-      value = ref_addr_exprs[i]
-    elif y.symbol.type == T_CHANEND_SINGLE:
+    if is_ref(y.symbol.type):
       value = ref_addr_exprs[i]
     # Otherwise we set this directly
     else:
@@ -137,10 +135,7 @@ def master_unset(t, index, pcall):
   # Load referenced variable values back
   j = 0
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
-    if y.symbol.type == T_REF_SINGLE:
-      ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
-      j = j + 1
-    elif y.symbol.type == T_CHANEND_SINGLE:
+    if is_ref(y.symbol.type):
       ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
       j = j + 1
  
