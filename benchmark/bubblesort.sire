@@ -1,34 +1,40 @@
-val LENGTH is 1000;
-val STORAGE is 100;
-val N is LENGTH/STORAGE;
-val READ is 0;
-val WRITE is 1;
+val STORAGE     is 10; % Storage per leaf
+val N           is 64; % Number of leaves (storage units)
+val LENGTH      is N*STORAGE;
+val READ        is 0;
+val WRITE       is 1;
+val HALT        is 2;
 
 proc leaf(chanend c) is
 { var base;
   var data[STORAGE];
   var query;
-  var i;
-  var v;
+  var index;
+  var value;
+  var running;
   
-  % Ignore configuration messages
-  c ? v;
+  % Read 'base' value configuration message
+  c ? value;
   c ? base;
-  c ? v;
-
+  c ? value;
+  
   % Run
-  %while true do
+  running := true;
+  while running do 
   { c ? query;
     if query = READ
     then
-    { c ? i;
-      c ! data[i-base]
+    { c ? index;
+      c ! data[index-base]
     }
-    else
-    { c ? i;
-      c ? v;
-      data[i-base] := v
+    else if query = WRITE
+    then
+    { c ? index;
+      c ? value;
+      data[index-base] := value
     }
+    else % HALT
+      running := false
   }
 }
 
@@ -37,110 +43,129 @@ proc branch(chanend root, chanend left, chanend right) is
   var base;
   var interval;
   var query;
-  var i;
-  var v;
+  var index;
+  var value;
+  var running;
  
-  % Configure
-  root ? depth;
-  root ? base;
-  root ? interval;
+  % Configure: depth, base, interval
+  root  ? depth;
+  root  ? base;
+  root  ? interval;
   left  ! depth + 1;
   right ! depth + 1;
   left  ! base;
   right ! base + (interval/2);
   left  ! interval/2;
   right ! interval/2;
-
+  
   % Run
-  while true do
+  running := true;
+  while running do
   { root ? query;
     if query = READ
     then 
-    { root ? i;
-      if i < base+(interval/2)
+    { root ? index;
+      if index < base+(interval/2)
       then
       { left ! READ;
-        left ! i;
-        left ? v
+        left ! index;
+        left ? value
       }
       else
       { right ! READ;
-        right ! i;
-        right ? v
+        right ! index;
+        right ? value
+      };
+      root ! value
+    }
+    else if query = WRITE
+    then
+    { root ? index;
+      root ? value;
+      if index < base+(interval/2)
+      then
+      { left ! WRITE;
+        left ! index;
+        left ! value
+      }
+      else
+      { right ! WRITE;
+        right ! index;
+        right ! value
       }
     }
-    else
-    { root  ? i;
-      root  ? v;
-      if i < base+(interval/2)
-      then
-      { left ! READ;
-        left ! i;
-        left ! v
-      }
-      else
-      { right ! READ;
-        right ! i;
-        right ! v
-      }
+    else % HALT
+    { left ! HALT;
+      right ! HALT;
+      running := false
     }
   }
 }
 
-proc serve(chanend c, chanend root) is
+proc serve(chanend x, chanend root) is
 { var query;
-  var i;
-  var v;
-  
+  var index;
+  var value;
+  var running;
+ 
   % Configure the structure
   root ! 0;
   root ! 0;
-  root ! LENGTH;
+  root ! N*STORAGE;
   
   % Run
-  while true do
-  { c ? query;
+  running := true;
+  while running do 
+  { x ? query;
     if query = READ
     then 
-    { c ? i;
+    { x ? index;
       root ! READ;
-      root ! i;
-      root ? v;
-      c ! v
+      root ! index;
+      root ? value;
+      x ! value
     }
-    else 
-    { c ? i;
-      c ? v;
+    else if query = WRITE
+    then
+    { x ? index;
+      x ? value;
       root ! WRITE;
-      root ! i;
-      root ! v
+      root ! index;
+      root ! value
+    }
+    else % HALT
+    { root ! HALT;
+      running := false
     }
   }
 }
 
-proc array(chanend cin) is
+proc array(chanend x) is
 { chan c[(2*N)-1];
   var i;
   server() 
    par i in [0 for N] do 
     leaf(c[(N-1)+i])
-  { serve(cin, c[0]) ||
+  { serve(x, c[0]) ||
     par i in [0 for N-1] do
       branch(c[i], c[(2*i)+1], c[(2*i)+2])
   }
 }
 
-proc read(chanend c, val i, var v) is
+proc read(chanend c, val index, var value) is
 { c ! READ;
-  c ! i;
-  c ? v
+  c ! index;
+  c ? value
 }
 
-proc write(chanend c, val i, val v) is
+proc write(chanend c, val index, val value) is
 { c ! WRITE;
-  c ! i;
-  c ! v
+  c ! index;
+  c ! value
 }
+
+proc halt(chanend c) is
+  c ! HALT
 
 proc bubblesort(chanend c, val n) is
 { var i;
@@ -177,10 +202,12 @@ proc dump(chanend r) is
 proc main() is
 { server(chan x)
     array(x)
-  { initialise(x);
-    dump(x);
+  {
+    initialise(x);
+    %dump(x);
     bubblesort(x, LENGTH);
-    dump(x)
+    dump(x);
+    halt(x)
   }
 }
 
