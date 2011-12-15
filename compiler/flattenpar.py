@@ -21,13 +21,17 @@ class FlattenPar(NodeWalker):
   # Statements ==========================================
 
   def stmt_par(self, node):
+    # NOTE: Can't just flatten nested parallel compostions because of nested 
+    # variable scoping.
     stmts = []
     for x in node.stmt:
       self.stmt(x)
       if isinstance(x, ast.StmtPar):
+        decls.extend(x.decls)
         stmts.extend(x.stmt)
       else:
         stmts.append(x)
+    node.decls = decls
     node.stmt = stmts
 
   def stmt_seq(self, node):

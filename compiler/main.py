@@ -239,7 +239,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
 
   # 2. Flatten nested parallel composition
   vmsg(v, "Flattening nested parallel composition")
-  FlattenPar().walk_program(ast)
+  #FlattenPar().walk_program(ast)
 
   # 3. Distribute processes
   vmsg(v, "Distributing processes")

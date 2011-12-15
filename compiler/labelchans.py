@@ -180,6 +180,7 @@ class LabelChans(NodeWalker):
     # Return no uses
     return ChanUseSet() 
   
+  # New scope
   def stmt_par(self, node, indices, tab):
     tab.begin_scope()
     self.insert_chan_decls(tab, node.decls)
@@ -200,6 +201,7 @@ class LabelChans(NodeWalker):
     # Return no uses 
     return ChanUseSet()
  
+  # New scope
   def stmt_server(self, node, indices, tab):
     tab.begin_scope()
     self.insert_chan_decls(tab, node.decls)
@@ -286,6 +288,7 @@ class LabelChans(NodeWalker):
     
   # Other statements containing processes =================
 
+  # New scope
   def stmt_seq(self, node, indices, tab):
     tab.begin_scope()
     self.insert_chan_decls(tab, node.decls)

@@ -1,5 +1,5 @@
 val STORAGE     is 10; % Storage per leaf
-val N           is 64; % Number of leaves (storage units)
+val N           is 32; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
