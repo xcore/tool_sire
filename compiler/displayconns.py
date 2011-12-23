@@ -81,9 +81,8 @@ class DisplayConns(NodeWalker):
 
   # New scope
   def stmt_par(self, node, tab, scope):
-    _scope = node.scope if hasattr(node, 'scope') else scope
-    [self.aggregate(x, tab, _scope) for x in node.chans]
-    [self.stmt(x, tab, _scope) for x in node.stmt]
+    [self.aggregate(x, tab, node.scope) for x in node.chans]
+    [self.stmt(x, tab, node.scope) for x in node.stmt]
   
   # New scope
   def stmt_server(self, node, tab, scope):
@@ -99,8 +98,7 @@ class DisplayConns(NodeWalker):
 
   # New scope
   def stmt_seq(self, node, tab, scope):
-    _scope = node.scope if hasattr(node, 'scope') else scope
-    [self.stmt(x, tab, _scope) for x in node.stmt]
+    [self.stmt(x, tab, node.scope) for x in node.stmt]
 
   def stmt_if(self, node, tab, scope):
     self.stmt(node.thenstmt, tab, scope)

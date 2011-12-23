@@ -142,23 +142,28 @@ class InsertConns(NodeWalker):
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def create_tree_conn(tab, scope, chan, phase, base, diff, i_elem):
-      location = ast.ExprSingle(ast.ElemNumber(phase))
-      location = ast.ExprBinop('+', i_elem, location)
-      location = ast.ExprBinop('/', ast.ElemGroup(location),
+    def create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+        connid_min, connid_offset, connid_diff, i_elem):
+      location = ast.ExprBinop('/', i_elem,
           ast.ExprSingle(ast.ElemNumber(2)))
-      location = ast.ExprBinop('*', ast.ElemNumber(diff), 
+      location = ast.ExprBinop('*', ast.ElemNumber(loc_diff), 
           ast.ExprSingle(ast.ElemGroup(location)))
-      location = ast.ExprBinop('+', ast.ElemNumber(base),
+      location = ast.ExprBinop('+', ast.ElemNumber(loc_base),
           ast.ExprSingle(ast.ElemGroup(location)))
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
-      elem0 = chan.elems[0]
-      connid = tab.lookup_connid(chan.name, elem0.index, scope)
-      chanid = ast.ExprSingle(ast.ElemNumber(connid))
+      elem0 = chan.elems[phase]
+      connid = ast.ExprBinop('+', i_elem,
+          ast.ExprSingle(ast.ElemNumber(connid_offset)))
+      connid = ast.ExprBinop('rem', ast.ElemGroup(connid),
+          ast.ExprSingle(ast.ElemNumber(2)))
+      connid = ast.ExprBinop('*', ast.ElemGroup(connid),
+          ast.ExprSingle(ast.ElemNumber(connid_diff)))
+      connid = ast.ExprBinop('+', ast.ElemGroup(connid),
+          ast.ExprSingle(ast.ElemNumber(connid_min)))
       master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
-      return ast.StmtConnect(chanend, chanid, location,
+      return ast.StmtConnect(chanend, connid, location,
           self.connect_type(chan, master))
 
     def target_loc(name, index, chanend, scope):
@@ -253,39 +258,69 @@ class InsertConns(NodeWalker):
         locs.append((x, loc))
         print('  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
 
+      # Separate the first odd element if there is one
+      phase = 0
+      if locs[0][1] != locs[1][1]:
+        odd_elem = locs[0][0]
+        locs = locs[1:]
+        phase = 1
+
       # Set parameters
-      phase = 0 if locs[0][1] == locs[1][1] else 1
-      v = (phase+1) % 2
-      diff = locs[v+1][1]-locs[v][1]
-      base = locs[0][1]
-      connid = tab.lookup_connid(chan.name, locs[0][0].index, scope)
+      loc_diff = locs[2][1]-locs[1][1]
+      loc_base = locs[0][1]
+      base_indices_value = locs[0][0].indices_value
+      connidA = tab.lookup_connid(chan.name, locs[0][0].index, scope)
+      connidB = tab.lookup_connid(chan.name, locs[1][0].index, scope)
+      connid_min = min(connidA, connidB)
+      connid_diff = max(connidA, connidB) - connid_min
+      connid_offset = (phase + (1 if connidA > connidB else 0)) % 2
       
       # Print some debug info
       print('Attempting tree compression.')
-      print('  Phase: {}'.format(phase))
-      print('  Base:  {}'.format(base))
-      print('  Diff:  {}'.format(diff))
+      print('  Location base: {}'.format(loc_base))
+      print('  Location diff: {}'.format(loc_diff))
+      print('  Base ival:     {}'.format(base_indices_value))
+      print('  ConnID base:   {}'.format(connidA))
+      print('  ConnID diff:   {}'.format(connid_diff))
 
       # Check the form of the indice-target set is what we want
-      end = phase+1+(math.floor((len(locs)-(phase+1))/2)*2)
-      print('Checking pairs {} to {}'.format(phase+1, end))
-      for (x, y) in pairwise(locs[phase+1:end]):
+      end = 1+(math.floor((len(locs)-1)/2)*2)
+      print('Checking pairs 1 to {}'.format(end))
+      for (x, y) in pairwise(locs[1:end]):
         print('  {} and {}'.format(y[1], x[1]))
-        if y[1] - x[1] != diff:
+        connidX = tab.lookup_connid(chan.name, x[0].index, scope)
+        connidY = tab.lookup_connid(chan.name, y[0].index, scope)
+        connid_diff_ = connidX - connidY
+        if y[1] - x[1] != loc_diff or connid_diff != connid_diff_:
           print('Aborting tree compression.')
           return None
 
       # Check matching computed location
       print('Matching form, checking computed:')
+      if phase == 1:
+        connid = tab.lookup_connid(chan.name, odd_elem.index, scope)
+        print('  {}: connid={}'.format(odd_elem.indices_value, connid))
       for (elem, loc) in locs:
-        computed = base + (diff * (math.floor((elem.indices_value+phase)/2)))
-        econnid = tab.lookup_connid(chan.name, elem.index, scope)
-        print('  {}: {}, loc={}, computed={}'.format(elem.indices_value, 
-          econnid, loc, computed))
-        assert computed == loc
+        computed_loc = loc_base + (loc_diff * (math.floor(((elem.indices_value -
+          base_indices_value))/2)))
+        connid = tab.lookup_connid(chan.name, elem.index, scope)
+        computed_connid = (connid_min + 
+            ((elem.indices_value + connid_offset) % 2) * connid_diff)
+        print('  {}: connid={}, loc={} computed({}, {})'
+            .format(elem.indices_value, connid, loc, 
+              computed_connid, computed_loc))
+        assert computed_loc == loc
+        assert computed_connid == connid
 
       # Construct connection syntax
-      return create_tree_conn(tab, scope, chan, phase, base, diff, i_elem)
+      if phase == 0:
+        return create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+            connid_min, connid_offset, connid_diff, i_elem)
+      else:
+        s = create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+            connid_min, connid_offset, connid_diff, i_elem)
+        return create_single_conn(s, chan, scope, i_elem, 
+            odd_elem.indices_value, odd_elem.index)
 
     def conn_singles(chan, s, i_elem):
       """

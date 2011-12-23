@@ -259,11 +259,11 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   vmsg(v, "Labelling connections")
   LabelConns().walk_program(ast)
   
+  DisplayConns(device).walk_program(ast)
+
   # 7. Insert channel ends
   vmsg(v, "Inserting connections")
   InsertConns(sym).walk_program(ast)
-
-  DisplayConns(device).walk_program(ast)
 
   #sys.exit(1)
 
