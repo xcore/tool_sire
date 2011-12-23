@@ -1,4 +1,4 @@
-val D is 2;      % Tree depth
+val D is 3;      % Tree depth
 val N is 1 << D; % Number of leaves
 
 % Send a token down, then sum values up.
@@ -30,9 +30,9 @@ proc main() is
     c[0] ? v;
     assert v = N
   } ||
-  par i in [0 for N-1] do
-    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
   par i in [0 for N] do 
-    leaf(c[(N-1) + i])
+    leaf(c[(N-1) + i]) ||
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2])
 }
 

@@ -133,7 +133,7 @@ class Channel(object):
   A channel entity.
   """
   def __init__(self):
-    self.connid = 0
+    self.connid = -1
     self.locations = []
     self.chanends = []
     self.chansets = []

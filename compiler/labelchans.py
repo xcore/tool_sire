@@ -406,4 +406,5 @@ class ChanElemSet(object):
     self.indices = indices
     self.chanend = chanend
     self.elems = None
+    self.connid = -1
 

@@ -7,6 +7,7 @@ import math
 import sys
 
 import ast
+from util import pairwise
 from util import debug
 from walker import NodeWalker
 from definitions import *
@@ -119,12 +120,13 @@ class InsertConns(NodeWalker):
       # Form the location expression
       if elem0.indices_value > 0:
         location = ast.ElemGroup(ast.ExprBinop('-', i_elem,
-          ast.ElemNumber(elem0.indices_value)))
+          ast.ExprSingle(ast.ElemNumber(elem0.indices_value))))
       else:
         location = i_elem
       location = ast.ExprBinop('*', ast.ElemNumber(diff2+1),
           ast.ExprSingle(location))
-      location = ast.ExprBinop('+', ast.ElemGroup(location), ast.ElemNumber(offset))
+      location = ast.ExprBinop('+', ast.ElemGroup(location), 
+          ast.ExprSingle(ast.ElemNumber(offset)))
 
       chanend = ast.ElemId(chan.chanend)
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
@@ -133,11 +135,6 @@ class InsertConns(NodeWalker):
       chanid = ast.ExprSingle(ast.ElemNumber(connid))
       begin = elem0.indices_value
       end = group[1][-1][0].indices_value
-      #cond = ast.ExprBinop('and', 
-      #    ast.ElemGroup(ast.ExprBinop('>=', i_elem,
-      #      ast.ExprSingle(ast.ElemNumber(min(begin, end))))),
-      #    ast.ExprSingle(ast.ElemGroup(ast.ExprBinop('<=', i_elem,
-      #      ast.ExprSingle(ast.ElemNumber(max(begin, end)))))))
       cond = ast.ExprBinop('>=', i_elem, 
           ast.ExprSingle(ast.ElemNumber(min(begin, end))))
       master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
@@ -145,29 +142,49 @@ class InsertConns(NodeWalker):
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
+    def create_tree_conn(tab, scope, chan, phase, base, diff, i_elem):
+      location = ast.ExprSingle(ast.ElemNumber(phase))
+      location = ast.ExprBinop('+', i_elem, location)
+      location = ast.ExprBinop('/', ast.ElemGroup(location),
+          ast.ExprSingle(ast.ElemNumber(2)))
+      location = ast.ExprBinop('*', ast.ElemNumber(diff), 
+          ast.ExprSingle(ast.ElemGroup(location)))
+      location = ast.ExprBinop('+', ast.ElemNumber(base),
+          ast.ExprSingle(ast.ElemGroup(location)))
+      chanend = ast.ElemId(chan.chanend)
+      chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
+          None, scope=T_SCOPE_PROC)
+      elem0 = chan.elems[0]
+      connid = tab.lookup_connid(chan.name, elem0.index, scope)
+      chanid = ast.ExprSingle(ast.ElemNumber(connid))
+      master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
+      return ast.StmtConnect(chanend, chanid, location,
+          self.connect_type(chan, master))
+
     def target_loc(name, index, chanend, scope):
       master = tab.lookup_is_master(name, index, chanend, scope)
       return (tab.lookup_slave_location(name, index, scope) if master else
           tab.lookup_master_location(name, index, scope))
 
-    # Sort the channel elements into increasing order of indices
-    chan.elems = sorted(chan.elems, key=lambda x: x.indices_value)
+    def conn_diff_groups(chan, s, i_elem):
+      """
+      Compress connecitons based on the difference between differences of
+      indices value and destination.
+      """
+      # Build a list of channel elements and index-dest differences
+      diffs = []
+      for x in chan.elems:
+        diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indices_value
+        diffs.append((x, diff))
 
-    # Build a list of channel elements and index-dest differences
-    diffs = []
-    for x in chan.elems:
-      diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indices_value
-      diffs.append((x, diff))
+      print('Differences for chan {}:'.format(chan.name))
+      for (elem, diff) in diffs:
+        connid = tab.lookup_connid(chan.name, elem.index, scope)
+        print('  {:>3}: [{}]:{} - {}'.format(elem.indices_value, elem.index,
+          connid, diff))
 
-    #print('Differences for chan {}:'.format(chan.name))
-    #for (elem, diff) in diffs:
-    #  connid = tab.lookup_connid(chan.name, elem.index, scope)
-    #  print('  {:>3}: [{}]:{} - {}'.format(elem.indices_value, elem.index,
-    #    connid, diff))
-
-    # Group consecutive elements with a constant second difference
-    groups = []
-    if COMPRESS:
+      # Group consecutive elements with a constant second difference
+      groups = []
       newgroup = True
       for ((elemA, diffA), (elemB, diffB)) in zip(diffs[:-1], diffs[1:]):
         diff2 = diffB - diffA
@@ -188,40 +205,110 @@ class InsertConns(NodeWalker):
           newgroup = True
       if newgroup:
         groups.append((None, [diffs[-1]]))
-    else:
-      [groups.append((None, [x])) for x in diffs]
-      
-    #print('Groups:')
-    for x in groups:
-      diff2 = x[0]
-      elem0 = x[1][0][0]
-      offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
-      #print('  diff2:  {}'.format(diff2))
-      #print('  offset: {}'.format(offset))
-      #print('  base:   {}'.format(elem0.indices_value))
-      if len(x[1]) > 1:
-        for (i, (elem, diff)) in enumerate(x[1]):
-          loc = target_loc(chan.name, elem.index, chan.chanend, scope)
-          computed = ((diff2+1) * (elem.indices_value-elem0.indices_value)) + offset
-          assert computed == loc
-      #    print('    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
-      #        elem.indices_value, elem.index, loc, diff, computed))
-      #else:
-      #  print('    {:>3}: [{:>3}]->{:>3}'.format(
-      #      elem0.indices_value, elem0.index, offset))
+        
+      print('Groups:')
+      for x in groups:
+        diff2 = x[0]
+        elem0 = x[1][0][0]
+        offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
+        print('  diff2:  {}'.format(diff2))
+        print('  offset: {}'.format(offset))
+        print('  base:   {}'.format(elem0.indices_value))
+        if len(x[1]) > 1:
+          for (i, (elem, diff)) in enumerate(x[1]):
+            loc = target_loc(chan.name, elem.index, chan.chanend, scope)
+            computed = ((diff2+1) * (elem.indices_value-elem0.indices_value)) + offset
+            assert computed == loc
+            print('    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
+                elem.indices_value, elem.index, loc, diff, computed))
+        else:
+          print('    {:>3}: [{:>3}]->{:>3}'.format(
+              elem0.indices_value, elem0.index, offset))
 
-    # Construct the connection syntax
+      # If compression was inneffective then abort
+      if len(groups) >= ((len(chan.elems)/2)):
+        print('Aborting group diff compression.')
+        return None
+
+      # Construct connection syntax
+      s = None
+      for x in groups:
+        elem0 = x[1][0][0]
+        if len(x[1]) == 1:
+          s = create_single_conn(s, chan, scope, i_elem, 
+              elem0.indices_value, elem0.index)
+        else:
+          s = create_range_conn(s, chan, i_elem, x)
+      return s
+
+    def conn_tree_groups(chan, s, i_elem):
+      """
+      Compress connections based on monotonically increasing or decreasing
+      sets with the same target destination. Assume sets are of size 2.
+      """
+      locs = []
+      print('Locations:')
+      for x in chan.elems:
+        loc = target_loc(chan.name, x.index, chan.chanend, scope)
+        locs.append((x, loc))
+        print('  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
+
+      # Set parameters
+      phase = 0 if locs[0][1] == locs[1][1] else 1
+      v = (phase+1) % 2
+      diff = locs[v+1][1]-locs[v][1]
+      base = locs[0][1]
+      connid = tab.lookup_connid(chan.name, locs[0][0].index, scope)
+      
+      # Print some debug info
+      print('Attempting tree compression.')
+      print('  Phase: {}'.format(phase))
+      print('  Base:  {}'.format(base))
+      print('  Diff:  {}'.format(diff))
+
+      # Check the form of the indice-target set is what we want
+      end = phase+1+(math.floor((len(locs)-(phase+1))/2)*2)
+      print('Checking pairs {} to {}'.format(phase+1, end))
+      for (x, y) in pairwise(locs[phase+1:end]):
+        print('  {} and {}'.format(y[1], x[1]))
+        if y[1] - x[1] != diff:
+          print('Aborting tree compression.')
+          return None
+
+      # Check matching computed location
+      print('Matching form, checking computed:')
+      for (elem, loc) in locs:
+        computed = base + (diff * (math.floor((elem.indices_value+phase)/2)))
+        econnid = tab.lookup_connid(chan.name, elem.index, scope)
+        print('  {}: {}, loc={}, computed={}'.format(elem.indices_value, 
+          econnid, loc, computed))
+        assert computed == loc
+
+      # Construct connection syntax
+      return create_tree_conn(tab, scope, chan, phase, base, diff, i_elem)
+
+    def conn_singles(chan, s, i_elem):
+      """
+      Create (uncompressed) connections for each case.
+      """
+      print('Creating uncompressed connection range.')
+      for x in chan.elems:
+        s = create_single_conn(s, chan, scope, i_elem, x.indices_value, x.index)
+        print('  {}: {}[{}]'.format(x.indices_value, chan.name, x.index))
+      return s
+
+    # Sort the channel elements into increasing order of indices
+    chan.elems = sorted(chan.elems, key=lambda x: x.indices_value)
+
+    # Compress conditional connections and return the AST construction
     i_expr = indices_expr(chan.indices)
     i_elem = ast.ElemId('_i')
     i_elem.symbol = Symbol(i_elem.name, T_VAR_SINGLE, scope=T_SCOPE_BLOCK)
     s = None
-    for x in groups:
-      elem0 = x[1][0][0]
-      if len(x[1]) == 1:
-        s = create_single_conn(s, chan, scope, i_elem, 
-            elem0.indices_value, elem0.index)
-      else:
-        s = create_range_conn(s, chan, i_elem, x)
+    if COMPRESS:
+      s = conn_diff_groups(chan, s, i_elem)
+      s = conn_tree_groups(chan, s, i_elem) if s==None else s
+    s = conn_singles(chan, s, i_elem) if s==None else s
     s = [ast.StmtAss(i_elem, i_expr), s]
     s = ast.StmtSeq([ast.VarDecl(i_elem.name, T_VAR_SINGLE, None)], s)
     return s
