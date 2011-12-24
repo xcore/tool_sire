@@ -142,9 +142,12 @@ class InsertConns(NodeWalker):
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+    def create_tree_conn(tab, scope, chan, phase, 
+         base_indices_value, loc_base, loc_diff,
         connid_min, connid_offset, connid_diff, i_elem):
-      location = ast.ExprBinop('/', i_elem,
+      location = ast.ExprBinop('-', i_elem,
+          ast.ExprSingle(ast.ElemNumber(base_indices_value)))
+      location = ast.ExprBinop('/', ast.ElemGroup(location),
           ast.ExprSingle(ast.ElemNumber(2)))
       location = ast.ExprBinop('*', ast.ElemNumber(loc_diff), 
           ast.ExprSingle(ast.ElemGroup(location)))
@@ -301,8 +304,8 @@ class InsertConns(NodeWalker):
         connid = tab.lookup_connid(chan.name, odd_elem.index, scope)
         print('  {}: connid={}'.format(odd_elem.indices_value, connid))
       for (elem, loc) in locs:
-        computed_loc = loc_base + (loc_diff * (math.floor(((elem.indices_value -
-          base_indices_value))/2)))
+        computed_loc = loc_base + (loc_diff * (math.floor(
+            ((elem.indices_value - base_indices_value))/2)))
         connid = tab.lookup_connid(chan.name, elem.index, scope)
         computed_connid = (connid_min + 
             ((elem.indices_value + connid_offset) % 2) * connid_diff)
@@ -314,10 +317,12 @@ class InsertConns(NodeWalker):
 
       # Construct connection syntax
       if phase == 0:
-        return create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+        return create_tree_conn(tab, scope, chan, phase, 
+            base_indices_value, loc_base, loc_diff, 
             connid_min, connid_offset, connid_diff, i_elem)
       else:
-        s = create_tree_conn(tab, scope, chan, phase, loc_base, loc_diff, 
+        s = create_tree_conn(tab, scope, chan, phase, 
+            base_indices_value, loc_base, loc_diff, 
             connid_min, connid_offset, connid_diff, i_elem)
         return create_single_conn(s, chan, scope, i_elem, 
             odd_elem.indices_value, odd_elem.index)
