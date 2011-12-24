@@ -1,5 +1,5 @@
-val STORAGE     is 4;  % Storage per leaf
-val N           is 16; % Number of leaves (storage units)
+val STORAGE     is 4; % Storage per leaf
+val N           is 1024; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
@@ -164,19 +164,21 @@ proc write(chanend c, val index, val value) is
   c ! value
 }
 
+proc halt(chanend c) is
+  c ! HALT
+
+proc gengraph(chanend c) is
+  skip
+
+proc dfs(chanend c) is
+  skip
+
 proc main() is
 { server(chan x)
     array(x)
-  { var value;
-    var i;
-    for i in [0 for LENGTH] do
-      write(x, i, i);
-    for i in [0 for LENGTH] do
-    { read(x, i, value);
-      printhexln(value)
-    };
-    x ! HALT
-  } 
+  { buildgraph(x);
+    dfs(x);
+    halt(x)
+  }
 }
-
 
