@@ -174,7 +174,7 @@ class InsertConns(NodeWalker):
       return (tab.lookup_slave_location(name, index, scope) if master else
           tab.lookup_master_location(name, index, scope))
 
-    def conn_diff_groups(chan, s, i_elem):
+    def conn_diff_groups(chan, s, i_elem, d=False):
       """
       Compress connecitons based on the difference between differences of
       indices value and destination.
@@ -185,10 +185,10 @@ class InsertConns(NodeWalker):
         diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indices_value
         diffs.append((x, diff))
 
-      print('Differences for chan {}:'.format(chan.name))
+      debug(d, 'Differences for chan {}:'.format(chan.name))
       for (elem, diff) in diffs:
         connid = tab.lookup_connid(chan.name, elem.index, scope)
-        print('  {:>3}: [{}]:{} - {}'.format(elem.indices_value, elem.index,
+        debug(d, '  {:>3}: [{}]:{} - {}'.format(elem.indices_value, elem.index,
           connid, diff))
 
       # Group consecutive elements with a constant second difference
@@ -214,28 +214,28 @@ class InsertConns(NodeWalker):
       if newgroup:
         groups.append((None, [diffs[-1]]))
         
-      print('Groups:')
+      debug(d, 'Groups:')
       for x in groups:
         diff2 = x[0]
         elem0 = x[1][0][0]
         offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
-        print('  diff2:  {}'.format(diff2))
-        print('  offset: {}'.format(offset))
-        print('  base:   {}'.format(elem0.indices_value))
+        debug(d, '  diff2:  {}'.format(diff2))
+        debug(d, '  offset: {}'.format(offset))
+        debug(d, '  base:   {}'.format(elem0.indices_value))
         if len(x[1]) > 1:
           for (i, (elem, diff)) in enumerate(x[1]):
             loc = target_loc(chan.name, elem.index, chan.chanend, scope)
             computed = ((diff2+1) * (elem.indices_value-elem0.indices_value)) + offset
             assert computed == loc
-            print('    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
+            debug(d, '    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
                 elem.indices_value, elem.index, loc, diff, computed))
         else:
-          print('    {:>3}: [{:>3}]->{:>3}'.format(
+          debug(d, '    {:>3}: [{:>3}]->{:>3}'.format(
               elem0.indices_value, elem0.index, offset))
 
       # If compression was inneffective then abort
       if len(groups) >= ((len(chan.elems)/2)):
-        print('Aborting group diff compression.')
+        debug(d, 'Aborting group diff compression.')
         return None
 
       # Construct connection syntax
@@ -249,17 +249,17 @@ class InsertConns(NodeWalker):
           s = create_range_conn(s, chan, i_elem, x)
       return s
 
-    def conn_tree_groups(chan, s, i_elem):
+    def conn_tree_groups(chan, s, i_elem, d=False):
       """
       Compress connections based on monotonically increasing or decreasing
       sets with the same target destination. Assume sets are of size 2.
       """
       locs = []
-      print('Locations:')
+      debug(d, 'Locations:')
       for x in chan.elems:
         loc = target_loc(chan.name, x.index, chan.chanend, scope)
         locs.append((x, loc))
-        print('  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
+        debug(d, '  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
 
       # Separate the first odd element if there is one
       phase = 0
@@ -279,37 +279,37 @@ class InsertConns(NodeWalker):
       connid_offset = (phase + (1 if connidA > connidB else 0)) % 2
       
       # Print some debug info
-      print('Attempting tree compression.')
-      print('  Location base: {}'.format(loc_base))
-      print('  Location diff: {}'.format(loc_diff))
-      print('  Base ival:     {}'.format(base_indices_value))
-      print('  ConnID base:   {}'.format(connidA))
-      print('  ConnID diff:   {}'.format(connid_diff))
+      debug(d, 'Attempting tree compression.')
+      debug(d, '  Location base: {}'.format(loc_base))
+      debug(d, '  Location diff: {}'.format(loc_diff))
+      debug(d, '  Base ival:     {}'.format(base_indices_value))
+      debug(d, '  ConnID base:   {}'.format(connidA))
+      debug(d, '  ConnID diff:   {}'.format(connid_diff))
 
       # Check the form of the indice-target set is what we want
       end = 1+(math.floor((len(locs)-1)/2)*2)
-      print('Checking pairs 1 to {}'.format(end))
+      debug(d, 'Checking pairs 1 to {}'.format(end))
       for (x, y) in pairwise(locs[1:end]):
-        print('  {} and {}'.format(y[1], x[1]))
+        debug(d, '  {} and {}'.format(y[1], x[1]))
         connidX = tab.lookup_connid(chan.name, x[0].index, scope)
         connidY = tab.lookup_connid(chan.name, y[0].index, scope)
         connid_diff_ = connidX - connidY
         if y[1] - x[1] != loc_diff or connid_diff != connid_diff_:
-          print('Aborting tree compression.')
+          debug(d, 'Aborting tree compression.')
           return None
 
       # Check matching computed location
-      print('Matching form, checking computed:')
+      debug(d, 'Matching form, checking computed:')
       if phase == 1:
         connid = tab.lookup_connid(chan.name, odd_elem.index, scope)
-        print('  {}: connid={}'.format(odd_elem.indices_value, connid))
+        debug(d, '  {}: connid={}'.format(odd_elem.indices_value, connid))
       for (elem, loc) in locs:
         computed_loc = loc_base + (loc_diff * (math.floor(
             ((elem.indices_value - base_indices_value))/2)))
         connid = tab.lookup_connid(chan.name, elem.index, scope)
         computed_connid = (connid_min + 
             ((elem.indices_value + connid_offset) % 2) * connid_diff)
-        print('  {}: connid={}, loc={} computed({}, {})'
+        debug(d, '  {}: connid={}, loc={} computed({}, {})'
             .format(elem.indices_value, connid, loc, 
               computed_connid, computed_loc))
         assert computed_loc == loc
