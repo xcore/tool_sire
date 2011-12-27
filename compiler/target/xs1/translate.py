@@ -48,6 +48,11 @@ builtin_conversion = {
   'printstr'   : '_PRINTSTR',
   'printstrln' : '_PRINTSTRLN',
   'println'    : '_PRINTLN',
+  # File IO
+  'open'       : '_OPEN',
+  'write'      : '_WRITE',
+  'read'       : '_READ',
+  'close'      : '_CLOSE',
   # Fixed point
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',
@@ -195,6 +200,7 @@ class TranslateXS1(NodeWalker):
     """
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fileio.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
  
   # Program ============================================

@@ -86,6 +86,7 @@ xs1_feature_tests = [
   # Builtins
   Test('builtin_fixedpoint', f=D),
   Test('builtin_printing',   f=D),
+  Test('builtin_fileio',     f=D),
   Test('builtin_crc',        f=D),
   Test('builtin_rand',       f=D),
   Test('builtin_procid', [16], D),

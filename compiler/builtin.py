@@ -11,6 +11,7 @@ from ast import ProcDef, Param
 from typedefs import * 
 
 SVAL_PARAM = Param('v', T_VAL_SINGLE, None) 
+SREF_PARAM = Param('v', T_REF_SINGLE, None) 
 AVAL_PARAM = Param('v', T_REF_ARRAY, None) 
 
 class Builtin(object):
@@ -40,6 +41,12 @@ printstr    = proc_decl('printstr',    [AVAL_PARAM])
 printstrln  = proc_decl('printstrln',  [AVAL_PARAM])
 println     = proc_decl('println',     [])
 
+# File IO builtins
+fopen       = func_decl('open',  [AVAL_PARAM, SVAL_PARAM])
+fwrite      = func_decl('write', [SVAL_PARAM, SVAL_PARAM])
+fread       = func_decl('read',  [SVAL_PARAM, SREF_PARAM])
+fclose      = func_decl('close', [SVAL_PARAM])
+
 # Fixed point builtins
 mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
@@ -59,6 +66,10 @@ builtins = {
   'printstr'    : printstr,
   'printstrln'  : printstrln,
   'println'     : println,
+  'open'        : fopen,
+  'write'       : fwrite,
+  'read'        : fread,
+  'close'       : fclose,
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,

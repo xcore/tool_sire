@@ -1,0 +1,35 @@
+val N is 10;
+
+val RDONLY is 0x0001;
+val WRONLY is 0x0002;
+val RDWR   is 0x0004;
+val CREAT  is 0x0100;
+val TRUNC  is 0x0200;
+val EXCL   is 0x0400;
+val APPEND is 0x0800;
+val BINARY is 0x8000;
+
+proc main() is
+{ var fd;
+  var i;
+  var len;
+  var v;
+
+  % Write some data
+  fd := open("data", WRONLY or CREAT or BINARY);
+  len := 10;
+  write(fd, len);
+  for i in [0 for N] do
+    write(fd, i);
+  close(fd);
+  
+  % Read the data and print it
+  fd := open("data", RDONLY or BINARY);
+  read(fd, len);
+  for i in [0 for len] do
+  { read(fd, v);
+    printvalln(v)
+  };
+  close(fd)
+}
+
