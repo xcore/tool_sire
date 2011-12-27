@@ -1,4 +1,5 @@
 #define _POLYNOMIAL 0xEDB88320
+#include <math.h>
 
 int crc(int x) {
   unsigned y = (unsigned) x;
@@ -7,6 +8,7 @@ int crc(int x) {
 }
 
 int rand() {
+  int mask;
   crc32(_seed, ~0, _POLYNOMIAL);
-  return _seed;
+  return (int) ((int)_seed < 0) ? -(unsigned)_seed : _seed;
 }

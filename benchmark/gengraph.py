@@ -11,7 +11,7 @@ if len(sys.argv) != 2:
   sys.exit(1)
 
 # Generate a random graph
-p = 0.05
+p = 0.2
 graph = DenseGraph(VertexList(int(sys.argv[1]), 1))
 generator = ErdosRenyiGenerator(p)
 graph = generator.generate(graph)
@@ -29,8 +29,8 @@ try:
   index = 0
   # Vertices
   for i in range(numVertices):
-    f.write(struct.pack('i', index))
-    #print(index)
+    f.write(struct.pack('i', numVertices+index))
+    #print(numVertices+index)
     index += len(graph.neighbours(i))
   # Edges
   for i in range(numVertices):
