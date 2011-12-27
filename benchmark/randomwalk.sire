@@ -1,9 +1,12 @@
-val STORAGE     is 4; % Storage per leaf
-val N           is 1024; % Number of leaves (storage units)
+val STORAGE     is 10; % Storage per leaf
+val N           is 16; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
+
+val RDONLY is 0x0001;
+val BINARY is 0x8000;
 
 proc leaf(chanend c) is
 { var base;
@@ -167,17 +170,42 @@ proc write(chanend c, val index, val value) is
 proc halt(chanend c) is
   c ! HALT
 
-proc gengraph(chanend c) is
-  skip
+proc initgraph(chanend c, var nVertices, var nEdges) is
+{ var fd;
+  var i;
+  var v;
+  fd := fopen("graph", RDONLY or BINARY);
+  fread(fd, nVertices);
+  fread(fd, nEdges);
+  for i in [0 for nVertices] do
+  { fread(fd, v);
+    write(c, i, v)
+  };
+  %assert i = nVertices;
+  for i in [0 for nEdges] do
+  { fread(fd, v);
+    write(c, nVertices+i, v)
+  };
+  %assert i = nEdges;
+  fclose(fd);
+  printval(nVertices); 
+  printstrln(" vertices");
+  printval(nEdges); 
+  printstrln(" edges")
+}
 
-proc dfs(chanend c) is
-  skip
+proc randwalk(chanend c) is
+{ var v;
+  read(c, 0, v)
+}
 
 proc main() is
 { server(chan x)
     array(x)
-  { buildgraph(x);
-    dfs(x);
+  { var nVertices;
+    var nEdges;
+    initgraph(x, nVertices, nEdges);
+    randwalk(x);
     halt(x)
   }
 }

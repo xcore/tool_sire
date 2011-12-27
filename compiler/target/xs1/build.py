@@ -284,7 +284,6 @@ def append_header(device, outfile, show_calls, v):
   se = open(outfile, "wb")
   try:
     se.write(bytes('SIRE', 'UTF-8'))
-    v = bytearray()
     se.write(struct.pack('I', device.num_cores()))
     se.write(xe.read())
   finally:

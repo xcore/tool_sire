@@ -49,10 +49,10 @@ builtin_conversion = {
   'printstrln' : '_PRINTSTRLN',
   'println'    : '_PRINTLN',
   # File IO
-  'open'       : '_OPEN',
-  'write'      : '_WRITE',
-  'read'       : '_READ',
-  'close'      : '_CLOSE',
+  'fopen'      : '_OPEN',
+  'fwrite'     : '_WRITE',
+  'fread'      : '_READ',
+  'fclose'     : '_CLOSE',
   # Fixed point
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',

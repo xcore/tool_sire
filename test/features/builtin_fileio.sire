@@ -16,20 +16,20 @@ proc main() is
   var v;
 
   % Write some data
-  fd := open("data", WRONLY or CREAT or BINARY);
+  fd := fopen("data", WRONLY or CREAT or BINARY);
   len := 10;
-  write(fd, len);
+  fwrite(fd, len);
   for i in [0 for N] do
-    write(fd, i);
-  close(fd);
+    fwrite(fd, i);
+  fclose(fd);
   
   % Read the data and print it
-  fd := open("data", RDONLY or BINARY);
-  read(fd, len);
+  fd := fopen("data", RDONLY or BINARY);
+  fread(fd, len);
   for i in [0 for len] do
-  { read(fd, v);
+  { fread(fd, v);
     printvalln(v)
   };
-  close(fd)
+  fclose(fd)
 }
 
