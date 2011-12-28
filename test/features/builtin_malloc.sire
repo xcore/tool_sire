@@ -1,0 +1,7 @@
+proc main() is
+{ var a[];
+  var v;
+  v := malloc(a, 1000);
+  v := free(a)
+}
+

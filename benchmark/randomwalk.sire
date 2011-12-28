@@ -1,5 +1,5 @@
-val STORAGE     is 400; % Storage per leaf
-val N           is 64; % Number of leaves (storage units)
+val STORAGE     is 10; % Storage per leaf
+val N           is 16; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
@@ -12,7 +12,8 @@ val BINARY is 0x8000;
 
 proc leaf(chanend c) is
 { var base;
-  var data[STORAGE];
+  %var data[STORAGE];
+  var data[];
   var query;
   var index;
   var value;
@@ -22,7 +23,10 @@ proc leaf(chanend c) is
   c ? value;
   c ? base;
   c ? value;
-  
+ 
+  % Allocate storage
+  malloc(data, STORAGE);
+
   % Run
   running := true;
   while running do 
@@ -40,7 +44,10 @@ proc leaf(chanend c) is
     }
     else % HALT
       running := false
-  }
+  };
+
+  % Free storage
+  free(data)
 }
 
 proc branch(chanend root, chanend left, chanend right) is

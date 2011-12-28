@@ -53,6 +53,9 @@ builtin_conversion = {
   'fwrite'     : '_WRITE',
   'fread'      : '_READ',
   'fclose'     : '_CLOSE',
+  # Malloc/free
+  'malloc'     : '_malloc',
+  'free'       : '_free',
   # Fixed point
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',
@@ -201,6 +204,7 @@ class TranslateXS1(NodeWalker):
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fileio.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_malloc.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
  
   # Program ============================================
@@ -330,20 +334,22 @@ class TranslateXS1(NodeWalker):
         self.elem(node.left), self.expr(node.expr)))
 
   def stmt_out(self, node, chans):
+    left = self.elem(node.left)
+    expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
       self.out('// Server out')
       self.blocker.begin()
       self.out('unsigned _clientCRI;')
       self.out('asm("in %0, res[%1];"')
       self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-          .format(self.elem(node.left)))
+          .format(left))
       self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "out   res[%0], %1;"')
       self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}), "r"({}));'
-          .format(self.elem(node.left), self.expr(node.expr)))
+          .format(left, expr))
       self.blocker.end()
 
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
@@ -355,7 +361,7 @@ class TranslateXS1(NodeWalker):
       self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}), "r"({}));'
-          .format(self.elem(node.left), self.expr(node.expr)))
+          .format(left, expr))
 
     else:
       self.out('// Out')
@@ -365,24 +371,26 @@ class TranslateXS1(NodeWalker):
       self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}), "r"({}));'
-          .format(self.elem(node.left), self.expr(node.expr)))
+          .format(left, expr))
 
   def stmt_in(self, node, chans):
+    left = self.elem(node.left)
+    expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
       self.out('// Server in')
       self.blocker.begin()
       self.out('unsigned _clientCRI;')
       self.out('asm("in %0, res[%1];"')
       self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-          .format(self.elem(node.left)))
+          .format(left))
       self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-          .format(self.expr(node.expr), self.elem(node.left)))
+          .format(expr, left))
       self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}));'
-          .format(self.elem(node.left)))
+          .format(left))
       self.blocker.end()
 
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
@@ -391,22 +399,22 @@ class TranslateXS1(NodeWalker):
       self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "chkct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-          .format(self.expr(node.expr), self.elem(node.left)))
+          .format(expr, left))
       self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}));'
-          .format(self.elem(node.left)))
+          .format(left))
 
     else:
       self.out('// In')
       self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
       self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-          .format(self.expr(node.expr), self.elem(node.left)))
+          .format(expr, left))
       self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
       self.out('    "outct res[%0]," S(XS1_CT_END)')
       self.out('    :: "r"({}));'
-          .format(self.elem(node.left)))
+          .format(left))
     
   def stmt_alias(self, node, chans):
     """ 
