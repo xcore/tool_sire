@@ -26,14 +26,14 @@ proc print_slices(var a[n], val n, val m) is
 
 % Simple sliced traversals of a length 10 array.
 proc main() is
-  var a[N];
+{ var x[N];
   var i;
-{ for i in [0 for N] do a[i] := i; 
-  print_array(a, N);
-  print_slices(a, N, 1);
-  print_slices(a, N, 2);
-  print_slices(a, N, 3);
-  print_slices(a, N, 4);
-  print_slices(a, N, 5)
+  for i in [0 for N] do x[i] := i; 
+  print_array(x, N);
+  print_slices(x, N, 1);
+  print_slices(x, N, 2);
+  print_slices(x, N, 3);
+  print_slices(x, N, 4);
+  print_slices(x, N, 5)
 }
 

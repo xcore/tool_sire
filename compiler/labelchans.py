@@ -43,7 +43,8 @@ class LabelChans(NodeWalker):
     #print(Printer().expr(stmt.location))
     location_value = EvalExpr().expr(stmt.location)
     tab.insert(name, None, location_value, chanend, chan_set)
-    debug(self.debug, '  {} at {}'.format(name, location_value))
+    debug(self.debug, '  {} at {} (chanend {})'.format(
+      name, location_value, chanend))
     return ChanElem(None, location_value, None, None)
 
   def subscript_channel(self, indices, tab, stmt, name, expr, chanend, chan_set):
@@ -79,10 +80,11 @@ class LabelChans(NodeWalker):
       tab.insert(name, index_value, location_value, chanend, chan_set)
 
       # Add the expanded channel use to a list
-      chan_elems.append(ChanElem(index_value, location_value, 
-          indices, index_values))
+      chan_elems.append(ChanElem(
+        index_value, location_value, indices, index_values))
 
-      debug(self.debug, '  {}[{}] at {}'.format(name, index_value, location_value))
+      debug(self.debug, '  {}[{}] at {} (chanend {})'.format(
+        name, index_value, location_value, chanend))
     
     return chan_elems
 

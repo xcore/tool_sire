@@ -87,14 +87,14 @@ class ChanTable(object):
     x = self.lookup(name, index, base)
     return x.locations[1] if x != None else None
 
-  def lookup_chanset(self, name, index, chanend, base=None):
-    master = self.lookup_is_master(name, index, chanend, base)
+  def lookup_is_master(self, name, index, location, base=None):
+    x = self.lookup(name, index, base)
+    return x.locations[0] == location if x != None else None
+
+  def lookup_chanset(self, name, index, location, base=None):
+    master = self.lookup_is_master(name, index, location, base)
     x = self.lookup(name, index, base)
     return x.chansets[0 if master else 1] if x != None else None
-
-  def lookup_is_master(self, name, index, chanend, base=None):
-    x = self.lookup(name, index, base)
-    return x.chanends[0] == chanend if x != None else None
 
   def set_connid(self, name, index, scope, connid):
     self.lookup(name, index, scope).connid = connid

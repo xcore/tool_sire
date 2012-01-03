@@ -51,9 +51,9 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
       i := 0;
       while ((mulf8_24(xn,xn)+mulf8_24(y0,y0)) < fix(4)) 
         and (i < COUNT) do
-      { i := i + 1
-        xn := mulf8_24(x0+y0, x0-y0) + p
-        y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q
+      { i := i + 1;
+        xn := mulf8_24(x0+y0, x0-y0) + p;
+        y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q;
         x0 := xn
       };
       plot(i);
@@ -71,11 +71,11 @@ proc compute(val xmin, val ymin, val xmax, val ymax) is
 %   xmax := 0.75
 %   ymax := 1.25
 proc main() is
-  var xmin;
+{ var xmin;
   var ymin;
   var xmax;
   var ymax;
-{ xmin := fix(-2);
+  xmin := fix(-2);
   ymin := (fix(1) + FIX_QUAR)*(-1);
   xmax := FIX_HALF + FIX_QUAR;
   ymax := fix(1) + FIX_QUAR;

@@ -7,7 +7,6 @@ import math
 import sys
 
 import ast
-from util import pairwise
 from util import debug
 from walker import NodeWalker
 from definitions import *
@@ -18,6 +17,7 @@ from printer import Printer
 from indices import indices_value, indices_expr
 
 COMPRESS = True
+DEBUG_COMPRESSION = False
 
 class InsertConns(NodeWalker):
   """
@@ -69,7 +69,7 @@ class InsertConns(NodeWalker):
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    master = tab.lookup_is_master(chan.name, elem.index, chan.chanend, scope)
+    master = tab.lookup_is_master(chan.name, elem.index, elem.location, scope)
     location = None
     if master:
       location = ast.ExprSingle(ast.ElemNumber(
@@ -92,9 +92,14 @@ class InsertConns(NodeWalker):
     ChanElemSet with multiple elements.
     """
     
-    def create_single_conn(s, chan, scope, i_elem, range_begin, index):
+    def target_loc(name, index, location, scope):
+      master = tab.lookup_is_master(name, index, location, scope)
+      return (tab.lookup_slave_location(name, index, scope) if master else
+          tab.lookup_master_location(name, index, scope))
+
+    def create_single_conn(s, chan, scope, i_elem, range_begin, index, location):
       debug(self.debug, 'New connection for index {}'.format(index))
-      master = tab.lookup_is_master(chan.name, index, chan.chanend, scope)
+      master = tab.lookup_is_master(chan.name, index, location, scope)
       if master:
         location = ast.ExprSingle(ast.ElemNumber(
             tab.lookup_slave_location(chan.name, index, scope)))
@@ -115,7 +120,8 @@ class InsertConns(NodeWalker):
     def create_range_conn(s, chan, i_elem, group):
       diff2 = group[0]
       elem0 = group[1][0][0] 
-      offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
+      target = target_loc(chan.name, elem0.index, elem0.location, scope)
+      offset = target - elem0.indices_value
 
       # Form the location expression
       if elem0.indices_value > 0:
@@ -137,7 +143,7 @@ class InsertConns(NodeWalker):
       end = group[1][-1][0].indices_value
       cond = ast.ExprBinop('>=', i_elem, 
           ast.ExprSingle(ast.ElemNumber(min(begin, end))))
-      master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
+      master = tab.lookup_is_master(chan.name, elem0.index, elem0.location, scope)
       conn = ast.StmtConnect(chanend, chanid, location,
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
@@ -165,16 +171,11 @@ class InsertConns(NodeWalker):
           ast.ExprSingle(ast.ElemNumber(connid_diff)))
       connid = ast.ExprBinop('+', ast.ElemGroup(connid),
           ast.ExprSingle(ast.ElemNumber(connid_min)))
-      master = tab.lookup_is_master(chan.name, elem0.index, chan.chanend, scope)
+      master = tab.lookup_is_master(chan.name, elem0.index, elem0.location, scope)
       return ast.StmtConnect(chanend, connid, location,
           self.connect_type(chan, master))
 
-    def target_loc(name, index, chanend, scope):
-      master = tab.lookup_is_master(name, index, chanend, scope)
-      return (tab.lookup_slave_location(name, index, scope) if master else
-          tab.lookup_master_location(name, index, scope))
-
-    def conn_diff_groups(chan, s, i_elem, d=False):
+    def conn_diff_groups(chan, s, i_elem, d=DEBUG_COMPRESSION):
       """
       Compress connecitons based on the difference between differences of
       indices value and destination.
@@ -182,7 +183,7 @@ class InsertConns(NodeWalker):
       # Build a list of channel elements and index-dest differences
       diffs = []
       for x in chan.elems:
-        diff = target_loc(chan.name, x.index, chan.chanend, scope) - x.indices_value
+        diff = target_loc(chan.name, x.index, x.location, scope) - x.indices_value
         diffs.append((x, diff))
 
       debug(d, 'Differences for chan {}:'.format(chan.name))
@@ -197,13 +198,13 @@ class InsertConns(NodeWalker):
       for ((elemA, diffA), (elemB, diffB)) in zip(diffs[:-1], diffs[1:]):
         diff2 = diffB - diffA
         connid = tab.lookup_connid(chan.name, elemB.index, scope)
-        master = tab.lookup_is_master(chan.name, elemB.index, chan.chanend, scope)
+        master = tab.lookup_is_master(chan.name, elemB.index, elemB.location, scope)
         if newgroup:
           groups.append((diff2, [(elemA, diffA)]))
           groupdiff2 = diff2
           groupconnid = tab.lookup_connid(chan.name, elemA.index, scope)
           groupmaster = tab.lookup_is_master(chan.name, elemA.index,
-              chan.chanend, scope)
+              elemA.location, scope)
           newgroup = False
         if (groupdiff2 == diff2 
             and groupconnid == connid
@@ -218,13 +219,13 @@ class InsertConns(NodeWalker):
       for x in groups:
         diff2 = x[0]
         elem0 = x[1][0][0]
-        offset = target_loc(chan.name, elem0.index, chan.chanend, scope)
+        offset = target_loc(chan.name, elem0.index, elem0.location, scope)
         debug(d, '  diff2:  {}'.format(diff2))
         debug(d, '  offset: {}'.format(offset))
         debug(d, '  base:   {}'.format(elem0.indices_value))
         if len(x[1]) > 1:
           for (i, (elem, diff)) in enumerate(x[1]):
-            loc = target_loc(chan.name, elem.index, chan.chanend, scope)
+            loc = target_loc(chan.name, elem.index, elem.location, scope)
             computed = ((diff2+1) * (elem.indices_value-elem0.indices_value)) + offset
             assert computed == loc
             debug(d, '    {:>3}: [{:>3}]->{:>3}, diff: {:>3}, computed: {}'.format(
@@ -234,7 +235,7 @@ class InsertConns(NodeWalker):
               elem0.indices_value, elem0.index, offset))
 
       # If compression was inneffective then abort
-      if len(groups) >= ((len(chan.elems)/2)):
+      if len(groups) == len(chan.elems):
         debug(d, 'Aborting group diff compression.')
         return None
 
@@ -244,12 +245,12 @@ class InsertConns(NodeWalker):
         elem0 = x[1][0][0]
         if len(x[1]) == 1:
           s = create_single_conn(s, chan, scope, i_elem, 
-              elem0.indices_value, elem0.index)
+              elem0.indices_value, elem0.index, elem0.location)
         else:
           s = create_range_conn(s, chan, i_elem, x)
       return s
 
-    def conn_tree_groups(chan, s, i_elem, d=False):
+    def conn_tree_groups(chan, s, i_elem, d=DEBUG_COMPRESSION):
       """
       Compress connections based on monotonically increasing or decreasing
       sets with the same target destination. Assume sets are of size 2.
@@ -257,9 +258,14 @@ class InsertConns(NodeWalker):
       locs = []
       debug(d, 'Locations:')
       for x in chan.elems:
-        loc = target_loc(chan.name, x.index, chan.chanend, scope)
+        loc = target_loc(chan.name, x.index, x.location, scope)
         locs.append((x, loc))
         debug(d, '  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
+       
+      # Only consider more than three conditions 
+      if len(locs) <= 3:
+        debug(d, 'Aborting tree compression.')
+        return None
 
       # Separate the first odd element if there is one
       phase = 0
@@ -286,10 +292,18 @@ class InsertConns(NodeWalker):
       debug(d, '  ConnID base:   {}'.format(connidA))
       debug(d, '  ConnID diff:   {}'.format(connid_diff))
 
-      # Check the form of the indice-target set is what we want
+      # Check each pair
       end = 1+(math.floor((len(locs)-1)/2)*2)
       debug(d, 'Checking pairs 1 to {}'.format(end))
-      for (x, y) in pairwise(locs[1:end]):
+      for (x, y) in zip(locs[:-1:2], locs[1::2]):
+        debug(d, '  {} and {}'.format(y[1], x[1]))
+        if x[1] != y[1]:
+          debug(d, 'Aborting tree compression.')
+          return None
+      
+      # Check each step between pairs
+      debug(d, 'Checking diffs 1 to {}'.format(end))
+      for (x, y) in zip(locs[1::2], locs[2::2]):
         debug(d, '  {} and {}'.format(y[1], x[1]))
         connidX = tab.lookup_connid(chan.name, x[0].index, scope)
         connidY = tab.lookup_connid(chan.name, y[0].index, scope)
@@ -327,14 +341,15 @@ class InsertConns(NodeWalker):
         return create_single_conn(s, chan, scope, i_elem, 
             odd_elem.indices_value, odd_elem.index)
 
-    def conn_singles(chan, s, i_elem):
+    def conn_singles(chan, s, i_elem, d=DEBUG_COMPRESSION):
       """
       Create (uncompressed) connections for each case.
       """
-      print('Creating uncompressed connection range.')
+      debug(d, 'Creating uncompressed connection range.')
       for x in chan.elems:
-        s = create_single_conn(s, chan, scope, i_elem, x.indices_value, x.index)
-        print('  {}: {}[{}]'.format(x.indices_value, chan.name, x.index))
+        s = create_single_conn(s, chan, scope, i_elem, 
+            x.indices_value, x.index, x.location)
+        debug(d, '  {}: {}[{}]'.format(x.indices_value, chan.name, x.index))
       return s
 
     # Sort the channel elements into increasing order of indices
@@ -346,8 +361,8 @@ class InsertConns(NodeWalker):
     i_elem.symbol = Symbol(i_elem.name, T_VAR_SINGLE, scope=T_SCOPE_BLOCK)
     s = None
     if COMPRESS:
-      s = conn_diff_groups(chan, s, i_elem)
-      s = conn_tree_groups(chan, s, i_elem) if s==None else s
+      s = conn_tree_groups(chan, s, i_elem)
+      s = conn_diff_groups(chan, s, i_elem) if s==None else s 
     s = conn_singles(chan, s, i_elem) if s==None else s
     s = [ast.StmtAss(i_elem, i_expr), s]
     s = ast.StmtSeq([ast.VarDecl(i_elem.name, T_VAR_SINGLE, None)], s)

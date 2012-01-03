@@ -110,10 +110,6 @@ def vhdr(verbose, msg, end='\n'):
 def next_power_of_2(n):
   return (2 ** ceil(log(n, 2)))
 
-def pairwise(iterable):
-  a = iter(iterable)
-  return zip(a, a)
-      
 def vmsg(verbose, msg, end='\n'):
   """ 
   Verbose message: output a message that is displayed in verbose mode.

@@ -38,6 +38,7 @@ class Rename(NodeVisitor):
 
   def visit_stmt_alias(self, node):
     node.left = self.rename(node.left)
+    node.slice = self.rename(node.slice)
 
   def visit_stmt_connect(self, node):
     node.left = self.rename(node.left)

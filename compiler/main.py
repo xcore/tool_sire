@@ -238,7 +238,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   if errorlog.any(): raise Error('in process disribution')
 
   # 2. Flatten nested parallel composition
-  vmsg(v, "Flattening nested parallel composition")
+  #vmsg(v, "Flattening nested parallel composition")
   #FlattenPar().walk_program(ast)
 
   # 3. Distribute processes

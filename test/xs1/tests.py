@@ -17,7 +17,7 @@ from test import Test
 
 COMPILE  = 'sire'
 SIMULATE = 'axe'
-SIM_FLAGS = []
+SIM_FLAGS = ['-s']
 #SIMULATE = 'xsim'
 #SIM_FLAGS = ['--no-warn-registers']
 D = ['-D'] # Disable all AST transformations
@@ -172,7 +172,7 @@ def run_test(self, name, path, num_cores, cmp_flags, param):
       remove_file(filename)
 
     # Simulate execution
-    (exit, output) = call([SIMULATE, 'a.xe'] + SIM_FLAGS)
+    (exit, output) = call([SIMULATE, 'a.se'] + SIM_FLAGS)
     self.assertTrue(exit)
 
     # Check the output against the .output file

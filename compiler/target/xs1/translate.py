@@ -422,12 +422,12 @@ class TranslateXS1(NodeWalker):
     some inline assembly to get xcc to load the address for us. Otherwise,
     we can just perform arithmetic on the pointer.
     """
-    if node.left.symbol.type == T_VAR_ARRAY:
+    if node.slice.symbol.type == T_VAR_ARRAY:
       self.asm('add %0, %1, %2', outop=node.left.name, 
           inops=[node.slice.name, '({})*{}'.format(
-            self.expr(node.slice.begin), defs.BYTES_PER_WORD)])
+            self.expr(node.slice.base), defs.BYTES_PER_WORD)])
 
-    elif node.left.symbol.type == T_REF_ARRAY:
+    elif node.slice.symbol.type == T_REF_ARRAY:
       self.out('{} = {} + ({})*{};'.format(self.elem(node.left), node.slice.name, 
         self.expr(node.slice.base), defs.BYTES_PER_WORD))
 
