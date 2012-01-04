@@ -47,19 +47,16 @@ fwrite      = proc_decl('fwrite', [SVAL_PARAM, SVAL_PARAM])
 fread       = proc_decl('fread',  [SVAL_PARAM, SREF_PARAM])
 fclose      = proc_decl('fclose', [SVAL_PARAM])
 
-# Malloc/free
-# TODO: (check) actual malloc/free *may* be linked in different master/slave positions
-malloc      = func_decl('malloc', [AVAL_PARAM, SVAL_PARAM], mobile=True)
-free        = func_decl('free',   [AVAL_PARAM], mobile=True)
-
 # Fixed point builtins
 mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System builtins
-procid = func_decl('procid', []) # Required for implementation of on and connect
-crc    = func_decl('crc', [SVAL_PARAM], mobile=True)
-rand   = func_decl('rand', [], mobile=True)
+procid   = func_decl('procid',   []) # Required for implementation of on and connect
+crc      = func_decl('crc',      [SVAL_PARAM], mobile=True)
+rand     = func_decl('rand',     [], mobile=True)
+memalloc = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
+memfree  = func_decl('memfree',  [AVAL_PARAM])
 
 builtins = {
   'printchar'   : printchar,
@@ -75,13 +72,13 @@ builtins = {
   'fwrite'      : fwrite,
   'fread'       : fread,
   'fclose'      : fclose,
-  'malloc'      : malloc,
-  'free'        : free,
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,
   'crc'         : crc,
   'rand'        : rand,
+  'memalloc'    : memalloc,
+  'memfree'     : memfree,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
@@ -92,5 +89,7 @@ runtime_functions = [
   '_connectSlave',
   '_connectServer',
   '_connectClient',
+  '_memAlloc',
+  '_memFree',
   ]
 

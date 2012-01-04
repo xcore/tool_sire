@@ -26,6 +26,8 @@ _jumptab:
   .word _connectSlave
   .word _connectServer
   .word _connectClient
+  .word _memAlloc
+  .word _memFree
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

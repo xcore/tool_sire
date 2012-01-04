@@ -87,20 +87,31 @@ class ChanTable(object):
     x = self.lookup(name, index, base)
     return x.locations[1] if x != None else None
 
-  def lookup_is_master(self, name, index, location, base=None):
-    x = self.lookup(name, index, base)
-    return x.locations[0] == location if x != None else None
+  def lookup_connid(self, name, index, scope):
+    return self.lookup(name, index, scope).connid
 
-  def lookup_chanset(self, name, index, location, base=None):
-    master = self.lookup_is_master(name, index, location, base)
-    x = self.lookup(name, index, base)
+  def lookup_is_master(self, chan, elem, base=None):
+    """
+    Lookup if a particular ChanElem elem is the master in a connection. This is
+    determined either by the location matching the first (master) location, or,
+    if the location of master and slave are the same, the chanend matching the
+    first (master) chanend - which must be different if on the same location.
+    """
+    x = self.lookup(chan.name, elem.index, base)
+    if x == None:
+      return None
+    if x.locations[0] == x.locations[1]:
+      return x.chanends[0] == chan.chanend
+    else:
+      return x.locations[0] == elem.location 
+
+  def lookup_chanset(self, chan, elem, base=None):
+    master = self.lookup_is_master(chan, elem, base)
+    x = self.lookup(chan.name, elem.index, base)
     return x.chansets[0 if master else 1] if x != None else None
 
   def set_connid(self, name, index, scope, connid):
     self.lookup(name, index, scope).connid = connid
-
-  def lookup_connid(self, name, index, scope):
-    return self.lookup(name, index, scope).connid
 
   def new_chanend(self):
     name = '_c{}'.format(self.chanend_count)
@@ -113,7 +124,8 @@ class ChanTable(object):
     for x in self.scopes:
       if len(x.tab) == 0:
         print('  Empty')
-      for y in x.tab.keys():
+      for y in filter(lambda x: x[0]!='_', x.tab.keys()):
+      #for y in x.tab.keys():
         print('  Channel {} is {}'.format(y, x.tab[y]))
       print('--------------------------')
 

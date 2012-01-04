@@ -10,6 +10,8 @@
 
 // Builtins
 int _procId();
+int _memAlloc(unsigned &p, int size);
+int _memFree(unsigned p);
 
 // Initialisation
 void resetChanends();

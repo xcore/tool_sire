@@ -54,8 +54,8 @@ builtin_conversion = {
   'fread'      : '_READ',
   'fclose'     : '_CLOSE',
   # Malloc/free
-  'malloc'     : '_malloc',
-  'free'       : '_free',
+  'memalloc'   : '_memAlloc',
+  'memfree'    : '_memFree',
   # Fixed point
   'mul8_24'    : 'mul8_24',
   'div8_24'    : 'div8_24',
@@ -204,7 +204,6 @@ class TranslateXS1(NodeWalker):
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fixedpoint.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fileio.xc'))
-    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_malloc.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
  
   # Program ============================================

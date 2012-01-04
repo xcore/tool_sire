@@ -58,7 +58,7 @@ xs1_example_tests = [
   Test('cube2d',            [4]),
   Test('cube3d',            [16]),
 
-  Test('distributed-array', [5], p=['N', '4'])
+  Test('distributed-array', [5], p=[('N', '4')])
 
   # These exceed 8 threads on some nodes.
   #Test('array2d',           [16], p=[('N','4')]),
@@ -87,7 +87,7 @@ xs1_feature_tests = [
   Test('builtin_fixedpoint', f=D),
   Test('builtin_printing',   f=D),
   Test('builtin_fileio',     f=D),
-  Test('builtin_malloc',     f=D),
+  Test('builtin_mem',        f=D),
   Test('builtin_crc',        f=D),
   Test('builtin_rand',       f=D),
   Test('builtin_procid', [16], D),

@@ -1,0 +1,14 @@
+proc foo() is
+{ var a[];
+  var v;
+  v := memalloc(a, 1000);
+  v := memfree(a)
+}
+
+proc bar() is
+  on NUM_CORES-1 do foo()
+
+proc main() is
+{ foo() || bar() 
+}
+

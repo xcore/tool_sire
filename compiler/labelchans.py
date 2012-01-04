@@ -35,17 +35,52 @@ class LabelChans(NodeWalker):
     self.errorlog = errorlog
     self.debug = debug
 
-  def single_channel(self, tab, stmt, name, chanend, chan_set):
+  def single_channel(self, indices, tab, stmt, name, chanend, chan_set):
     """
     Process a single (non-subscripted) channel use by evaluating its location
-    and then adding it to the channel table and returning it as an element. 
+    and then adding it to the channel table and returning it as an element.
+    Single channels may appear only in replicators in the client process of a
+    server, hence we evaluate their location over the incident indices.
     """
     #print(Printer().expr(stmt.location))
-    location_value = EvalExpr().expr(stmt.location)
-    tab.insert(name, None, location_value, chanend, chan_set)
-    debug(self.debug, '  {} at {} (chanend {})'.format(
-      name, location_value, chanend))
-    return ChanElem(None, location_value, None, None)
+    if indices:
+      elem = ChanElem(None, None, None, None)
+      
+      # Iterate over cartesian product of iterator ranges
+      ranges = [range(x.base_value, x.base_value+x.count_value) for x in indices]
+      for x in product(*ranges):
+
+        # Deep copy expressions so we can modify them
+        location_expr = copy.deepcopy(stmt.location)
+
+        # Substitute index variables for values
+        index_values = []
+        for (y, z) in zip(indices, x):
+          location_expr.accept(SubElem(ast.ElemId(y.name),
+            ast.ElemNumber(z-y.base_value)))
+
+        # Evaluate the expressions
+        location_value = EvalExpr().expr(location_expr)
+
+        # Add to the table
+        tab.insert(name, None, location_value, chanend, chan_set)
+        
+        # Add the location to the channel element
+        elem.add_location(location_value)
+        
+        debug(self.debug, '  {} at {} (chanend {})'.format(
+          name, location_value, chanend))
+     
+      elem.location = elem.locations[0]
+      return [elem]
+    
+    else:
+      location_value = EvalExpr().expr(stmt.location)
+      tab.insert(name, None, location_value, chanend, chan_set)
+      debug(self.debug, ' {} at {} (chanend {})'.format(
+          name, location_value, chanend))
+      return [ChanElem(None, location_value, None, None)]
+
 
   def subscript_channel(self, indices, tab, stmt, name, expr, chanend, chan_set):
     """
@@ -95,20 +130,17 @@ class LabelChans(NodeWalker):
     chans = []
     for x in chan_uses.uses:
       chanend = tab.new_chanend()
+      chan_set = ChanElemSet(x.name, x.expr, x.symbol, indices, chanend)
       if x.expr == None:
-        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indices, chanend)
-        chan_set.elems = [self.single_channel(
-            tab, stmt, x.name, chanend, chan_set)]
-        chans.append(chan_set)
+        chan_set.elems = self.single_channel(
+            indices, tab, stmt, x.name, chanend, chan_set)
       else:
-        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indices, chanend)
         chan_set.elems = self.subscript_channel(
             indices, tab, stmt, x.name, x.expr, chanend, chan_set)
-        chans.append(chan_set)
+      chans.append(chan_set)
 
     # Sort them by chanend
-    chans = sorted(chans, key=lambda x: x.chanend)
-    return chans
+    return sorted(chans, key=lambda x: x.chanend)
  
   def insert_chan_decls(self, tab, decls):
     """
@@ -388,9 +420,17 @@ class ChanElem(object):
     self.index = index
     self.location = location
     self.indices_value = None
+    self.locations = []
     if indices != None and index_values != None:
       self.indices_value = indices_value(indices, index_values)
 
+  # This is a bit messy but a simple way to reflect that a single channel can
+  # be shared in a client replicator of a server.
+  def add_location(self, location):
+    self.locations.append(location)
+
+  def has_multiple_locations(self):
+    return len(self.locations) > 0
 
 class ChanElemSet(object):
   """

@@ -44,19 +44,32 @@ class DisplayConns(NodeWalker):
     """
     Iterate over ChanElemSets and aggregate the expanded channels with their
     locations by location into the 'd' array.
+
+    TODO: There is still a problem displaying the correct master/slave types
+    for single server channels where the slave end is shared over a replicator.
     """
     for x in chans:
       for y in x.elems:
-        master = tab.lookup_is_master(x.name, y.index, y.location, scope)
+        master = tab.lookup_is_master(x, y, scope)
         connid = tab.lookup_connid(x.name, y.index, scope)
         if master:
           slave_loc = tab.lookup_slave_location(x.name, y.index, scope)
-          self.d[y.location].append(self.ConnMaster(
-            x.name, x.chanend, connid, y.index, slave_loc))
+          if not y.has_multiple_locations():
+            self.d[y.location].append(self.ConnMaster(
+                x.name, x.chanend, connid, y.index, slave_loc))
+          else:
+            for z in y.locations:
+              self.d[z].append(self.ConnMaster(
+                  x.name, x.chanend, connid, y.index, slave_loc))
         else:
           master_loc = tab.lookup_master_location(x.name, y.index, scope)
-          self.d[y.location].append(self.ConnSlave(
-            x.name, x.chanend, connid, y.index, master_loc))
+          if not y.has_multiple_locations():
+            self.d[y.location].append(self.ConnSlave(
+                x.name, x.chanend, connid, y.index, master_loc))
+          else:
+            for z in y.locations:
+              self.d[z].append(self.ConnSlave(
+                  x.name, x.chanend, connid, y.index, master_loc))
  
   def display(self):
     for (i, x) in enumerate(self.d):

@@ -160,6 +160,22 @@ int _procId() {
 }
 
 /*
+ * memAlloc builtin wrapper.
+ */
+int _memAlloc(unsigned &p, int size) {
+  p = memAlloc(size);
+  return (p == 0) ? 0 : 1;
+}
+
+/*
+ * memAlloc builtin wrapper.
+ */
+int _memFree(unsigned p) {
+  memFree(p);
+  return 0;
+}
+
+/*
  * Spawn a new asynchronous thread with 4 specified arguments.
  */
 void newAsyncThread(unsigned pc, unsigned arg1, 
