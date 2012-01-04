@@ -334,8 +334,7 @@ class InsertConns(NodeWalker):
         s = create_tree_conn(tab, scope, chan, phase, 
             base_indices_value, loc_base, loc_diff, 
             connid_min, connid_offset, connid_diff, i_elem)
-        return create_single_conn(s, chan, scope, i_elem, 
-            odd_elem.indices_value, odd_elem.index)
+        return create_single_conn(s, chan, scope, i_elem, odd_elem)
 
     def conn_singles(chan, s, i_elem, d=DEBUG_COMPRESSION):
       """

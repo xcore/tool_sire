@@ -2,9 +2,11 @@
 
 import sys
 import struct
-import numpy
-from apgl.graph import *
+#from apgl.graph import *
+from apgl.graph.DenseGraph import DenseGraph
+from apgl.graph.VertexList import VertexList
 from apgl.generator.ErdosRenyiGenerator import ErdosRenyiGenerator
+import numpy
 
 if len(sys.argv) != 2:
   print('Usage {} <num-vertices>'.format(sys.argv[0]))

@@ -12,8 +12,8 @@ val BINARY is 0x8000;
 
 proc leaf(chanend c) is
 { var base;
-  %var data[STORAGE];
-  var data[];
+  var data[STORAGE];
+  %var data[];
   var query;
   var index;
   var value;
@@ -25,7 +25,7 @@ proc leaf(chanend c) is
   c ? value;
  
   % Allocate storage
-  malloc(data, STORAGE);
+  %memalloc(data, STORAGE);
 
   % Run
   running := true;
@@ -44,10 +44,10 @@ proc leaf(chanend c) is
     }
     else % HALT
       running := false
-  };
+  }
 
   % Free storage
-  free(data)
+  %memfree(data)
 }
 
 proc branch(chanend root, chanend left, chanend right) is
@@ -184,6 +184,7 @@ proc initgraph(chanend c, var nVertices, var nEdges) is
   var i;
   var v;
   fd := fopen("graph", RDONLY or BINARY);
+  assert fd ~= (-1);
   fread(fd, nVertices);
   fread(fd, nEdges);
   printval(nVertices); 
@@ -245,7 +246,7 @@ proc main() is
     var nEdges;
     initgraph(x, nVertices, nEdges);
     %dumpgraph(x, nVertices, nEdges);
-    randwalk(x, nVertices, nEdges, 0);
+    %randwalk(x, nVertices, nEdges, 0);
     halt(x)
   }
 }
