@@ -32,7 +32,9 @@ class TransformServer(NodeWalker):
   # Program ============================================
 
   def walk_program(self, node):
-    [self.stmt(x.stmt) for x in node.defs]
+    for x in node.defs:
+      self.stmt(x.stmt)
+      x.stmt = self.transform(x.stmt)
   
   # Statements containing statements ===================
 

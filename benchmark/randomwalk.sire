@@ -1,19 +1,19 @@
-val STORAGE     is 10; % Storage per leaf
-val N           is 16; % Number of leaves (storage units)
+val STORAGE     is 1000; % Storage per leaf
+val N           is 1024; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
 
-val NUM_STEPS   is 100;
+val NUM_STEPS   is 1000;
 
 val RDONLY is 0x0001;
 val BINARY is 0x8000;
 
 proc leaf(chanend c) is
 { var base;
-  var data[STORAGE];
-  %var data[];
+  %var data[STORAGE];
+  var data[];
   var query;
   var index;
   var value;
@@ -25,7 +25,7 @@ proc leaf(chanend c) is
   c ? value;
  
   % Allocate storage
-  %memalloc(data, STORAGE);
+  memalloc(data, STORAGE);
 
   % Run
   running := true;
@@ -44,10 +44,10 @@ proc leaf(chanend c) is
     }
     else % HALT
       running := false
-  }
+  };
 
   % Free storage
-  %memfree(data)
+  memfree(data)
 }
 
 proc branch(chanend root, chanend left, chanend right) is
@@ -184,7 +184,7 @@ proc initgraph(chanend c, var nVertices, var nEdges) is
   var i;
   var v;
   fd := fopen("graph", RDONLY or BINARY);
-  assert fd ~= (-1);
+  %assert fd ~= (-1);
   fread(fd, nVertices);
   fread(fd, nEdges);
   printval(nVertices); 
@@ -240,14 +240,14 @@ proc randwalk(chanend c, val nVertices, val nEdges, val startVertex) is
 }
 
 proc main() is
-{ server(chan x)
+  server(chan x)
     array(x)
   { var nVertices;
     var nEdges;
+    printstr("Allocated an array of length "); printvalln(LENGTH);
     initgraph(x, nVertices, nEdges);
     %dumpgraph(x, nVertices, nEdges);
-    %randwalk(x, nVertices, nEdges, 0);
+    randwalk(x, nVertices, nEdges, 0);
     halt(x)
   }
-}
 
