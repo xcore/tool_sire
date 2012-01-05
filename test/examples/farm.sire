@@ -1,0 +1,32 @@
+val N is 16;
+val NUM_WORK is N;
+val WORK is 1;
+
+proc farmer(chanend c) is
+  % Take a request and provide some work
+{ var left;
+  var workerid;
+  left := NUM_WORK;
+  while left > 0 do
+  { c ? workerid;
+    c ! WORK;
+    left := left - 1
+  }
+}
+
+proc worker(val id, chanend c) is
+  % Request some work from the farmer
+{ var work;
+  c ! id;
+  c ? work
+  % Do some work
+}
+
+proc main() is
+  server(chan x)
+    farmer(x)
+  { var i;
+    par i in [0 for N] do 
+      worker(i, x)
+  }
+

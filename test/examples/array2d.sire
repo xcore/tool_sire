@@ -1,4 +1,4 @@
-val N is 4;
+val N is 1;
 
 proc foo(val i, val j, chanend n, chanend s, chanend w, chanend e) is 
 { var u;
