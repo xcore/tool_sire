@@ -4,19 +4,44 @@
 %  - A, B, C and N*N matrices
 %  - Matrices are distributed with submatrices of size (N/R)^2
 
-val N is 4; % Dimension of square matrix
-val R is 2; % Num partitions per dimension
-val X is R*R;
-val MATRIX_STORAGE is (N/R)*(N/R);
+val N is 320; % Dimension of square matrix
+val R is 32;  % Num partitions per dimension
+val M is N/R; % Submatrix dimension
+val X is R*R; % Num channels in a dimension
+val MATRIX_STORAGE is M*M;
 
-proc send_submatrix(chanend c, var M[MATRIX_STORAGE]) is
-{ var i;
-  for i in [0 for MATRIX_STORAGE] do c ! M[i]
+proc zeromatrix(var A[MATRIX_STORAGE]) is
+{ var x;
+  var y;
+  for x in [0 for M] do % Row
+    for y in [0 for M] do % Col
+      A[(x*M)+y] := 0
 }
 
-proc recv_submatrix(chanend c, var M[MATRIX_STORAGE]) is
+% C = C + A*B
+proc muladd(
+    var A[MATRIX_STORAGE], 
+    var B[MATRIX_STORAGE], 
+    var C[MATRIX_STORAGE]) is
+{ var x;
+  var y;
+  var z;
+  for x in [0 for M] do % Row
+    for y in [0 for M] do % Col1
+      for z in [0 for M] do % Col2
+        C[(x*M)+y] := C[(x*M)+y] + (A[(x*M)+y] * B[(y*M)+z])
+}
+
+proc send_submatrix(chanend c, var X[MATRIX_STORAGE]) is
 { var i;
-  for i in [0 for MATRIX_STORAGE] do c ? M[i]
+  for i in [0 for MATRIX_STORAGE] do 
+    c ! X[i]
+}
+
+proc recv_submatrix(chanend c, var X[MATRIX_STORAGE]) is
+{ var i;
+  for i in [0 for MATRIX_STORAGE] do 
+    c ? X[i]
 }
 
 proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
@@ -28,6 +53,9 @@ proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
   memalloc(A, MATRIX_STORAGE);
   memalloc(B, MATRIX_STORAGE);
   memalloc(C, MATRIX_STORAGE);
+  zeromatrix(A);
+  zeromatrix(B);
+  zeromatrix(C);
   
   % Circularly shift west each matrix A_{i,j} by i columns
   for k in [0 for i] do
@@ -39,7 +67,7 @@ proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
     else
     { recv_submatrix(e, A);
       send_submatrix(w, A)
-    }
+    };
 
   % Circularly shift north each matrix B_{i,j} by j rows
   for k in [0 for j] do
@@ -54,38 +82,42 @@ proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
     };
   
   % Compute C_{i,j}=A_{i,j}*B_{i,j}+C_{,j},
-  % circularly shift left A_{i,j} and north B_{i,j} by one.
+  % circularly shift east A_{i,j} and north B_{i,j} by one.
   for k in [0 for R] do
     if (i = 0) and (j = 0)
     then
-    { muladd(); % C = C + A*B
-      send_submatrix(s, A);
-      send_submatrix(e, B);
-      recv_submatrix(n, A);
-      recv_submatrix(w, B)
+    { muladd(A, B, C);
+      send_submatrix(w, A);
+      recv_submatrix(e, A);
+      
+      send_submatrix(n, B);
+      recv_submatrix(s, B)
     }
     else if i = 0
     then
-    { muladd(); % C = C + A*B
-      send_submatrix(s, A);
-      recv_submatrix(n, A);
-      recv_submatrix(w, B);
-      send_submatrix(s, B)
+    { muladd(A, B, C);
+      recv_submatrix(e, A);
+      send_submatrix(w, A);
+
+      send_submatrix(n, B);
+      recv_submatrix(s, B)
     }
     else if j = 0
     then
-    { muladd(); % C = C + A*B
-      send_submatrix(e, B);
-      recv_submatrix(w, B);
-      recv_submatrix(n, A);
-      send_submatrix(s, A)
+    { muladd(A, B, C);
+      send_submatrix(w, A);
+      recv_submatrix(e, A);
+
+      recv_submatrix(s, B);
+      send_submatrix(n, B)
     }
     else
-    { muladd(); % C = C + A*B
-      recv_submatrix(n, A);
-      recv_submatrix(w, B);
-      send_submatrix(s, A);
-      send_submatrix(e, B)
+    { muladd(A, B, C);
+      recv_submatrix(e, A);
+      send_submatrix(w, A);
+
+      recv_submatrix(s, B);
+      send_submatrix(n, B)
     };
 
   memfree(A);
@@ -100,6 +132,6 @@ proc main() is
   var j;
   par i in [0 for R], j in [0 for R] do
     cell(i, j, y[(j*R)+i], y[(j*R)+((i+1) rem R)], 
-                 x[(i*R)+j], x[(i*R)+((j+1) rem R)])
+               x[(i*R)+j], x[(i*R)+((j+1) rem R)])
 }
 
