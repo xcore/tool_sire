@@ -1,11 +1,11 @@
 val STORAGE     is 1000; % Storage per leaf
-val N           is 1024; % Number of leaves (storage units)
+val N           is 8; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
 
-val NUM_STEPS   is 1000;
+val NUM_STEPS   is 1;
 
 val RDONLY is 0x0001;
 val BINARY is 0x8000;
@@ -216,8 +216,8 @@ proc randwalk(chanend c, val nVertices, val nEdges, val startVertex) is
   var i;
   vertex := startVertex;
   for i in [0 for NUM_STEPS] do
-  { printstr("Visited ");
-    printvalln(vertex);
+  { %printstr("Visited ");
+    %printvalln(vertex);
     read(c, vertex, ptr1);
     read(c, vertex+1, ptr2);
     if vertex = nVertices-1 
@@ -233,8 +233,8 @@ proc randwalk(chanend c, val nVertices, val nEdges, val startVertex) is
       %printstr("  Leaving on ");printvalln(vertex)
     }
     else
-    { vertex := rand() rem nVertices;
-      printstr("Jumping to ");printvalln(vertex)
+    { vertex := rand() rem nVertices
+    %; printstr("Jumping to ");printvalln(vertex)
     }
   }
 }

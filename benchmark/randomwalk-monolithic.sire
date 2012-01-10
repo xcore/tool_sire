@@ -1,0 +1,80 @@
+val STORAGE     is 8000;
+val NUM_STEPS   is 1;
+
+val RDONLY is 0x0001;
+val BINARY is 0x8000;
+
+proc initgraph(var graph[1], var nVertices, var nEdges) is
+{ var fd;
+  var i;
+  var v;
+  fd := fopen("graph", RDONLY or BINARY);
+  %assert fd ~= (-1);
+  fread(fd, nVertices);
+  fread(fd, nEdges);
+  printval(nVertices); 
+  printstrln(" vertices");
+  printval(nEdges); 
+  printstrln(" edges");
+  for i in [0 for nVertices+nEdges] do
+  { fread(fd, v);
+    graph[i] := v
+  };
+  %assert i = (nVertices + nEdges);
+  fclose(fd)
+}
+
+proc dumpgraph(var graph[1], val nVertices, val nEdges) is
+{ var i;
+  for i in [0 for nVertices+nEdges] do
+    printvalln(graph[i])
+}
+
+proc randwalk(var graph[1], val nVertices, val nEdges, val startVertex) is
+{ var ptr1;
+  var ptr2;
+  var edge;
+  var vertex;
+  var i;
+  vertex := startVertex;
+  for i in [0 for NUM_STEPS] do
+  { %printstr("Visited ");
+    %printvalln(vertex);
+    ptr1 := graph[vertex];
+    ptr2 := graph[vertex+1];
+    if vertex = nVertices-1 
+    then
+    { edge := rand() rem (nVertices+nEdges-ptr1);
+      vertex := graph[ptr1 + edge]
+      %printstr("  Leaving on ");printvalln(vertex)
+    }
+    else if ptr2 > ptr1 
+    then
+    { edge := rand() rem (ptr2 - ptr1);
+      vertex := graph[ptr1 + edge]
+      %printstr("  Leaving on ");printvalln(vertex)
+    }
+    else
+    { vertex := rand() rem nVertices
+    %; printstr("Jumping to ");printvalln(vertex)
+    }
+  }
+}
+
+proc main() is
+{ var graph[];
+  var nVertices;
+  var nEdges;
+  
+  % Allocate storage
+  memalloc(graph, STORAGE);
+  printstr("Allocated an array of length "); printvalln(STORAGE);
+  
+  initgraph(graph, nVertices, nEdges);
+  %dumpgraph(graph, nVertices, nEdges);
+  randwalk(graph, nVertices, nEdges, 0);
+  
+  % Free storage
+  memfree(graph)
+}
+
