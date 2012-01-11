@@ -53,6 +53,7 @@ divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System builtins
 procid   = func_decl('procid',   []) # Required for implementation of on and connect
+time     = func_decl('time',     [])
 crc      = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand     = func_decl('rand',     [], mobile=True)
 memalloc = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
@@ -75,6 +76,7 @@ builtins = {
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,
+  'time'        : time,
   'crc'         : crc,
   'rand'        : rand,
   'memalloc'    : memalloc,

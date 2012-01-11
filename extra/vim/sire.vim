@@ -24,7 +24,7 @@ syn keyword     sBuiltin     printstr printstrln println
 syn keyword     sBuiltin     fopen fwrite fread fclose
 syn keyword     sBuiltin     malloc free
 syn keyword     sBuiltin     mulf8_24 divf8_24
-syn keyword     sBuiltin     procid crc rand
+syn keyword     sBuiltin     procid time crc rand
 
 " Control structures
 syn keyword	sStructure   if then else

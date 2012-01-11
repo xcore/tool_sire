@@ -61,6 +61,7 @@ builtin_conversion = {
   'div8_24'    : 'div8_24',
   # System
   'procid'     : '_procId',
+  'time'       : 'time',
   'crc'        : 'crc',
   'rand'       : 'rand',
 }

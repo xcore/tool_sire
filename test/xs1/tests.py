@@ -89,6 +89,7 @@ xs1_feature_tests = [
   Test('builtin_fileio',     f=D),
   Test('builtin_mem',        f=D),
   Test('builtin_crc',        f=D),
+  Test('builtin_time',       f=D),
   Test('builtin_rand',       f=D),
   Test('builtin_procid', [16], D),
 

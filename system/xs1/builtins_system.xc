@@ -1,6 +1,14 @@
 #define _POLYNOMIAL 0xEDB88320
 #include <math.h>
 
+int time() {
+  timer t;
+  unsigned v;
+  t :> v;
+  ASSERT(v < 0x7fffffff);
+  return (int) v;
+}
+
 int crc(int x) {
   unsigned y = (unsigned) x;
   crc32(y, ~0, _POLYNOMIAL);
