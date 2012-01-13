@@ -1,9 +1,10 @@
 val STORAGE     is 1000; % Storage per leaf
-val N           is 1024; % Number of leaves (storage units)
+val N           is 16; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
-val READ        is 0;
-val WRITE       is 1;
-val HALT        is 2;
+val SYNC        is 0;
+val READ        is 1;
+val WRITE       is 2;
+val HALT        is 3;
 
 val NUM_STEPS   is 100;
 
@@ -18,7 +19,10 @@ proc leaf(chanend c) is
   var index;
   var value;
   var running;
-  
+
+  % Synchronise
+  c ! SYNC;
+
   % Read 'base' value configuration message
   c ? value;
   c ? base;
@@ -51,13 +55,20 @@ proc leaf(chanend c) is
 }
 
 proc branch(chanend root, chanend left, chanend right) is
-{ var depth;
+{ var sync;
+  var depth;
   var base;
   var interval;
   var query;
   var index;
   var value;
+  var cmp;
   var running;
+  
+  % Synchronise
+  left ? sync;
+  right ? sync;
+  root ! SYNC;
  
   % Configure: depth, base, interval
   root  ? depth;
@@ -69,6 +80,7 @@ proc branch(chanend root, chanend left, chanend right) is
   right ! base + (interval/2);
   left  ! interval/2;
   right ! interval/2;
+  cmp := base+(interval/2);
   
   % Run
   running := true;
@@ -77,7 +89,7 @@ proc branch(chanend root, chanend left, chanend right) is
     if query = READ
     then 
     { root ? index;
-      if index < base+(interval/2)
+      if index < cmp
       then
       { left ! READ;
         left ! index;
@@ -94,7 +106,7 @@ proc branch(chanend root, chanend left, chanend right) is
     then
     { root ? index;
       root ? value;
-      if index < base+(interval/2)
+      if index < cmp
       then
       { left ! WRITE;
         left ! index;
@@ -115,11 +127,16 @@ proc branch(chanend root, chanend left, chanend right) is
 }
 
 proc serve(chanend x, chanend root) is
-{ var query;
+{ var sync;
+  var query;
   var index;
   var value;
   var running;
- 
+
+  % Synchronise
+  root ? sync;
+  x ! SYNC;
+
   % Configure the structure
   root ! 0;
   root ! 0;
@@ -162,6 +179,18 @@ proc array(chanend x) is
     par i in [0 for N-1] do
       branch(c[i], c[(2*i)+1], c[(2*i)+2])
   }
+
+  %{ { leaf(c[0]) || serve(x, c[0]) } ||
+  %  par i in [0 for N-1] do 
+  %  { leaf(c[(N-1)+i+1]) || 
+  %    branch(c[i], c[(2*i)+1], c[(2*i)+2])
+  %  }
+  %}
+}
+
+proc sync(chanend c) is
+{ var sync;
+  c ? sync
 }
 
 proc read(chanend c, val index, var value) is
@@ -240,11 +269,11 @@ proc randwalk(chanend c, val nVertices, val nEdges, val startVertex) is
 }
 
 proc main() is
-  server(chan x)
-    array(x)
+{ chan x;
   { var nVertices;
     var nEdges;
     var t;
+    sync(x);
     printstr("Allocated an array of length "); printvalln(LENGTH);
     initgraph(x, nVertices, nEdges);
     %dumpgraph(x, nVertices, nEdges);
@@ -252,5 +281,7 @@ proc main() is
     randwalk(x, nVertices, nEdges, 0);
     printvalln(time() - t);
     halt(x)
-  }
+  } ||
+  array(x)
+}
 

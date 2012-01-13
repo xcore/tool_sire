@@ -13,6 +13,7 @@ from typedefs import *
 SVAL_PARAM = Param('v', T_VAL_SINGLE, None) 
 SREF_PARAM = Param('v', T_REF_SINGLE, None) 
 AVAL_PARAM = Param('v', T_REF_ARRAY, None) 
+CHANEND_PARAM = Param('v', T_CHANEND_SINGLE, None) 
 
 class Builtin(object):
   """
@@ -47,6 +48,14 @@ fwrite      = proc_decl('fwrite', [SVAL_PARAM, SVAL_PARAM])
 fread       = proc_decl('fread',  [SVAL_PARAM, SREF_PARAM])
 fclose      = proc_decl('fclose', [SVAL_PARAM])
 
+# Communication builtins
+inp        = proc_decl('inp',      [CHANEND_PARAM, SREF_PARAM])
+out        = proc_decl('out',      [CHANEND_PARAM, SVAL_PARAM])
+inct       = proc_decl('inct',     [CHANEND_PARAM, SVAL_PARAM])
+outct      = proc_decl('outct',    [CHANEND_PARAM, SVAL_PARAM])
+chkctend   = proc_decl('chkctend', [CHANEND_PARAM])
+outctend   = proc_decl('outctend', [CHANEND_PARAM])
+
 # Fixed point builtins
 mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
@@ -73,6 +82,12 @@ builtins = {
   'fwrite'      : fwrite,
   'fread'       : fread,
   'fclose'      : fclose,
+  'inp'         : inp,
+  'out'         : out,
+  'inct'        : inct,
+  'outct'       : outct,
+  'chkctend'    : chkctend,
+  'outctend'    : outctend,
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,

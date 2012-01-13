@@ -308,12 +308,12 @@ class LabelChans(NodeWalker):
         if (isinstance(x.elem, ast.ElemId)
             and x.elem.symbol.type == T_CHAN_SINGLE):
           debug(self.debug, 'single arg channel {}:'.format(x.elem.name))
-          uses.add(ChanUse(x.elem.name, None, c.elem.symbol))
+          uses.add(ChanUse(x.elem.name, None, x.elem.symbol))
 
         elif (isinstance(x.elem, ast.ElemSub)
             and x.elem.symbol.type == T_CHAN_ARRAY):
           debug(self.debug, 'subscript arg channel {}:'.format(x.elem.name))
-          uses.add(ChanUse(x.elem.name, x.elem.expr, c.elem.symbol))
+          uses.add(ChanUse(x.elem.name, x.elem.expr, x.elem.symbol))
 
         else:
           pass

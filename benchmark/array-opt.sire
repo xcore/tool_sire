@@ -1,32 +1,26 @@
-val STORAGE     is 1000; % Storage per leaf
-val N           is 1024; % Number of leaves (storage units)
+val STORAGE     is 4;  % Storage per leaf
+val N           is 16; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
 
-val NUM_STEPS   is 100;
-
-val RDONLY is 0x0001;
-val BINARY is 0x8000;
-
 proc leaf(chanend c) is
 { var base;
-  %var data[STORAGE];
-  var data[];
+  var data[STORAGE];
   var query;
   var index;
   var value;
   var running;
-  
+
+  % Synchronise
+  c ! 0;
+
   % Read 'base' value configuration message
   c ? value;
   c ? base;
   c ? value;
- 
-  % Allocate storage
-  memalloc(data, STORAGE);
-
+  
   % Run
   running := true;
   while running do 
@@ -44,20 +38,23 @@ proc leaf(chanend c) is
     }
     else % HALT
       running := false
-  };
-
-  % Free storage
-  memfree(data)
+  }
 }
 
 proc branch(chanend root, chanend left, chanend right) is
 { var depth;
   var base;
   var interval;
+  var cmp;
   var query;
   var index;
   var value;
   var running;
+ 
+  % Synchronise
+  left ? depth;
+  right ? depth;
+  root ! 0;
  
   % Configure: depth, base, interval
   root  ? depth;
@@ -69,6 +66,7 @@ proc branch(chanend root, chanend left, chanend right) is
   right ! base + (interval/2);
   left  ! interval/2;
   right ! interval/2;
+  cmp := base + (interval/2);
   
   % Run
   running := true;
@@ -77,7 +75,7 @@ proc branch(chanend root, chanend left, chanend right) is
     if query = READ
     then 
     { root ? index;
-      if index < base+(interval/2)
+      if index < cmp
       then
       { left ! READ;
         left ! index;
@@ -94,7 +92,7 @@ proc branch(chanend root, chanend left, chanend right) is
     then
     { root ? index;
       root ? value;
-      if index < base+(interval/2)
+      if index < cmp
       then
       { left ! WRITE;
         left ! index;
@@ -119,7 +117,11 @@ proc serve(chanend x, chanend root) is
   var index;
   var value;
   var running;
- 
+
+  % Synchronise
+  root ? query;
+  x ! 0;
+
   % Configure the structure
   root ! 0;
   root ! 0;
@@ -164,6 +166,11 @@ proc array(chanend x) is
   }
 }
 
+proc sync(chanend c) is
+{ var sync;
+  c ? sync
+}
+
 proc read(chanend c, val index, var value) is
 { c ! READ;
   c ! index;
@@ -176,81 +183,36 @@ proc write(chanend c, val index, val value) is
   c ! value
 }
 
-proc halt(chanend c) is
-  c ! HALT
-
-proc initgraph(chanend c, var nVertices, var nEdges) is
-{ var fd;
-  var i;
-  var v;
-  fd := fopen("graph", RDONLY or BINARY);
-  %assert fd ~= (-1);
-  fread(fd, nVertices);
-  fread(fd, nEdges);
-  printval(nVertices); 
-  printstrln(" vertices");
-  printval(nEdges); 
-  printstrln(" edges");
-  for i in [0 for nVertices+nEdges] do
-  { fread(fd, v);
-    write(c, i, v)
-  };
-  %assert i = (nVertices + nEdges);
-  fclose(fd)
-}
-
-proc dumpgraph(chanend c, val nVertices, val nEdges) is
-{ var i;
-  var v;
-  for i in [0 for nVertices+nEdges] do
-  { read(c, i, v);
-    printvalln(v)
-  }
-}
-
-proc randwalk(chanend c, val nVertices, val nEdges, val startVertex) is
-{ var ptr1;
-  var ptr2;
-  var edge;
-  var vertex;
-  var i;
-  vertex := startVertex;
-  for i in [0 for NUM_STEPS] do
-  { %printstr("Visited ");
-    %printvalln(vertex);
-    read(c, vertex, ptr1);
-    read(c, vertex+1, ptr2);
-    if vertex = nVertices-1 
-    then
-    { edge := rand() rem (nVertices+nEdges-ptr1);
-      read(c, ptr1 + edge, vertex)
-      %printstr("  Leaving on ");printvalln(vertex)
-    }
-    else if ptr2 > ptr1 
-    then
-    { edge := rand() rem (ptr2 - ptr1);
-      read(c, ptr1 + edge, vertex)
-      %printstr("  Leaving on ");printvalln(vertex)
-    }
-    else
-    { vertex := rand() rem nVertices
-    %; printstr("Jumping to ");printvalln(vertex)
-    }
-  }
-}
-
 proc main() is
-  server(chan x)
+{ server(chan x)
     array(x)
-  { var nVertices;
-    var nEdges;
+  { var value;
+    var i;
+    var total;
     var t;
-    printstr("Allocated an array of length "); printvalln(LENGTH);
-    initgraph(x, nVertices, nEdges);
-    %dumpgraph(x, nVertices, nEdges);
-    t := time();
-    randwalk(x, nVertices, nEdges, 0);
-    printvalln(time() - t);
-    halt(x)
-  }
+    
+    sync(x);
+
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      read(x, i, value);
+      total := total + (time()-t)
+    };
+    printstr("Average read time (cycles): ");
+    printvalln(total/LENGTH);
+    
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      write(x, i, i);
+      total := total + (time()-t)
+    };
+    printstr("Average write time (cycles): ");
+    printvalln(total/LENGTH);
+
+    x ! HALT
+  } 
+}
+
 

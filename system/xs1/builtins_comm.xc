@@ -1,0 +1,6 @@
+#define _INP(c, v)   asm("in %0, res[%1]" : "=r"(v) : "r"(c))
+#define _OUT(c, v)   asm("out res[%0], %1" :: "r"(c), "r"(v))
+#define _INCT(c, v)  asm("inct res[%1], %0" : "=r"(v) : "r"(c))
+#define _OUTCT(c, v) asm("outct res[%0], %1" :: "r"(c), "r"(v))
+#define _CHKCTEND(c) asm("chkct res[%0]," S(XS1_CT_END) :: "r"(c))
+#define _OUTCTEND(c) asm("outct res[%0]," S(XS1_CT_END) :: "r"(c))

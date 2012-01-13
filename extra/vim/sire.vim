@@ -22,6 +22,7 @@ syn keyword     sBuiltin     printval printvalln
 syn keyword     sBuiltin     printhex printhexln
 syn keyword     sBuiltin     printstr printstrln println
 syn keyword     sBuiltin     fopen fwrite fread fclose
+syn keyword     sBuiltin     in out inct outct chkctend outctend
 syn keyword     sBuiltin     malloc free
 syn keyword     sBuiltin     mulf8_24 divf8_24
 syn keyword     sBuiltin     procid time crc rand

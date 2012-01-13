@@ -151,6 +151,8 @@ inline
 void FREER(unsigned r) {
   asm("freer res[%0]" :: "r"(r));
 }
+// TODO: temporary hack for inline compiler error
+//#define FREER(x) asm("freer res[%0]" :: "r"(x))
 
 // Create the channel identifier (for channel 0) for a given destination
 // The node bits are written in MSB first, so need to be reversed

@@ -1,0 +1,10 @@
+proc main() is
+{ var i;
+  var t1;
+  var t2;
+  t1 := time();
+  for i in [0 for 10000] do
+    skip;
+  t2 := time();
+  printvalln(t2-t1)
+}
