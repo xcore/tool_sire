@@ -77,7 +77,7 @@ class TranslateXS1(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, sig, child, buf, short_comm=True):
+  def __init__(self, sig, child, buf, short_comm=False):
     super(TranslateXS1, self).__init__()
     self.sig = sig
     self.child = child

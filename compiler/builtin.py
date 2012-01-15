@@ -51,7 +51,7 @@ fclose      = proc_decl('fclose', [SVAL_PARAM])
 # Communication builtins
 inp        = proc_decl('inp',      [CHANEND_PARAM, SREF_PARAM])
 out        = proc_decl('out',      [CHANEND_PARAM, SVAL_PARAM])
-inct       = proc_decl('inct',     [CHANEND_PARAM, SVAL_PARAM])
+inct       = proc_decl('inct',     [CHANEND_PARAM, SREF_PARAM])
 outct      = proc_decl('outct',    [CHANEND_PARAM, SVAL_PARAM])
 chkctend   = proc_decl('chkctend', [CHANEND_PARAM])
 outctend   = proc_decl('outctend', [CHANEND_PARAM])

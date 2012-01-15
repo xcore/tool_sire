@@ -1,9 +1,9 @@
 val STORAGE     is 4;  % Storage per leaf
-val N           is 16; % Number of leaves (storage units)
+val N           is 8; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
-val READ        is 0;
-val WRITE       is 1;
-val HALT        is 2;
+val READ        is 0x5;
+val WRITE       is 0x6;
+val HALT        is 0x7;
 
 proc sync(chanend c) is
 { var sync;
@@ -11,21 +11,17 @@ proc sync(chanend c) is
 }
 
 proc read(chanend c, val index, var value) is
-{ %c ! READ;
-  %c ! index;
-  %c ? value
-  outct(c, READ);
+{ out(c, READ);
   out(c, index);
-  in(c, value);
+  inp(c, value);
   chkctend(c);
   outctend(c)
 }
 
 proc write(chanend c, val index, val value) is
-{ %c ! WRITE;
-  %c ! index;
-  %c ! value
-  outct(c, WRITE);
+{ out(c, WRITE);
+  outctend(c);
+  chkctend(c);
   out(c, index);
   out(c, value);
   outctend(c);
@@ -33,7 +29,10 @@ proc write(chanend c, val index, val value) is
 }
 
 proc halt(chanend c) is
-  c ! HALT
+{ out(c, HALT);
+  outctend(c);
+  chkctend(c)
+}
 
 proc leaf(chanend c) is
 { var base;
@@ -54,20 +53,29 @@ proc leaf(chanend c) is
   % Run
   running := true;
   while running do 
-  { c ? query;
+  { inp(c, query);
     if query = READ
     then
-    { c ? index;
-      c ! data[index-base]
+    { inp(c, index);
+      out(c, data[index-base]);
+      outctend(c);
+      chkctend(c)
     }
     else if query = WRITE
     then
-    { c ? index;
-      c ? value;
+    { chkctend(c);
+      outctend(c);
+      inp(c, index);
+      inp(c, value);
+      chkctend(c);
+      outctend(c);
       data[index-base] := value
     }
     else % HALT
+    { chkctend(c);
+      outctend(c);
       running := false
+    }
   }
 }
 
@@ -82,8 +90,8 @@ proc branch(chanend root, chanend left, chanend right) is
   var running;
  
   % Synchronise
-  left ? depth;
-  right ? depth;
+  sync(left);
+  sync(right);
   root ! 0;
  
   % Configure: depth, base, interval
@@ -101,42 +109,38 @@ proc branch(chanend root, chanend left, chanend right) is
   % Run
   running := true;
   while running do
-  { root ? query;
+  { inp(root, query);
     if query = READ
     then 
-    { root ? index;
+    { inp(root, index);
       if index < cmp
       then
-      { left ! READ;
-        left ! index;
-        left ? value
-      }
+        read(left, index, value)
       else
-      { right ! READ;
-        right ! index;
-        right ? value
-      };
-      root ! value
+        read(right, index, value);
+      out(root, value);
+      outctend(root);
+      chkctend(root)
     }
     else if query = WRITE
     then
-    { root ? index;
-      root ? value;
+    { chkctend(root);
+      outctend(root);
+      inp(root, index);
+      inp(root, value);
+      chkctend(root);
+      outctend(root);
       if index < cmp
       then
-      { left ! WRITE;
-        left ! index;
-        left ! value
-      }
+        write(left, index, value)
       else
-      { right ! WRITE;
-        right ! index;
-        right ! value
-      }
+        write(right, index, value)
     }
     else % HALT
-    { left ! HALT;
-      right ! HALT;
+    { chkctend(root);
+      outctend(root);
+      halt(left);
+      halt(right);
       running := false
     }
   }
@@ -160,16 +164,10 @@ proc serve(chanend x, chanend root) is
   % Run
   running := true;
   while running do 
-  { %x ? query;
-    inct(x, query);
+  { inp(x, query);
     if query = READ
     then 
-    { %x ? index;
-      %root ! READ;
-      %root ! index;
-      %root ? value;
-      %x ! value
-      in(x, index);
+    { inp(x, index);
       read(root, index, value);
       out(x, value);
       outctend(x);
@@ -177,19 +175,18 @@ proc serve(chanend x, chanend root) is
     }
     else if query = WRITE
     then
-    { %x ? index;
-      %x ? value;
-      %root ! WRITE;
-      %root ! index;
-      %root ! value
-      in(x, index);
-      in(x, value);
+    { chkctend(x);
+      outctend(x);
+      inp(x, index);
+      inp(x, value);
       write(root, index, value);
       chkctend(x);
       outctend(x)
     }
     else % HALT
-    { root ! HALT;
+    { chkctend(x);
+      outctend(x);
+      halt(root);
       running := false
     }
   }
@@ -216,6 +213,9 @@ proc main() is
     var t;
     
     sync(x);
+
+    %read(x, 0, value);
+    %write(x, 0, 0);
 
     total := 0;
     for i in [0 for LENGTH] do

@@ -2,6 +2,11 @@ proc foo(chanend c) is
 { outctend(c);
   chkctend(c);
   out(c, 0);
+  out(c, 0);
+  outct(c, 0x7);
+  out(c, 0);
+  out(c, 0);
+  out(c, 0);
   outctend(c);
   chkctend(c)
 }
@@ -10,6 +15,11 @@ proc bar(chanend c) is
 { var v;
   chkctend(c);
   outctend(c);
+  inp(c, v);
+  inp(c, v);
+  inct(c, v);
+  inp(c, v);
+  inp(c, v);
   inp(c, v);
   chkctend(c);
   outctend(c)

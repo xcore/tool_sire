@@ -55,6 +55,8 @@ param_conversions = {
   T_CHANEND_SINGLE : [
     T_CHANEND_SINGLE,
     T_CHANEND_SUB,
+    T_CHANEND_SERVER_SINGLE,
+    T_CHANEND_CLIENT_SINGLE,
     T_CHAN_SINGLE,
     T_CHAN_SUB,
     ],
@@ -217,11 +219,13 @@ class Semantics(NodeWalker):
       # If argument y has no type, i.e. not defined
       if not t:
         self.nodef_error(node.name, node.coord)
+        debug(self.debug, 'No type for argument')
         return False
 
       # Check it against each valid conversion
       if not any(t==z for z in param_conversions[x.type]):
         self.nodef_error(node.name, node.coord)
+        debug(self.debug, 'No valid conversion')
         return False
     
     return True
