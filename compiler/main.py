@@ -235,7 +235,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 1. Distribute processes
   vmsg(v, "Expanding processes")
   ExpandProcs(sig, ast).walk_program(ast)
-  if errorlog.any(): raise Error('in process disribution')
+  if errorlog.any(): raise Error()
 
   # 2. Flatten nested parallel composition
   #vmsg(v, "Flattening nested parallel composition")
@@ -244,7 +244,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 3. Distribute processes
   vmsg(v, "Distributing processes")
   InsertOns(device, errorlog).walk_program(ast, v)
-  if errorlog.any(): raise Error('in process disribution')
+  if errorlog.any(): raise Error()
 
   # 4. Label process locations
   vmsg(v, "Labelling processes")
@@ -253,7 +253,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 5. Label channels
   vmsg(v, "Labelling channels")
   LabelChans(device, errorlog).walk_program(ast)
-  if errorlog.any(): raise Error('in channel labelling')
+  if errorlog.any(): raise Error()
 
   # 6. Label connections
   vmsg(v, "Labelling connections")
@@ -365,7 +365,7 @@ def main(args):
   
   # Handle any specific compilation errors
   except Error as e:
-    sys.stderr.write('Error: {}\n'.format(e))
+    #sys.stderr.write('Error: {}\n'.format(e))
     return 1
   
   # Parser attribute error
