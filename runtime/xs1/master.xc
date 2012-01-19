@@ -33,7 +33,8 @@ void initMaster() {
 void initMain() {
   
   // Claim a thread
-  unsigned t = GETR_ASYNC_THREAD();
+  unsigned t;
+  GETR_ASYNC_THREAD(t);
   
   // Load the address of '_main'
   asm("ldap r11, " LABEL_MAIN "; init t[%0]:pc, r11" :: "r"(t) : "r11");

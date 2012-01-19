@@ -74,5 +74,9 @@ if __name__ == '__main__':
   # Run all the tests
   sys.argv.pop()
   sys.argv.append('-v')
-  unittest.main()
+  try:
+    unittest.main()
+  except KeyboardInterrupt:
+    sys.exit(1)
+    raise
 

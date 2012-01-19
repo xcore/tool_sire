@@ -24,12 +24,15 @@ void receiveResults    (unsigned, int, unsigned[]);
  */
 void _createProcess(unsigned dest, unsigned closure[]) 
 {
-  unsigned threadId = THREAD_ID();
-  unsigned c = thread_chans[threadId];
-  unsigned destId = GEN_CHAN_RI_0(dest);
+  unsigned threadId;
+  unsigned c;
+  unsigned destResID; 
+  THREAD_ID(threadId);
+  c = thread_chans[threadId];
+  CHAN_RI_0(dest, destResID);
 
   // Initialise the connection with the host
-  initHostConnection(c, destId);
+  initHostConnection(c, destResID);
   
   // Transfer closure data
   sendClosure(c, closure);
@@ -44,11 +47,11 @@ void _createProcess(unsigned dest, unsigned closure[])
 /*
  * Initialise the connection with the host thread.
  */
-void initHostConnection(unsigned c, unsigned destId) {
+void initHostConnection(unsigned c, unsigned destResID) {
 
   // Connected to: Master spawn channel=======================
   // Initiate conneciton by sending chanResId
-  SETD(c, destId);
+  SETD(c, destResID);
   OUT(c, c);
 
   // Close the current channel connection 
@@ -57,8 +60,8 @@ void initHostConnection(unsigned c, unsigned destId) {
   
   // Connected to: Slave spawn channel========================
   // Open new connection with spawned thread and get their CRI
-  destId = IN(c);
-  SETD(c, destId);
+  IN(c, destResID);
+  SETD(c, destResID);
   
   // Sync and close the connection
   CHKCT_END(c);
@@ -162,7 +165,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   
     // Send the jump index
     OUTS(c, procIndex);
-    flag = INS(c);
+    INS(c, flag);
     
     // If the host doesn't have the procedure, send it.
     if(flag) {
@@ -212,14 +215,16 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
     
     case t_arg_ALIAS:
       for(int j=0; j<(int) closure[index+1]; j++) {
-        unsigned value = INS(c);
+        unsigned value;
+        INS(c, value);
         asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
       }
       index += 3;
       break;
     
     case t_arg_VAR:
-      { unsigned value = INS(c);
+      {unsigned value;
+      INS(c, value);
       asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+1]), "r"(0));}
       index += 2;
       break;

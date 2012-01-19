@@ -23,9 +23,11 @@ void memFree(unsigned p) {
 void readSSwitchReg(int coreId, int reg, unsigned &data) {
 
   // Get and set a chanend
-  unsigned switchCRI = GEN_CONFIG_RI(coreId); 
-  unsigned c = GETR_CHANEND();
-  asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
+  unsigned switchCRI; 
+  unsigned c;
+  switchCRI = CONFIG_RI(coreId); 
+  GETR_CHANEND(c);
+  SETD(c, switchCRI);
 
   // READC
   asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_READC));
@@ -54,9 +56,11 @@ void readSSwitchReg(int coreId, int reg, unsigned &data) {
 void writeSSwitchReg(int coreId, int reg, unsigned data) {
 
   // Get and set a chanend
-  unsigned switchCRI = GEN_CONFIG_RI(coreId); 
-  unsigned c = GETR_CHANEND();
-  asm("setd res[%0], %1" :: "r"(c), "r"(switchCRI));
+  unsigned switchCRI; 
+  unsigned c;
+  switchCRI = CONFIG_RI(coreId); 
+  GETR_CHANEND(c);
+  SETD(c, switchCRI);
 
   // WRITEC token
   asm("outct res[%0], %1" :: "r"(c), "r"(XS1_CT_WRITEC));

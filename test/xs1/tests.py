@@ -57,8 +57,8 @@ xs1_example_tests = [
   Test('tree',              [16], p=[('D','2')]),
   Test('cube2d',            [4]),
   Test('cube3d',            [16]),
-  Test('distributed-array', [5],  p=[('N', '4')])
-  Test('farm',              [16], p=[('N', '16')])
+  Test('distributed-array', [5],  p=[('N', '4')]),
+  Test('farm',              [16], p=[('N', '16')]),
 
   # These exceed 8 threads on some nodes.
   #Test('array2d',           [16], p=[('N','4')]),
@@ -87,7 +87,7 @@ xs1_feature_tests = [
   Test('builtin_fixedpoint', f=D),
   Test('builtin_printing',   f=D),
   Test('builtin_fileio',     f=D),
-  Test('builtin_comm'),
+  Test('builtin_comm',   [16]),
   Test('builtin_mem',        f=D),
   Test('builtin_crc',        f=D),
   Test('builtin_time',       f=D),
@@ -183,10 +183,6 @@ def run_test(self, name, path, num_cores, cmp_flags, param):
   
   except Exception as e:
     sys.stderr.write('Error: {}\n'.format(e))
-    raise
-  
-  except:
-    sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
     raise
 
 def generate_xs1_example_tests(path):

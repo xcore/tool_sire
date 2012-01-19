@@ -15,238 +15,227 @@ typedef char bool;
 #define false (0)
 
 // String wrapper
-#define S_(x) #x
-#define S(x) S_(x)
+#define WRAPPER(x) #x
+#define S(x) WRAPPER(x)
 
 // Raise a runtime exception
-inline
-void EXCEPTION(int e) {
-  asm("add r0, r0, %0" :: "r"(e));
-  asm("ldc r11, 0 ; ecallf r11" ::: "r11");
-}
+#define EXCEPTION(value) \
+do { \
+  asm("add r0, r0, %0" :: "r"(value)); \
+  asm("ldc r11, 0 ; ecallf r11" ::: "r11"); \
+} while(0)
 
 // Assert a value is true (!=0)
-inline
-void ASSERT(int v) {
-  asm("ecallf %0" :: "r"(v));
-}
+#define ASSERT(value) \
+do { \
+  asm("ecallf %0" :: "r"(value)); \
+} while(0)
 
 // Set channel destination
-inline
-void SETD(unsigned c, unsigned dest) {
-  asm("setd res[%0], %1" :: "r"(c), "r"(dest));
-}
+#define SETD(c, destID) \
+do { \
+  asm("setd res[%0], %1" :: "r"(c), "r"(destID)); \
+} while(0)
 
 // OUTCT CT_END
-inline
-void OUTCT_END(unsigned c) {
-  asm("outct res[%0], " S(XS1_CT_END) :: "r"(c));
-}
+#define OUTCT_END(c) \
+do { \
+  asm("outct res[%0], " S(XS1_CT_END) :: "r"(c)); \
+} while(0)
 
 // CHKCT CT_END
-inline
-void CHKCT_END(unsigned c) {
-  asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c));
-}
+#define CHKCT_END(c) \
+do { \
+  asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c)); \
+} while(0)
 
 // OUTCT CT_ACK
-inline
-void OUTCT_ACK(unsigned c) {
-  //asm("outct res[%0], 0x5" :: "r"(c));
-  asm("outct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-}
+#define OUTCT_ACK(c) \
+do { \
+  asm("outct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
+} while(0)
 
 // CHKCT CT_ACK
-inline
-void CHKCT_ACK(unsigned c) {
-  //asm("chkct res[%0], 0x5" :: "r"(c));
-  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c));
-}
+#define CHKCT_ACK(c) \
+do { \
+  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
+} while(0)
 
 // Asynchronous out
-inline
-void OUT(unsigned c, unsigned v) {
-  asm("out res[%0], %1" :: "r"(c), "r"(v));
-}
+#define OUT(c, value) \
+do { \
+  asm("out res[%0], %1" :: "r"(c), "r"(value)); \
+} while(0)
 
 // Asynchronous in
-inline
-unsigned IN(unsigned c) {
-  unsigned v;
-  asm("in %0, res[%1]" : "=r"(v) : "r"(c));
-  return v;
-}
+#define IN(c, value) \
+do { \
+  asm("in %0, res[%1]" : "=r"(value) : "r"(c)); \
+} while(0)
 
 // Synchronised out
-inline
-void OUTS(unsigned c, unsigned v) {
-  asm("outct res[%0], " S(XS1_CT_END) ";"
-      "chkct res[%0], " S(XS1_CT_END) ";"
-      "out   res[%0], %1;" 
-      "outct res[%0], " S(XS1_CT_END) ";"
-      "chkct res[%0], " S(XS1_CT_END) ";"
-      :: "r"(c), "r"(v));
-}
+#define OUTS(c, value) \
+do { \
+  asm("outct res[%0], " S(XS1_CT_END) ";" \
+      "chkct res[%0], " S(XS1_CT_END) ";" \
+      "out   res[%0], %1;" \
+      "outct res[%0], " S(XS1_CT_END) ";" \
+      "chkct res[%0], " S(XS1_CT_END) ";" \
+      :: "r"(c), "r"(value)); \
+} while(0)
 
 // Synchronised in
-inline
-unsigned INS(unsigned c) {
-  unsigned v;
-  asm("chkct  res[%1], " S(XS1_CT_END) ";" 
-      "outct  res[%1], " S(XS1_CT_END) ";" 
-      "in %0, res[%1];"
-      : "=r"(v) : "r"(c));
-  asm("chkct  res[%0], " S(XS1_CT_END) ";"
-      "outct  res[%0], " S(XS1_CT_END) ";"
-      :: "r"(c));
-  return v;
-}
+#define INS(c, value) \
+do {\
+  asm("chkct  res[%1], " S(XS1_CT_END) ";" \
+      "outct  res[%1], " S(XS1_CT_END) ";" \
+      "in %0, res[%1];" \
+      : "=r"(value) : "r"(c)); \
+  asm("chkct  res[%0], " S(XS1_CT_END) ";" \
+      "outct  res[%0], " S(XS1_CT_END) ";" \
+      :: "r"(c)); \
+} while(0)
 
 // Get a chanend
-inline
-unsigned GETR_CHANEND() {
-  unsigned c;
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-  if (c == 0) {
-    EXCEPTION(et_INSUFFICIENT_CHANNELS);
-  }
-  return c;
-}
+#define GETR_CHANEND(resID) \
+do { \
+  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(resID)); \
+  if (resID == 0) { \
+    EXCEPTION(et_INSUFFICIENT_CHANNELS); \
+  } \
+} while(0)
 
 // Get a synchroniser
-inline
-unsigned GETR_SYNC() {
-  unsigned s;
-  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(s));
-  if (s == 0) {
-    EXCEPTION(et_INSUFFICIENT_SYNCS);
-  }
-  return s;
-}
+#define GETR_SYNC(resID) \
+do { \
+  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(resID)); \
+  if (resID == 0) { \
+    EXCEPTION(et_INSUFFICIENT_SYNCS); \
+  } \
+} while(0)
 
 // Get an asynchronous thread
-inline
-unsigned GETR_ASYNC_THREAD() {
-  unsigned t;
-  asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(t));
-  if (t == 0) {
-    EXCEPTION(et_INSUFFICIENT_THREADS);
-  }
-  return t;
-}
+#define GETR_ASYNC_THREAD(resID) \
+do { \
+  asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(resID)); \
+  if (resID == 0) { \
+    EXCEPTION(et_INSUFFICIENT_THREADS); \
+  } \
+} while(0)
 
 // Get a synchronous thread
-inline
-unsigned GETR_SYNC_THREAD(unsigned sync) {
-  unsigned t;
-  asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
-  if (t == 0) {
-    EXCEPTION(et_INSUFFICIENT_THREADS);
-  }
-  return t;
-}
+#define GETR_SYNC_THREAD(sync, resID) \
+do { \
+  asm("getst %0, res[%1]" : "=r"(resID) : "r"(sync)); \
+  if (resID == 0) { \
+    EXCEPTION(et_INSUFFICIENT_THREADS); \
+  } \
+} while(0)
 
 // Free a resource
-inline
-void FREER(unsigned r) {
-  asm("freer res[%0]" :: "r"(r));
-}
-// TODO: temporary hack for inline compiler error
-//#define FREER(x) asm("freer res[%0]" :: "r"(x))
+#define FREER(resID) \
+do { \
+  asm("freer res[%0]" :: "r"(resID)); \
+} while(0)
 
 // Create the channel identifier (for channel 0) for a given destination
 // The node bits are written in MSB first, so need to be reversed
-inline
-unsigned GEN_CHAN_RI_0(unsigned dest) {
-#ifdef XS1_G
-  unsigned n = dest / NUM_CORES_PER_NODE;
-  asm("bitrev %0, %1" : "=r"(n) : "r"(n));
-  return n | (dest % NUM_CORES_PER_NODE) << 16 | XS1_RES_TYPE_CHANEND;
+#if defined(XS1_G)
+#define CHAN_RI_0(destID, resID) \
+do { \
+  unsigned __n = destID / NUM_CORES_PER_NODE; \
+  asm("bitrev %0, %1" : "=r"(__n) : "r"(__n)); \
+  resID = __n | (destID % NUM_CORES_PER_NODE) << 16 | XS1_RES_TYPE_CHANEND; \
+} while(0)
+#elif defined(XS1_L)
+#define CHAN_RI_0(destID, resID) \
+do { \
+  resID = destID << 16 | XS1_RES_TYPE_CHANEND; \
+} while(0)
 #endif
-#ifdef XS1_L
-  return dest << 16 | XS1_RES_TYPE_CHANEND;
-#endif
-}
 
 // Create a channel resource identifier with a particular count
-inline
-unsigned GEN_CHAN_RI(unsigned id, int counter) {
-  return GEN_CHAN_RI_0(id) | counter << 8;  
-}
+#define CHAN_RI(chanID, counter, resID) \
+do { \
+  CHAN_RI_0(chanID, resID); \
+  resID |= counter << 8; \
+} while(0)
 
 // Generate a configuration resource identifier
-inline
-unsigned GEN_CONFIG_RI(unsigned nodeId) {
-  return nodeId << 24 | XS1_CT_SSCTRL << 8 | 12;
-}
-
-// Get the current thread id
-inline
-unsigned THREAD_ID() {
-   int id;
-   asm("get r11, id ; mov %0, r11" : "=r"(id) :: "r11");
-   return id;
-}
+#define CONFIG_RI(nodeID) \
+  (nodeID << 24 | XS1_CT_SSCTRL << 8 | 12)
 
 // Get a thread id from a resource identifier
-inline
-unsigned THREAD_ID_MASK(unsigned resId) {
-  return (resId >> 8) & 0xFF;
-}
+#define TID_MASK(resID) \
+  ((resID >> 8) & 0xFF)
+
+// Get the current thread id
+#define THREAD_ID(threadID) \
+do { \
+   asm("get r11, id ; mov %0, r11" : "=r"(threadID) :: "r11"); \
+} while(0)
 
 // Return the stack pointer for a specific thread given a thread resource
 // identifier to extract the thread id from and the base stack pointer.
-inline
-unsigned THREAD_SP(int tid) {
-  unsigned sp;
-  asm("ldw %0, dp[_sp]" : "=r"(sp)); 
-  return sp - (tid * THREAD_STACK_SPACE);
-}
+#define THREAD_SP(threadID, threadSP) \
+do { \
+  unsigned __sp; \
+  asm("ldw %0, dp[_sp]" : "=r"(__sp)); \
+  threadSP = __sp - (threadID * THREAD_STACK_SPACE); \
+} while(0)
 
 // Given a resource id, return the node identifer
-inline
-unsigned GET_NODE_ID(unsigned resId) {
-#ifdef XS1_G
-  unsigned int n;
-  asm("bitrev %0, %1" : "=r"(n) : "r"(resId));
-  return n & 0xFF;
+#if defined(XS1_G)
+#define GET_NODE_ID(resID, nodeID) \
+do { \
+  unsigned int __n; \
+  asm("bitrev %0, %1" : "=r"(__n) : "r"(resID)); \
+  nodeID = __n & 0xFF; \
+} while(0)
+#elif defined(XS1_L)
+#define GET_NODE_ID(resID, nodeID) \
+do { \
+  nodeID = (resID >> 16 & 0xFFFF) / NUM_CORES_PER_NODE; \
+} while(0)
 #endif
-#ifdef XS1_L
-  return (resId >> 16 & 0xFFFF) / NUM_CORES_PER_NODE;
-#endif
-}
 
 // Given a resource id, return the core identifier
-inline
-unsigned GET_CORE_ID(unsigned resId) {
-#ifdef XS1_G
-  return (resId >> 16) & 0xFF;
+#if defined(XS1_G)
+#define GET_CORE_ID(resID, coreID) \
+do { \
+  coreID = (resID >> 16) & 0xFF; \
+} while(0)
+#elif defined(XS1_L)
+#define GET_CORE_ID(resID, coreID) \
+do { \
+  coreID = (resID >> 16 & 0xFFFF) % NUM_CORES_PER_NODE; \
+} while(0)
 #endif
-#ifdef XS1_L
-  return (resId >> 16 & 0xFFFF) % NUM_CORES_PER_NODE;
-#endif
-}
 
 // Given a resource id, return the global core label.
-inline
-unsigned GET_GLOBAL_CORE_ID(unsigned resId) {
-#ifdef XS1_G
-  return (GET_NODE_ID(resId) * NUM_CORES_PER_NODE) + GET_CORE_ID(resId);
+#if defined(XS1_G)
+#define GET_GLOBAL_CORE_ID(resID, coreID) \
+do { \
+  coreID = (GET_NODE_ID(resID) * NUM_CORES_PER_NODE) + GET_CORE_ID(resID); \
+} while(0)
+#elif defined(XS1_L)
+#define GET_GLOBAL_CORE_ID(resID, coreID) \
+do { \
+  coreID = resID >> 16 & 0xFFFF; \
+} while(0)
 #endif
-#ifdef XS1_L
-  return resId >> 16 & 0xFFFF;
-#endif
-}
 
-inline
-void DISABLE_INTERRUPTS() { 
-  asm("clrsr " S(SR_IEBLE));
-}
+// Disable interrupts
+#define DISABLE_INTERRUPTS() \
+do { \
+  asm("clrsr " S(SR_IEBLE)); \
+} while(0)
 
-inline
-void ENABLE_INTERRUPTS(){ 
-  asm("setsr " S(SR_IEBLE));
-}
+// Enable interrupts
+#define ENABLE_INTERRUPTS() \
+do { \
+  asm("setsr " S(SR_IEBLE)); \
+} while(0)
 
 unsigned memAlloc(unsigned int size);
 void memFree(unsigned p);

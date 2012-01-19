@@ -21,7 +21,7 @@ def init_slaves(t, sync_label, num_slaves):
   t.blocker.begin()
   
   # Get a synchronised thread
-  t.out('_threads[_i] = GETR_SYNC_THREAD(_sync);')
+  t.out('GETR_SYNC_THREAD(_sync, _threads[_i]);')
 
   # Set lr = slave_exit_label
   t.asm('ldap r11, '+sync_label+' ; init t[%0]:lr, r11',
@@ -91,9 +91,9 @@ def thread_set(t, index, pcall, slave_exit_labels):
   
   # Load sp address and extend it if we need space for refd vars
   if ext > 0:
-    t.out('_sps[{}] = THREAD_SP(THREAD_ID_MASK(_threads[{}])){};'
-      .format(index, index, '' if ext == 0 else 
-        ' - ({}*{})'.format(ext, defs.BYTES_PER_WORD)))
+    t.out('THREAD_SP(TID_MASK(_threads[{0}]), _sps[{0}]);'.format(index))
+    t.out('_sps[{}] -= {};'.format(index, '' if ext == 0 else 
+        '{}*{}'.format(ext, defs.BYTES_PER_WORD)))
     t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
   # Write the value of referenced variables to the stack
@@ -144,7 +144,13 @@ def slave_unset(t):
   This (is not ideal but) ensures any extended stack pointers are restored.
   TODO: Fix the << 8 
   """
-  t.asm('set sp, %0', inops=['THREAD_SP(THREAD_ID())'])
+  t.blocker.begin()
+  t.out('unsigned _sp;')
+  t.out('unsigned _tid;')
+  t.out('THREAD_ID(_tid);')
+  t.out('THREAD_SP(_tid, _sp);')
+  t.asm('set sp, %0', inops=['_sp'])
+  t.blocker.end()
 
 def gen_par(t, node, chans):
   """
@@ -165,7 +171,7 @@ def gen_par(t, node, chans):
 
   # Get a thread synchroniser
   t.comment('Get a sync, sp base, _spLock and claim num threads')
-  t.out('_sync = GETR_SYNC();')
+  t.out('GETR_SYNC(_sync);')
    
   # Slave initialisation
   init_slaves(t, sync_label, num_slaves)
@@ -194,10 +200,16 @@ def gen_par(t, node, chans):
   # Ouput exit label 
   t.comment('Exit, free _sync, restore _sp and _numthreads')
   t.asm(exit_label+':')
-  
-  # Individual slave teardown
-  [master_unset(t, i, x) for (i, x) in enumerate(node.stmt[1:])]
-  
+ 
+  # NOTE: when freer _sync appears after the loads back from the stack, there
+  # was a situation where the compiler was saving the correct value from the
+  # destination of a load before the load was executed with optimisation levels
+  # > 1. Not sure if this is a bug with the compiler or the threading
+  # implementation.
+
   # Free synchroniser resource
   t.out('FREER(_sync);')
 
+  # Individual slave teardown
+  [master_unset(t, i, x) for (i, x) in enumerate(node.stmt[1:])]
+  

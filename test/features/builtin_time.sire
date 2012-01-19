@@ -6,5 +6,6 @@ proc main() is
   for i in [0 for 10000] do
     skip;
   t2 := time();
-  printvalln(t2-t1)
+  assert (t2 > t1)
+  %printvalln(t2-t1)
 }

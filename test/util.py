@@ -41,9 +41,6 @@ def read_file(filename, read_lines=False):
   except IOError as err:
     raise Error('Error reading input {}: {}'
         .format(filename, err.strerror))
-  except:
-    raise Exception('Unexpected error: {}'
-        .format(sys.exc_info()[0]))
 
 def write_file(filename, s):
   """ 
@@ -55,12 +52,9 @@ def write_file(filename, s):
     file.close()
     return True
   except IOError as err:
-    sys.stderr.write('writing output {}: {}'
+    sys.stderr.write('Error writing output {}: {}'
         .format(filename, err.strerror))
     raise Error()
-  except:
-    raise Exception('Unexpected error: {}'
-        .format(sys.exc_info()[0]))
 
 def remove_file(filename):
   """ 
@@ -74,7 +68,6 @@ def call(args):
   Execute a shell command, return (success, output)
   """
   try:
-  
     #print(' '.join(args))
     s = subprocess.check_output(args, stderr=subprocess.STDOUT)
     return (1, s.decode('utf-8'))
@@ -84,9 +77,5 @@ def call(args):
     s = err.output.decode('utf-8').replace("\\n", "\n")
     sys.stderr.write('\nCall error: '+s)
     sys.stderr.write(' '.join(args)+'\n')
-    return (0, None)
-
-  except:
-    sys.stderr.write("Unexpected error: {}\n".format(sys.exc_info()[0]))
     return (0, None)
 

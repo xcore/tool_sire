@@ -26,13 +26,13 @@ void       sendResults        (unsigned, int, int[], unsigned[], int[]);
  * Setup and initialise execution of a new thread.
  */
 void runThread(unsigned senderId) {
-  
   int procIndex;
   int numArgs;
   int argTypes[MAX_PROC_PARAMETERS];
   unsigned argValues[MAX_PROC_PARAMETERS];
-  int      argLengths[MAX_PROC_PARAMETERS];
-  unsigned threadId = THREAD_ID();
+  int argLengths[MAX_PROC_PARAMETERS];
+  unsigned threadId;
+  THREAD_ID(threadId);
   
   // Initialise connection with sender
   initSourceConnection(thread_chans[threadId], senderId);
@@ -55,11 +55,10 @@ void runThread(unsigned senderId) {
  * Initialise source connection with this thread 0 as host.
  */
 unsigned setHost() {
-  
   unsigned senderId;
   
   // Connect to the sender and receive their id 
-  senderId = IN(spawn_master);
+  IN(spawn_master, senderId);
   SETD(spawn_master, senderId);
   
   // Close spawn_master connection
@@ -75,12 +74,11 @@ unsigned setHost() {
  * arrive until the spawn_master channel connection is closed.
  */
 void spawnHost() {
-
   unsigned senderId;
   unsigned pc;
   
   // Connect to the sender and receive their id 
-  senderId = IN(spawn_master);
+  IN(spawn_master, senderId);
   SETD(spawn_master, senderId);
 
   // Close the connection
@@ -131,10 +129,10 @@ void initSourceConnection(unsigned c, unsigned senderId) {
  * Receive the closure header.
  */
 {int, int} receiveHeader(unsigned c) {
-  
-  int numArgs = INS(c);
-  int numProcs = INS(c);
-
+  int numArgs;
+  int numProcs; 
+  INS(c, numArgs);
+  INS(c, numProcs);
   return {numArgs, numProcs};
 }
 
@@ -149,18 +147,19 @@ void receiveArguments(unsigned c, int numArgs,
   for(int i=0; i<numArgs; i++) {
 
     // Receive the argument type
-    argTypes[i] = INS(c);
+    INS(c, argTypes[i]);
 
     switch(argTypes[i]) {
     default: break;
     
     case t_arg_ALIAS:
-      argLengths[i] = INS(c);
+      INS(c, argLengths[i]);
       argValues[i] = memAlloc(argLengths[i]*BYTES_PER_WORD);
       
       // Receive each element of the array and write straight to memory
       for(int j=0; j<argLengths[i]; j++) {
-        unsigned value = INS(c);
+        unsigned value;
+        INS(c, value);
         asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(j));
       }
       break;
@@ -168,18 +167,19 @@ void receiveArguments(unsigned c, int numArgs,
     case t_arg_VAR:
       argLengths[i] = 1;
       argValues[i] = memAlloc(BYTES_PER_WORD);
-      {unsigned value = INS(c);
+      {unsigned value;
+      INS(c, value);
       asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
       break;
     
     case t_arg_CHANEND:
       argLengths[i] = 1;
-      argValues[i] = INS(c);
+      INS(c, argValues[i]);
       break;
     
     case t_arg_VAL:
       argLengths[i] = 1;
-      argValues[i] = INS(c);
+      INS(c, argValues[i]);
       break;
     }
   }
@@ -190,7 +190,6 @@ void receiveArguments(unsigned c, int numArgs,
  */
 #pragma unsafe arrays
 int receiveProcedures(unsigned c, int numProcs) {
-  
   int index;
   unsigned jumpTable;
 
@@ -200,7 +199,8 @@ int receiveProcedures(unsigned c, int numProcs) {
   for(int i=0; i<numProcs; i++) {
     
     // Jump index and size
-    int procIndex = INS(c);
+    int procIndex;
+    INS(c, procIndex);
     if(i == 0) index = procIndex;
 
     // If we don't have the procedure, receive it
@@ -210,12 +210,13 @@ int receiveProcedures(unsigned c, int numProcs) {
       unsigned ptr;
       
       OUTS(c, 1);
-      procSize = INS(c);
+      INS(c, procSize);
       ptr = memAlloc(procSize);
 
       // Instructions
       for(int j=0; j<procSize/4; j++) {
-        unsigned inst = INS(c);
+        unsigned inst;
+        INS(c, inst);
         asm("stw %0, %1[%2]" :: "r"(inst), "r"(ptr), "r"(j));
       }
      
@@ -257,8 +258,7 @@ void informCompleted(unsigned c, unsigned senderId) {
  */
 #pragma unsafe arrays
 void sendResults(unsigned c, int numArgs, 
-  int argTypes[], unsigned argValues[], int argLengths[]) {
-
+    int argTypes[], unsigned argValues[], int argLengths[]) {
   unsigned value;
   
   for(int i=0; i<numArgs; i++) {

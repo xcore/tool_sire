@@ -11,10 +11,6 @@
 #include "worker.h"
 #include "system.h"
 
-extern inline unsigned GETR_CHANEND();
-extern inline unsigned GET_CORE_ID(unsigned resId);
-extern inline unsigned GET_NODE_ID(unsigned resId);
-
 /* 
  * Allocate all remaining channel ends then free them to ensure they are all
  * available.
@@ -42,11 +38,14 @@ void resetChanends() {
  * handler (kep).
  */
 void initThreads() {
-  unsigned sync = GETR_SYNC();
+  unsigned sync;
   unsigned t;
+  unsigned sp;
+  GETR_SYNC(sync);
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   while (t) {
-    asm("init t[%0]:sp, %1"::"r"(t), "r"(THREAD_SP(THREAD_ID_MASK(t))));
+    THREAD_SP(TID_MASK(t), sp);
+    asm("init t[%0]:sp, %1"::"r"(t), "r"(sp));
     asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
     asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
@@ -66,16 +65,16 @@ void initChanends() {
   
   // Get the migration channel and set the event vector
   // ASSERT: channel resource counter must be 0 
-  spawn_master = GETR_CHANEND();
+  GETR_CHANEND(spawn_master);
   asm("eeu res[%0]" :: "r"(spawn_master));
   
   // Allocate a channel end for setting up connections
-  conn_master = GETR_CHANEND();
+  GETR_CHANEND(conn_master);
   asm("eeu res[%0]" :: "r"(conn_master));
 
   // Get channels for each thread
   for(int i=0; i<MAX_THREADS; i++)
-    thread_chans[i] = GETR_CHANEND();
+    GETR_CHANEND(thread_chans[i]);
 }
 
 /*
@@ -182,7 +181,8 @@ void newAsyncThread(unsigned pc, unsigned arg1,
     unsigned arg2, unsigned arg3, unsigned arg4) {
   
   // Claim a thread
-  unsigned t = GETR_ASYNC_THREAD();
+  unsigned t;
+  GETR_ASYNC_THREAD(t);
   
   // Initialise pc, lr
   asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));

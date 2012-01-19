@@ -35,14 +35,13 @@ XCC            = 'xcc'
 XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
 # NOTE: Ignore warnings when compiling program source
-COMPILE_FLAGS = ['-S', '-O2', 
-  #'-fverbose-asm', #'-Wall', '-Wextra', 
-  #'-Winline','-Wno-timing',  '-Wunreachable-code',
+COMPILE_FLAGS = ['-S', '-O3', 
+  '-Wall', '-Wextra', 
+  #'-fverbose-asm', '-Winline','-Wno-timing',  '-Wunreachable-code',
   ]
-ASSEMBLE_FLAGS = ['-c', '-O2',
-  #'-fverbose-asm', 
-  '-Wall', '-Wextra', '-Winline',
-  '-Wno-timing',  '-Wunreachable-code',
+ASSEMBLE_FLAGS = ['-c', '-O3',
+  '-Wall', '-Wextra', 
+  #'-fverbose-asm', '-Winline', '-Wno-timing',  '-Wunreachable-code',
   ]
 LINK_FLAGS = ['-nostartfiles', '-Xmapper', '--nochaninit']
 
