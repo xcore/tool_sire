@@ -1,9 +1,12 @@
-val STORAGE     is 4;  % Storage per leaf
-val N           is 8; % Number of leaves (storage units)
+val STORAGE     is 4;   % Storage per leaf
+val N           is 512; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
-val READ        is 0x5;
-val WRITE       is 0x6;
-val HALT        is 0x7;
+val ADDR_LEN    is 30;
+val ADDR_MASK   is 0x3FFFFFFF;
+val QUERY_MASK  is 0xC0000000;
+val READ        is (0x1 << ADDR_LEN);
+val WRITE       is (0x2 << ADDR_LEN);
+val HALT        is (0x3 << ADDR_LEN);
 
 proc sync(chanend c) is
 { var sync;
@@ -11,18 +14,18 @@ proc sync(chanend c) is
 }
 
 proc read(chanend c, val index, var value) is
-{ out(c, READ);
-  out(c, index);
+{ out(c, READ or index);
+  outctend(c);
+  %chkctend(c);
   inp(c, value);
   chkctend(c);
   outctend(c)
 }
 
 proc write(chanend c, val index, val value) is
-{ out(c, WRITE);
+{ out(c, WRITE or index);
   outctend(c);
-  chkctend(c);
-  out(c, index);
+  %chkctend(c);
   out(c, value);
   outctend(c);
   chkctend(c)
@@ -54,9 +57,12 @@ proc leaf(chanend c) is
   running := true;
   while running do 
   { inp(c, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
     if query = READ
     then
-    { inp(c, index);
+    { chkctend(c);
+      %outctend(c);
       out(c, data[index-base]);
       outctend(c);
       chkctend(c)
@@ -64,12 +70,11 @@ proc leaf(chanend c) is
     else if query = WRITE
     then
     { chkctend(c);
-      outctend(c);
-      inp(c, index);
+      %outctend(c);
       inp(c, value);
+      data[index-base] := value;
       chkctend(c);
-      outctend(c);
-      data[index-base] := value
+      outctend(c)
     }
     else % HALT
     { chkctend(c);
@@ -110,9 +115,12 @@ proc branch(chanend root, chanend left, chanend right) is
   running := true;
   while running do
   { inp(root, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
     if query = READ
     then 
-    { inp(root, index);
+    { chkctend(root);
+      %outctend(root);
       if index < cmp
       then
         read(left, index, value)
@@ -125,16 +133,15 @@ proc branch(chanend root, chanend left, chanend right) is
     else if query = WRITE
     then
     { chkctend(root);
-      outctend(root);
-      inp(root, index);
+      %outctend(root);
       inp(root, value);
-      chkctend(root);
-      outctend(root);
       if index < cmp
       then
         write(left, index, value)
       else
-        write(right, index, value)
+        write(right, index, value);
+      chkctend(root);
+      outctend(root)
     }
     else % HALT
     { chkctend(root);
@@ -165,9 +172,12 @@ proc serve(chanend x, chanend root) is
   running := true;
   while running do 
   { inp(x, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
     if query = READ
     then 
-    { inp(x, index);
+    { chkctend(x);
+      %outctend(x);
       read(root, index, value);
       out(x, value);
       outctend(x);
@@ -176,8 +186,7 @@ proc serve(chanend x, chanend root) is
     else if query = WRITE
     then
     { chkctend(x);
-      outctend(x);
-      inp(x, index);
+      %outctend(x);
       inp(x, value);
       write(root, index, value);
       chkctend(x);

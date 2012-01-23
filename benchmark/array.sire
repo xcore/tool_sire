@@ -1,9 +1,29 @@
-val STORAGE     is 4;  % Storage per leaf
-val N           is 16; % Number of leaves (storage units)
+val STORAGE     is 4; % Storage per leaf
+val N           is 512; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val READ        is 0;
 val WRITE       is 1;
 val HALT        is 2;
+
+proc sync(chanend c) is
+{ var sync;
+  c ? sync
+}
+
+proc read(chanend c, val index, var value) is
+{ c ! READ;
+  c ! index;
+  c ? value
+}
+
+proc write(chanend c, val index, val value) is
+{ c ! WRITE;
+  c ! index;
+  c ! value
+}
+
+proc halt(chanend c) is
+  c ! HALT
 
 proc leaf(chanend c) is
 { var base;
@@ -13,6 +33,9 @@ proc leaf(chanend c) is
   var value;
   var running;
   
+  % Synchronise
+  c ! 0;
+
   % Read 'base' value configuration message
   c ? value;
   c ? base;
@@ -47,6 +70,11 @@ proc branch(chanend root, chanend left, chanend right) is
   var value;
   var running;
  
+  % Synchronise
+  sync(left);
+  sync(right);
+  root ! 0;
+ 
   % Configure: depth, base, interval
   root  ? depth;
   root  ? base;
@@ -67,15 +95,9 @@ proc branch(chanend root, chanend left, chanend right) is
     { root ? index;
       if index < base+(interval/2)
       then
-      { left ! READ;
-        left ! index;
-        left ? value
-      }
+        read(left, index, value)
       else
-      { right ! READ;
-        right ! index;
-        right ? value
-      };
+        read(right, index, value);
       root ! value
     }
     else if query = WRITE
@@ -84,19 +106,13 @@ proc branch(chanend root, chanend left, chanend right) is
       root ? value;
       if index < base+(interval/2)
       then
-      { left ! WRITE;
-        left ! index;
-        left ! value
-      }
+        write(left, index, value)
       else
-      { right ! WRITE;
-        right ! index;
-        right ! value
-      }
+        write(right, index, value)
     }
     else % HALT
-    { left ! HALT;
-      right ! HALT;
+    { halt(left);
+      halt(right);
       running := false
     }
   }
@@ -108,6 +124,10 @@ proc serve(chanend x, chanend root) is
   var value;
   var running;
  
+  % Synchronise
+  sync(root);
+  x ! 0;
+
   % Configure the structure
   root ! 0;
   root ! 0;
@@ -120,21 +140,17 @@ proc serve(chanend x, chanend root) is
     if query = READ
     then 
     { x ? index;
-      root ! READ;
-      root ! index;
-      root ? value;
+      read(root, index, value);
       x ! value
     }
     else if query = WRITE
     then
     { x ? index;
       x ? value;
-      root ! WRITE;
-      root ! index;
-      root ! value
+      write(root, index, value)
     }
     else % HALT
-    { root ! HALT;
+    { halt(root);
       running := false
     }
   }
@@ -152,31 +168,38 @@ proc array(chanend x) is
   }
 }
 
-proc read(chanend c, val index, var value) is
-{ c ! READ;
-  c ! index;
-  c ? value
-}
-
-proc write(chanend c, val index, val value) is
-{ c ! WRITE;
-  c ! index;
-  c ! value
-}
-
 proc main() is
 { server(chan x)
     array(x)
   { var value;
     var i;
+    var total;
+    var t;
+    
+    sync(x);
+
+    %read(x, 0, value);
+    %write(x, 0, 0);
+
+    total := 0;
     for i in [0 for LENGTH] do
-      write(x, i, i);
-    for i in [0 for LENGTH] do
-    { read(x, i, value);
-      printhexln(value)
+    { t := time();
+      read(x, i, value);
+      total := total + (time()-t)
     };
-    x ! HALT
+    printstr("Average read time (cycles): ");
+    printvalln(total/LENGTH);
+    
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      write(x, i, i);
+      total := total + (time()-t)
+    };
+    printstr("Average write time (cycles): ");
+    printvalln(total/LENGTH);
+
+    halt(x)
   } 
 }
-
 
