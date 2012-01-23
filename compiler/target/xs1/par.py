@@ -137,6 +137,9 @@ def master_unset(t, index, pcall):
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     if is_ref(y.symbol.type):
       ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+      # This seems to solve a register problem...
+      t.out('{0} = {0}-1;'.format(t.expr(x)))
+      t.out('{0} = {0}+1;'.format(t.expr(x)))
       j = j + 1
  
 def slave_unset(t):

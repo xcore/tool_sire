@@ -77,12 +77,11 @@ class TranslateXS1(NodeWalker):
   """ 
   A walker class to pretty-print the AST in the langauge syntax.
   """
-  def __init__(self, sig, child, buf, short_comm=False):
+  def __init__(self, sig, child, buf):
     super(TranslateXS1, self).__init__()
     self.sig = sig
     self.child = child
     self.buf = buf
-    self.short_comm = short_comm
     self.indent = [INDENT]
     self.blocker = Blocker(self, buf)
     self.label_counter = 0
@@ -346,149 +345,21 @@ class TranslateXS1(NodeWalker):
     left = self.elem(node.left)
     expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
-      if not self.short_comm:
-        self.out('// Server out')
-        self.blocker.begin()
-        self.out('unsigned _clientCRI;')
-        self.out('asm("in %0, res[%1];"')
-        self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-            .format(left))
-        self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
-        self.blocker.end()
-      else:
-        self.out('// Server out')
-        self.blocker.begin()
-        self.out('unsigned _clientCRI;')
-        self.out('asm("in %0, res[%1];"')
-        self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-            .format(left))
-        self.out('asm("out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
-        self.blocker.end()
-
+      self.out('SERVER_OUT({}, {});'.format(left, expr))
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      if not self.short_comm:
-        self.out('// Client out')
-        self.out('asm("out   res[%0], %0;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
-      else:
-        self.out('// Client out short')
-        self.out('asm("out   res[%0], %0;"')
-        self.out('    "out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
-
+      self.out('CLIENT_OUT({}, {});'.format(left, expr))
     else:
-      if not self.short_comm:
-        self.out('// Out')
-        self.out('asm("outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
-      else:
-        self.out('// Out short')
-        self.out('asm("out   res[%0], %1;"')
-        self.out('    "outct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}), "r"({}));'
-            .format(left, expr))
+      self.out('OUTS({}, {});'.format(left, expr))
 
   def stmt_in(self, node, chans):
     left = self.elem(node.left)
     expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
-      if not self.short_comm:
-        self.out('// Server in')
-        self.blocker.begin()
-        self.out('unsigned _clientCRI;')
-        self.out('asm("in %0, res[%1];"')
-        self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-            .format(left))
-        self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
-        self.blocker.end()
-      else:
-        self.out('// Server in short')
-        self.blocker.begin()
-        self.out('unsigned _clientCRI;')
-        self.out('asm("in %0, res[%1];"')
-        self.out('    "setd res[%1], %0" : "=&r"(_clientCRI) : "r"({}));'
-            .format(left))
-        self.out('asm("in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
-        self.blocker.end()
-
+      self.out('SERVER_IN({}, {});'.format(left, expr))
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      if not self.short_comm:
-        self.out('// Client in')
-        self.out('asm("out   res[%1], %1;"')
-        self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "chkct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
-      else:
-        self.out('// Client in short')
-        self.out('asm("out   res[%1], %1;"')
-        self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
-
+      self.out('CLIENT_IN({}, {});'.format(left, expr))
     else:
-      if not self.short_comm:
-        self.out('// In')
-        self.out('asm("chkct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%1]," S(XS1_CT_END) ";"')
-        self.out('    "in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
-      else:
-        self.out('// In short')
-        self.out('asm("in    %0, res[%1];" : "=r"({}) : "r"({}));'
-            .format(expr, left))
-        self.out('asm("chkct res[%0]," S(XS1_CT_END) ";"')
-        self.out('    "outct res[%0]," S(XS1_CT_END)')
-        self.out('    :: "r"({}));'
-            .format(left))
+      self.out('INS({}, {});'.format(left, expr))
     
   def stmt_alias(self, node, chans):
     """ 

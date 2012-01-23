@@ -96,6 +96,58 @@ do {\
       :: "r"(c)); \
 } while(0)
 
+// Server out
+#define SERVER_OUT(c, value) \
+do { \
+  unsigned _clientCRI; \
+  asm("in %0, res[%1];" \
+      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+  asm("outct res[%0]," S(XS1_CT_END) ";" \
+      "chkct res[%0]," S(XS1_CT_END) ";" \
+      "out   res[%0], %1;" \
+      "outct res[%0]," S(XS1_CT_END) ";" \
+      "chkct res[%0]," S(XS1_CT_END) \
+      :: "r"(c), "r"(value)); \
+} while(0)
+
+// Server in
+#define SERVER_IN(c, value) \
+do { \
+  unsigned _clientCRI; \
+  asm("in %0, res[%1];" \
+      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+  asm("chkct res[%1]," S(XS1_CT_END) ";" \
+      "outct res[%1]," S(XS1_CT_END) ";" \
+      "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm("chkct res[%0]," S(XS1_CT_END) ";" \
+      "outct res[%0]," S(XS1_CT_END) \
+      :: "r"(c)); \
+} while(0)
+
+// Client out
+#define CLIENT_OUT(c, value) \
+do { \
+asm("out   res[%0], %0;" \
+    "outct res[%0]," S(XS1_CT_END) ";" \
+    "chkct res[%0]," S(XS1_CT_END) ";" \
+    "out   res[%0], %1;" \
+    "outct res[%0]," S(XS1_CT_END) ";" \
+    "chkct res[%0]," S(XS1_CT_END) \
+    :: "r"(c), "r"(value)); \
+} while(0)
+          
+// Client in
+#define CLIENT_IN(c, value) \
+do { \
+asm("out   res[%1], %1;" \
+    "outct res[%1]," S(XS1_CT_END) ";" \
+    "chkct res[%1]," S(XS1_CT_END) ";" \
+    "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
+asm("chkct res[%0]," S(XS1_CT_END) ";" \
+    "outct res[%0]," S(XS1_CT_END) \
+    :: "r"(c)); \
+} while(0)
+
 // Get a chanend
 #define GETR_CHANEND(resID) \
 do { \
@@ -236,6 +288,9 @@ do { \
 do { \
   asm("setsr " S(SR_IEBLE)); \
 } while(0)
+
+// Synchronised output
+
 
 unsigned memAlloc(unsigned int size);
 void memFree(unsigned p);
