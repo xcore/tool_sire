@@ -1,0 +1,282 @@
+val STORAGE     is 4;   % Storage per leaf
+val N           is 64; % Number of leaves (storage units)
+val DEGREE      is 4;
+val BRANCHES    is N/(DEGREE-1);
+val LENGTH      is N*STORAGE;
+val ADDR_LEN    is 30;
+val ADDR_MASK   is 0x3FFFFFFF;
+val QUERY_MASK  is 0xC0000000;
+val READ        is (0x1 << ADDR_LEN);
+val WRITE       is (0x2 << ADDR_LEN);
+val HALT        is (0x3 << ADDR_LEN);
+
+proc sync(chanend c) is
+{ var sync;
+  c ? sync
+}
+
+proc read(chanend c, val index, var value) is
+{ out(c, READ or index);
+  outctend(c);
+  %chkctend(c);
+  inp(c, value);
+  chkctend(c);
+  outctend(c)
+}
+
+proc write(chanend c, val index, val value) is
+{ out(c, WRITE or index);
+  outctend(c);
+  %chkctend(c);
+  out(c, value);
+  outctend(c);
+  chkctend(c)
+}
+
+proc halt(chanend c) is
+{ out(c, HALT);
+  outctend(c);
+  chkctend(c)
+}
+
+proc leaf(chanend c) is
+{ var base;
+  var data[STORAGE];
+  var query;
+  var index;
+  var value;
+  var running;
+
+  % Synchronise
+  c ! 0;
+
+  % Read 'base' value configuration message
+  c ? value;
+  c ? base;
+  c ? value;
+  
+  % Run
+  running := true;
+  while running do 
+  { inp(c, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
+    if query = READ
+    then
+    { chkctend(c);
+      %outctend(c);
+      out(c, data[index-base]);
+      outctend(c);
+      chkctend(c)
+    }
+    else if query = WRITE
+    then
+    { chkctend(c);
+      %outctend(c);
+      inp(c, value);
+      data[index-base] := value;
+      chkctend(c);
+      outctend(c)
+    }
+    else % HALT
+    { chkctend(c);
+      outctend(c);
+      running := false
+    }
+  }
+}
+
+proc branch(chanend root, 
+    chanend c0, 
+    chanend c1, 
+    chanend c2, 
+    chanend c3) is
+{ var depth;
+  var base;
+  var interval;
+  var cmp;
+  var query;
+  var index;
+  var value;
+  var running;
+ 
+  % Synchronise
+  sync(c0);
+  sync(c1);
+  sync(c2);
+  sync(c3);
+  root ! 0;
+ 
+  % Configure: depth, base, interval
+  root  ? depth;
+  root  ? base;
+  root  ? interval;
+  c0 ! depth + 1;
+  c1 ! depth + 1;
+  c2 ! depth + 1;
+  c3 ! depth + 1;
+  c0 ! base;
+  c1 ! base + (interval/4);
+  c2 ! base + (2*(interval/4));
+  c3 ! base + (3*(interval/4));
+  c0 ! interval/4;
+  c1 ! interval/4;
+  c2 ! interval/4;
+  c3 ! interval/4;
+  cmp := base + (interval/2);
+  
+  % Run
+  running := true;
+  while running do
+  { inp(root, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
+    if query = READ
+    then 
+    { chkctend(root);
+      %outctend(root);
+      if index < base+(interval/DEGREE)
+      then
+        read(c0, index, value)
+      else if index < base+(2*(interval/DEGREE))
+      then
+        read(c1, index, value)
+      else if index < base+(3*(interval/DEGREE))
+      then
+        read(c2, index, value)
+      else
+        read(c3, index, value);
+      out(root, value);
+      outctend(root);
+      chkctend(root)
+    }
+    else if query = WRITE
+    then
+    { chkctend(root);
+      %outctend(root);
+      inp(root, value);
+      if index < base+(interval/DEGREE)
+      then
+        write(c0, index, value)
+      else if index < base+(2*(interval/DEGREE))
+      then
+        write(c1, index, value)
+      else if index < base+(3*(interval/DEGREE))
+      then
+        write(c2, index, value)
+      else
+        write(c3, index, value);
+      chkctend(root);
+      outctend(root)
+    }
+    else % HALT
+    { chkctend(root);
+      outctend(root);
+      halt(c0);
+      halt(c1);
+      halt(c2);
+      halt(c3);
+      running := false
+    }
+  }
+}
+
+proc serve(chanend x, chanend root) is
+{ var query;
+  var index;
+  var value;
+  var running;
+
+  % Synchronise
+  root ? query;
+  x ! 0;
+
+  % Configure the structure
+  root ! 0;
+  root ! 0;
+  root ! N*STORAGE;
+  
+  % Run
+  running := true;
+  while running do 
+  { inp(x, query);
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
+    if query = READ
+    then 
+    { chkctend(x);
+      %outctend(x);
+      read(root, index, value);
+      out(x, value);
+      outctend(x);
+      chkctend(x)
+    }
+    else if query = WRITE
+    then
+    { chkctend(x);
+      %outctend(x);
+      inp(x, value);
+      write(root, index, value);
+      chkctend(x);
+      outctend(x)
+    }
+    else % HALT
+    { chkctend(x);
+      outctend(x);
+      halt(root);
+      running := false
+    }
+  }
+}
+
+proc array(chanend x) is
+{ chan c[BRANCHES+N];
+  var i;
+  server() 
+    par i in [0 for N] do 
+      leaf(c[BRANCHES+i])
+  { serve(x, c[0]) ||
+    par i in [0 for BRANCHES] do
+      branch(c[i], 
+        c[(DEGREE*i)+1], 
+        c[(DEGREE*i)+2], 
+        c[(DEGREE*i)+3], 
+        c[(DEGREE*i)+4])
+  }
+}
+
+proc main() is
+{ server(chan x)
+    array(x)
+  { var value;
+    var i;
+    var total;
+    var t;
+    
+    sync(x);
+
+    %read(x, 0, value);
+    %write(x, 0, 0);
+
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      read(x, i, value);
+      total := total + (time()-t)
+    };
+    printstr("Average read time (cycles): ");
+    printvalln(total/LENGTH);
+    
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      write(x, i, i);
+      total := total + (time()-t)
+    };
+    printstr("Average write time (cycles): ");
+    printvalln(total/LENGTH);
+
+    halt(x)
+  } 
+}
+
