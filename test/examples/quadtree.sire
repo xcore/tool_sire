@@ -1,0 +1,60 @@
+val DEGREE is 4;
+val LEAVES is 16;
+val BRANCHES is LEAVES/(DEGREE-1);
+
+% Send a token down, then sum values up.
+proc branch(chanend root, 
+    chanend c0, 
+    chanend c1, 
+    chanend c2, 
+    chanend c3) is
+{ var a;
+  var b;
+  var c;
+  var d;
+  var v;
+
+  root ? v;
+  assert v = 0;
+  
+  % Down
+  c0 ! v;
+  c1 ! v;
+  c2 ! v;
+  c3 ! v;
+
+  % Up
+  c0 ? a;
+  c1 ? b;
+  c2 ? c;
+  c3 ? d;
+  
+  root ! a+b+c+d
+}
+
+% Receive a token and send back a 1.
+proc leaf(chanend c) is
+{ var v;
+  c ? v;
+  assert v = 0;
+  c ! 1
+}
+
+proc main() is
+{ chan c[BRANCHES+LEAVES];
+  var v;
+  var i;
+  { c[0] ! 0; 
+    c[0] ? v;
+    assert v = LEAVES
+  } ||
+  par i in [0 for LEAVES] do 
+    leaf(c[BRANCHES + i]) ||
+  par i in [0 for BRANCHES] do
+    branch(c[i], 
+    c[(DEGREE*i)+1], 
+    c[(DEGREE*i)+2], 
+    c[(DEGREE*i)+3], 
+    c[(DEGREE*i)+4])
+}
+

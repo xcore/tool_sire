@@ -147,12 +147,12 @@ class InsertConns(NodeWalker):
           self.connect_type(chan, master))
       return ast.StmtIf(cond, conn, s) if s else conn
 
-    def create_tree_conn(tab, scope, chan, phase, base_indices_value, 
+    def create_tree_conn(tab, scope, chan, phase, group_size, base_indices_value, 
         loc_base, loc_diff, connid_min, connid_offset, connid_diff, i_elem):
       location = ast.ExprBinop('-', i_elem,
           ast.ExprSingle(ast.ElemNumber(base_indices_value)))
       location = ast.ExprBinop('/', ast.ElemGroup(location),
-          ast.ExprSingle(ast.ElemNumber(2)))
+          ast.ExprSingle(ast.ElemNumber(group_size)))
       location = ast.ExprBinop('*', ast.ElemNumber(loc_diff), 
           ast.ExprSingle(ast.ElemGroup(location)))
       location = ast.ExprBinop('+', ast.ElemNumber(loc_base),
@@ -161,10 +161,12 @@ class InsertConns(NodeWalker):
       chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
           None, scope=T_SCOPE_PROC)
       elem0 = chan.elems[phase]
-      connid = ast.ExprBinop('+', i_elem,
-          ast.ExprSingle(ast.ElemNumber(connid_offset)))
+      #connid = ast.ExprBinop('+', i_elem,
+      #    ast.ExprSingle(ast.ElemNumber(connid_offset)))
+      connid = ast.ExprBinop('-', i_elem,
+          ast.ExprSingle(ast.ElemNumber(phase)))
       connid = ast.ExprBinop('rem', ast.ElemGroup(connid),
-          ast.ExprSingle(ast.ElemNumber(2)))
+          ast.ExprSingle(ast.ElemNumber(group_size)))
       connid = ast.ExprBinop('*', ast.ElemGroup(connid),
           ast.ExprSingle(ast.ElemNumber(connid_diff)))
       connid = ast.ExprBinop('+', ast.ElemGroup(connid),
@@ -235,6 +237,8 @@ class InsertConns(NodeWalker):
       if len(groups) == len(chan.elems):
         debug(d, 'Aborting group diff compression.')
         return None
+      
+      debug(d, 'Diff compression successful.')
 
       # Construct connection syntax
       s = None
@@ -249,7 +253,8 @@ class InsertConns(NodeWalker):
     def conn_tree_groups(chan, s, i_elem, d=DEBUG_COMPRESSION):
       """
       Compress connections based on monotonically increasing or decreasing
-      sets with the same target destination. Assume sets are of size 2.
+      sets with the same target destination. Within a set, connection IDs can
+      be monotonically increasing or decreasing.
       """
       locs = []
       debug(d, 'Locations:')
@@ -258,11 +263,6 @@ class InsertConns(NodeWalker):
         locs.append((x, loc))
         debug(d, '  {:>4} : {}[{}] -> {}'.format(x.indices_value, chan.name, x.index, loc))
        
-      # Only consider more than three conditions 
-      if len(locs) <= 3:
-        debug(d, 'Aborting tree compression.')
-        return None
-
       # Separate the first odd element if there is one
       phase = 0
       if locs[0][1] != locs[1][1]:
@@ -270,8 +270,18 @@ class InsertConns(NodeWalker):
         locs = locs[1:]
         phase = 1
 
+      # Count the group size
+      group_size = 1
+      while group_size < len(locs) and locs[group_size-1][1] == locs[group_size][1]:
+        group_size += 1
+
+      # Only consider connections with more than one group 
+      if len(locs) <= group_size+1:
+        debug(d, 'Aborting tree compression.')
+        return None
+
       # Set parameters
-      loc_diff = locs[2][1]-locs[1][1]
+      loc_diff = locs[group_size][1]-locs[group_size-1][1]
       loc_base = locs[0][1]
       base_indices_value = locs[0][0].indices_value
       connidA = tab.lookup_connid(chan.name, locs[0][0].index, scope)
@@ -282,25 +292,29 @@ class InsertConns(NodeWalker):
       
       # Print some debug info
       debug(d, 'Attempting tree compression.')
+      debug(d, '  Group size:    {}'.format(group_size))
       debug(d, '  Location base: {}'.format(loc_base))
       debug(d, '  Location diff: {}'.format(loc_diff))
       debug(d, '  Base ival:     {}'.format(base_indices_value))
       debug(d, '  ConnID base:   {}'.format(connidA))
       debug(d, '  ConnID diff:   {}'.format(connid_diff))
 
-      # Check each pair
-      end = 1+(math.floor((len(locs)-1)/2)*2)
-      debug(d, 'Checking pairs 1 to {}'.format(end))
-      for (x, y) in zip(locs[:-1:2], locs[1::2]):
-        debug(d, '  {} and {}'.format(y[1], x[1]))
-        if x[1] != y[1]:
-          debug(d, 'Aborting tree compression.')
-          return None
+      # Check each group contains the same location
+      debug(d, 'Checking groups...')
+      i = 0
+      while i*group_size < len(locs):
+        debug(d, '  Group {}'.format(i))
+        for j in range(1, group_size):
+          if locs[i*group_size][1] != locs[(i*group_size)+j][1]:
+            debug(d, 'Aborting tree compression.')
+            return None
+        i += 1
       
-      # Check each step between pairs
-      debug(d, 'Checking diffs 1 to {}'.format(end))
-      for (x, y) in zip(locs[1::2], locs[2::2]):
-        debug(d, '  {} and {}'.format(y[1], x[1]))
+      # Check each step between groups has same location and connection diffs
+      debug(d, 'Checking diffs...')
+      for (i, (x, y)) in enumerate(
+          zip(locs[1::group_size], locs[group_size::group_size])):
+        debug(d, '  Group {} and {}: {} and {}'.format(i, i+1, y[1], x[1]))
         connidX = tab.lookup_connid(chan.name, x[0].index, scope)
         connidY = tab.lookup_connid(chan.name, y[0].index, scope)
         connid_diff_ = connidX - connidY
@@ -309,29 +323,33 @@ class InsertConns(NodeWalker):
           return None
 
       # Check matching computed location
-      debug(d, 'Matching form, checking computed:')
+      debug(d, 'Checking computed...')
+      debug(d, 'connid_min = {}'.format(connid_min))
+      debug(d, 'connid_off = {}'.format(connid_offset))
       if phase == 1:
         connid = tab.lookup_connid(chan.name, odd_elem.index, scope)
         debug(d, '  {}: connid={}'.format(odd_elem.indices_value, connid))
       for (elem, loc) in locs:
         computed_loc = loc_base + (loc_diff * (math.floor(
-            ((elem.indices_value - base_indices_value))/2)))
+            ((elem.indices_value - base_indices_value))/group_size)))
         connid = tab.lookup_connid(chan.name, elem.index, scope)
-        computed_connid = (connid_min + 
-            ((elem.indices_value + connid_offset) % 2) * connid_diff)
+        #computed_connid = (connid_min + ((elem.indices_value + connid_offset) % group_size) * connid_diff)
+        computed_connid = (connid_min + ((elem.indices_value - phase) % group_size) * connid_diff)
         debug(d, '  {}: connid={}, loc={} computed({}, {})'
             .format(elem.indices_value, connid, loc, 
               computed_connid, computed_loc))
         assert computed_loc == loc
         assert computed_connid == connid
+      
+      debug(d, 'Tree compression successful.')
 
       # Construct connection syntax
       if phase == 0:
-        return create_tree_conn(tab, scope, chan, phase, 
+        return create_tree_conn(tab, scope, chan, phase, group_size, 
             base_indices_value, loc_base, loc_diff, 
             connid_min, connid_offset, connid_diff, i_elem)
       else:
-        s = create_tree_conn(tab, scope, chan, phase, 
+        s = create_tree_conn(tab, scope, chan, phase, group_size,
             base_indices_value, loc_base, loc_diff, 
             connid_min, connid_offset, connid_diff, i_elem)
         return create_single_conn(s, chan, scope, i_elem, odd_elem)

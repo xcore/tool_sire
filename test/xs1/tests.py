@@ -55,6 +55,7 @@ xs1_example_tests = [
   Test('array2d_composite', [16], p=[('N','2')]),
   Test('tree',              [4],  p=[('D','1')]),
   Test('tree',              [16], p=[('D','2')]),
+  Test('quadtree',          [22]),
   Test('cube2d',            [4]),
   Test('cube3d',            [16]),
   Test('distributed-array', [5],  p=[('N', '4')]),
