@@ -9,6 +9,9 @@ class LabelConns(NodeWalker):
   """
   Label connections with identifers by performing a greedy colouring of
   ChanElemSets.
+
+  TODO: Recognise tree-connection patterns and ensure the assignment of
+  connection IDs is compatible with the compression scheme.
   """
   def __init__(self):
     self.connid_count = 0

@@ -333,8 +333,10 @@ class InsertConns(NodeWalker):
         computed_loc = loc_base + (loc_diff * (math.floor(
             ((elem.indices_value - base_indices_value))/group_size)))
         connid = tab.lookup_connid(chan.name, elem.index, scope)
-        #computed_connid = (connid_min + ((elem.indices_value + connid_offset) % group_size) * connid_diff)
-        computed_connid = (connid_min + ((elem.indices_value - phase) % group_size) * connid_diff)
+        #computed_connid = (connid_min + 
+        #    ((elem.indices_value + connid_offset) % group_size) * connid_diff)
+        computed_connid = (connid_min + 
+            ((elem.indices_value - phase) % group_size) * connid_diff)
         debug(d, '  {}: connid={}, loc={} computed({}, {})'
             .format(elem.indices_value, connid, loc, 
               computed_connid, computed_loc))
