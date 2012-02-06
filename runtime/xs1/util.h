@@ -37,6 +37,18 @@ do { \
   asm("setd res[%0], %1" :: "r"(c), "r"(destID)); \
 } while(0)
 
+// OUTCT
+#define OUTCT(c, value) \
+do { \
+  asm("outct res[%0], %1" :: "r"(c), "r"(value)); \
+} while(0)
+
+// CHKCT
+#define CHKCT(c, value) \
+do { \
+  asm("chkct res[%0], %1" :: "r"(c), "r"(value)); \
+} while(0)
+
 // OUTCT CT_END
 #define OUTCT_END(c) \
 do { \

@@ -54,12 +54,15 @@ builtin_conversion = {
   'fread'      : '_READ',
   'fclose'     : '_CLOSE',
   # Channel communication
-  'inp'       : '_INP',
-  'out'       : '_OUT',
-  'inct'      : '_INCT',
-  'outct'     : '_OUTCT',
-  'chkctend'  : '_CHKCTEND',
-  'outctend'  : '_OUTCTEND',
+  'inp'        : '_INP',
+  'out'        : '_OUT',
+  'inct'       : '_INCT',
+  'outct'      : '_OUTCT',
+  'chkctend'   : '_CHKCTEND',
+  'outctend'   : '_OUTCTEND',
+  # Remote memory access
+  'rwrite'     : '_RWRITE',
+  'rread'      : '_RREAD',
   # Malloc/free
   'memalloc'   : '_memAlloc',
   'memfree'    : '_memFree',
@@ -213,6 +216,7 @@ class TranslateXS1(NodeWalker):
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_printing.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_fileio.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_comm.xc'))
+    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_remotemem.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
  
   # Program ============================================

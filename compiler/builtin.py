@@ -31,7 +31,9 @@ def proc_decl(name, params, mobile=False):
 def func_decl(name, params, mobile=False):
   return Builtin(ProcDef(name, T_FUNC, params, None, None), mobile)
 
-# Printing builtins
+# Builtin definitions
+
+# Printing
 printchar   = proc_decl('printchar',   [SVAL_PARAM])
 printcharln = proc_decl('printcharln', [SVAL_PARAM])
 printval    = proc_decl('printval',    [SVAL_PARAM])
@@ -42,13 +44,13 @@ printstr    = proc_decl('printstr',    [AVAL_PARAM])
 printstrln  = proc_decl('printstrln',  [AVAL_PARAM])
 println     = proc_decl('println',     [])
 
-# File IO builtins
-fopen       = proc_decl('fopen',  [AVAL_PARAM, SVAL_PARAM])
-fwrite      = proc_decl('fwrite', [SVAL_PARAM, SVAL_PARAM])
-fread       = proc_decl('fread',  [SVAL_PARAM, SREF_PARAM])
-fclose      = proc_decl('fclose', [SVAL_PARAM])
+# File IO
+fopen       = proc_decl('fopen',   [AVAL_PARAM, SVAL_PARAM])
+fwrite      = proc_decl('fwrite',  [SVAL_PARAM, SVAL_PARAM])
+fread       = proc_decl('fread',   [SVAL_PARAM, SREF_PARAM])
+fclose      = proc_decl('fclose',  [SVAL_PARAM])
 
-# Communication builtins
+# Communication
 inp        = proc_decl('inp',      [CHANEND_PARAM, SREF_PARAM])
 out        = proc_decl('out',      [CHANEND_PARAM, SVAL_PARAM])
 inct       = proc_decl('inct',     [CHANEND_PARAM, SREF_PARAM])
@@ -56,17 +58,21 @@ outct      = proc_decl('outct',    [CHANEND_PARAM, SVAL_PARAM])
 chkctend   = proc_decl('chkctend', [CHANEND_PARAM])
 outctend   = proc_decl('outctend', [CHANEND_PARAM])
 
-# Fixed point builtins
-mulf8_24 = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
-divf8_24 = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
+# Remote memory access
+rread      = proc_decl('rread',    [SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
+rwrite     = proc_decl('rwrite',   [SVAL_PARAM, SVAL_PARAM, SVAL_PARAM])
 
-# System builtins
-procid   = func_decl('procid',   []) # Required for implementation of on and connect
-time     = func_decl('time',     [])
-crc      = func_decl('crc',      [SVAL_PARAM], mobile=True)
-rand     = func_decl('rand',     [], mobile=True)
-memalloc = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
-memfree  = func_decl('memfree',  [AVAL_PARAM])
+# Fixed point
+mulf8_24   = func_decl('mulf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
+divf8_24   = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
+
+# System
+procid     = func_decl('procid',   []) # Required for implementation of on and connect
+time       = func_decl('time',     [])
+crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
+rand       = func_decl('rand',     [], mobile=True)
+memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
+memfree    = func_decl('memfree',  [AVAL_PARAM])
 
 builtins = {
   'printchar'   : printchar,
@@ -88,6 +94,8 @@ builtins = {
   'outct'       : outct,
   'chkctend'    : chkctend,
   'outctend'    : outctend,
+  'rread'       : rread,
+  'rwrite'      : rwrite,
   'mulf8_24'    : mulf8_24,
   'divf8_24'    : divf8_24,
   'procid'      : procid,

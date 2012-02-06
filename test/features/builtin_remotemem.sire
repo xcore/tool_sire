@@ -1,0 +1,30 @@
+val location := NUM_CORES-1;
+
+proc foo(chanend c) is
+{ var v;
+  var address[];
+  v := memalloc(address, 1);
+  c ! address;
+  c ? v;
+  v := memfree(address)
+}
+
+proc baz(chanend c) is
+{ var v;
+  var address;
+  c ? address;
+  rwrite(location, 0x20000, 0xDEADBEEF);
+  rread(location, 0x20000, v);
+  %printhexln(v);
+  %assert v = 0xDEADBEEF;
+  c ! 0;
+}
+
+proc bar(chanend c) is
+  on location do baz(c)
+
+proc main() is
+{ chan x;
+  foo(x) || bar(x)
+}
+
