@@ -1,30 +1,29 @@
-val location := NUM_CORES-1;
+val N is NUM_CORES-1;
 
-proc foo(chanend c) is
-{ var v;
+proc foo(val origin) is
+{ chanend c;
+  var v;
   var address[];
+  connect c:0 to master origin;
   v := memalloc(address, 1);
   c ! address;
   c ? v;
   v := memfree(address)
 }
 
-proc baz(chanend c) is
-{ var v;
+proc bar(val dest) is
+{ chanend c;
+  var v;
   var address;
+  connect c:0 to slave dest;
   c ? address;
-  rwrite(location, 0x20000, 0xDEADBEEF);
-  rread(location, 0x20000, v);
+  %rwrite(location, 0x20000, 0xDEADBEEF);
+  rread(dest, 0x20000, v);
   %printhexln(v);
   %assert v = 0xDEADBEEF;
-  c ! 0;
+  c ! 0
 }
-
-proc bar(chanend c) is
-  on location do baz(c)
 
 proc main() is
-{ chan x;
-  foo(x) || bar(x)
-}
+{ on N do bar(0) || foo(N) }
 

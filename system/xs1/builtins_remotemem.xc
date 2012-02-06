@@ -1,7 +1,7 @@
 #define _RWRITE(destID, address, value) \
 do { \
   unsigned c; \
-  GETR_CHANEND(c) \
+  GETR_CHANEND(c); \
   SETD(c, destID << 16 | XS1_RES_TYPE_CHANEND); \
   OUTCT(c, XS1_CT_WRITE4); \
   OUT(c, address); \
@@ -13,7 +13,7 @@ do { \
 #define _RREAD(destID, address, value) \
 do { \
   unsigned c; \
-  GETR_CHANEND(c) \
+  GETR_CHANEND(c); \
   SETD(c, destID << 16 | XS1_RES_TYPE_CHANEND); \
   OUTCT(c, XS1_CT_READ4); \
   OUT(c, address); \
