@@ -1,0 +1,141 @@
+val STORAGE     is 4; % Storage per leaf
+val N           is 1024; % Number of leaves (storage units)
+val LENGTH      is N*STORAGE;
+val READ        is 0;
+val WRITE       is 1;
+val HALT        is 2;
+val READY       is 3;
+
+proc read(chanend c, val index, var value) is
+{ c ! READ;
+  c ! index;
+  c ? value
+}
+
+proc write(chanend c, val index, val value) is
+{ c ! WRITE;
+  c ! index;
+  c ! value
+}
+
+proc control(chanend input, chanend begin, chanend end) is
+{ %var addresses[N];
+  var base;
+  var j;
+  var dest;
+  var address;
+  var running;
+  var query;
+  var index;
+  var value;
+  
+  % Collect addresses
+  base := 0;
+  for j in [0 for N] do
+  { %end ? addresses[N-j-1]
+    end ? address;
+    if address > base then base := address else skip
+  };
+  %for j in [0 for N] do
+  %{ printval(j); printstr(": address 0x");
+  %  printhexln(addresses[j])
+  %};
+
+  % Notify ready
+  input ! READY;
+
+  % Run
+  running := true;
+  while running do 
+  { input ? query;
+    if query = READ
+    then 
+    { input ? index;
+      dest := index / STORAGE;
+      %address := addresses[dest] + ((index rem STORAGE)<<2);
+      address := base + ((index rem STORAGE)<<2);
+      rread(dest, address, value);
+      input ! value
+    }
+    else if query = WRITE
+    then
+    { input ? index;
+      input ? value;
+      dest := index / STORAGE;
+      %address := addresses[dest] + ((index rem STORAGE)<<2);
+      address := base + ((index rem STORAGE)<<2);
+      rwrite(dest, address, value)
+    }
+    else % HALT
+    { begin ! HALT;
+      end ? value;
+      running := false
+    }
+  }
+}
+
+proc leaf(val id, chanend left, chanend right) is
+{ var data[];
+  var v;
+  var j;
+  %v := memalloc(data, STORAGE);
+  v := memalloc(data, 1);
+  
+  % Circulate addresses
+  right ! data;
+  for j in [0 for id] do
+  { left ? v;
+    right ! v
+  };
+  % Wait to halt
+  left ? v;
+  right ! HALT;
+  v := memfree(data)
+}
+
+proc array(chanend x) is
+{ var i;
+  % Small hack: replicated connections can't mix normal and server types
+  chan c[N+1];
+  server() 
+    control(x, c[0], c[N])
+    par i in [0 for N] do 
+      leaf(i, c[i], c[i+1])
+}
+
+proc main() is
+{ server(chan x)
+    array(x)
+  { var value;
+    var i;
+    var total;
+    var t;
+   
+    % Wait until array is ready
+    x ? value;
+
+    %read(x, 0, value);
+    %write(x, 0, 0xDEADBEEF);
+
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      read(x, i, value);
+      total := total + (time()-t)
+    };
+    printstr("Average read time (cycles): ");
+    printvalln(total/LENGTH);
+    
+    total := 0;
+    for i in [0 for LENGTH] do
+    { t := time();
+      write(x, i, i);
+      total := total + (time()-t)
+    };
+    printstr("Average write time (cycles): ");
+    printvalln(total/LENGTH);
+
+    x ! HALT
+  } 
+}
+
