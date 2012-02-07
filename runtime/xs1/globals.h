@@ -24,7 +24,7 @@ extern unsigned _seed;
 /* Processor allocation ================================*/
 
 // CRI of control spawn channel
-extern unsigned spawn_master; 
+extern unsigned spawn_master; // Channel ID 0
 extern unsigned thread_chans[MAX_THREADS];
 
 /* Connection setup and management =====================*/
@@ -43,10 +43,14 @@ typedef struct
 } conn_srv;
 
 // CRI of control connection channel
-extern unsigned conn_master; 
+extern unsigned conn_master; // Channel ID 1
 extern conn_req conn_buffer[CONN_BUFFER_SIZE];
 extern conn_req conn_locals[MAX_THREADS];
 extern conn_srv conn_server[MAX_OPEN_CONNS];
+
+/* Remote memory access ===============================*/
+
+extern unsigned chan_mem_access; // Channel ID 2
 
 #endif
 

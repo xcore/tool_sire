@@ -1,29 +1,48 @@
 val N is NUM_CORES-1;
+val SIZE is 100;
 
-proc foo(val origin) is
+proc memory(val origin) is
 { chanend c;
   var v;
   var address[];
+  var i;
   connect c:0 to master origin;
-  v := memalloc(address, 1);
+  % Allocate some memory 
+  v := memalloc(address, SIZE);
+  % Write to even locations
+  for i in [0 for SIZE/2] do
+    address[i*2] := i*2;
+  % Send details to the accessor
   c ! address;
+  c ! SIZE;
+  % Wait for accessor to finish
   c ? v;
   v := memfree(address)
 }
 
-proc bar(val dest) is
+proc accessor(val dest) is
 { chanend c;
   var v;
   var address;
+  var size;
+  var i;
   connect c:0 to slave dest;
   c ? address;
-  %rwrite(location, 0x20000, 0xDEADBEEF);
-  rread(dest, 0x20000, v);
-  %printhexln(v);
-  %assert v = 0xDEADBEEF;
+  c ? size;
+  printhexln(address);
+  printvalln(size);
+  % Write to odd locations
+  for i in [1 for size/2] do
+    rwrite(dest, address+(((i*2)-1)<<2), (i*2)-1);
+  % Read out whole area
+  for i in [0 for size] do
+  { rread(dest, address+(i<<2), v)
+    %;printvalln(v)
+    ;assert v = i
+  };
   c ! 0
 }
 
 proc main() is
-{ on N do bar(0) || foo(N) }
+{ on N do memory(0) || accessor(N) }
 

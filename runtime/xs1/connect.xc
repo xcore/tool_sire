@@ -6,7 +6,7 @@
 
 #define LOCAL_CONNECT_CHAN(c, resID) \
 do { \
-  CHAN_RI(0, CONTROL_CONNECT, resID); \
+  CHAN_RI(0, CHAN_ID_CONTROL_CONNECT, resID); \
   resID = ((c & 0xFFFF0000) | (resID & 0xFFFF)); \
 } while(0)
 #define COMPLETE(c, cri, v) \
@@ -60,7 +60,7 @@ void initConnections()
 unsigned _connectMaster(int connId, int dest)
 { unsigned c;
   unsigned destCRI;
-  CHAN_RI(dest, CONTROL_CONNECT, destCRI);
+  CHAN_RI(dest, CHAN_ID_CONTROL_CONNECT, destCRI);
   GETR_CHANEND(c);
   SETD(c, destCRI);
   
@@ -156,7 +156,7 @@ unsigned _connectServer(int connId)
 unsigned _connectClient(int connId, int dest)
 { unsigned c;
   unsigned destCRI;
-  CHAN_RI(dest, CONTROL_CONNECT, destCRI);
+  CHAN_RI(dest, CHAN_ID_CONTROL_CONNECT, destCRI);
   GETR_CHANEND(c);
   SETD(c, destCRI);
   

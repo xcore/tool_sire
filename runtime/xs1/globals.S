@@ -17,6 +17,8 @@
   .globl conn_locals,  "a(:s(){m(connId){si},m(origin){si},m(chanCRI){ui}})"
   .globl conn_server,  "a(:s(){m(connId){si},m(chanCRI){ui}})"
 
+  .globl chan_mem_access, "ui"
+  
 .section .dp.data, "awd", @progbits
   .align BYTES_PER_WORD
 
@@ -69,4 +71,13 @@ conn_server:
   .space 2*MAX_THREADS*BYTES_PER_WORD
   .globl conn_server.globound
   .set conn_server.globound, 2*MAX_THREADS*BYTES_PER_WORD
+
+/*
+ * Remote memory access
+ */
+
+chan_mem_access:
+  .space BYTES_PER_WORD
+  .globl chan_mem_access.globound
+  .set chan_mem_access.globound, BYTES_PER_WORD
 

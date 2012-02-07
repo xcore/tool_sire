@@ -55,8 +55,9 @@
 #define JUMP_INDEX_OFFSET        8 
 
 // Control thread channels
-#define CONTROL_CREATE           0
-#define CONTROL_CONNECT          1
+#define CHAN_ID_CONTROL_CREATE   0
+#define CHAN_ID_CONTROL_CONNECT  1
+#define CHAN_ID_MEM_ACCESS       2
 
 // Hardware parameters
 #define RAM_BASE                 0x10000

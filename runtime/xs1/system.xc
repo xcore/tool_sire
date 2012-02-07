@@ -72,6 +72,9 @@ void initChanends() {
   GETR_CHANEND(conn_master);
   asm("eeu res[%0]" :: "r"(conn_master));
 
+  // Allocate a channel end for setting up connections
+  GETR_CHANEND(chan_mem_access);
+
   // Get channels for each thread
   for(int i=0; i<MAX_THREADS; i++)
     GETR_CHANEND(thread_chans[i]);
