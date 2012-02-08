@@ -1,20 +1,22 @@
-val STORAGE     is 4; % Storage per leaf
-val N           is 1024; % Number of leaves (storage units)
+val STORAGE     is 1; % Storage per leaf
+val N           is NUM_CORES; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
-val READ        is 0;
-val WRITE       is 1;
-val HALT        is 2;
-val READY       is 3;
+val ADDR_LEN    is 30;
+val ADDR_MASK   is 0x3FFFFFFF;
+val QUERY_MASK  is 0xC0000000;
+val READ        is (0x1 << ADDR_LEN);
+val WRITE       is (0x2 << ADDR_LEN);
+val HALT        is (0x3 << ADDR_LEN);
+val READY       is (0x4 << ADDR_LEN);
+val NUM_ACCESSES is 1000;
 
 proc read(chanend c, val index, var value) is
-{ c ! READ;
-  c ! index;
+{ c ! READ or index;
   c ? value
 }
 
 proc write(chanend c, val index, val value) is
-{ c ! WRITE;
-  c ! index;
+{ c ! WRITE or index;
   c ! value
 }
 
@@ -48,10 +50,11 @@ proc control(chanend input, chanend begin, chanend end) is
   running := true;
   while running do 
   { input ? query;
+    index := query and ADDR_MASK;
+    query := query and QUERY_MASK;
     if query = READ
     then 
-    { input ? index;
-      dest := index / STORAGE;
+    { dest := index / STORAGE;
       %address := addresses[dest] + ((index rem STORAGE)<<2);
       address := base + ((index rem STORAGE)<<2);
       rread(dest, address, value);
@@ -59,8 +62,7 @@ proc control(chanend input, chanend begin, chanend end) is
     }
     else if query = WRITE
     then
-    { input ? index;
-      input ? value;
+    { input ? value;
       dest := index / STORAGE;
       %address := addresses[dest] + ((index rem STORAGE)<<2);
       address := base + ((index rem STORAGE)<<2);
@@ -95,7 +97,8 @@ proc leaf(val id, chanend left, chanend right) is
 
 proc array(chanend x) is
 { var i;
-  % Small hack: replicated connections can't mix normal and server types
+  % Small hack: channel declaration taken out of server as replicated
+  % connections can't mix normal and server types.
   chan c[N+1];
   server() 
     control(x, c[0], c[N])
@@ -108,6 +111,7 @@ proc main() is
     array(x)
   { var value;
     var i;
+    var index;
     var total;
     var t;
    
@@ -118,22 +122,24 @@ proc main() is
     %write(x, 0, 0xDEADBEEF);
 
     total := 0;
-    for i in [0 for LENGTH] do
-    { t := time();
-      read(x, i, value);
+    for i in [0 for NUM_ACCESSES] do
+    { index := rand() rem LENGTH;
+      t := time();
+      read(x, index, value);
       total := total + (time()-t)
     };
-    printstr("Average read time (cycles): ");
-    printvalln(total/LENGTH);
+    %printstr("Average read time (cycles): ");
+    printvalln(total/NUM_ACCESSES);
     
     total := 0;
-    for i in [0 for LENGTH] do
-    { t := time();
-      write(x, i, i);
+    for i in [0 for NUM_ACCESSES] do
+    { index := rand() rem LENGTH;
+      t := time();
+      write(x, index, i);
       total := total + (time()-t)
     };
-    printstr("Average write time (cycles): ");
-    printvalln(total/LENGTH);
+    %printstr("Average write time (cycles): ");
+    printvalln(total/NUM_ACCESSES);
 
     x ! HALT
   } 
