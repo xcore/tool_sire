@@ -11,13 +11,27 @@ val READY       is (0x4 << ADDR_LEN);
 val NUM_ACCESSES is 1000;
 
 proc read(chanend c, val index, var value) is
-{ c ! READ or index;
-  c ? value
+{ out(c, READ or index);
+  outctend(c);
+  %chkctend(c);
+  inp(c, value);
+  chkctend(c);
+  outctend(c)
 }
 
 proc write(chanend c, val index, val value) is
-{ c ! WRITE or index;
-  c ! value
+{ out(c, WRITE or index);
+  outctend(c);
+  %chkctend(c);
+  out(c, value);
+  outctend(c);
+  chkctend(c)
+}
+
+proc halt(chanend c) is
+{ out(c, HALT);
+  outctend(c);
+  chkctend(c)
 }
 
 proc control(chanend input, chanend begin, chanend end) is
@@ -49,27 +63,36 @@ proc control(chanend input, chanend begin, chanend end) is
   % Run
   running := true;
   while running do 
-  { input ? query;
+  { inp(input, query);
     index := query and ADDR_MASK;
     query := query and QUERY_MASK;
     if query = READ
-    then 
-    { dest := index / STORAGE;
-      %address := addresses[dest] + ((index rem STORAGE)<<2);
-      address := base + ((index rem STORAGE)<<2);
-      rread(dest, address, value);
-      input ! value
-    }
-    else if query = WRITE
     then
-    { input ? value;
+    { chkctend(input);
       dest := index / STORAGE;
       %address := addresses[dest] + ((index rem STORAGE)<<2);
       address := base + ((index rem STORAGE)<<2);
-      rwrite(dest, address, value)
+      rread(dest, address, value);
+      out(input, value);
+      outctend(input);
+      chkctend(input)
+    }
+    else if query = WRITE
+    then
+    { chkctend(input);
+      %outctend(root);
+      inp(input, value);
+      dest := index / STORAGE;
+      %address := addresses[dest] + ((index rem STORAGE)<<2);
+      address := base + ((index rem STORAGE)<<2);
+      rwrite(dest, address, value);
+      chkctend(input);
+      outctend(input)
     }
     else % HALT
-    { begin ! HALT;
+    { chkctend(input);
+      outctend(input);
+      begin ! HALT;
       end ? value;
       running := false
     }
@@ -159,7 +182,7 @@ proc main() is
     %printstr("Average read/write time (cycles): ");
     printvalln(total/NUM_ACCESSES);
 
-    x ! HALT
+    halt(x)
   } 
 }
 
