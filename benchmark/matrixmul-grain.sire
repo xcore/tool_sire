@@ -4,18 +4,20 @@
 %  - A, B, C and N*N matrices
 %  - Matrices are distributed with submatrices of size (N/R)^2
 
-val N is 80; % Dimension of square matrix
-val R is 8;  % Num partitions per dimension
+val N is 128;  % Dimension of square matrix
+% Num partitions per dimension
+val R is 1; 
 val M is N/R; % Submatrix dimension
 val X is R*R; % Num channels in a dimension
 val MATRIX_STORAGE is M*M;
 
 proc zeromatrix(var A[MATRIX_STORAGE]) is
-{ var x;
-  var y;
-  for x in [0 for M] do % Row
-    for y in [0 for M] do % Col
-      A[(x*M)+y] := 0
+{ %var x;
+  %var y;
+  %for x in [0 for M] do % Row
+  %  for y in [0 for M] do % Col
+  %    A[(x*M)+y] := 0
+  A[0] := 0
 }
 
 % C = C + A*B
@@ -29,19 +31,55 @@ proc muladd(
   for x in [0 for M] do % Row
     for y in [0 for M] do % Col1
       for z in [0 for M] do % Col2
-        C[(x*M)+y] := C[(x*M)+y] + (A[(x*M)+y] * B[(y*M)+z])
+        %C[(x*M)+y] := C[(x*M)+y] + (A[(x*M)+y] * B[(y*M)+z])
+        C[0] := C[0] + (A[0] * B[0])
 }
 
 proc send_submatrix(chanend c, var X[MATRIX_STORAGE]) is
 { var i;
   for i in [0 for MATRIX_STORAGE] do 
-    c ! X[i]
+    %c ! X[i]
+    c ! X[0]
 }
 
 proc recv_submatrix(chanend c, var X[MATRIX_STORAGE]) is
 { var i;
   for i in [0 for MATRIX_STORAGE] do 
-    c ? X[i]
+    %c ? X[i]
+    c ? X[0]
+}
+
+proc sync_horz(val j, chanend e, chanend w) is
+{ var v;
+  if j = 0 % Left col 
+  then 
+    w ? v
+  else if j = R-1 % Right col
+  then 
+    e ! 0
+  else { % Middle cols
+    w ? v;
+    e ! v
+  }
+}
+
+proc sync(val i, val j, chanend n, chanend s, chanend e, chanend w) is
+{ var v;
+  if i = 0 % Top row
+  then {
+    s ? v; 
+    sync_horz(j, e, w)
+  }
+  else if i = R-1 % Bottom row
+  then {
+    n ! 0; 
+    sync_horz(j, e, w)
+  }
+  else { % Middle rows
+    s ? v;
+    n ! v; 
+    sync_horz(j, e, w)
+  }
 }
 
 proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
@@ -49,14 +87,21 @@ proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
   var B[];
   var C[];
   var k;
+  var t;
 
-  memalloc(A, MATRIX_STORAGE);
-  memalloc(B, MATRIX_STORAGE);
-  memalloc(C, MATRIX_STORAGE);
+  %memalloc(A, MATRIX_STORAGE);
+  %memalloc(B, MATRIX_STORAGE);
+  %memalloc(C, MATRIX_STORAGE);
+  memalloc(A, 1);
+  memalloc(B, 1);
+  memalloc(C, 1);
   zeromatrix(A);
   zeromatrix(B);
   zeromatrix(C);
-  
+
+  sync(i, j, n, s, e, w);
+  t := time();
+
   % Circularly shift west each matrix A_{i,j} by i columns
   for k in [0 for i] do
     if j = 0
@@ -119,6 +164,16 @@ proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
       recv_submatrix(s, B);
       send_submatrix(n, B)
     };
+ 
+  t := time() - t;
+  sync(i, j, n, s, e, w);
+
+  if (i=0) and (j=0)
+  then {
+    %printstr("Time: ");
+    printvalln(t)
+  }
+  else skip;
 
   memfree(A);
   memfree(B);
