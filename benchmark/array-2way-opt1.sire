@@ -218,22 +218,42 @@ proc main() is
     %write(x, 0, 0);
 
     total := 0;
-    for i in [0 for LENGTH] do
-    { t := time();
-      read(x, i, value);
+    for i in [0 for NUM_ACCESSES] do
+    { index := rand() rem LENGTH;
+      t := time();
+      read(x, index, value);
       total := total + (time()-t)
     };
-    printstr("Average read time (cycles): ");
-    printvalln(total/LENGTH);
+    %printstr("Average read time (cycles): ");
+    printvalln(total/NUM_ACCESSES);
     
     total := 0;
-    for i in [0 for LENGTH] do
-    { t := time();
-      write(x, i, i);
+    for i in [0 for NUM_ACCESSES] do
+    { index := rand() rem LENGTH;
+      t := time();
+      write(x, index, i);
       total := total + (time()-t)
     };
-    printstr("Average write time (cycles): ");
-    printvalln(total/LENGTH);
+    %printstr("Average write time (cycles): ");
+    printvalln(total/NUM_ACCESSES);
+
+    total := 0;
+    for i in [0 for NUM_ACCESSES] do
+    { index := rand() rem LENGTH;
+      if (rand() rem 2) = 0
+      then
+      { t := time();
+        read(x, index, value);
+        total := total + (time()-t)
+      }
+      else
+      { t := time();
+        write(x, index, i);
+        total := total + (time()-t)
+      }
+    };
+    %printstr("Average read/write time (cycles): ");
+    printvalln(total/NUM_ACCESSES);
 
     halt(x)
   } 
