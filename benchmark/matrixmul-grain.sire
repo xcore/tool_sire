@@ -4,9 +4,9 @@
 %  - A, B, C and N*N matrices
 %  - Matrices are distributed with submatrices of size (N/R)^2
 
-val N is 128;  % Dimension of square matrix
+val N is 256;  % Dimension of square matrix
 % Num partitions per dimension
-val R is 1; 
+val R is 8; 
 val M is N/R; % Submatrix dimension
 val X is R*R; % Num channels in a dimension
 val MATRIX_STORAGE is M*M;
