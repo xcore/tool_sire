@@ -1,4 +1,4 @@
-val STORAGE     is 1; % Storage per leaf
+val STORAGE     is 64; % Storage per leaf
 val N           is NUM_CORES; % Number of leaves (storage units)
 val LENGTH      is N*STORAGE;
 val ADDR_LEN    is 30;
@@ -181,6 +181,26 @@ proc main() is
     };
     %printstr("Average read/write time (cycles): ");
     printvalln(total/NUM_ACCESSES);
+
+    t := time();
+    livermore1(x, 40, 101);
+    printvalln(time()-t);
+
+    t := time();
+    livermore2(x, 40, 101);
+    printvalln(time()-t);
+
+    t := time();
+    livermore3(x, 53, 101);
+    printvalln(time()-t);
+
+    t := time();
+    livermore4(x, 70, 101);
+    printvalln(time()-t);
+
+    t := time();
+    livermore5(x, 55, 101);
+    printvalln(time()-t);
 
     halt(x)
   } 

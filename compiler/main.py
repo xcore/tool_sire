@@ -76,7 +76,12 @@ def setup_argparse():
   p.add_argument('-n', nargs=1, metavar='<n>', type=int, 
       dest='num_cores', default=[DEFAULT_NUM_CORES],
       help='number of cores (default: {})'.format(DEFAULT_NUM_CORES))
-  
+ 
+  # Modes
+
+  p.add_argument('-b', action='store_true', dest='build_only',
+      help='build an exisiting translation')
+
   # Verbosity
 
   p.add_argument('-v', action='store_true', dest='verbose', 
@@ -138,6 +143,10 @@ def setup_globals(a):
   global num_cores
   target_system = a.target_system[0]
   num_cores = int(a.num_cores[0])
+
+  # Modes
+  global build_only
+  build_only = a.build_only
 
   # Stages
   global print_ast
@@ -334,7 +343,13 @@ def main(args):
 
     # Setup the error object
     errorlog = ErrorLog()
-    
+   
+    if build_only:
+      # Generate code
+      vhdr(v, 'Generating code for {}'.format(device))
+      generate(ast, sig, child, device, outfile, 
+          False, True, compile_only, display_memory, show_calls, v)
+
     # Parse the input file and produce an AST
     ast = produce_ast(input_file, errorlog)
 

@@ -74,6 +74,13 @@ rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
 memfree    = func_decl('memfree',  [AVAL_PARAM])
 
+#livermore loops
+livermore1 = proc_decl('livermore1', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
+livermore2 = proc_decl('livermore2', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
+livermore3 = proc_decl('livermore3', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
+livermore4 = proc_decl('livermore4', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
+livermore5 = proc_decl('livermore5', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
+
 builtins = {
   'printchar'   : printchar,
   'printcharln' : printcharln,
@@ -104,6 +111,11 @@ builtins = {
   'rand'        : rand,
   'memalloc'    : memalloc,
   'memfree'     : memfree,
+  'livermore1'  : livermore1,
+  'livermore2'  : livermore2,
+  'livermore3'  : livermore3,
+  'livermore4'  : livermore4,
+  'livermore5'  : livermore5,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
