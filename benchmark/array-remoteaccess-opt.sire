@@ -1,5 +1,5 @@
-val STORAGE     is 64; % Storage per leaf
 val N           is NUM_CORES; % Number of leaves (storage units)
+val STORAGE     is 1024/N; % Storage per leaf
 val LENGTH      is N*STORAGE;
 val ADDR_LEN    is 30;
 val ADDR_MASK   is 0x3FFFFFFF;
@@ -72,7 +72,8 @@ proc control(chanend input, chanend begin, chanend end) is
       dest := index / STORAGE;
       %address := addresses[dest] + ((index rem STORAGE)<<2);
       address := base + ((index rem STORAGE)<<2);
-      rread(dest, address, value);
+      %printstr("Read:  ");printvalln(NUM_CORES-1-dest);
+      rread(NUM_CORES-1-dest, address, value);
       out(input, value);
       outctend(input);
       chkctend(input)
@@ -85,7 +86,8 @@ proc control(chanend input, chanend begin, chanend end) is
       dest := index / STORAGE;
       %address := addresses[dest] + ((index rem STORAGE)<<2);
       address := base + ((index rem STORAGE)<<2);
-      rwrite(dest, address, value);
+      %printstr("Write: ");printvalln(NUM_CORES-1-dest);
+      rwrite(NUM_CORES-1-dest, address, value);
       chkctend(input);
       outctend(input)
     }
