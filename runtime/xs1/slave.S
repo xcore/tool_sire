@@ -13,6 +13,7 @@
   .extern initThreads
   .extern initChanends
   .extern initPorts
+  .extern initTimers
   .extern initConnections
   .extern slaveSync
   .extern controlIdle
@@ -45,6 +46,7 @@ _slave:
   bl initThreads
   bl initChanends
   bl initPorts
+  bl initTimers
   bl initConnections
   bl __alloc_libc_hwlock
   bl slaveSync

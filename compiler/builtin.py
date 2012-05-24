@@ -68,7 +68,7 @@ divf8_24   = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System
 procid     = func_decl('procid',   []) # Required for implementation of on and connect
-time       = func_decl('time',     [])
+time       = func_decl('time',     [SREF_PARAM])
 crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])

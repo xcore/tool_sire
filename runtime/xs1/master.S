@@ -13,6 +13,7 @@
   .extern initThreads
   .extern initChanends
   .extern initPorts
+  .extern initTimers
   .extern initConnections
   .extern masterSync
   .extern initMaster
@@ -49,6 +50,7 @@ _master:
   bl initThreads
   bl initChanends
   bl initPorts
+  bl initTimers
   bl initConnections
   bl __alloc_libc_hwlock
   bl setInterrupts

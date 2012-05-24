@@ -1,5 +1,5 @@
 val N           is NUM_CORES; % Number of leaves (storage units)
-val STORAGE     is 1024/N; % Storage per leaf
+val STORAGE     is 4096/N; % Storage per leaf
 val LENGTH      is N*STORAGE;
 val ADDR_LEN    is 30;
 val ADDR_MASK   is 0x3FFFFFFF;
@@ -20,12 +20,20 @@ proc read(chanend c, val index, var value) is
 }
 
 proc write(chanend c, val index, val value) is
-{ out(c, WRITE or index);
+{ var t1;
+  var t2;
+
+  time(t1);
+
+  out(c, WRITE or index);
   outctend(c);
   %chkctend(c);
   out(c, value);
   outctend(c);
-  chkctend(c)
+  chkctend(c);
+
+  time(t2);
+  printvalln(t2-t1)
 }
 
 proc halt(chanend c) is
@@ -143,66 +151,66 @@ proc main() is
     % Wait until array is ready
     x ? value;
 
-    %read(x, 0, value);
-    %write(x, 0, 0xDEADBEEF);
+    write(x, 0, 0xDEADBEEF);
+    read(x, 0, value);
 
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      t := time();
-      read(x, index, value);
-      total := total + (time()-t)
-    };
-    %printstr("Average read time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
-    
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      t := time();
-      write(x, index, i);
-      total := total + (time()-t)
-    };
-    %printstr("Average write time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  t := time();
+    %  read(x, index, value);
+    %  total := total + (time()-t)
+    %};
+    %%printstr("Average read time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
+    %
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  t := time();
+    %  %write(x, index, i);
+    %  total := total + (time()-t)
+    %};
+    %%printstr("Average write time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
 
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      if (rand() rem 2) = 0
-      then
-      { t := time();
-        read(x, index, value);
-        total := total + (time()-t)
-      }
-      else
-      { t := time();
-        write(x, index, i);
-        total := total + (time()-t)
-      }
-    };
-    %printstr("Average read/write time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  if (rand() rem 2) = 0
+    %  then
+    %  { t := time();
+    %    %read(x, index, value);
+    %    total := total + (time()-t)
+    %  }
+    %  else
+    %  { t := time();
+    %    %write(x, index, i);
+    %    total := total + (time()-t)
+    %  }
+    %};
+    %%printstr("Average read/write time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
 
-    t := time();
-    livermore1(x, 40, 101);
-    printvalln(time()-t);
+    %t := time();
+    %livermore1(x, 40, 101);
+    %printvalln(time()-t);
 
-    t := time();
-    livermore2(x, 40, 101);
-    printvalln(time()-t);
+    %t := time();
+    %livermore2(x, 40, 101);
+    %printvalln(time()-t);
 
-    t := time();
-    livermore3(x, 53, 101);
-    printvalln(time()-t);
+    %t := time();
+    %livermore3(x, 53, 101);
+    %printvalln(time()-t);
 
-    t := time();
-    livermore4(x, 70, 101);
-    printvalln(time()-t);
+    %t := time();
+    %livermore4(x, 70, 101);
+    %printvalln(time()-t);
 
-    t := time();
-    livermore5(x, 55, 101);
-    printvalln(time()-t);
+    %t := time();
+    %livermore5(x, 55, 101);
+    %printvalln(time()-t);
 
     halt(x)
   } 

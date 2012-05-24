@@ -38,14 +38,14 @@ do { \
 } while(0)
 
 #define LEN 1001
-/*#define ADDR_x 0
+#define ADDR_x 0
 #define ADDR_y LEN
 #define ADDR_z (2*LEN)
-#define ADDR_v (3*LEN)*/
-#define ADDR_x 0
+#define ADDR_v (3*LEN)
+/*#define ADDR_x 0
 #define ADDR_y 0
 #define ADDR_z 0
-#define ADDR_v 0
+#define ADDR_v 0*/
 
 void livermore1(unsigned mem, int loop, int n) {
   int l, k;
@@ -106,7 +106,7 @@ void livermore2(unsigned mem, int n, int loop) {
 
 // x[1001]
 // z[1001]
-void livermore3(unsigned mem, int n, int loop) {
+int livermore3(unsigned mem, int n, int loop) {
   int l, k;
   int q;
   for ( l=1 ; l<=loop ; l++ ) {
@@ -119,6 +119,8 @@ void livermore3(unsigned mem, int n, int loop) {
       q += t1*t2;
     }
   }
+  // Otherwise most of this gets optimised away
+  return q;
 }
 
 /*

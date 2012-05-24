@@ -215,6 +215,14 @@ do { \
   } \
 } while(0)
 
+#define GETR_TIMER(resID) \
+do { \
+  asm("getr %0, " S(XS1_RES_TYPE_TIMER) : "=r"(resID)); \
+  if (resID == 0) { \
+    EXCEPTION(et_INSUFFICIENT_TIMERS); \
+  } \
+} while(0)
+
 // Get a synchroniser
 #define GETR_SYNC(resID) \
 do { \

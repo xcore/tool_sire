@@ -1,13 +1,10 @@
 #define _POLYNOMIAL 0xEDB88320
 #include <math.h>
 
-int time() {
-  timer t;
-  unsigned v;
-  t :> v;
-  ASSERT(v < 0x7fffffff);
-  return (int) v;
-}
+#define _TIME(v) \
+do {\
+  asm("in %0, res[%1]" : "=r"(v) : "r"(system_timer));\
+} while(0)
 
 int crc(int x) {
   unsigned y = (unsigned) x;
