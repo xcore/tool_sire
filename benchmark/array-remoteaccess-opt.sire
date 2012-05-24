@@ -11,29 +11,31 @@ val READY       is (0x4 << ADDR_LEN);
 val NUM_ACCESSES is 1000;
 
 proc read(chanend c, val index, var value) is
-{ out(c, READ or index);
-  outctend(c);
+{ var t;
+
+  %out(c, READ or index);
+  %outctend(c);
   %chkctend(c);
-  inp(c, value);
-  chkctend(c);
-  outctend(c)
+  %inp(c, value);
+  %chkctend(c);
+  %outctend(c);
+
+  memreadtimed(c, index, value, t);
+  printvalln(t)
 }
 
 proc write(chanend c, val index, val value) is
-{ var t1;
-  var t2;
+{ var t;
 
-  time(t1);
-
-  out(c, WRITE or index);
-  outctend(c);
+  %out(c, WRITE or index);
+  %outctend(c);
   %chkctend(c);
-  out(c, value);
-  outctend(c);
-  chkctend(c);
+  %out(c, value);
+  %outctend(c);
+  %chkctend(c);
 
-  time(t2);
-  printvalln(t2-t1)
+  memwritetimed(c, index, value, t);
+  printvalln(t)
 }
 
 proc halt(chanend c) is

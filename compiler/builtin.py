@@ -74,7 +74,11 @@ rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
 memfree    = func_decl('memfree',  [AVAL_PARAM])
 
-#livermore loops
+# For experiments
+memreadtimed = proc_decl('memreadtimed', 
+    [CHANEND_PARAM, SVAL_PARAM, SREF_PARAM, SREF_PARAM])
+memwritetimed = proc_decl('memwritetimed', 
+    [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
 livermore1 = proc_decl('livermore1', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
 livermore2 = proc_decl('livermore2', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
 livermore3 = proc_decl('livermore3', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
@@ -82,40 +86,42 @@ livermore4 = proc_decl('livermore4', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 livermore5 = proc_decl('livermore5', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 
 builtins = {
-  'printchar'   : printchar,
-  'printcharln' : printcharln,
-  'printval'    : printval,
-  'printvalln'  : printvalln,
-  'printhex'    : printhex,
-  'printhexln'  : printhexln,
-  'printstr'    : printstr,
-  'printstrln'  : printstrln,
-  'println'     : println,
-  'fopen'       : fopen,
-  'fwrite'      : fwrite,
-  'fread'       : fread,
-  'fclose'      : fclose,
-  'inp'         : inp,
-  'out'         : out,
-  'inct'        : inct,
-  'outct'       : outct,
-  'chkctend'    : chkctend,
-  'outctend'    : outctend,
-  'rread'       : rread,
-  'rwrite'      : rwrite,
-  'mulf8_24'    : mulf8_24,
-  'divf8_24'    : divf8_24,
-  'procid'      : procid,
-  'time'        : time,
-  'crc'         : crc,
-  'rand'        : rand,
-  'memalloc'    : memalloc,
-  'memfree'     : memfree,
-  'livermore1'  : livermore1,
-  'livermore2'  : livermore2,
-  'livermore3'  : livermore3,
-  'livermore4'  : livermore4,
-  'livermore5'  : livermore5,
+  'printchar'     : printchar,
+  'printcharln'   : printcharln,
+  'printval'      : printval,
+  'printvalln'    : printvalln,
+  'printhex'      : printhex,
+  'printhexln'    : printhexln,
+  'printstr'      : printstr,
+  'printstrln'    : printstrln,
+  'println'       : println,
+  'fopen'         : fopen,
+  'fwrite'        : fwrite,
+  'fread'         : fread,
+  'fclose'        : fclose,
+  'inp'           : inp,
+  'out'           : out,
+  'inct'          : inct,
+  'outct'         : outct,
+  'chkctend'      : chkctend,
+  'outctend'      : outctend,
+  'rread'         : rread,
+  'rwrite'        : rwrite,
+  'mulf8_24'      : mulf8_24,
+  'divf8_24'      : divf8_24,
+  'procid'        : procid,
+  'time'          : time,
+  'crc'           : crc,
+  'rand'          : rand,
+  'memalloc'      : memalloc,
+  'memfree'       : memfree,
+  'memreadtimed'  : memreadtimed,
+  'memwritetimed' : memwritetimed,
+  'livermore1'    : livermore1,
+  'livermore2'    : livermore2,
+  'livermore3'    : livermore3,
+  'livermore4'    : livermore4,
+  'livermore5'    : livermore5,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.

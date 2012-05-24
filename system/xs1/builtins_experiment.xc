@@ -1,16 +1,3 @@
-/*
- *******************************************************************
- *   Kernel 1 -- hydro fragment
- *******************************************************************
- */
-
-// r
-// t
-// q
-// x[1001]
-// y[1001]
-// z[1001]
-
 #define ADDR_LEN   30
 #define ADDR_MASK  0x3FFFFFFF
 #define QUERY_MASK 0xC0000000
@@ -37,6 +24,24 @@ do { \
   CHKCT_END(c); \
 } while(0)
 
+#define _MEM_READ_TIMED(c, index, value, time) \
+do { \
+  unsigned t1, t2; \
+  _TIME(t1); \
+  MEM_READ(c, index, value); \
+  _TIME(t2); \
+  time = t2 - t1; \
+} while(0)
+
+#define _MEM_WRITE_TIMED(c, index, value, time) \
+do { \
+  unsigned t1, t2; \
+  _TIME(t1); \
+  MEM_WRITE(c, index, value); \
+  _TIME(t2); \
+  time = t2 - t1; \
+} while(0)
+
 #define LEN 1001
 #define ADDR_x 0
 #define ADDR_y LEN
@@ -46,6 +51,19 @@ do { \
 #define ADDR_y 0
 #define ADDR_z 0
 #define ADDR_v 0*/
+
+/*
+ *******************************************************************
+ *   Kernel 1 -- hydro fragment
+ *******************************************************************
+ */
+
+// r
+// t
+// q
+// x[1001]
+// y[1001]
+// z[1001]
 
 void livermore1(unsigned mem, int loop, int n) {
   int l, k;
