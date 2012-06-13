@@ -84,6 +84,8 @@ livermore2 = proc_decl('livermore2', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 livermore3 = proc_decl('livermore3', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
 livermore4 = proc_decl('livermore4', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 livermore5 = proc_decl('livermore5', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
+testEmulated = proc_decl('testEmulated', [CHANEND_PARAM])
+testNormal = proc_decl('testNormal', [])
 
 builtins = {
   'printchar'     : printchar,
@@ -122,6 +124,8 @@ builtins = {
   'livermore3'    : livermore3,
   'livermore4'    : livermore4,
   'livermore5'    : livermore5,
+  'testEmulated'  : testEmulated,
+  'testNormal'    : testNormal
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.

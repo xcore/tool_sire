@@ -39,8 +39,8 @@ proc halt(chanend c) is
 }
 
 proc control(chanend input, chanend begin, chanend end) is
-{ %var addresses[N];
-  var base;
+{ var addresses[2];
+  var i;
   var j;
   var dest;
   var address;
@@ -50,16 +50,16 @@ proc control(chanend input, chanend begin, chanend end) is
   var value;
   
   % Collect addresses
-  base := 0;
-  for j in [0 for N] do
-  { %end ? addresses[N-j-1]
-    end ? address;
-    if address > base then base := address else skip
+  i := 0;
+  end ? addresses[1];
+  % Check all remaining match
+  for j in [2 for N-2] do
+  { end ? value;
+    assert value = addresses[1]
+    %;printval(j); printstr(": address 0x");
+    %printhexln(value)
   };
-  %for j in [0 for N] do
-  %{ printval(j); printstr(": address 0x");
-  %  printhexln(addresses[j])
-  %};
+  end ? addresses[0];
 
   % Notify ready
   input ! READY;
@@ -73,11 +73,12 @@ proc control(chanend input, chanend begin, chanend end) is
     if query = READ
     then
     { chkctend(input);
+      outctend(input);
       dest := index / STORAGE;
-      %address := addresses[dest] + ((index rem STORAGE)<<2);
-      address := base + ((index rem STORAGE)<<2);
-      %printstr("Read:  ");printvalln(NUM_CORES-1-dest);
-      rread(NUM_CORES-1-dest, address, value);
+      address := addresses[dest>0] + ((index rem STORAGE)<<2);
+      %address := base + ((index rem STORAGE)<<2);
+      %printstr("Read:  ");printvalln(dest);
+      rread(dest, address, value);
       out(input, value);
       outctend(input);
       chkctend(input)
@@ -85,22 +86,29 @@ proc control(chanend input, chanend begin, chanend end) is
     else if query = WRITE
     then
     { chkctend(input);
-      %outctend(root);
+      outctend(input);
       inp(input, value);
       dest := index / STORAGE;
-      %address := addresses[dest] + ((index rem STORAGE)<<2);
-      address := base + ((index rem STORAGE)<<2);
-      %printstr("Write: ");printvalln(NUM_CORES-1-dest);
-      rwrite(NUM_CORES-1-dest, address, value);
+      address := addresses[dest>0] + ((index rem STORAGE)<<2);
+      %address := base + ((index rem STORAGE)<<2);
+      %printstr("Write: ");printvalln(dest);
+      rwrite(dest, address, value);
       chkctend(input);
       outctend(input)
     }
-    else % HALT
+    else if query = HALT
+    then
     { chkctend(input);
       outctend(input);
+      %printstr("Halt");
       begin ! HALT;
       end ? value;
       running := false
+    }
+    else
+    { %printstr("Undefined command ");
+      %printhexln(query);
+      assert 0
     }
   }
 }
@@ -109,8 +117,8 @@ proc leaf(val id, chanend left, chanend right) is
 { var data[];
   var v;
   var j;
-  %v := memalloc(data, STORAGE);
-  v := memalloc(data, 1);
+  v := memalloc(data, STORAGE);
+  assert v ~= 0;
   
   % Circulate addresses
   right ! data;
@@ -143,8 +151,6 @@ proc main() is
     var index;
     var total;
     var t;
-    var t1;
-    var t2;
    
     % Wait until array is ready
     x ? value;
@@ -152,67 +158,41 @@ proc main() is
     %write(x, 0, 0xDEADBEEF);
     %read(x, 0, value);
 
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      read(x, index, value, t);
-      total := total + t
-    };
-    %printstr("Average read time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
-    
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      write(x, index, i, t);
-      total := total + t
-    };
-    %printstr("Average write time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  read(x, index, value, t);
+    %  total := total + t
+    %};
+    %%printstr("Average read time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
+    %
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  write(x, index, i, t);
+    %  total := total + t
+    %};
+    %%printstr("Average write time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
 
-    total := 0;
-    for i in [0 for NUM_ACCESSES] do
-    { index := rand() rem LENGTH;
-      if (rand() rem 2) = 0
-      then
-      { read(x, index, value, t);
-        total := total + t
-      }
-      else
-      { write(x, index, i, t);
-        total := total + t
-      }
-    };
-    %printstr("Average read/write time (cycles): ");
-    printvalln(total/NUM_ACCESSES);
+    %total := 0;
+    %for i in [0 for NUM_ACCESSES] do
+    %{ index := rand() rem LENGTH;
+    %  if (rand() rem 2) = 0
+    %  then
+    %  { read(x, index, value, t);
+    %    total := total + t
+    %  }
+    %  else
+    %  { write(x, index, i, t);
+    %    total := total + t
+    %  }
+    %};
+    %%printstr("Average read/write time (cycles): ");
+    %printvalln(total/NUM_ACCESSES);
 
-    testEmulated(x);
-
-    %time(t1);
-    %livermore1(x, 40, 101);
-    %time(t2);
-    %printvalln(t2-t1);
-
-    %time(t1);
-    %livermore2(x, 40, 101);
-    %time(t2);
-    %printvalln(t2-t1);
-
-    %time(t1);
-    %livermore3(x, 53, 101);
-    %time(t2);
-    %printvalln(t2-t1);
-
-    %time(t1);
-    %livermore4(x, 70, 101);
-    %time(t2);
-    %printvalln(t2-t1);
-
-    %time(t1);
-    %livermore5(x, 55, 101);
-    %time(t2);
-    %printvalln(t2-t1);
-
+    %testEmulated(x);
     halt(x)
   } 
 }
