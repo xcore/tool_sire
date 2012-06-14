@@ -67,7 +67,7 @@
 #define RAM_BASE                 0x10000
 #define RAM_SIZE                 0x10000
 #define BYTES_PER_WORD           4
-#define MAX_THREADS              16 
+#define MAX_THREADS              20 
 #define MAX_CHANNELS             32
 
 // Architectural constants
@@ -79,7 +79,7 @@
 #define SIZE_TABLE_SIZE          64 
 #define MAX_PROCS                56 
 #define KERNEL_SPACE             0x200
-#define THREAD_STACK_SPACE       0xD00
+#define THREAD_STACK_SPACE       0x800
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
 #define CONN_BUFFER_SIZE         10
 #define MAX_OPEN_CONNS           8
