@@ -172,7 +172,7 @@ int _procId() {
  * memAlloc builtin wrapper.
  */
 int _memAlloc(unsigned &p, int size) {
-  p = memAlloc(size);
+  p = memAlloc(size*BYTES_PER_WORD);
   return (p == 0) ? 0 : 1;
 }
 

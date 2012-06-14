@@ -28,6 +28,8 @@ _jumptab:
   .word _connectClient
   .word _memAlloc
   .word _memFree
+  .word _pointerUnsigned
+  .word _pointerInt
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET)
 
 // dp =====================================================

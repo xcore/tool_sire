@@ -459,10 +459,12 @@ void testEmulated(unsigned mem) {
   printintln(t2 - t1);
 }
 
-#define LOOP (100)
+#define LOOP (10)
 void testNormal() {
   timer tmr;
   unsigned t1, t2;
+  
+  printintln(37);
   
   tmr :> t1;
   mix_1_1_normal(LOOP);

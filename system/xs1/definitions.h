@@ -36,6 +36,8 @@
 #define LABEL_CONNECT_CLIENT     "_connectClient"
 #define LABEL_MEM_ALLOC          "_memAlloc"
 #define LABEL_MEM_FREE           "_memFree"
+#define LABEL_POINTER_U          "_pointerUnsigned"
+#define LABEL_POINTER_I          "_pointerInt"
 
 // Jump table indicies
 // When adding new entries ensure the following are consistent:
@@ -50,9 +52,11 @@
 #define JUMPI_CONNECT_CLIENT     5
 #define JUMPI_MEM_ALLOC          6
 #define JUMPI_MEM_FREE           7
+#define JUMPI_POINTER_U          8
+#define JUMPI_POINTER_I          9
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        8 
+#define JUMP_INDEX_OFFSET        10 
 
 // Control thread channels
 #define CHAN_ID_CONTROL_CREATE   0
@@ -63,7 +67,7 @@
 #define RAM_BASE                 0x10000
 #define RAM_SIZE                 0x10000
 #define BYTES_PER_WORD           4
-#define MAX_THREADS              20 
+#define MAX_THREADS              16 
 #define MAX_CHANNELS             32
 
 // Architectural constants
@@ -75,7 +79,7 @@
 #define SIZE_TABLE_SIZE          64 
 #define MAX_PROCS                56 
 #define KERNEL_SPACE             0x200
-#define THREAD_STACK_SPACE       0x800
+#define THREAD_STACK_SPACE       0xD00
 #define PROG_CHAN_OFF            (MAX_THREADS+1)
 #define CONN_BUFFER_SIZE         10
 #define MAX_OPEN_CONNS           8

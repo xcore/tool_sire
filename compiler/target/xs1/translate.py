@@ -196,6 +196,7 @@ class TranslateXS1(NodeWalker):
     self.out('#include "runtime/xs1/globals.h"')
     self.out('#include "runtime/xs1/source.h"')
     self.out('#include "runtime/xs1/connect.h"')
+    self.out('#include "runtime/xs1/pointer.h"')
     self.out('#include "runtime/xs1/system.h"')
     self.out('#include "runtime/xs1/util.h"')
     self.out('')

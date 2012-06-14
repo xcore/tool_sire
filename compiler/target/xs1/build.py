@@ -61,7 +61,8 @@ RUNTIME_FILES = [
   'control.xc',
   'worker.xc',
   'util.xc', 
-  'memory.c'
+  'memory.c',
+  'pointer.c',
   ]
   
 def build_xs1(sig, device, program_buf, outfile, 
@@ -243,6 +244,7 @@ def link_master(device, show_calls, v):
     'master.S.o',
     'program.o',
     'memory.c.o', 
+    'pointer.c.o', 
     'util.xc.o', 
     '-o', MASTER_XE] + LINK_FLAGS, 
     v=show_calls)
@@ -268,6 +270,7 @@ def link_slave(device, show_calls, v):
     'slave.xc.o', 
     'slave.S.o',
     'memory.c.o', 
+    'pointer.c.o', 
     'util.xc.o', 
     '-o', SLAVE_XE] + LINK_FLAGS,
     v=show_calls)
@@ -468,6 +471,8 @@ def build_jumptab(sig, buf, v):
   buf.write('\t.word '+defs.LABEL_CONNECT_CLIENT+'\n')
   buf.write('\t.word '+defs.LABEL_MEM_ALLOC+'\n')
   buf.write('\t.word '+defs.LABEL_MEM_FREE+'\n')
+  buf.write('\t.word '+defs.LABEL_POINTER_U+'\n')
+  buf.write('\t.word '+defs.LABEL_POINTER_I+'\n')
 
   # Program entries
   for x in sig.mobile_proc_names:

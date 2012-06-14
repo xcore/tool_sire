@@ -138,5 +138,7 @@ runtime_functions = [
   '_connectClient',
   '_memAlloc',
   '_memFree',
+  '_pointerUnsigned',
+  '_pointerInt',
   ]
 

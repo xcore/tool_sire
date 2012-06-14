@@ -35,11 +35,11 @@ def is_ref(t):
       or t == T_CHANEND_SERVER_SINGLE
       or t == T_CHANEND_CLIENT_SINGLE)
 
-def num_ref_singles(params):
-  """
-  Return the number of referenced single variables in a param list.
-  """
-  return reduce(lambda x,y: x+(1 if is_ref(y.symbol.type) else 0), params, 0)
+#def num_ref_singles(params):
+#  """
+#  Return the number of referenced single variables in a param list.
+#  """
+#  return reduce(lambda x,y: x+(1 if is_ref(y.symbol.type) else 0), params, 0)
 
 def num_stack_args(pcall):
   """
@@ -85,9 +85,9 @@ def thread_set(t, index, pcall, slave_exit_labels):
 
   # Count the number of referenced single variable parameters
   # Calculate the extra stack space for arguments
-  n_ref_singles = num_ref_singles(params)
+  #n_ref_singles = num_ref_singles(params)
   n_stack_args = num_stack_args(pcall)
-  ext = n_ref_singles + n_stack_args
+  ext = n_stack_args
   
   # Load sp address and extend it if we need space for refd vars
   if ext > 0:
@@ -97,23 +97,27 @@ def thread_set(t, index, pcall, slave_exit_labels):
     t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
   # Write the value of referenced variables to the stack
-  ref_addr_exprs = []
-  j = 0
-  for (i, (x, y)) in enumerate(zip(pcall.args, params)):
-    a = None
-    if is_ref(y.symbol.type):
-      assert isinstance(x, ast.ExprSingle)
-      stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
-      a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
-      j = j + 1
-    ref_addr_exprs.append(a)
+  #ref_addr_exprs = []
+  #j = 0
+  #for (i, (x, y)) in enumerate(zip(pcall.args, params)):
+  #  a = None
+  #  if is_ref(y.symbol.type):
+  #    assert isinstance(x, ast.ExprSingle)
+  #    stw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+  #    a = '_sps[{}]+({}*{})'.format(index, 1+n_stack_args+j, defs.BYTES_PER_WORD)
+  #    j = j + 1
+  #  ref_addr_exprs.append(a)
 
   # Write arguments to registers and stack
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
 
-    # For references, we pass the address
-    if is_ref(y.symbol.type):
-      value = ref_addr_exprs[i]
+    # For references, we pass the address, via a pointer function hack
+    if y.symbol.type == T_REF_SINGLE:
+      value = '_pointerInt({})'.format(t.expr(x))
+    elif y.symbol.type == T_CHANEND_SINGLE or \
+      y.symbol.type == T_CHANEND_SERVER_SINGLE or \
+      y.symbol.type == T_CHANEND_CLIENT_SINGLE:
+      value = '_pointerUnsigned({})'.format(t.expr(x))
     # Otherwise we set this directly
     else:
       value = t.expr(x)
@@ -133,14 +137,14 @@ def master_unset(t, index, pcall):
   n_stack_args = num_stack_args(pcall)
 
   # Load referenced variable values back
-  j = 0
-  for (i, (x, y)) in enumerate(zip(pcall.args, params)):
-    if is_ref(y.symbol.type):
-      ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
-      # This seems to solve a register problem...
-      t.out('{0} = {0}-1;'.format(t.expr(x)))
-      t.out('{0} = {0}+1;'.format(t.expr(x)))
-      j = j + 1
+  #j = 0
+  #for (i, (x, y)) in enumerate(zip(pcall.args, params)):
+  #  if is_ref(y.symbol.type):
+  #    ldw(t, t.expr(x), '_sps[{}]'.format(index), 1+n_stack_args+j)
+  #    # This seems to solve a register problem...
+  #    t.out('{0} = {0}-1;'.format(t.expr(x)))
+  #    t.out('{0} = {0}+1;'.format(t.expr(x)))
+  #    j = j + 1
  
 def slave_unset(t):
   """
