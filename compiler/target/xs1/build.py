@@ -35,11 +35,11 @@ XCC            = 'xcc'
 XAS            = 'xas'
 XOBJDUMP       = 'xobjdump'
 # NOTE: Ignore warnings when compiling program source
-COMPILE_FLAGS = ['-S', '-O3', 
+COMPILE_FLAGS = ['-S', '-O2', #'-fllvm', 
   '-Wall', '-Wextra', 
   #'-fverbose-asm', '-Winline','-Wno-timing',  '-Wunreachable-code',
   ]
-ASSEMBLE_FLAGS = ['-c', '-O3',
+ASSEMBLE_FLAGS = ['-c', '-O2', #'-fllvm',
   '-Wall', '-Wextra', 
   #'-fverbose-asm', '-Winline', '-Wno-timing',  '-Wunreachable-code',
   ]
@@ -63,6 +63,7 @@ RUNTIME_FILES = [
   'util.xc', 
   'memory.c',
   'pointer.c',
+  'experiment.S',
   ]
   
 def build_xs1(sig, device, program_buf, outfile, 
@@ -245,7 +246,8 @@ def link_master(device, show_calls, v):
     'program.o',
     'memory.c.o', 
     'pointer.c.o', 
-    'util.xc.o', 
+    'util.xc.o',
+    'experiment.S.o',
     '-o', MASTER_XE] + LINK_FLAGS, 
     v=show_calls)
   print(s, end='')
@@ -618,7 +620,7 @@ def cleanup(v):
     util.remove_file(x)
 
 def target(device):
-  return '-target=XS1-L2A'
+  return config.INSTALL_PATH+'/device/xs1/XS1-L2A.xn'
   #return '{}/{}.xn'.format(config.XS1_DEVICE_PATH, device.name)
 
 def function_label_top(name):

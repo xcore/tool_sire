@@ -77,6 +77,7 @@ builtin_conversion = {
   # Experiments
   'memreadtimed' : '_MEM_READ_TIMED',
   'memwritetimed' : '_MEM_WRITE_TIMED',
+  'memctrl' : '_memController'
 }
 
 class TranslateXS1(NodeWalker):

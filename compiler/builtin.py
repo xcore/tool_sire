@@ -73,17 +73,14 @@ crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
 memfree    = func_decl('memfree',  [AVAL_PARAM])
+memController = func_decl('memctrl',  [CHANEND_PARAM, CHANEND_PARAM,
+  CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 
 # For experiments
 memreadtimed = proc_decl('memreadtimed', 
     [CHANEND_PARAM, SVAL_PARAM, SREF_PARAM, SREF_PARAM])
 memwritetimed = proc_decl('memwritetimed', 
     [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
-livermore1 = proc_decl('livermore1', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
-livermore2 = proc_decl('livermore2', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
-livermore3 = proc_decl('livermore3', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM]) 
-livermore4 = proc_decl('livermore4', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
-livermore5 = proc_decl('livermore5', [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
 testEmulated = proc_decl('testEmulated', [CHANEND_PARAM])
 testNormal = proc_decl('testNormal', [])
 
@@ -119,13 +116,9 @@ builtins = {
   'memfree'       : memfree,
   'memreadtimed'  : memreadtimed,
   'memwritetimed' : memwritetimed,
-  'livermore1'    : livermore1,
-  'livermore2'    : livermore2,
-  'livermore3'    : livermore3,
-  'livermore4'    : livermore4,
-  'livermore5'    : livermore5,
   'testEmulated'  : testEmulated,
-  'testNormal'    : testNormal
+  'testNormal'    : testNormal,
+  'memctrl'       : memController,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
