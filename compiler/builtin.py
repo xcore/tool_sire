@@ -73,8 +73,8 @@ crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
 memfree    = func_decl('memfree',  [AVAL_PARAM])
-memController = func_decl('memctrl',  [CHANEND_PARAM, CHANEND_PARAM,
-  CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM])
+memController = func_decl('memctrl',  [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM,
+  SVAL_PARAM])
 
 # For experiments
 memreadtimed = proc_decl('memreadtimed', 

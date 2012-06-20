@@ -44,8 +44,8 @@ do { \
   time = t2 - t1; \
 } while(0)
 
-extern void _memController(unsigned input, unsigned begin, unsigned end, 
-    unsigned storage, unsigned base);
+extern void _memController(unsigned int input, 
+    unsigned int storage, unsigned int base0, unsigned int base);
 
 //#define LEN 1001
 ///*#define ADDR_x 0
