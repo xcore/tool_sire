@@ -781,6 +781,152 @@ void mix_12_10_78_normal(int loop) {
   _memFree(p);
 }
 
+void mix_27_10_63_emulated(unsigned mem, int loop) {
+  int v;
+  unsigned p;
+  _memAlloc(p, 4);
+  for(int i=0; i<loop; i++) {
+    MEM_WRITE(mem, 3339, v);
+    MEM_WRITE(mem, 1257, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    MEM_READ(mem, 578, v);
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 2052, v);
+    MEM_WRITE(mem, 2262, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 2278, v);
+    MEM_WRITE(mem, 1306, v);
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 1523, v);
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    MEM_READ(mem, 2330, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_WRITE(mem, 2375, v);
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 3165, v);
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_WRITE(mem, 1433, v);
+    MEM_WRITE(mem, 3704, v);
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 1805, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_WRITE(mem, 2059, v);
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_WRITE(mem, 2968, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    MEM_READ(mem, 2005, v);
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+  }
+  _memFree(p);
+}
+
+void mix_27_10_63_normal(int loop) {
+  int v;
+  unsigned p;
+  _memAlloc(p, 4);
+  for(int i=0; i<loop; i++) {
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("stw %0, %1[%2]" :: "r"(v), "r"(p), "r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("ldw %0, %1[%2]":"=r"(v):"r"(p),"r"(0));
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+    asm("add r0, r0, 0");
+  }
+  _memFree(p);
+}
+
 #define LOOP (10)
 void testEmulated(unsigned mem) {
   timer tmr;
@@ -811,6 +957,11 @@ void testEmulated(unsigned mem) {
   mix_12_10_78_emulated(mem, LOOP);
   tmr :> t2;
   printintln(t2 - t1);
+  
+  tmr :> t1;
+  mix_27_10_63_emulated(mem, LOOP);
+  tmr :> t2;
+  printintln(t2 - t1);
 }
 
 #define LOOP (10)
@@ -837,6 +988,11 @@ void testNormal() {
   
   tmr :> t1;
   mix_12_10_78_normal(LOOP);
+  tmr :> t2;
+  printintln(t2 - t1);
+  
+  tmr :> t1;
+  mix_27_10_63_normal(LOOP);
   tmr :> t2;
   printintln(t2 - t1);
 }
