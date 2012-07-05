@@ -6,7 +6,7 @@
 
 #include "system/xs1/definitions.h"
 
-  .globl _sp,          "ui"
+  .globl _spValue,     "ui"
   .globl _seed,        "ui"
 
   .globl spawn_master, "ui"
@@ -28,9 +28,9 @@
  * Global data
  */
 
-_sp:
+_spValue:
   .space BYTES_PER_WORD
-  .set _sp.globound, BYTES_PER_WORD
+  .set _spValue.globound, BYTES_PER_WORD
 
 _seed:
   .word 0xFFFFFFFF

@@ -10,6 +10,7 @@
 
 // Builtins
 int _procId();
+unsigned _sp();
 int _memAlloc(unsigned &p, int size);
 int _memFree(unsigned p);
 

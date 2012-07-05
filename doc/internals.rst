@@ -1,4 +1,0 @@
-Internals
-=========
-
-To do.

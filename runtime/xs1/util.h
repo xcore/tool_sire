@@ -295,12 +295,14 @@ do { \
 
 // Return the stack pointer for a specific thread given a thread resource
 // identifier to extract the thread id from and the base stack pointer.
-#define THREAD_SP(threadID, threadSP) \
-do { \
-  unsigned __sp; \
-  asm("ldw %0, dp[_sp]" : "=r"(__sp)); \
-  threadSP = __sp - (threadID * THREAD_STACK_SPACE); \
-} while(0)
+// NOTE: only to be called by code resident on a core otherwise the _sp dp
+// offset may be wrong.
+//#define THREAD_SP(threadID, threadSP) \
+//do { \
+//  unsigned __sp; \
+//  asm("ldw %0, dp[_sp]" : "=r"(__sp)); \
+//  threadSP = __sp - (threadID * THREAD_STACK_SPACE); \
+//} while(0)
 
 // Given a resource id, return the node identifer
 #if defined(XS1_G)

@@ -15,7 +15,7 @@
 
   .extern spawn_master
   .extern conn_master
-  .extern _sp
+  .extern _spValue
 
   .globl exepHandler
   .globl hostHandler
@@ -149,7 +149,7 @@ initPointers:
   set sp, r11
 
   /* Save the sp for thread allocation */
-  stw r11, dp[_sp]
+  stw r11, dp[_spValue]
 
   retsp 0
   .cc_bottom initPointers.function
@@ -217,5 +217,6 @@ _jumpTable:
   .word _memFree
   .word _pointerUnsigned
   .word _pointerInt
+  .word _sp
   .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET), 0
 

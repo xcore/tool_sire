@@ -39,6 +39,7 @@
 #define LABEL_MEM_FREE           "_memFree"
 #define LABEL_POINTER_U          "_pointerUnsigned"
 #define LABEL_POINTER_I          "_pointerInt"
+#define LABEL_SP                 "_sp"
 
 // Jump table indicies
 // When adding new entries ensure the following are consistent:
@@ -55,9 +56,10 @@
 #define JUMPI_MEM_FREE           7
 #define JUMPI_POINTER_U          8
 #define JUMPI_POINTER_I          9
+#define JUMPI_SP_I               10
 
 // Index offset of program jump indicies
-#define JUMP_INDEX_OFFSET        10 
+#define JUMP_INDEX_OFFSET        11 
 
 // Control thread channels
 #define CHAN_ID_CONTROL_CREATE   0
