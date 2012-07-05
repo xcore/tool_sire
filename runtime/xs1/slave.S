@@ -23,15 +23,16 @@
  
   .text
 
-// set the _dosyscall symbol to an inaccessable pc because it persists between
-// loadables for mulit-node simulations cauising a retsp to be executed. slave
-// nodes should never use this symbol
+/* Set the _dosyscall symbol to an inaccessable pc because it persists between
+ * loadables for mulit-node simulations cauising a retsp to be executed. slave
+ * nodes should never use this symbol
+ */
   //.set _DoSyscall, 0 // This causes problems with 11.2.0 release (not 10.4.2)
   .set _DoSyscall, RAM_BASE+RAM_SIZE 
 
-//==========================================================
-// This initilises the execution of thread 0, core i for i>0
-//==========================================================
+/*==============================================================
+ * This initilises the execution of thread 0, core i for i>0
+ *============================================================*/
   .cc_top _slave.function, _slave
   .align 2 
 
@@ -54,4 +55,16 @@ _slave:
   bu controlIdle
 
   .cc_bottom _slave.function
+  
+  .globl _sizeTable,  "a(:ui)"
+
+/*==============================================================
+ * dp
+ *============================================================*/
+	.section .dp.data, "awd", @progbits
+  .align 4
+  
+_sizeTable:
+  .set _sizeTable.globound, BYTES_PER_WORD*SIZE_TABLE_SIZE
+  .space BYTES_PER_WORD*SIZE_TABLE_SIZE, 0 
 

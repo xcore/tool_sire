@@ -22,6 +22,7 @@ void receiveResults    (unsigned, int, unsigned[]);
 /*
  * Create a new remote process.
  */
+#pragma unsafe arrays
 void _createProcess(unsigned dest, unsigned closure[]) 
 {
   unsigned threadId;
@@ -73,6 +74,7 @@ void initHostConnection(unsigned c, unsigned destResID) {
  * NOTE: xcc adds in array bounds checking which assumes array length is an
  * implicit argument.
  */
+#pragma unsafe arrays
 void sendClosure(unsigned c, unsigned closure[]) {
    
   unsigned numArgs  = closure[CLOSURE_NUM_ARGS];
@@ -170,7 +172,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
     // If the host doesn't have the procedure, send it.
     if(flag) {
       unsigned procAddr; 
-      int procSize  = (int) _sizetab[procIndex];
+      int procSize  = (int) SIZE_TABLE[procIndex];
       OUTS(c, procSize);
     
       // Instructions

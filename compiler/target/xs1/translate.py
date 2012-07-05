@@ -223,7 +223,7 @@ class TranslateXS1(NodeWalker):
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_comm.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_remotemem.xc'))
     self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_system.xc'))
-    self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_experiment.xc'))
+    #self.out(read_file(config.XS1_SYSTEM_PATH+'/builtins_experiment.xc'))
  
   # Program ============================================
 

@@ -108,6 +108,7 @@ void initSourceConnection(unsigned c, unsigned senderId) {
 /*
  * Receive a closure.
  */
+#pragma unsafe arrays
 {int, int} receiveClosure(unsigned c, 
     int argTypes[], unsigned argValues[], int argLengths[]) {
   
@@ -194,7 +195,7 @@ int receiveProcedures(unsigned c, int numProcs) {
   unsigned jumpTable;
 
   // Load jump table address
-  asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
+  asm("ldaw r11, cp["LABEL_JUMP_TABLE"] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
 
   for(int i=0; i<numProcs; i++) {
     
@@ -204,7 +205,7 @@ int receiveProcedures(unsigned c, int numProcs) {
     if(i == 0) index = procIndex;
 
     // If we don't have the procedure, receive it
-    if (_sizetab[procIndex] == 0) {
+    if (SIZE_TABLE[procIndex] == 0) {
       
       int procSize;
       unsigned ptr;
@@ -224,7 +225,7 @@ int receiveProcedures(unsigned c, int numProcs) {
       asm("stw %0, %1[%2]" :: "r"(ptr), "r"(jumpTable), "r"(procIndex));
 
       // Update the procSize entry
-      _sizetab[procIndex] = procSize;
+      SIZE_TABLE[procIndex] = procSize;
     }
     else {
       OUTS(c, 0);

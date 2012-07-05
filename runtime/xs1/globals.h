@@ -9,7 +9,7 @@
 #include "system/xs1/definitions.h"
 
 // Seperate master and slave versions
-extern unsigned _sizetab[SIZE_TABLE_SIZE];
+extern unsigned SIZE_TABLE[SIZE_TABLE_SIZE];
 
 // External functions
 extern void exceptionHandler();

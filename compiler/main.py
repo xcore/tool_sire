@@ -117,6 +117,10 @@ def setup_argparse():
  
   # Other options
 
+  p.add_argument('--save-temps', action='store_true',
+      dest='save_temps',
+      help='do not discard any intermediate files')
+ 
   p.add_argument('-D', action='store_true',
       dest='disable_transformations',
       help='disable AST transformations')
@@ -166,8 +170,10 @@ def setup_globals(a):
   compile_only = a.compile_only
 
   # Other
+  global save_temps
   global disable_transformations
   global display_memory
+  save_temps = a.save_temps
   disable_transformations = a.disable_transformations
   display_memory = a.display_memory
 
@@ -368,7 +374,8 @@ def main(args):
     # Generate code
     vhdr(v, 'Generating code for {}'.format(device))
     generate(ast, sig, child, device, outfile, 
-        translate_only, compile_only, display_memory, show_calls, v)
+        translate_only, compile_only, 
+        display_memory, show_calls, save_temps, v)
 
   # Handle (expected) system exits
   except SystemExit:

@@ -15,6 +15,7 @@
   .extern initPorts
   .extern initTimers
   .extern initConnections
+  .extern initJumpTable
   .extern masterSync
   .extern initMaster
   .extern hostHandler
@@ -23,6 +24,8 @@
   
   .extern spawn_master
   .extern conn_master
+  .extern _numProgEntries
+  .extern _jumpLocations
 
   .globl main
   .globl _start
@@ -47,11 +50,13 @@ _master:
   bl initPointers
   bl setupTraps
   bl resetChanends
+  bl initJumpTable
   bl initThreads
   bl initChanends
   bl initPorts
   bl initTimers
   bl initConnections
+  bl initJumpTable
   bl __alloc_libc_hwlock
   bl setInterrupts
   bl masterSync
@@ -98,9 +103,36 @@ setInterrupts:
 
   .cc_bottom setInterrupts.function
 
-/*===========================================================================
- * A wrapper to run the program main so that r0-r3 are preserved properly
- *==========================================================================*/
+/*==============================================================
+ * Initiliase the jump table with the program entries. 
+ *============================================================*/
+.cc_top initJumpTable.function, initJumpTable
+.align 2
+initJumpTable:
+	ldaw r11, cp[_jumpTable]
+  mov  r10, r11
+  ldaw r11, dp[_jumpLocations]
+  mov  r9, r11
+  ldw  r8, dp[_numProgEntries]
+  ldc  r7, 0
+_loop:
+  lss  r11, r7, r8
+  bf   r11, _exit
+  ldw  r11, r9[r7]
+  ldc  r6, JUMP_INDEX_OFFSET
+  add  r6, r7, r6
+  stw  r11, r10[r6]
+  add  r7, r7, 1
+  bu   _loop
+_exit:
+
+	retsp 0
+.cc_bottom initJumpTable.function
+
+/*==============================================================
+ * A wrapper to run the program main so that r0-r3 are preserved 
+ * properly.
+ *============================================================*/
   .cc_top runMain.function, runMain
   .align 2 
    

@@ -24,6 +24,8 @@
   .globl touchRegs
   .globl setupTraps
   .globl initThread
+  
+  .globl _jumpTable
 
   /* Set heap labels for malloc */
   .globl _bheap
@@ -196,4 +198,24 @@ initThread:
   bl setupTraps
   ssync
   .cc_bottom initThread.function
+
+/*==============================================================
+ * cp
+ *============================================================*/
+  .section .cp.rodata, "ac", @progbits
+  .align 4
+
+  .set _jumpTable.globound, BYTES_PER_WORD*JUMP_TABLE_SIZE
+_jumpTable:
+  .word _createProcess
+	.word _procId
+  .word _connectMaster
+  .word _connectSlave
+  .word _connectServer
+  .word _connectClient
+  .word _memAlloc
+  .word _memFree
+  .word _pointerUnsigned
+  .word _pointerInt
+  .space BYTES_PER_WORD*(JUMP_TABLE_SIZE-JUMP_INDEX_OFFSET), 0
 

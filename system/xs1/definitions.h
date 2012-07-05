@@ -24,8 +24,9 @@
 #define LABEL_BEGIN_BSS          "_fdp.bss"
 #define LABEL_END_BSS            "_edp.bss"
 #define LABEL_START              "_start"
-#define LABEL_JUMP_TABLE         "_jumptab"
-#define LABEL_SIZE_TABLE         "_sizetab"
+#define LABEL_JUMP_TABLE         "_jumpTable"
+#define SIZE_TABLE               _sizeTable
+#define LABEL_SIZE_TABLE         "_sizeTable"
 
 // Labels for jump table builtins
 #define LABEL_CREATE_PROCESS     "_createProcess"
