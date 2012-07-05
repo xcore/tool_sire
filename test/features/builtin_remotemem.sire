@@ -1,5 +1,5 @@
 val N is NUM_CORES-1;
-val SIZE is 20;
+val SIZE is 100;
 
 proc memory(val origin) is
 { chanend c;
@@ -12,8 +12,8 @@ proc memory(val origin) is
   % Write to even locations
   for i in [0 for SIZE] do
     address[i] := 0;
-  %for i in [0 for SIZE/2] do
-  %  address[i*2] := i*2;
+  for i in [0 for SIZE/2] do
+    address[i*2] := i;
   % Send details to the accessor
   c ! address;
   c ! SIZE;
@@ -34,15 +34,15 @@ proc accessor(val dest) is
   printvalln(address);
   printvalln(size);
   % Write to odd locations
-  %for i in [0 for size/2] do
-  %{ v := address + (((i*2)-1)<<2);
-  %  rwrite(dest, v, (i*2)-1)
-  %};
+  for i in [0 for size/2] do
+  { v := address + (((i*2)-1)<<2);
+    rwrite(dest, v, (i*2)-1)
+  };
   % Read out whole area
-  for i in [0 for size] do
-  { rread(dest, address+(i<<2), v)
-    ;printvalln(v)
-    %;assert v = i
+  for i in [0 for size/2] do
+  { rread(dest, address+((i*2)<<2), v)
+    %;printvalln(v)
+    ;assert v = i
   };
   c ! 0
 }
