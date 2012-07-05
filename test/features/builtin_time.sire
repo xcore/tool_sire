@@ -2,10 +2,10 @@ proc main() is
 { var i;
   var t1;
   var t2;
-  t1 := time();
+  time(t1);
   for i in [0 for 10000] do
     skip;
-  t2 := time();
+  time(t2);
   assert (t2 > t1)
   %printvalln(t2-t1)
 }

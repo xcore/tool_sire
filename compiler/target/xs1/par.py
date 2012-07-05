@@ -86,15 +86,18 @@ def thread_set(t, index, pcall, slave_exit_labels):
   # Count the number of referenced single variable parameters
   # Calculate the extra stack space for arguments
   #n_ref_singles = num_ref_singles(params)
-  n_stack_args = num_stack_args(pcall)
-  ext = n_stack_args
+  #n_stack_args = num_stack_args(pcall)
+  #ext = n_stack_args
+  
+  #t.out('THREAD_SP(TID_MASK(_threads[{0}]), _sps[{0}]);'.format(index))
+  t.out('_tsp = _sp() - (TID_MASK(_threads[{0}])*THREAD_STACK_SPACE);'
+      .format(index))
   
   # Load sp address and extend it if we need space for refd vars
-  if ext > 0:
-    t.out('THREAD_SP(TID_MASK(_threads[{0}]), _sps[{0}]);'.format(index))
-    t.out('_sps[{}] -= {};'.format(index, '' if ext == 0 else 
-        '{}*{}'.format(ext, defs.BYTES_PER_WORD)))
-    t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
+  #if ext > 0:
+  #  t.out('_sps[{}] -= {};'.format(index, '' if ext == 0 else 
+  #      '{}*{}'.format(ext, defs.BYTES_PER_WORD)))
+  #  t.asm('init t[%0]:sp, %1', inops=[tid, '_sps[{}]'.format(index)])
 
   # Write the value of referenced variables to the stack
   #ref_addr_exprs = []
@@ -125,7 +128,7 @@ def thread_set(t, index, pcall, slave_exit_labels):
     if i < defs.NUM_PARAM_REGS:
       t.asm('set t[%0]:r{}, %1'.format(i), inops=[tid, value])
     else:
-      stw(t, value, '_sps[{}]'.format(index), i-defs.NUM_PARAM_REGS+1)
+      stw(t, value, '_tsp', i-defs.NUM_PARAM_REGS+1)
 
 def master_unset(t, index, pcall):
   """
@@ -134,7 +137,7 @@ def master_unset(t, index, pcall):
   assert isinstance(pcall, ast.StmtPcall)
   t.comment('Master unset slave {}'.format(index))
   params = t.sig.get_params(pcall.name)
-  n_stack_args = num_stack_args(pcall)
+  #n_stack_args = num_stack_args(pcall)
 
   # Load referenced variable values back
   #j = 0
@@ -151,13 +154,13 @@ def slave_unset(t):
   This (is not ideal but) ensures any extended stack pointers are restored.
   TODO: Fix the << 8 
   """
-  t.blocker.begin()
-  t.out('unsigned _sp;')
-  t.out('unsigned _tid;')
-  t.out('THREAD_ID(_tid);')
-  t.out('THREAD_SP(_tid, _sp);')
-  t.asm('set sp, %0', inops=['_sp'])
-  t.blocker.end()
+  #t.blocker.begin()
+  #t.out('unsigned _sp;')
+  #t.out('unsigned _tid;')
+  #t.out('THREAD_ID(_tid);')
+  #t.out('THREAD_SP(_tid, _sp);')
+  #t.asm('set sp, %0', inops=['_sp'])
+  #t.blocker.end()
 
 def gen_par(t, node, chans):
   """
@@ -172,7 +175,7 @@ def gen_par(t, node, chans):
   t.out('unsigned _sync;')
   #t.out('unsigned _spbase;')
   t.out('unsigned _threads[{}];'.format(num_slaves))
-  t.out('unsigned _sps[{}];'.format(num_slaves))
+  t.out('unsigned _tsp;'.format(num_slaves))
   t.out('unsigned _dp;')
   t.out('unsigned _cp;')
 
@@ -201,7 +204,7 @@ def gen_par(t, node, chans):
   # Slave synchronise and exit
   t.comment('Slave exit')
   t.asm(sync_label+':')
-  slave_unset(t)
+  #slave_unset(t)
   t.asm('ssync') # Stop
 
   # Ouput exit label 

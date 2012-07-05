@@ -89,7 +89,7 @@ xs1_feature_tests = [
   Test('builtin_printing',   f=D),
   Test('builtin_fileio',     f=D),
   Test('builtin_comm', [16]),
-  Test('builtin_remotemem', [4]),
+  Test('builtin_remotemem', [4], f=D),
   Test('builtin_mem',        f=D),
   Test('builtin_crc',        f=D),
   Test('builtin_time',       f=D),

@@ -18,7 +18,7 @@ extern void _main(void);
 /* These variables are declared in globals.c. */
 
 // Global data
-extern unsigned _sp;
+extern unsigned _spValue;
 extern unsigned _seed;
 
 /* Processor allocation ================================*/

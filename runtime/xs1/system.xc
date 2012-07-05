@@ -40,12 +40,12 @@ void resetChanends() {
 void initThreads() {
   unsigned sync;
   unsigned t;
-  unsigned sp;
+  unsigned tsp;
   GETR_SYNC(sync);
   asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   while (t) {
-    THREAD_SP(TID_MASK(t), sp);
-    asm("init t[%0]:sp, %1"::"r"(t), "r"(sp));
+    tsp = _sp() - (TID_MASK(t)*THREAD_STACK_SPACE);
+    asm("init t[%0]:sp, %1"::"r"(t), "r"(tsp));
     asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
     asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
     asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
@@ -165,6 +165,15 @@ int _procId() {
   asm("bitrev %0, %1" : "=r"(v) : "r"(c));
   v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
   asm("freer res[%0]" :: "r"(c));
+  return v;
+}
+
+/*
+ * System builtin to return the base stack pointer.
+ */
+unsigned _sp() {
+  unsigned v;
+  asm("ldw %0, dp[_spValue]" : "=r"(v));
   return v;
 }
 

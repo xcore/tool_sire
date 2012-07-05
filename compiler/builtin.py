@@ -68,6 +68,7 @@ divf8_24   = func_decl('divf8_24', [SVAL_PARAM, SVAL_PARAM], mobile=True)
 
 # System
 procid     = func_decl('procid',   []) # Required for implementation of on and connect
+sp         = func_decl('sp',       []) # Required for implementation of threading
 time       = func_decl('time',     [SREF_PARAM])
 crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand       = func_decl('rand',     [], mobile=True)
@@ -133,5 +134,6 @@ runtime_functions = [
   '_memFree',
   '_pointerUnsigned',
   '_pointerInt',
+  '_sp',
   ]
 

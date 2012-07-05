@@ -1,4 +1,4 @@
-val N is NUM_CORES;
+val N is NUM_CORES-1;
   
 proc master_(chanend begin, chanend end) is
 { var v;
