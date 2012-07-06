@@ -1,28 +1,40 @@
 #define ADDR_LEN   30
 #define ADDR_MASK  0x3FFFFFFF
 #define QUERY_MASK 0xC0000000
-#define READ       (0x1 << ADDR_LEN)
-#define WRITE      (0x2 << ADDR_LEN)
-#define HALT       (0x3 << ADDR_LEN)
-#define READY      (0x4 << ADDR_LEN)
+//#define READ       (0x1 << ADDR_LEN)
+//#define WRITE      (0x2 << ADDR_LEN)
+//#define HALT       (0x3 << ADDR_LEN)
+//#define READY      (0x4 << ADDR_LEN)
+#define READ       (0x3)
+#define WRITE      (0x4)
+#define HALT       (0x1)
+#define READY      (0x0)
+
+//#define MEM_READ(c, index, value) \
+//do { \
+//  OUT(c, READ | index); \
+//  IN(c, value); \
+//} while(0)
+//
+//#define MEM_WRITE(c, index, value) \
+//do { \
+//  OUT(c, WRITE | index); \
+//  OUT(c, value); \
+//  CHKCT_END(c); \
+//} while(0)
 
 #define MEM_READ(c, index, value) \
 do { \
-  OUT(c, READ | index); \
-  OUTCT_END(c); \
-  CHKCT_END(c); \
+  OUTCT(c, READ); \
+  OUT(c, index); \
   IN(c, value); \
-  CHKCT_END(c); \
-  OUTCT_END(c); \
 } while(0)
 
 #define MEM_WRITE(c, index, value) \
 do { \
-  OUT(c, WRITE | index); \
-  OUTCT_END(c); \
-  CHKCT_END(c); \
+  OUTCT(c, WRITE); \
+  OUT(c, index); \
   OUT(c, value); \
-  OUTCT_END(c); \
   CHKCT_END(c); \
 } while(0)
 

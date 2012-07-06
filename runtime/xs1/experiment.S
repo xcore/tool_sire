@@ -55,17 +55,18 @@ _memController:
   ldw   r4, dp[chan_mem_access] // r4 = chan_mem_access
  
 loop:
-  in    r6, res[r0]  // input ? query
-  chkct res[r0], XS1_CT_END
-  outct res[r0], XS1_CT_END
+  inct  r6, res[r0]  // input ? query
+  in    r7, res[r0]  // input ? index
+  //chkct res[r0], XS1_CT_END
+  //outct res[r0], XS1_CT_END
 
   // Get query and index
-  ldc   r5, 30
-  ldc   r11, 0x3
-  shl   r11, r11, r5 // r11 (INDEX_MASK) = 0x3 << 30
-  not   r11, r11     // r11 (INDEX_MASK) = not(0x3 << 30) 
-  and   r7, r6, r11  // r7 (index) = query & INDEX_MASK
-  shr   r6, r6, r5   // r6 (query) = query >> 30
+  //ldc   r5, 30
+  //ldc   r11, 0x3
+  //shl   r11, r11, r5 // r11 (INDEX_MASK) = 0x3 << 30
+  //not   r11, r11     // r11 (INDEX_MASK) = not(0x3 << 30) 
+  //and   r7, r6, r11  // r7 (index) = query & INDEX_MASK
+  //shr   r6, r6, r5   // r6 (query) = query >> 30
 
   // Compute destination and address
   divs  r8, r7, r1   // r8 (dest) = index / leafStorage
@@ -89,11 +90,11 @@ endAddBase:
   or    r8, r8, r11             // r8 (dest) = dest | XS1_TYPE_CHANEND
 
   // Perform read, write or halt
-  eq    r11, r6, 1
-  bt    r11, read
-  eq    r11, r6, 2
-  bt    r11, write
   eq    r11, r6, 3
+  bt    r11, read
+  eq    r11, r6, 4
+  bt    r11, write
+  eq    r11, r6, 1
   bt    r11, halt
   bu    exit
 
@@ -110,8 +111,8 @@ read:
   
   // Return value and close channel
   out   res[r0], r10             // out(input, value)
-  outct res[r0], XS1_CT_END      // outct(input, CT_END)
-  chkct res[r0], XS1_CT_END      // chkct(input, CT_END)
+  //outct res[r0], XS1_CT_END      // outct(input, CT_END)
+  //chkct res[r0], XS1_CT_END      // chkct(input, CT_END)
   bu loopEnd
 
 write:
@@ -125,11 +126,11 @@ write:
   out   res[r4], r9            // out(r4, address)
   out   res[r4], r10           // out(r4, value)
   outct res[r4], XS1_CT_END    // outct(r4, CT_END)
-  chkct res[r4], XS1_CT_END    // chkdt(r4, CT_END)
+  chkct res[r4], XS1_CT_END    // chkct(r4, CT_END)
   
-  // Return value and close channel
+  // Synchronise with writer and close channel
   outct res[r0], XS1_CT_END     // outct(input, CT_END)
-  chkct res[r0], XS1_CT_END     // chkct(input, CT_END)
+  //chkct res[r0], XS1_CT_END     // chkct(input, CT_END)
   bu loopEnd
 
 halt:
