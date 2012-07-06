@@ -360,7 +360,7 @@ class TranslateXS1(NodeWalker):
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
       self.out('CLIENT_OUT({}, {});'.format(left, expr))
     else:
-      self.out('OUTS({}, {});'.format(left, expr))
+      self.out('OUT({}, {});'.format(left, expr))
 
   def stmt_in(self, node, chans):
     left = self.elem(node.left)
@@ -370,7 +370,27 @@ class TranslateXS1(NodeWalker):
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
       self.out('CLIENT_IN({}, {});'.format(left, expr))
     else:
-      self.out('INS({}, {});'.format(left, expr))
+      self.out('IN({}, {});'.format(left, expr))
+    
+  def stmt_out_tag(self, node, chans):
+    left = self.elem(node.left)
+    expr = self.expr(node.expr) 
+    if chans[node.left.name] == defs.CONNECT_SERVER:
+      self.out('SERVER_OUT_TAG({}, {});'.format(left, expr))
+    elif chans[node.left.name] == defs.CONNECT_CLIENT:
+      self.out('CLIENT_OUT_TAG({}, {});'.format(left, expr))
+    else:
+      self.out('OUT({}, {});'.format(left, expr))
+
+  def stmt_in_tag(self, node, chans):
+    left = self.elem(node.left)
+    expr = self.expr(node.expr) 
+    if chans[node.left.name] == defs.CONNECT_SERVER:
+      self.out('SERVER_IN_TAG({}, {});'.format(left, expr))
+    elif chans[node.left.name] == defs.CONNECT_CLIENT:
+      self.out('CLIENT_IN_TAG({}, {});'.format(left, expr))
+    else:
+      self.out('IN({}, {});'.format(left, expr))
     
   def stmt_alias(self, node, chans):
     """ 

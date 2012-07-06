@@ -411,6 +411,14 @@ class Parser(object):
     'stmt : left OUT expr'
     p[0] = ast.StmtOut(p[1], p[3], self.coord(p))
 
+  def p_stmt_intag(self, p):
+    'stmt : left INTAG expr'
+    p[0] = ast.StmtInTag(p[1], p[3], self.coord(p))
+
+  def p_stmt_outtag(self, p):
+    'stmt : left OUTTAG expr'
+    p[0] = ast.StmtOutTag(p[1], p[3], self.coord(p))
+
   def p_stmt_alias(self, p):
     'stmt : left ALIASES elem'
     p[0] = ast.StmtAlias(p[1], p[3], self.coord(p))

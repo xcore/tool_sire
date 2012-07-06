@@ -209,6 +209,7 @@ extern void _memController(unsigned int input,
 //  }
 //}
 
+/*
 void mix_50_10_40_emulated(unsigned mem, int loop) {
   int v;
   unsigned p;
@@ -1476,4 +1477,4 @@ void testNormal() {
   tmr :> t2;
   printintln(t2 - t1);
 }
-
+*/

@@ -35,6 +35,12 @@ class Display(NodeVisitor):
   def visit_stmt_out(self, node):
     self.f(node)
 
+  def visit_stmt_in_tag(self, node):
+    self.f(node)
+
+  def visit_stmt_out_tag(self, node):
+    self.f(node)
+
   def visit_stmt_alias(self, node):
     self.f(node)
 

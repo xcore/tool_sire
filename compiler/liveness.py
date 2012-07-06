@@ -111,6 +111,12 @@ class Liveness(NodeWalker):
   def stmt_out(self, node):
     return self.compute(node)
 
+  def stmt_in_tag(self, node):
+    return self.compute(node)
+
+  def stmt_out_tag(self, node):
+    return self.compute(node)
+
   def stmt_alias(self, node):
     return self.compute(node)
 

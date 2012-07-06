@@ -150,6 +150,12 @@ class RenameChans(NodeWalker):
         or (isinstance(c, ast.ElemId) and t == T_CHANEND_CLIENT_SINGLE)
         or (isinstance(c, ast.ElemSub) and t == T_CHANEND_ARRAY)):
       node.left = self.rename_chan(c, chans).elem
+  
+  def stmt_in_tag(self, node, chans):
+    self.stmt_in(node, chans)
+
+  def stmt_out_tag(self, node, chans):
+    self.stmt_out(node, chans)
 
   def stmt_pcall(self, node, chans):
     for (i, x) in enumerate(node.args):

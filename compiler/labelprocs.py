@@ -104,6 +104,12 @@ class LabelProcs(NodeWalker):
   def stmt_out(self, node, l):
     node.location = l
 
+  def stmt_in_tag(self, node, l):
+    node.location = l
+
+  def stmt_out_tag(self, node, l):
+    node.location = l
+
   def stmt_alias(self, node, l):
     node.location = l
 

@@ -85,6 +85,12 @@ class LiveOut(NodeWalker):
   def stmt_out(self, node, succ):
     return self.collect(node, succ)
 
+  def stmt_in_tag(self, node, succ):
+    return self.collect(node, succ)
+
+  def stmt_out_tag(self, node, succ):
+    return self.collect(node, succ)
+
   def stmt_alias(self, node, succ):
     return self.collect(node, succ)
 

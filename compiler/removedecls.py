@@ -72,6 +72,12 @@ class RemoveDecls(NodeWalker):
   def stmt_out(self, node):
     s = self.elem(node.left)
     return s | self.expr(node.expr)
+  
+  def stmt_in_tag(self, node):
+    return self.stmt_in(node)
+
+  def stmt_out_tag(self, node):
+    return self.stmt_out(node)
 
   def stmt_alias(self, node):
     return self.expr(node.slice)

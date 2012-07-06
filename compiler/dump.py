@@ -69,6 +69,12 @@ class Dump(NodeVisitor):
   def visit_stmt_out(self, node):
     self.out(node)
 
+  def visit_stmt_in_tag(self, node):
+    self.out(node)
+
+  def visit_stmt_out_tag(self, node):
+    self.out(node)
+
   def visit_stmt_server(self, node):
     self.out(node)
   

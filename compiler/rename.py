@@ -36,6 +36,12 @@ class Rename(NodeVisitor):
   def visit_stmt_out(self, node):
     node.left = self.rename(node.left)
 
+  def visit_stmt_in_tag(self, node):
+    node.left = self.rename(node.left)
+
+  def visit_stmt_out_tag(self, node):
+    node.left = self.rename(node.left)
+
   def visit_stmt_alias(self, node):
     node.left = self.rename(node.left)
     node.slice = self.rename(node.slice)

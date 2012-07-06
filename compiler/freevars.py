@@ -70,6 +70,16 @@ class FreeVars(NodeWalker):
     c |= self.expr(node.expr)
     return c
 
+  def stmt_in_tag(self, node):
+    c = self.elem(node.left)
+    c |= self.expr(node.expr)
+    return c
+
+  def stmt_out_tag(self, node):
+    c = self.elem(node.left)
+    c |= self.expr(node.expr)
+    return c
+
   def stmt_alias(self, node):
     c = self.elem(node.left)
     c |= self.elem(node.slice)

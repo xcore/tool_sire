@@ -313,6 +313,12 @@ class TransformRep(NodeWalker):
   def stmt_out(self, node):
     return []
 
+  def stmt_in_tag(self, node):
+    return []
+
+  def stmt_out_tag(self, node):
+    return []
+
   def stmt_alias(self, node):
     return []
 

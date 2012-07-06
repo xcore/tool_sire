@@ -66,6 +66,14 @@ class TemplateWalker(NodeWalker):
     self.elem(node.left)
     self.expr(node.expr)
 
+  def stmt_in_tag(self, node):
+    self.elem(node.left)
+    self.expr(node.expr)
+
+  def stmt_out_tag(self, node):
+    self.elem(node.left)
+    self.expr(node.expr)
+
   def stmt_alias(self, node):
     self.expr(node.slice)
 

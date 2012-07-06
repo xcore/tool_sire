@@ -69,6 +69,12 @@ class FlattenPar(NodeWalker):
   def stmt_out(self, node):
     pass
 
+  def stmt_in_tag(self, node):
+    pass
+
+  def stmt_out_tag(self, node):
+    pass
+
   def stmt_alias(self, node):
     pass
 

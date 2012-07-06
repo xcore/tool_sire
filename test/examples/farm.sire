@@ -1,32 +1,38 @@
-val N is 16;
-val NUM_WORK is N;
-val WORK is 1;
+val NUM_WORKERS is NUM_CORES;
+val WORK is 0xDEADBEEF;
+
+val CT_ACK is 0;
+val CT_END is 1;
 
 proc farmer(chanend c) is
   % Take a request and provide some work
-{ var left;
-  var workerid;
-  left := NUM_WORK;
-  while left > 0 do
-  { c ? workerid;
+{ var i;
+  var tag;
+  i := NUM_WORKERS;
+  while i > 0 do
+  { c ?? tag;
     c ! WORK;
-    left := left - 1
+    c !! CT_END;
+    c ?? tag;
+    i := i - 1
   }
 }
 
 proc worker(val id, chanend c) is
   % Request some work from the farmer
 { var work;
-  c ! id;
-  c ? work
-  % Do some work
+  var tag;
+  c !! CT_END;
+  c ? work;
+  c !! CT_END;
+  c ?? tag
 }
 
 proc main() is
   server(chan x)
     farmer(x)
   { var i;
-    par i in [0 for N] do 
+    par i in [0 for NUM_WORKERS] do 
       worker(i, x)
   }
 

@@ -169,6 +169,23 @@ class BuildCFG(NodeWalker):
     #  node.use |= node.defs
     return [node]
 
+  def stmt_in_tag(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    node.defs |= self.expr(node.expr)
+    node.use |= set([node.left])
+    return [node]
+
+  def stmt_out_tag(self, node, pred, succ):
+    self.init_sets(node, pred, succ)
+    node.use |= self.expr(node.expr)
+    node.use |= set([node.left])
+
+    # Writes to arrays, include them as a use so they are live until this
+    # point.
+    #if isinstance(node.left, ast.ElemSub):
+    #  node.use |= node.defs
+    return [node]
+
   def stmt_alias(self, node, pred, succ):
     self.init_sets(node, pred, succ)
     node.use |= self.elem(node.slice)

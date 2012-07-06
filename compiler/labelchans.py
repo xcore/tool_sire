@@ -298,6 +298,12 @@ class LabelChans(NodeWalker):
     
     else:
         return ChanUseSet()
+  
+  def stmt_in_tag(self, node, indices, tab):
+    return self.stmt_in(node, indices, tab)
+
+  def stmt_out_tag(self, node, indices, tab):
+    return self.stmt_out(node, indices, tab)
 
   def stmt_pcall(self, node, indices, tab):
     uses = ChanUseSet()

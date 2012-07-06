@@ -299,6 +299,12 @@ class TransformPar(NodeWalker):
   def stmt_out(self, node, indices):
     return []
 
+  def stmt_in_tag(self, node, indices):
+    return []
+
+  def stmt_out_tag(self, node, indices):
+    return []
+
   def stmt_alias(self, node, indices):
     return []
 

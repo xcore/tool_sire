@@ -140,6 +140,12 @@ class DisplayConns(NodeWalker):
   def stmt_out(self, node, tab, scope):
     pass
 
+  def stmt_in_tag(self, node, tab, scope):
+    pass
+
+  def stmt_out_tag(self, node, tab, scope):
+    pass
+
   def stmt_alias(self, node, tab, scope):
     pass
 

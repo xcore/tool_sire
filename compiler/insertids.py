@@ -114,6 +114,12 @@ class InsertIds(NodeWalker):
   def stmt_out(self, node):
     return False
 
+  def stmt_in_tag(self, node):
+    return False
+
+  def stmt_out_tag(self, node):
+    return False
+
   def stmt_alias(self, node):
     return False
 

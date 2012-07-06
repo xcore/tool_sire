@@ -37,6 +37,8 @@ class NodeVisitor(object):
   def visit_stmt_ass(self, node): pass
   def visit_stmt_in(self, node): pass
   def visit_stmt_out(self, node): pass
+  def visit_stmt_in_tag(self, node): pass
+  def visit_stmt_out_tag(self, node): pass
   def visit_stmt_alias(self, node): pass
   def visit_stmt_connect(self, node): pass
   def visit_stmt_server(self, node): pass
@@ -320,6 +322,56 @@ class StmtOut(Stmt):
 
   def __repr__(self):
     s =  'StmtOut('
+    s += ')'
+    return s
+
+
+class StmtInTag(Stmt):
+  def __init__(self, left, expr, coord=None):
+    self.left = left
+    self.expr = expr
+    self.coord = coord
+
+  def children(self):
+    c = []
+    if self.left is not None: c.append(self.left)
+    if self.expr is not None: c.append(self.expr)
+    return tuple(c)
+
+  def accept(self, visitor):
+    tag = visitor.visit_stmt_in_tag(self)
+    visitor.down(tag)
+    for c in self.children():
+      c.accept(visitor)
+    visitor.up(tag)
+
+  def __repr__(self):
+    s =  'StmtInTag('
+    s += ')'
+    return s
+
+
+class StmtOutTag(Stmt):
+  def __init__(self, left, expr, coord=None):
+    self.left = left
+    self.expr = expr
+    self.coord = coord
+
+  def children(self):
+    c = []
+    if self.left is not None: c.append(self.left)
+    if self.expr is not None: c.append(self.expr)
+    return tuple(c)
+
+  def accept(self, visitor):
+    tag = visitor.visit_stmt_out_tag(self)
+    visitor.down(tag)
+    for c in self.children():
+      c.accept(visitor)
+    visitor.up(tag)
+
+  def __repr__(self):
+    s =  'StmtOutTag('
     s += ')'
     return s
 

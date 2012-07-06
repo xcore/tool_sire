@@ -163,6 +163,12 @@ class FlattenCalls(NodeWalker):
   def stmt_out(self, node, replace):
     pass
 
+  def stmt_in_tag(self, node, replace):
+    pass
+
+  def stmt_out_tag(self, node, replace):
+    pass
+
   def stmt_alias(self, node, replace):
     pass
 

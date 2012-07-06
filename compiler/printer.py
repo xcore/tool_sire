@@ -236,6 +236,14 @@ class Printer(NodeWalker):
     self.out('{} ! {}'.format(
       self.elem(node.left), self.expr(node.expr)))
 
+  def stmt_in_tag(self, node):
+    self.out('{} ?? {}'.format(
+      self.elem(node.left), self.expr(node.expr)))
+
+  def stmt_out_tag(self, node):
+    self.out('{} !! {}'.format(
+      self.elem(node.left), self.expr(node.expr)))
+
   def stmt_alias(self, node):
     self.out('{} aliases {}'.format(
       self.elem(node.left), self.elem(node.slice)))

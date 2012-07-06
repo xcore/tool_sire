@@ -98,7 +98,7 @@ class Lexer(object):
     'NOT', #OR, AND, XOR
     'LSHIFT','RSHIFT','LT','GT','LE','GE','EQ','NE',
     # Assignment operators
-    'ASS', 'INP', 'OUT',
+    'ASS', 'INP', 'OUT', 'INTAG', 'OUTTAG',
     # Delimiters
     'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 'COLON', 
     # Separators
@@ -138,6 +138,8 @@ class Lexer(object):
   t_ASS      = r':='
   t_INP      = r'\?'
   t_OUT      = r'\!'
+  t_INTAG    = r'\?\?'
+  t_OUTTAG   = r'\!\!'
 
   # Delimeters
   t_LPAREN   = r'\('

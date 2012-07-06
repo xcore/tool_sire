@@ -124,6 +124,12 @@ class InsertOns(NodeWalker):
   def stmt_out(self, node, parent, d):
     return 1
 
+  def stmt_in_tag(self, node, parent, d):
+    return 1
+
+  def stmt_out_tag(self, node, parent, d):
+    return 1
+
   def stmt_alias(self, node, parent, d):
     return 1
 

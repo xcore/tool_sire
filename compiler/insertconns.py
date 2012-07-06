@@ -540,6 +540,12 @@ class InsertConns(NodeWalker):
   def stmt_out(self, node, tab, scope):
     return []
 
+  def stmt_in_tag(self, node, tab, scope):
+    return []
+
+  def stmt_out_tag(self, node, tab, scope):
+    return []
+
   def stmt_pcall(self, node, tab, scope):
     return []
     

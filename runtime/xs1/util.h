@@ -85,6 +85,18 @@ do { \
   asm("in %0, res[%1]" : "=r"(value) : "r"(c)); \
 } while(0)
 
+// Asynchronous out
+#define OUT_TAG(c, value) \
+do { \
+  asm("outct res[%0], " S(value) :: "r"(c)); \
+} while(0)
+
+// Asynchronous in
+#define IN_TAG(c, value) \
+do { \
+  asm("inct %0, res[%1]" : "=r"(value) : "r"(c)); \
+} while(0)
+
 // Synchronised out
 #define OUTS(c, value) \
 do { \
@@ -108,16 +120,56 @@ do {\
       :: "r"(c)); \
 } while(0)
 
+// Synchronised server out
+#define SERVER_OUTS(c, value) \
+do { \
+  unsigned _clientCRI; \
+  asm("in %0, res[%1];" \
+      "setd   res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+  asm("out    res[%0], %1;" \
+      "outct  res[%0]," S(XS1_CT_END) ";" \
+      "chkct  res[%0]," S(XS1_CT_END) \
+      :: "r"(c), "r"(value)); \
+} while(0)
+
+// Synchronised server in
+#define SERVER_INS(c, value) \
+do { \
+  unsigned _clientCRI; \
+  asm("in %0, res[%1];" \
+      "setd   res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+  asm("outct  res[%1]," S(XS1_CT_END) ";" \
+      "in     %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm("chkct  res[%0]," S(XS1_CT_END) ";" \
+      "outct  res[%0]," S(XS1_CT_END) \
+      :: "r"(c)); \
+} while(0)
+
+// Synchronised client out
+#define CLIENT_OUTS(c, value) \
+do { \
+asm("out   res[%0], %0;" \
+    "chkct res[%0]," S(XS1_CT_END) ";" \
+    "out   res[%0], %1;" \
+    "outct res[%0]," S(XS1_CT_END) ";" \
+    "chkct res[%0]," S(XS1_CT_END) \
+    :: "r"(c), "r"(value)); \
+} while(0)
+          
+// Synchronised client in
+#define CLIENT_INS(c, value) \
+do { \
+asm("out   res[%1], %1;" \
+    "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
+asm("chkct res[%0]," S(XS1_CT_END) ";" \
+    "outct res[%0]," S(XS1_CT_END) \
+    :: "r"(c)); \
+} while(0)
+
 // Server out
 #define SERVER_OUT(c, value) \
 do { \
-  unsigned _clientCRI; \
-  asm("in %0, res[%1];" \
-      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("out   res[%0], %1;" \
-      "outct res[%0]," S(XS1_CT_END) ";" \
-      "chkct res[%0]," S(XS1_CT_END) \
-      :: "r"(c), "r"(value)); \
+  asm("out res[%0], %1;" :: "r"(c), "r"(value)); \
 } while(0)
 
 // Server in
@@ -126,85 +178,51 @@ do { \
   unsigned _clientCRI; \
   asm("in %0, res[%1];" \
       "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("outct res[%1]," S(XS1_CT_END) ";" \
-      "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-  asm("chkct res[%0]," S(XS1_CT_END) ";" \
-      "outct res[%0]," S(XS1_CT_END) \
-      :: "r"(c)); \
+  asm("in %0, res[%1];" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Client out
 #define CLIENT_OUT(c, value) \
 do { \
-asm("out   res[%0], %0;" \
-    "chkct res[%0]," S(XS1_CT_END) ";" \
-    "out   res[%0], %1;" \
-    "outct res[%0]," S(XS1_CT_END) ";" \
-    "chkct res[%0]," S(XS1_CT_END) \
-    :: "r"(c), "r"(value)); \
-} while(0)
-          
-// Client in
-#define CLIENT_IN(c, value) \
-do { \
-asm("out   res[%1], %1;" \
-    "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-asm("chkct res[%0]," S(XS1_CT_END) ";" \
-    "outct res[%0]," S(XS1_CT_END) \
-    :: "r"(c)); \
-} while(0)
-
-/*// Server out
-#define SERVER_OUT(c, value) \
-do { \
-  unsigned _clientCRI; \
-  asm("in %0, res[%1];" \
-      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("outct res[%0]," S(XS1_CT_END) ";" \
-      "chkct res[%0]," S(XS1_CT_END) ";" \
-      "out   res[%0], %1;" \
-      "outct res[%0]," S(XS1_CT_END) ";" \
-      "chkct res[%0]," S(XS1_CT_END) \
+  asm("out res[%0], %0;" \
+      "out res[%0], %1" \
       :: "r"(c), "r"(value)); \
 } while(0)
-
-// Server in
-#define SERVER_IN(c, value) \
-do { \
-  unsigned _clientCRI; \
-  asm("in %0, res[%1];" \
-      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("chkct res[%1]," S(XS1_CT_END) ";" \
-      "outct res[%1]," S(XS1_CT_END) ";" \
-      "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-  asm("chkct res[%0]," S(XS1_CT_END) ";" \
-      "outct res[%0]," S(XS1_CT_END) \
-      :: "r"(c)); \
-} while(0)
-
-// Client out
-#define CLIENT_OUT(c, value) \
-do { \
-asm("out   res[%0], %0;" \
-    "outct res[%0]," S(XS1_CT_END) ";" \
-    "chkct res[%0]," S(XS1_CT_END) ";" \
-    "out   res[%0], %1;" \
-    "outct res[%0]," S(XS1_CT_END) ";" \
-    "chkct res[%0]," S(XS1_CT_END) \
-    :: "r"(c), "r"(value)); \
-} while(0)
           
 // Client in
 #define CLIENT_IN(c, value) \
 do { \
-asm("out   res[%1], %1;" \
-    "outct res[%1]," S(XS1_CT_END) ";" \
-    "chkct res[%1]," S(XS1_CT_END) ";" \
-    "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-asm("chkct res[%0]," S(XS1_CT_END) ";" \
-    "outct res[%0]," S(XS1_CT_END) \
-    :: "r"(c)); \
-} while(0)*/
+  asm("in %0, res[%1]" : "=r"(value) : "r"(c)); \
+} while(0)
+
+// Server out tag
+#define SERVER_OUT_TAG(c, value) \
+do { \
+  asm("outct res[%0], " S(value) :: "r"(c)); \
+} while(0)
+
+// Server in tag
+#define SERVER_IN_TAG(c, value) \
+do { \
+  unsigned _clientCRI; \
+  asm("in %0, res[%1];" \
+      "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+  asm("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
+} while(0)
+
+// Client out tag
+#define CLIENT_OUT_TAG(c, value) \
+do { \
+  asm("out   res[%0], %0;" \
+      "outct res[%0], " S(value) \
+      :: "r"(c), "r"(value)); \
+} while(0)
+          
+// Client in tag
+#define CLIENT_IN_TAG(c, value) \
+do { \
+  asm("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
+} while(0)
 
 // Get a chanend
 #define GETR_CHANEND(resID) \

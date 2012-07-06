@@ -49,6 +49,12 @@ class SubElem(NodeVisitor):
   def visit_stmt_out(self, node):
     node.left = self.substitute(node.left)
 
+  def visit_stmt_in_tag(self, node):
+    node.left = self.substitute(node.left)
+
+  def visit_stmt_out_tag(self, node):
+    node.left = self.substitute(node.left)
+
   def visit_stmt_alias(self, node):
     node.left = self.substitute(node.left)
 

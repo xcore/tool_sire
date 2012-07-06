@@ -608,6 +608,12 @@ class Semantics(NodeWalker):
          T_CHANEND_SUB,]):
       self.type_error('output channel', node.left.name, node.coord)
 
+  def stmt_in_tag(self, node):
+    self.stmt_in(node)
+
+  def stmt_out_tag(self, node):
+    self.stmt_out(node)
+
   def stmt_alias(self, node):
 
     # Children
