@@ -356,9 +356,9 @@ class TranslateXS1(NodeWalker):
     left = self.elem(node.left)
     expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
-      self.out('SERVER_OUT({}, {});'.format(left, expr))
+      self.out('SERVER_OUTS({}, {});'.format(left, expr))
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      self.out('CLIENT_OUT({}, {});'.format(left, expr))
+      self.out('CLIENT_OUTS({}, {});'.format(left, expr))
     else:
       self.out('OUTS({}, {});'.format(left, expr))
 
@@ -366,9 +366,9 @@ class TranslateXS1(NodeWalker):
     left = self.elem(node.left)
     expr = self.expr(node.expr) 
     if chans[node.left.name] == defs.CONNECT_SERVER:
-      self.out('SERVER_IN({}, {});'.format(left, expr))
+      self.out('SERVER_INS({}, {});'.format(left, expr))
     elif chans[node.left.name] == defs.CONNECT_CLIENT:
-      self.out('CLIENT_IN({}, {});'.format(left, expr))
+      self.out('CLIENT_INS({}, {});'.format(left, expr))
     else:
       self.out('INS({}, {});'.format(left, expr))
     
