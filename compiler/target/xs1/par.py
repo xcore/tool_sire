@@ -139,6 +139,19 @@ def master_unset(t, index, pcall):
   params = t.sig.get_params(pcall.name)
   #n_stack_args = num_stack_args(pcall)
 
+  # Hack to ensure the compiler knows the value of each referenced variable may
+  # have been updated as it happens 'invisibly' by passing a pointer to the
+  # thread.
+  for (i, (x, y)) in enumerate(zip(pcall.args, params)):
+    if y.symbol.type == T_REF_SINGLE:
+      value = '_pointerInt({})'.format(t.expr(x))
+      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=[value])
+    elif y.symbol.type == T_CHANEND_SINGLE or \
+      y.symbol.type == T_CHANEND_SERVER_SINGLE or \
+      y.symbol.type == T_CHANEND_CLIENT_SINGLE:
+      value = '_pointerUnsigned({})'.format(t.expr(x))
+      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=[value])
+
   # Load referenced variable values back
   #j = 0
   #for (i, (x, y)) in enumerate(zip(pcall.args, params)):

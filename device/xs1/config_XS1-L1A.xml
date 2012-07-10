@@ -6,7 +6,7 @@
         <Switch sLinks="16"/>
         <Processor numChanEnds="32" numClkBlks="6" numLocks="4" numSyncs="7" numThreads="8" numTimers="10" number="0">
           <MemoryController>
-            <Ram base="0x10000" size="0x10000"/>
+            <Ram base="0x40000" size="0x40000"/>
           </MemoryController>
         </Processor>
       </Node>

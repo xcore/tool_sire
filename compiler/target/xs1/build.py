@@ -461,11 +461,14 @@ def dump_memory_use():
   def size(v):
     return '{:>6} {:>8}'.format(v, '({:,.2f}KB)'.format(v/1000))
 
+  s = util.call([XOBJDUMP, '--size', MASTER_XE])
+  m = re.findall(r' *([0-9]+) *([0-9]+) *([0-9]+) *([0-9]+)', s)
+  master_sizes = [int(x) for x in m[0]]
+  assert len(m) == 1
   s = util.call([XOBJDUMP, '--size', SLAVE_XE])
   m = re.findall(r' *([0-9]+) *([0-9]+) *([0-9]+) *([0-9]+)', s)
-  assert len(m) == 2
-  master_sizes = [int(x) for x in m[0]]
-  slave_sizes = [int(x) for x in m[1]]
+  slave_sizes = [int(x) for x in m[0]]
+  assert len(m) == 1
   print('Total memory:           '+size(defs.RAM_SIZE))
   print()
   
@@ -515,6 +518,7 @@ def cleanup(v):
   
   # Remove specific files
   util.remove_file(MASTER_XE)
+  util.remove_file(SLAVE_XE)
   util.remove_file('image_n0c0.elf')
   util.remove_file('config.xml')
   util.remove_file('platform_def.xn')

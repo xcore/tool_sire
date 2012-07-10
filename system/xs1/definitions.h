@@ -67,11 +67,11 @@
 #define CHAN_ID_MEM_ACCESS       2
 
 // Hardware parameters
-#define RAM_BASE                 0x10000
-#define RAM_SIZE                 0x10000
+#define RAM_BASE                 0x40000
+#define RAM_SIZE                 0x40000
 #define BYTES_PER_WORD           4
-#define MAX_THREADS              20 
-#define MAX_CHANNELS             32
+#define MAX_THREADS              32 
+#define MAX_CHANNELS             128
 
 // Architectural constants
 #define SWITCH_SCRATCH_REG       3

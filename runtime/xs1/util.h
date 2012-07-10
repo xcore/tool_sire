@@ -169,6 +169,9 @@ do {\
 // Synchronised server out
 #define SERVER_OUTS(c, value) \
 do { \
+  unsigned _clientCID; \
+  asm("in %0, res[%1];" \
+      "setd   res[%1], %0" : "=&r"(_clientCID) : "r"(c)); \
   asm("out    res[%0], %1;" \
       "outct  res[%0]," S(XS1_CT_END) ";" \
       "chkct  res[%0]," S(XS1_CT_END) \
@@ -178,9 +181,9 @@ do { \
 // Synchronised server in
 #define SERVER_INS(c, value) \
 do { \
-  unsigned _clientCRI; \
+  unsigned _clientCID; \
   asm("in     %0, res[%1];" \
-      "setd   res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
+      "setd   res[%1], %0" : "=&r"(_clientCID) : "r"(c)); \
   asm("in     %0, res[%1];" : "=r"(value) : "r"(c)); \
   asm("chkct  res[%0]," S(XS1_CT_END) ";" \
       "outct  res[%0]," S(XS1_CT_END) \
@@ -200,7 +203,8 @@ do { \
 // Synchronised client in
 #define CLIENT_INS(c, value) \
 do { \
-  asm("in    %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm("out   res[%1], %1;" \
+      "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
   asm("chkct res[%0]," S(XS1_CT_END) ";" \
       "outct res[%0]," S(XS1_CT_END) \
       :: "r"(c)); \

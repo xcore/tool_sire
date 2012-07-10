@@ -1,0 +1,278 @@
+val N            is NUM_CORES; % Number of leaves (storage units)
+val STORAGE      is 1000/N; % Storage per leaf
+val LENGTH       is N*STORAGE;
+val READ         is (0x3);
+val WRITE        is (0x4);
+val HALT         is (0x1);
+val READY        is (0x0);
+
+%val FIX_IBITS is 8;
+val FIX_DBITS is 24;
+val FIX_HALF is 0x00800000;
+val FIX_QUAR is 0x00400000;
+
+%val XDIM is 80;
+%val YDIM is 40;
+val XDIM is 80;
+val YDIM is 40;
+val COUNT is 40;
+
+val CT_ACK    is 0;
+val CT_END    is 1;
+val CT_INIT   is 2;
+val CT_WORK   is 3;
+val CT_RESULT is 4;
+
+val NUM_WORKERS is NUM_CORES-1;
+
+proc read(chanend c, val index, var value) is
+{ outct(c, READ);
+  out(c, index);
+  inp(c, value)
+}
+
+proc write(chanend c, val index, val value) is
+{ outct(c, WRITE);
+  out(c, index);
+  out(c, value);
+  chkctend(c)
+}
+
+proc halt(chanend c) is
+{ outct(c, HALT);
+  out(c, 0)
+  %outctend(c);
+  %chkctend(c)
+}
+
+proc control(chanend input, chanend begin, chanend end) is
+{ var base0;
+  var base;
+  var j;
+  var value;
+  
+  % Collect addresses, last node first
+  end ? base;
+  for j in [0 for N-2] do
+  { end ? value%;
+    %assert value = base
+  };
+  end ? base0;
+
+  % Notify ready
+  input ! READY;
+
+  % Run
+  memctrl(input, STORAGE, base0, base);
+  begin ! HALT;
+  end ? value
+}
+
+proc leaf(val id, chanend left, chanend right) is
+{ var data[];
+  var v;
+  var j;
+  v := memalloc(data, STORAGE);
+  
+  % Circulate addresses
+  right ! data;
+  for j in [0 for id] do
+  { left ? v;
+    right ! v
+  };
+  % Wait to halt
+  left ? v;
+  right ! HALT;
+  v := memfree(data)
+}
+
+proc array(chanend x) is
+{ var i;
+  % Small hack: channel declaration taken out of server as replicated
+  % connections can't mix normal and server types.
+  chan c[N+1];
+  server() 
+    control(x, c[0], c[N])
+    par i in [0 for N] do 
+      leaf(i, c[i], c[i+1])
+}
+
+func fix(val x) is
+  return x << FIX_DBITS
+
+func plot(val i) is
+  if i > 32      then printchar(' ')
+  else if i > 16 then printchar('.')
+  else if i > 8  then printchar(':')
+  else if i > 3  then printchar('+')
+  else if i > 1  then printchar('%')
+  else                printchar('#')
+
+proc compute(
+    val xmin, val ymin, val xmax, val ymax, 
+    chanend req, chanend c) is
+{ var i;
+  var x;
+  var y;
+  var dx;
+  var dy;
+  var rx;
+  var ry;
+  var request;
+  var tag;
+  var data[];
+  var workCount;
+  var outstandingWork;
+  var activeWorkers;
+ 
+  % Wait until memory ready
+  %mem ? request;
+  %halt(mem);
+
+  i := memalloc(data, YDIM*XDIM*4);
+  outstandingWork := XDIM * YDIM;
+  workCount := outstandingWork;
+  activeWorkers := NUM_WORKERS;
+  dx := divf8_24(xmax-xmin, fix(XDIM));
+  dy := divf8_24(ymax-ymin, fix(YDIM));
+
+  % Main loop
+  x := 0; 
+  y := 0;
+  while outstandingWork > 0 do
+  { req ? request;
+    %printstrln("got req");
+    if request = CT_INIT
+    then
+    { c ! dx;
+      c ! dy;
+      c ! xmin;
+      c ! ymin
+      %;printstrln("init worker")
+    }
+    else if request = CT_WORK
+    then
+    { if workCount = 0
+      then 
+      { c ! false;
+        activeWorkers := activeWorkers - 1
+      }
+      else
+      { c ! true;
+        c ! x;
+        c ! y;
+        x := (x + 1) rem XDIM;
+        if x = 0 then y := y + 1 else skip;
+        workCount := workCount - 1
+        %;printstrln("sent work")
+      }
+    }
+    else if request = CT_RESULT
+    then
+    { c ? rx;
+      c ? ry;
+      c ? i;
+      data[(ry*XDIM)+rx] := i;
+      outstandingWork := outstandingWork - 1
+      %;printstrln("got result")
+    }
+    else skip
+  };
+ 
+  % Terminate all of the workers
+  for i in [0 for activeWorkers] do
+  { req ? request;
+    c ! false
+    %;printstrln("terminated worker")
+  };
+
+  % Print the result
+  for y in [0 for YDIM] do
+  { for x in [0 for XDIM] do
+      plot(data[(y*XDIM)+x]);
+    println()
+  }
+}
+
+proc worker(val id, chanend req, chanend c) is
+  % Request some work from the farmer
+{ var dx;
+  var dy;
+  var xn;
+  var x0;
+  var y0;
+  var p;
+  var q;
+  var i;
+  var x;
+  var y;
+  var xmin;
+  var ymin;
+  var running;
+  var tag;
+ 
+  % Initialise
+  req ! CT_INIT;
+  c ? dx;
+  c ? dy;
+  c ? xmin;
+  c ? ymin;
+
+  % Main loop
+  running := true;
+  while running do
+  { % Get work
+    req ! CT_WORK;
+    c ? running;
+    if running
+    then
+    { c ? x;
+      c ? y;
+      % Perform work
+      p := xmin + mulf8_24(fix(x), dx);
+      q := ymin + mulf8_24(fix(y), dy);
+      xn := 0;
+      x0 := 0;
+      y0 := 0;
+      i := 0;
+      while ((mulf8_24(xn,xn)+mulf8_24(y0,y0)) < fix(4)) 
+        and (i < COUNT) do
+      { i := i + 1;
+        xn := mulf8_24(x0+y0, x0-y0) + p;
+        y0 := mulf8_24(fix(2), mulf8_24(x0, y0)) + q;
+        x0 := xn
+      };
+      % Return work
+      req ! CT_RESULT;
+      c ! x;
+      c ! y;
+      c ! i
+    }
+    else skip
+  }
+}
+
+% Initial parameters:
+%   xmin := -2
+%   ymin := -1.25
+%   xmax := 0.75
+%   ymax := 1.25
+proc main() is
+{ var xmin;
+  var ymin;
+  var xmax;
+  var ymax;
+  xmin := fix(-2);
+  ymin := (fix(1) + FIX_QUAR)*(-1);
+  xmax := FIX_HALF + FIX_QUAR;
+  ymax := fix(1) + FIX_QUAR;
+  %server(chan x)
+  %  array(x)
+    server(chan req, chan foo)
+      compute(xmin, ymin, xmax, ymax, req, foo)
+    { var i;
+      par i in [0 for NUM_WORKERS] do
+        worker(i, req, foo)
+    }
+}
+
