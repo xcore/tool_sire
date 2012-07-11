@@ -1,0 +1,16 @@
+proc worldmodel(chanend c[N]) is
+{ par i in [0 for N] do
+    control(i, c[i]) & 
+  par i in [0 for N] do
+    leaf(i, c[i])
+}
+
+proc workers(chanend c[N]) is
+  par i in [0 for N] do
+    worker(i, c[i])
+
+server$(chan c[N])
+  worldmodel(c)
+  server(chan m)
+    farmer(m)
+    workers(m, c)

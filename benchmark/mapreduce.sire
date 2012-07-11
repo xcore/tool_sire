@@ -1,0 +1,72 @@
+val LEAF_STORAGE is 10;
+val ct_PTR is 0;
+val ct_END is 1;
+
+func f(val v) is
+  return v
+
+func reduce(val a, val b) is
+  return a and b
+
+proc dataleaf(chanend c) is
+{ var data[LEAF_STORAGE];
+  var req;
+  var running;
+  running := true;
+  while running do
+  { c ? req;
+    if req = ct_PTR
+    then
+      c ! data
+    else
+      running := false
+  }
+}
+
+proc halt(chanend c[N]) is
+  par i in [0 for N] do c[i] ! ct_END
+
+proc map(chanend c[N]) is
+{ par i in [0 for N] do
+  { var data[];
+    c ! ct_PTR;
+    c ? data;
+    for j in [0 for N] do
+      data[i] = f(data[i])
+  }
+}
+
+proc branch(chanend root, chanend left, chanend right) is
+{ var lvalue;
+  var rvalue;
+  left ? lvalue;
+  right ? rvalue;
+  root ! reduce(lvalue, rvalue)
+}
+
+proc reduceleaf(chanend leaf, chanend reducetree) is
+{ var data[];
+  leaf ! ct_PTR;
+  leaf ? data;
+  reducetree ! reduce(data)
+}
+
+proc reduce(chan c[N], var result) is
+{ chan d[(2*N)-1];
+  var i;
+  c[0] ? result &
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) &
+  par i in [0 for N] do
+    leaf(c[i], d[(N-1)+i])
+}
+
+proc main() is
+  var result;
+  server(chan c[N])
+    data(c)
+  { map(c);
+    reduce(c, result);
+    halt(c) 
+  }
+
