@@ -13,13 +13,13 @@ proc backwards(val n) is
   else on n-1 do backwards(n-1)
 
 proc foo() is
-{ backwards(N) || 
+{ backwards(N) & 
   backwards(N)
 }
 
 proc main() is
-{ on N do foo() || 
-  forwards(0) || 
+{ on N do foo() & 
+  forwards(0) & 
   forwards(0)
 }
 

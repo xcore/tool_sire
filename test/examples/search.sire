@@ -46,9 +46,9 @@ proc branch(chanend root, chanend left, chanend right) is
 proc tree(chanend input) is
 { chan c[(2*N)-1];
   var i;
-  serve(input, c[0]) ||
+  serve(input, c[0]) &
   par i in [0 for N-1] do
-    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) &
   par i in [0 for N] do
     leaf(c[(N-1) + i])
 }
@@ -57,7 +57,7 @@ proc main() is
 { chan c;
   var i;
   var result;
-  tree(c) ||
+  tree(c) &
   for i in [0 for NUM_QUERIES] do
   { c ! rand();
     c ? result

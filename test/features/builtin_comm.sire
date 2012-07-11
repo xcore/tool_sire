@@ -27,5 +27,5 @@ proc bar(chanend c) is
 
 proc main() is
 { chan x;
-  foo(x) || bar(x)
+  foo(x) & bar(x)
 }

@@ -247,7 +247,7 @@ proc array(chanend x) is
         c[(DEGREE*i)+5], 
         c[(DEGREE*i)+6], 
         c[(DEGREE*i)+7], 
-        c[(DEGREE*i)+8]) ||
+        c[(DEGREE*i)+8]) &
    serve(x, c[0])
   }
 }

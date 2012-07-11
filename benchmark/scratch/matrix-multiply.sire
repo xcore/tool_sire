@@ -44,18 +44,18 @@ proc main() is
   skip
   
 ; { par j in [0 for N] do 
-      produce_xj(j, y[j]) ||
+      produce_xj(j, y[j]) &
     
     par i in [0 for N] do 
-      offset(k[i], x[(N*N) + i]) ||
+      offset(k[i], x[(N*N) + i]) &
 
     par i in [0 for N], j in [0 for N] do 
         multiplier(A[(N*i) + j],
           y[(N*i) + j], y[(N * (i+1)) + j],
-          x[i + (N*j)], x[i + (N * (j+1))]) ||
+          x[i + (N*j)], x[i + (N * (j+1))]) &
 
     par j in [0 for N] do 
-      sink(y[(N*N) + j]) ||
+      sink(y[(N*N) + j]) &
 
     par i in [0 for N] do 
       consume_yi(i, x[i])

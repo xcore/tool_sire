@@ -23,12 +23,12 @@ proc main() is
   c6 := 6;
   c7 := 7;
   c8 := 8;
-  { foo(r[0], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
-    foo(r[1], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
-    foo(r[2], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
-    foo(r[3], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
-    foo(r[4], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
-    foo(r[5], c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+  { foo(r[0], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
+    foo(r[1], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
+    foo(r[2], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
+    foo(r[3], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
+    foo(r[4], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
+    foo(r[5], c0, c1, c2, c3, c4, c5, c6, c7, c8) &
     foo(r[6], c0, c1, c2, c3, c4, c5, c6, c7, c8)
   }; 
   for i in [0 for 7] do

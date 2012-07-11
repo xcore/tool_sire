@@ -48,5 +48,5 @@ proc accessor(val dest) is
 }
 
 proc main() is
-{ on N do memory(0) || accessor(N) }
+{ on N do memory(0) & accessor(N) }
 

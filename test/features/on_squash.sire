@@ -19,11 +19,11 @@ proc main() is
   var b;
   var c;
   var d;
-  bar(L, a, b, c, d) ||
-  bar(L, a, b, c, d) ||
-  bar(L, a, b, c, d) ||
-  bar(L, a, b, c, d) ||
-  bar(R, a, b, c, d) ||
-  bar(R, a, b, c, d) ||
+  bar(L, a, b, c, d) &
+  bar(L, a, b, c, d) &
+  bar(L, a, b, c, d) &
+  bar(L, a, b, c, d) &
+  bar(R, a, b, c, d) &
+  bar(R, a, b, c, d) &
   bar(R, a, b, c, d)
 }

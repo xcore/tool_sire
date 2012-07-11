@@ -31,7 +31,7 @@ proc p3(val dest) is
 
 proc main() is
 { var v;
-  { on N do p0(0) || p1(N) };
-  { on N do p2(0) || p3(N) }
+  { on N do p0(0) & p1(N) };
+  { on N do p2(0) & p3(N) }
 }
 

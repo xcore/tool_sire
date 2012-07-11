@@ -1,4 +1,4 @@
 proc foo() is skip
 
 proc main() is
-{ foo() || foo() || foo() || foo() }
+{ foo() & foo() & foo() & foo() }

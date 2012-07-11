@@ -92,9 +92,9 @@ proc leaf(val i, chanend c) is
 proc table(chanend query) is
 { chan c[(2*N)-1];
   var i;
-  serve(query, c[0]) ||
+  serve(query, c[0]) &
   par i in [0 for N-1] do
-    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) &
   par i in [0 for N] do 
     leaf(i, c[(N-1) + i])
 }
@@ -118,7 +118,7 @@ proc foo(chanend c) is skip
 proc main() is
 { chan c;
   var value;
-  table(c) ||
+  table(c) &
   { put(c, 1, 0xDEADBEEF);
     %put(c, 34, 0xBADF00D);
     get(value, c, 1);

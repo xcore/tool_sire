@@ -191,7 +191,7 @@ proc array(chanend x) is
   server() 
     par i in [0 for N] do 
       leaf(c[BRANCHES+i])
-  { serve(x, c[0]) ||
+  { serve(x, c[0]) &
     par i in [0 for BRANCHES] do
       branch(c[i], 
         c[(DEGREE*i)+1], 

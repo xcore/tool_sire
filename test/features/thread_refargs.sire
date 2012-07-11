@@ -23,7 +23,7 @@ proc main() is
   c6 := 6;
   c7 := 7;
   c8 := 8;
-  { foo(x, c0, c1, c2, c3, c4, c5, c6, c7, c8) ||
+  { foo(x, c0, c1, c2, c3, c4, c5, c6, c7, c8) &
     foo(y, c0, c1, c2, c3, c4, c5, c6, c7, c8)
   };
   assert (x = 36) and (y = 36)

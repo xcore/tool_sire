@@ -47,9 +47,9 @@ proc main() is
   { c[0] ! 0; 
     c[0] ? v;
     assert v = LEAVES
-  } ||
+  } &
   par i in [0 for LEAVES] do 
-    leaf(c[BRANCHES + i]) ||
+    leaf(c[BRANCHES + i]) &
   par i in [0 for BRANCHES] do
     branch(c[i], 
     c[(DEGREE*i)+1], 

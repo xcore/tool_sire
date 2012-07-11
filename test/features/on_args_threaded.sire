@@ -63,12 +63,12 @@ proc main() is
     set(A5, LEN, VAL);
     set(A6, LEN, VAL);
     set(A7, LEN, VAL);
-    { foo(0, 0, 0, 0, i,   A1, LEN, v1) ||
-      foo(0, 0, 0, 0, i+1, A2, LEN, v2) ||
-      foo(0, 0, 0, 0, i+2, A3, LEN, v4) ||
-      foo(0, 0, 0, 0, i+3, A4, LEN, v5) ||
-      foo(0, 0, 0, 0, i+4, A5, LEN, v6) ||
-      foo(0, 0, 0, 0, i+5, A6, LEN, v7) ||
+    { foo(0, 0, 0, 0, i,   A1, LEN, v1) &
+      foo(0, 0, 0, 0, i+1, A2, LEN, v2) &
+      foo(0, 0, 0, 0, i+2, A3, LEN, v4) &
+      foo(0, 0, 0, 0, i+3, A4, LEN, v5) &
+      foo(0, 0, 0, 0, i+4, A5, LEN, v6) &
+      foo(0, 0, 0, 0, i+5, A6, LEN, v7) &
       foo(0, 0, 0, 0, i+6, A7, LEN, v7)
     };
     check(A1, LEN, i);

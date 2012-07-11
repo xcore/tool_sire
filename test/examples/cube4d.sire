@@ -36,7 +36,7 @@ proc slave_(val i, chanend d0, chanend d1, chanend d2, chanend d3) is
 proc main() is
 { var i;
   chan c[N*D];
-  master_(0, c[0], c[1], c[2], c[3]) ||
+  master_(0, c[0], c[1], c[2], c[3]) &
   par i in [1 for N-1] do
     slave_(i,
       c[(((i xor 1) xor ((i xor (i xor 1)) and (-(i < (i xor 1)))))*D) + 0], 

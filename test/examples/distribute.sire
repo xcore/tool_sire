@@ -3,7 +3,7 @@ proc d(val t, val n) is
   if n = 1 
   then skip
   else 
-    { on t+(n/2) do d(t+(n/2), n/2) || 
+    { on t+(n/2) do d(t+(n/2), n/2) & 
       d(t, n/2)
     }
 

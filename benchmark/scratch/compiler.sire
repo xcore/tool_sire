@@ -12,7 +12,7 @@ proc main() is
   chan c_ast;
   chan c_sym;
 {
-  server { ast(c_ast) || symtab(c_sym) }
+  server { ast(c_ast) & symtab(c_sym) }
   { lex(c_ast, c_sym);
     syn(c_ast, c_sym);
     sem(c_ast, c_sym);
@@ -25,7 +25,7 @@ proc main() is
   chan c_ast[N];
   chan c_sym[N];
 {
-  server { ast(c_ast) || symtab(c_sym) }
+  server { ast(c_ast) & symtab(c_sym) }
   { lex(c_ast, c_sym);
     syn(c_ast, c_sym);
     sem(c_ast, c_sym);

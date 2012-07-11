@@ -3,12 +3,12 @@ proc foo() is skip
 proc main() is
 { var i;
   for i in [1 for 100] do
-  { foo() || 
-    foo() || 
-    foo() || 
-    foo() || 
-    foo() || 
-    foo() || 
+  { foo() & 
+    foo() & 
+    foo() & 
+    foo() & 
+    foo() & 
+    foo() & 
     foo() 
   }
 }

@@ -9,6 +9,6 @@ proc bar() is
   on NUM_CORES-1 do foo()
 
 proc main() is
-{ foo() || bar() 
+{ foo() & bar() 
 }
 

@@ -41,9 +41,9 @@ proc tree(chanend input) is
   var v;
   var i;
 {
-  { input ? v ; c[0] ! v } ||
+  { input ? v ; c[0] ! v } &
   par i in [0 for N-1] do
-    branch(c[i], c[(2*i)+1], c[(2*i)+2]) ||
+    branch(c[i], c[(2*i)+1], c[(2*i)+2]) &
   par i in [0 for N] do 
     leaf(c[(N-1) + i])
 }
@@ -52,6 +52,6 @@ proc main() is
   chan c;
   var enq;
   var result;
-{ { c ! enq ; c ? result } || tree(c) }
+{ { c ! enq ; c ? result } & tree(c) }
 
 
