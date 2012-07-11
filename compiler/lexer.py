@@ -103,6 +103,8 @@ class Lexer(object):
     'LPAREN','RPAREN','LBRACKET','RBRACKET','START','END','COMMA', 'COLON', 
     # Separators
     'SEQSEP','PARSEP',
+    # Markers
+    'DISTRIBUTE',
     # Literals
     'HEXLITERAL','DECLITERAL','BINLITERAL','CHAR','STRING',
     # Identifiers
@@ -153,7 +155,10 @@ class Lexer(object):
 
   # Separators
   t_SEQSEP   = r';'
-  t_PARSEP = r'\|\|'
+  t_PARSEP   = r'&'
+
+  # Markers
+  t_DISTRIBUTE = r'\$'
 
   # Whitespace
   def t_IGNORE(self, t):

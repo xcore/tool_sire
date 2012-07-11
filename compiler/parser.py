@@ -368,7 +368,12 @@ class Parser(object):
   # Par block
   def p_stmt_par_block(self, p):
     'stmt : START var_decls stmt_par END'
-    p[0] = ast.StmtPar(p[2], p[3], self.coord(p))
+    p[0] = ast.StmtPar(p[2], p[3], False, self.coord(p))
+
+  # Par block distribute
+  def p_stmt_par_block_distribute(self, p):
+    'stmt : START var_decls stmt_par END DISTRIBUTE'
+    p[0] = ast.StmtPar(p[2], p[3], True, self.coord(p))
 
   # Par
   def p_stmt_par(self, p):
@@ -441,7 +446,11 @@ class Parser(object):
 
   def p_stmt_server(self, p):
     'stmt : SERVER LPAREN server_decls RPAREN stmt stmt'
-    p[0] = ast.StmtServer(p[3], p[5], p[6], self.coord(p))
+    p[0] = ast.StmtServer(p[3], p[5], p[6], False, self.coord(p))
+
+  def p_stmt_server_distribute(self, p):
+    'stmt : SERVER DISTRIBUTE LPAREN server_decls RPAREN stmt stmt'
+    p[0] = ast.StmtServer(p[3], p[5], p[6], True, self.coord(p))
 
   def p_stmt_if(self, p):
     'stmt : IF expr THEN stmt ELSE stmt'

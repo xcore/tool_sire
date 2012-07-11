@@ -62,25 +62,35 @@ class InsertOns(NodeWalker):
     if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
       self.errorlog.report_error("parallel composition contains 'on's")
       return 0
-    e = self.stmt(node.stmt[0], parent, d)
-    debug(self.debug, 'd before par = {}'.format(d))
-    for (i, x) in enumerate(node.stmt[1:]):
-      node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d+e)), x)
-      e += self.stmt(x, parent, d+e)
-    debug(self.debug, 'd after par = {}'.format(d))
-    return e
+    if node.distribute:
+      e = self.stmt(node.stmt[0], parent, d)
+      debug(self.debug, 'd before par = {}'.format(d))
+      for (i, x) in enumerate(node.stmt[1:]):
+        node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d+e)), x)
+        e += self.stmt(x, parent, d+e)
+      debug(self.debug, 'd after par = {}'.format(d))
+      return e
+    else:
+      return 0
 
   def stmt_server(self, node, parent, d):
     """
     For server statements the server and client processes are overlaid.
     """
-    debug(self.debug, 'd before server = {}'.format(d))
-    #d += self.stmt(node.server, parent, d)
-    x = self.stmt(node.server, parent, d)
-    debug(self.debug, 'd after server = {}'.format(x))
-    #node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
-    y = self.stmt(node.client, parent, d)
-    debug(self.debug, 'd after client = {}'.format(y))
+    if node.distribute:
+      debug(self.debug, 'd before server = {}'.format(d))
+      e = self.stmt(node.server, parent, d)
+      debug(self.debug, 'd after server = {}'.format(x))
+      node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
+      e += self.stmt(node.client, parent, d)
+      debug(self.debug, 'd after client = {}'.format(y))
+      return e
+    else:
+      debug(self.debug, 'd before server = {}'.format(d))
+      x = self.stmt(node.server, parent, d)
+      debug(self.debug, 'd after server = {}'.format(x))
+      y = self.stmt(node.client, parent, d)
+      debug(self.debug, 'd after client = {}'.format(y))
     return max(x, y)
 
   def stmt_rep(self, node, parent, d):

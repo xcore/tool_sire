@@ -227,9 +227,10 @@ class StmtSeq(Stmt):
 
 
 class StmtPar(Stmt):
-  def __init__(self, decls, stmt, coord=None):
+  def __init__(self, decls, stmt, distribute, coord=None):
     self.decls = decls
     self.stmt = stmt
+    self.distribute = distribute
     self.coord = coord
 
   def children(self):
@@ -247,6 +248,7 @@ class StmtPar(Stmt):
 
   def __repr__(self):
     s =  'StmtPar('
+    s += ', '.join('%s' % v for v in [self.distribute])
     s += ')'
     return s
 
@@ -431,10 +433,11 @@ class StmtConnect(Stmt):
 
 
 class StmtServer(Stmt):
-  def __init__(self, decls, server, client, coord=None):
+  def __init__(self, decls, server, client, distribute, coord=None):
     self.decls = decls
     self.server = server
     self.client = client
+    self.distribute = distribute
     self.coord = coord
 
   def children(self):
@@ -453,6 +456,7 @@ class StmtServer(Stmt):
 
   def __repr__(self):
     s =  'StmtServer('
+    s += ', '.join('%s' % v for v in [self.distribute])
     s += ')'
     return s
 
