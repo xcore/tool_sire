@@ -19,6 +19,6 @@ proc main() is
   { master_(c[0], c[N]) &
     par i in [0 for N] do 
       node_(c[i], c[i+1])
-  }
+  }$
 }
 

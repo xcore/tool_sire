@@ -291,6 +291,10 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 10. Perform liveness analysis
   vmsg(v, "Performing liveness analysis")
   Liveness().run(ast)
+  
+  # 13. Transform server processes
+  vmsg(v, "Transforming server processes")
+  TransformServer().walk_program(ast)
 
   # 11. Transform parallel composition
   vmsg(v, "Transforming parallel composition")
@@ -300,10 +304,6 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   vmsg(v, "Transforming parallel replication")
   TransformRep(sym, sem, sig, device).walk_program(ast)
   
-  # 13. Transform server processes
-  vmsg(v, "Transforming server processes")
-  TransformServer().walk_program(ast)
-
   # 14. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)

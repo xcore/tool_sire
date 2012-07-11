@@ -25,7 +25,9 @@ class ExpandProcs(NodeWalker):
     Given a procedure call statement, return the process body for the
     procedure.
     """
-    if isinstance(stmt, ast.StmtPcall) and self.sig.is_mobile(stmt.name):
+    if isinstance(stmt, ast.StmtPcall) and \
+        self.sig.is_mobile(stmt.name) and \
+        self.sig.has_channel_params(stmt.name):
       defn = [x for x in self.ast.defs if x.name == stmt.name][0]
       proc = copy.deepcopy(defn.stmt)
 
@@ -55,10 +57,13 @@ class ExpandProcs(NodeWalker):
     # Expand all procedure calls
     self.stmt(node.defs[-1].stmt)
 
-    # Remove all (now redundant) procedure definitions
-    [self.sig.remove(x.name) for x in node.defs[:-1] if x.type == T_PROC]
-    node.defs = ([x for x in node.defs if x.type == T_FUNC] 
-        + [node.defs[-1]])
+    # Remove all (now redundant) procedure definitions (before removing from
+    # the signature table)
+    remove = [x.name for x in node.defs \
+        if x.type == T_PROC and self.sig.has_channel_params(x.name)]
+    node.defs = [x for x in node.defs \
+        if not (x.type == T_PROC and self.sig.has_channel_params(x.name))]
+    [self.sig.remove(x) for x in remove]
   
   # Statements containing statements ====================
   

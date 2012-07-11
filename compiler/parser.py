@@ -450,7 +450,7 @@ class Parser(object):
 
   def p_stmt_server_distribute(self, p):
     'stmt : SERVER DISTRIBUTE LPAREN server_decls RPAREN stmt stmt'
-    p[0] = ast.StmtServer(p[3], p[5], p[6], True, self.coord(p))
+    p[0] = ast.StmtServer(p[4], p[6], p[7], True, self.coord(p))
 
   def p_stmt_if(self, p):
     'stmt : IF expr THEN stmt ELSE stmt'

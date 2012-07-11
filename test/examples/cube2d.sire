@@ -32,5 +32,5 @@ proc main() is
     slave_(i,
       c[(((i xor 1) xor ((i xor (i xor 1)) and (-(i < (i xor 1)))))*D) + 0], 
       c[(((i xor 2) xor ((i xor (i xor 2)) and (-(i < (i xor 2)))))*D) + 1])
-}
+}$
 

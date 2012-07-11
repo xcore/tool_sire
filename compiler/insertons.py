@@ -59,16 +59,17 @@ class InsertOns(NodeWalker):
     compile-time distribution. If any process is already prefixed with an 'on',
     then do not add any (this is mainly for the test cases).
     """
-    if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
-      self.errorlog.report_error("parallel composition contains 'on's")
-      return 0
     if node.distribute:
+      if any([isinstance(x, ast.StmtOn) for x in node.stmt]):
+        self.errorlog.report_error("parallel composition contains 'on's")
+        return 0
       e = self.stmt(node.stmt[0], parent, d)
       debug(self.debug, 'd before par = {}'.format(d))
       for (i, x) in enumerate(node.stmt[1:]):
         node.stmt[i+1] = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d+e)), x)
         e += self.stmt(x, parent, d+e)
       debug(self.debug, 'd after par = {}'.format(d))
+      node.distribute = False
       return e
     else:
       return 0
@@ -80,10 +81,11 @@ class InsertOns(NodeWalker):
     if node.distribute:
       debug(self.debug, 'd before server = {}'.format(d))
       e = self.stmt(node.server, parent, d)
-      debug(self.debug, 'd after server = {}'.format(x))
+      debug(self.debug, 'd after server = {}'.format(e))
       node.client = ast.StmtOn(ast.ExprSingle(ast.ElemNumber(d)), node.client)
       e += self.stmt(node.client, parent, d)
-      debug(self.debug, 'd after client = {}'.format(y))
+      debug(self.debug, 'd after client = {}'.format(e))
+      node.distribute = False
       return e
     else:
       debug(self.debug, 'd before server = {}'.format(d))

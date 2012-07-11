@@ -12,8 +12,6 @@ proc memory(val origin) is
   % Write to even locations
   for i in [0 for SIZE] do
     address[i] := 0;
-  for i in [0 for SIZE/2] do
-    address[i*2] := i;
   % Send details to the accessor
   c ! address;
   c ! SIZE;
@@ -31,18 +29,18 @@ proc accessor(val dest) is
   connect c:0 to slave dest;
   c ? address;
   c ? size;
-  printvalln(address);
-  printvalln(size);
+  %printvalln(address);
+  %printvalln(size);
   % Write to odd locations
   for i in [0 for size/2] do
   { v := address + (((i*2)-1)<<2);
     rwrite(dest, v, (i*2)-1)
   };
-  % Read out whole area
+  % Read out even entries which should be 0
   for i in [0 for size/2] do
   { rread(dest, address+((i*2)<<2), v)
     %;printvalln(v)
-    ;assert v = i
+    ;assert v = 0
   };
   c ! 0
 }

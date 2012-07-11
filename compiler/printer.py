@@ -161,7 +161,7 @@ class Printer(NodeWalker):
       { 
       stmt1;
       stmt2;
-      { stmt3||
+      { stmt3 &
         stmt4
       };
       stmt5
@@ -171,7 +171,7 @@ class Printer(NodeWalker):
     self.indent.append(INDENT)
     self.var_decls(node.decls)
     for (i, x) in enumerate(node.stmt): 
-      if sep=='||':
+      if sep=='&':
         self.stmt(x)
       else:
         self.stmt(x)
@@ -179,17 +179,19 @@ class Printer(NodeWalker):
       self.buf.write('\n')
     self.indent.pop()
     self.out('}')
+    if hasattr(node, 'distribute') and node.distribute:
+      self.out('$')
 
   def stmt_seq(self, node):
     self.stmt_block(node, ';')
 
   def stmt_par(self, node):
-    self.stmt_block(node, '||')
+    self.stmt_block(node, '&')
 
   def stmt_server(self, node):
     #self.display_location(node)
-    self.out('server({})\n'.format(', '.join(
-        [self.param(x) for x in node.decls])))
+    self.out('server({}){}\n'.format(', '.join(
+        [self.param(x) for x in node.decls]), '$' if node.distribute else ''))
     self.indent.append(INDENT)
     #self.display_location(node.server)
     self.stmt(node.server)

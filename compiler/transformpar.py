@@ -64,6 +64,9 @@ class TransformPar(NodeWalker):
     elif elem.symbol.type == T_VAR_ARRAY:
       return ast.VarDecl(elem.name, T_VAR_ARRAY, elem.expr)
     
+    elif elem.symbol.type == T_REF_ARRAY:
+      return ast.VarDecl(elem.name, T_REF_ARRAY, None)
+    
     #elif elem.symbol.type == T_CHANEND_SINGLE:
     # return ast.VarDecl(elem.name, T_CHANEND_SINGLE, None)
   
@@ -75,6 +78,7 @@ class TransformPar(NodeWalker):
   
     else:
       print (elem.symbol.type)
+      print (elem.name)
       assert 0
 
   def stmt_to_process(self, stmt, indices=[]):
@@ -134,6 +138,15 @@ class TransformPar(NodeWalker):
       live -= set([x])
       local_decls -= set([x])
 
+    # Remove values from local declarations
+    s = set()
+    for x in local_decls:
+      if not( x.symbol.type == T_VAL_SINGLE and \
+          (x.symbol.scope == T_SCOPE_PROGRAM or \
+            x.symbol.scope == T_SCOPE_SYSTEM)):
+        s.add(x)
+    local_decls = s
+
     # Replicated parallel statements are more restrivtive
     var_to_param = rep_var_to_param if len(indices)>0 else par_var_to_param
     
@@ -141,7 +154,9 @@ class TransformPar(NodeWalker):
     for x in live:
       
       # Don't include constant values.
-      if x.symbol.type == T_VAL_SINGLE and x.symbol.scope == 'program':
+      if x.symbol.type == T_VAL_SINGLE and \
+          (x.symbol.scope == T_SCOPE_PROGRAM or \
+            x.symbol.scope == T_SCOPE_SYSTEM):
           continue
       
       # All parameters are added as formals with the appropriate conversion

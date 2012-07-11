@@ -169,7 +169,7 @@ class TranslateXS1(NodeWalker):
             tmp = self.blocker.get_tmp()
             self.asm('add %0, %1, %2', outop=tmp,
                 inops=[x.elem.name, '({})*{}'.format(
-                self.expr(x.elem.begin), defs.BYTES_PER_WORD)])
+                self.expr(x.elem.base), defs.BYTES_PER_WORD)])
             arg = tmp
           elif x.elem.symbol.type == T_REF_ARRAY:
             arg = '{}+(({})*{})'.format(
@@ -272,6 +272,8 @@ class TranslateXS1(NodeWalker):
       chans[node.name] = defs.CONNECT_CLIENT
       return 'unsigned '+node.name+';'
     else:
+      print(node.type)
+      print(node.name)
       assert 0
 
   # Procedure definitions ===============================

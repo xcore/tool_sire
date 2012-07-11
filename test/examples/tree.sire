@@ -34,5 +34,5 @@ proc main() is
     leaf(c[(N-1) + i]) &
   par i in [0 for N-1] do
     branch(c[i], c[(2*i)+1], c[(2*i)+2])
-}
+}$
 

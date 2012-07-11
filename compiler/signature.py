@@ -98,6 +98,15 @@ class SignatureTable(object):
     
     return None
 
+  def has_channel_params(self, name):
+    def chanend_param(f):
+      return f.symbol.type == T_CHANEND_SINGLE or \
+          f.symbol.type == T_CHANEND_ARRAY or \
+          f.symbol.type == T_CHAN_SINGLE or \
+          f.symbol.type == T_CHAN_ARRAY
+    if name in self.tab:
+      return any([chanend_param(x) for x in self.tab[name].params])
+
   def is_mobile(self, name):
     """
     Return if a procedure name is mobile, i.e. it is defined in the source of

@@ -110,7 +110,7 @@ class TransformRep(NodeWalker):
             on_stmt,
             # d(t, n/2, n/2)
             ast.StmtPcall(name, [expr_t, expr_x, expr_x] + proc_actuals),
-            ]),
+            ], False),
         # else d(t, n/2, m)
         ast.StmtPcall(name, [expr_t, expr_x, expr_m] + proc_actuals))
 

@@ -56,5 +56,5 @@ proc main() is
     c[(DEGREE*i)+2], 
     c[(DEGREE*i)+3], 
     c[(DEGREE*i)+4])
-}
+}$
 

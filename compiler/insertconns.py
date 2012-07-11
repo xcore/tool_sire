@@ -396,7 +396,7 @@ class InsertConns(NodeWalker):
         else:
           conns.append(self.gen_array_conn(tab, scope, x))
       if len(conns) > 1:
-        s1 = ast.StmtPar([], conns) 
+        s1 = ast.StmtPar([], conns, False) 
         s1.location = stmt.location
         s1.chans = []
         decls = self.create_decls(tab, scope, chans)

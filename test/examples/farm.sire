@@ -1,38 +1,31 @@
 val NUM_WORKERS is NUM_CORES;
 val WORK is 0xDEADBEEF;
 
-val CT_ACK is 0;
-val CT_END is 1;
-
-proc farmer(chanend c) is
+proc farmer(chanend req, chanend c) is
   % Take a request and provide some work
 { var i;
-  var tag;
+  var id;
   i := NUM_WORKERS;
   while i > 0 do
-  { c ?? tag;
+  { req ? id;
     c ! WORK;
-    c !! CT_END;
-    c ?? tag;
     i := i - 1
   }
 }
 
-proc worker(val id, chanend c) is
+proc worker(val id, chanend req, chanend c) is
   % Request some work from the farmer
 { var work;
   var tag;
-  c !! CT_END;
-  c ? work;
-  c !! CT_END;
-  c ?? tag
+  req ! id;
+  c ? work
 }
 
 proc main() is
-  server(chan x)
-    farmer(x)
+  server(chan req, chan x)
+    farmer(req, x)
   { var i;
     par i in [0 for NUM_WORKERS] do 
-      worker(i, x)
+      worker(i, req, x)
   }
 
