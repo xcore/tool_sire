@@ -10,7 +10,7 @@ import re
 import glob
 import subprocess
 import struct
-from math import floor
+import math
 
 import definitions as defs
 import config
@@ -146,6 +146,10 @@ def build_xs1(sig, device, program_buf, outfile,
 def create_headers(device, v):
   vmsg(v, 'Creating device header '+DEVICE_HDR)
   s =  '#define NUM_CORES {}\n'.format(device.num_cores())
+  s += '#define NUM_CORES_LOG {}\n'.format(
+      int(math.log(device.num_cores())/math.log(2)))
+  s += '#define NUM_CORES_SQRT {}\n'.format(
+      int(math.sqrt(device.num_cores())))
   s += '#define NUM_NODES 0\n'
   s += '#define NUM_CORES_PER_NODE NUM_CORES\n'
   s += '#define XS1_L\n'

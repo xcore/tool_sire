@@ -1,0 +1,139 @@
+val hIMG is 16;  % Image width/height
+val wIMG is hIMG;  % Image width/height
+val hKERNEL is 5; % Kernel width/height
+val wKERNEL is hKERNEL; % Kernel width/height
+val hGRID is NUM_CORES_SQRT; % Length of square processor array
+val wGRID is NUM_CORES_SQRT; % Length of square processor array
+val sGRID is hGRID*wGRID; % Length of square processor array
+val hHALO is hKERNEL/2; % Halo width/height
+val wHALO is wKERNEL/2; % Halo width/height
+val hSEG is hIMG / hGRID; % Image segment width/height
+val wSEG is wIMG / wGRID; % Image segment width/height
+val hSEGH is hSEG + (hHALO*2); % Image segement width/height with halo
+val wSEGH is wSEG + (wHALO*2); % Image segement width/height with halo
+val sSEGH is hSEGH*hSEGH; % Segment with halo size
+val sKERNEL is hKERNEL*hKERNEL; % Kernel size
+
+proc sendVertHalo(chanend c, var I[sSEGH], val xOff, val yOff) is
+{ var i;
+  var j;
+  for i in [0 for hSEG] do % Image y (rows)
+    for j in [0 for wHALO] do % Halo x (cols)
+      c ! I[(wSEG*(i+yOff))+xOff+j]
+}
+
+proc recvVertHalo(chanend c, var I[sSEGH], val xOff, val yOff) is
+{ var i;
+  var j;
+  for i in [0 for hSEG] do % Image y (rows)
+    for j in [0 for wHALO] do % Halo x (cols)
+      c ? I[(wSEG*(i+yOff))+xOff+j]
+}
+
+proc sendHorzHalo(chanend c, var I[sSEGH], val xOff, val yOff) is
+{ var i;
+  var j;
+  for i in [0 for hHALO] do % Halo y (rows)
+    for j in [0 for wSEG] do % Image x (cols)
+      c ! I[(wSEG*(i+yOff))+xOff+j]
+}
+
+proc recvHorzHalo(chanend c, var I[sSEGH], val xOff, val yOff) is
+{ var i;
+  var j;
+  for i in [0 for hHALO] do % Halo y (rows)
+    for j in [0 for wSEG] do % Image x (cols)
+      c ? I[(wSEG*(i+yOff))+xOff+j]
+}
+
+proc convolve(var I[sSEGH], var K[sKERNEL]) is
+{ var i;
+  var j;
+  var m;
+  var n;
+  var ii;
+  var jj;
+  var mm;
+  var nn;
+  var sum;
+  for i in [hHALO for hSEG] do % Image segment y (row)
+    for j in [wHALO for wSEG] do % Image segment x (col)
+    { sum := 0;
+      for m in [0 for hKERNEL] do % Kernel y (row)
+      { mm := hKERNEL - 1 - m;
+        for n in [0 for wKERNEL] do % Kernel x (col)
+        { nn := wKERNEL - 1 - n;
+          ii := (i+1) + (m - (hKERNEL/2));
+          jj := (j+wHALO) + (n - (wKERNEL/2));
+          sum := sum + (I[(wSEGH*ii)+jj] * K[(wKERNEL*mm)+nn])
+        }
+      };
+      I[(wSEGH*i)+(wHALO+j)] := sum
+    }
+}
+
+proc p(val idX, val idY, chanend n, chanend s, chanend e, chanend w) is
+{ var I[sSEGH];
+  var K[sKERNEL];
+
+  % Load image
+
+  % Distribute halos
+  % 1. Circular shift left
+  if idY = 0 
+  then
+  { sendVertHalo(w, I, wHALO,      hHALO);
+    recvVertHalo(e, I, wSEG+wHALO, hHALO)
+  }
+  else
+  { recvVertHalo(e, I, wSEG+wHALO, hHALO);
+    sendVertHalo(w, I, wHALO,      hHALO)
+  };
+  % 2. Circular shift right
+  if idY = 0 
+  then
+  { sendVertHalo(e, I, wSEG, hHALO);
+    recvVertHalo(w, I, 0,    hHALO)
+  }
+  else
+  { recvVertHalo(w, I, 0,    hHALO);
+    sendVertHalo(e, I, wSEG, hHALO)
+  };
+  % 3. Circular shift up
+  if idX = 0 
+  then
+  { sendHorzHalo(s, I, 0, hHALO);
+    recvHorzHalo(n, I, 0, hSEG)
+  }
+  else
+  { recvHorzHalo(n, I, 0, hSEG);
+    sendHorzHalo(s, I, 0, hHALO)
+  };
+  % 4. Circular shift down
+  if idX = 0 
+  then
+  { sendHorzHalo(n, I, 0, hHALO+hSEG);
+    recvHorzHalo(s, I, 0, 0)
+  }
+  else
+  { recvVertHalo(s, I, 0, 0);
+    sendVertHalo(n, I, 0, hHALO+hSEG)
+  };
+
+  % Perform convolution
+  convolve(I, K);
+
+  % Return results
+  skip
+}
+
+proc main() is
+{ chan x[sGRID];
+  chan y[sGRID];
+  var i;
+  var j;
+  par i in [0 for wGRID], j in [0 for hGRID] do
+    p(i, j, y[(j*hGRID)+i], y[(j*hGRID)+((i+1) rem hGRID)],
+            x[(i*wGRID)+j], x[(i*wGRID)+((j+1) rem wGRID)])
+}
+

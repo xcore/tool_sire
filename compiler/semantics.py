@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 import sys
+import math
 import traceback
 import error
 import util
@@ -125,6 +126,10 @@ class Semantics(NodeWalker):
     self.sym.begin_scope('system')
     s = self.sym.insert(defs.SYS_NUM_CORES_CONST, T_VAL_SINGLE)
     s.set_value(device.num_cores())
+    s = self.sym.insert(defs.SYS_NUM_CORES_LOG_CONST, T_VAL_SINGLE)
+    s.set_value(int(math.log(device.num_cores())/math.log(2)))
+    s = self.sym.insert(defs.SYS_NUM_CORES_SQRT_CONST, T_VAL_SINGLE)
+    s.set_value(int(math.sqrt(device.num_cores())))
 
     # Add all mobile builtin functions
     for x in builtins.values():
