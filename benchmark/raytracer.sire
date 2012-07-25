@@ -1,13 +1,31 @@
+
+proc control(val id, chanend c) is
+{ skip
+}
+
+proc leaf(val id, chanend c) is
+{ skip
+}
+
 proc worldmodel(chanend c[N]) is
-{ par i in [0 for N] do
-    control(i, c[i]) & 
+{ server(chan d[N]) 
   par i in [0 for N] do
-    leaf(i, c[i])
+    leaf(i, c[i], d[i])
+  par i in [0 for N] do
+    control(i, c[i], d[i]) & 
+}
+
+proc worker(val id, chanend m, chanend w) is
+{ skip
 }
 
 proc workers(chanend c[N]) is
   par i in [0 for N] do
     worker(i, c[i])
+
+proc farmer(chanend c) is
+{ skip
+}
 
 server$(chan c[N])
   worldmodel(c)
