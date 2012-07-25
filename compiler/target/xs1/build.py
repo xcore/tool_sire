@@ -61,7 +61,6 @@ RUNTIME_FILES = [
   'util.xc', 
   'memory.c',
   'pointer.c',
-  'experiment.S',
   ]
   
 def build_xs1(sig, device, program_buf, outfile, 
@@ -239,7 +238,6 @@ def link_master(device, show_calls, v):
     'memory.c.o', 
     'pointer.c.o', 
     'util.xc.o',
-    'experiment.S.o',
     MASTER_TABLES+'.o', 
     CONST_POOL+'.o',
     'globals.S.o',

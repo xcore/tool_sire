@@ -74,16 +74,6 @@ crc        = func_decl('crc',      [SVAL_PARAM], mobile=True)
 rand       = func_decl('rand',     [], mobile=True)
 memalloc   = func_decl('memalloc', [AVAL_PARAM, SVAL_PARAM])
 memfree    = func_decl('memfree',  [AVAL_PARAM])
-memController = func_decl('memctrl',  [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM,
-  SVAL_PARAM])
-
-# For experiments
-memreadtimed = proc_decl('memreadtimed', 
-    [CHANEND_PARAM, SVAL_PARAM, SREF_PARAM, SREF_PARAM])
-memwritetimed = proc_decl('memwritetimed', 
-    [CHANEND_PARAM, SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
-testEmulated = proc_decl('testEmulated', [CHANEND_PARAM])
-testNormal = proc_decl('testNormal', [])
 
 builtins = {
   'printchar'     : printchar,
@@ -115,11 +105,6 @@ builtins = {
   'rand'          : rand,
   'memalloc'      : memalloc,
   'memfree'       : memfree,
-  'memreadtimed'  : memreadtimed,
-  'memwritetimed' : memwritetimed,
-  'testEmulated'  : testEmulated,
-  'testNormal'    : testNormal,
-  'memctrl'       : memController,
   }
 
 # Runtime functions available to programs. Ordering matches jump and size tables.
