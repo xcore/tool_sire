@@ -1,3 +1,5 @@
+val NUM_LEAVES := 10;
+val NUM_WORKERS := NUM_LEAVES;
 
 proc control(val id, chanend c) is
 { skip
@@ -8,10 +10,10 @@ proc leaf(val id, chanend c) is
 }
 
 proc worldmodel(chanend c[N]) is
-{ server(chan d[N]) 
-  par i in [0 for N] do
+{ server(chan d[NUM_LEAVES]) 
+  par i in [0 for NUM_LEAVES] do
     leaf(i, c[i], d[i])
-  par i in [0 for N] do
+  par i in [0 for NUM_WORKERS] do
     control(i, c[i], d[i]) & 
 }
 
@@ -19,15 +21,15 @@ proc worker(val id, chanend m, chanend w) is
 { skip
 }
 
-proc workers(chanend c[N]) is
-  par i in [0 for N] do
+proc workers(chanend c[NUM_WORKERS]) is
+  par i in [0 for NUM_WORKERS] do
     worker(i, c[i])
 
 proc farmer(chanend c) is
 { skip
 }
 
-server$(chan c[N])
+server$(chan c[NUM_LEAVES])
   worldmodel(c)
   server(chan m)
     farmer(m)
