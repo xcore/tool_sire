@@ -1,5 +1,7 @@
 val NUM_LEAVES := 10;
 val NUM_WORKERS := NUM_LEAVES;
+val XDIM := 80;
+val YDIM := 80;
 
 proc control(val id, chanend c) is
 { skip
@@ -10,27 +12,100 @@ proc leaf(val id, chanend c) is
 }
 
 proc worldmodel(chanend c[N]) is
-{ server(chan d[NUM_LEAVES]) 
-  par i in [0 for NUM_LEAVES] do
-    leaf(i, c[i], d[i])
-  par i in [0 for NUM_WORKERS] do
-    control(i, c[i], d[i]) & 
+{ var i;
+  server(chan d[NUM_LEAVES]) 
+    par i in [0 for NUM_LEAVES] do
+      leaf(i, c[i], d[i])
+    par i in [0 for NUM_WORKERS] do
+      control(i, c[i], d[i])
 }
 
-proc worker(val id, chanend m, chanend w) is
-{ skip
+proc worker(val id, chanend req, chanend c) is
+{ var i;
+  var x;
+  var y;
+  var running;
+  running := true;
+  while running do
+  { req ! CT_WORK;
+    c ? running;
+    if running
+    then
+    { c ? x;
+      c ? y;
+      % Perform work
+      for i in [0 for 1000] do
+        skip
+      % Return work
+      req ! CT_RESULT;
+      c ! x;
+      c ! y;
+      c ! i
+    }
+    else skip
+  }
 }
 
-proc workers(chanend c[NUM_WORKERS]) is
-  par i in [0 for NUM_WORKERS] do
-    worker(i, c[i])
+proc farmer(chanend req, chanend c) is
+{ var frmBuf[XDIM*YDIM];
+  var x;
+  var y;
+  var rx;
+  var ry;
+  var outstandingWork;
+  var workCount;
+  var activeWorkers;
+  outstandingWork := XDIM * YDIM;
+  workCount := outstandingWork;
+  activeWorkers := NUM_WORKERS;
+  x := 0;
+  y := 0;
+  while outstandingWork > 0 do
+  { req ? request;
+    if request = CT_WORK
+    then
+    { if workCount = 0
+      then 
+      { c ! false;
+        activeWorkers := activeWorkers - 1
+      }
+      else
+      { c ! true;
+        c ! x;
+        c ! y
+        x := (x + 1) rem XDIM;
+        if x = 0 then y := y + 1 else skip;
+        workCount := workCount - 1
+      }
+    }
+    else if request = CT_RESULT
+    then
+    { c ? rx;
+      c ? ry;
+      c ? i;
+      frmBuf[(ry*XDIM)+rx] := i;
+      outstandingWork := outstandingWork - 1
+    }
+    else skip
+  }
+  
+  % Terminate all of the workers
+  for i in [0 for activeWorkers] do
+  { req ? request;
+    c ! false
+  };
 
-proc farmer(chanend c) is
-{ skip
+  % Print the result
+  for y in [0 for YDIM] do
+  { for x in [0 for XDIM] do
+      plot(data[(y*XDIM)+x]);
+    println()
+  }
 }
 
 server$(chan c[NUM_LEAVES])
   worldmodel(c)
   server(chan m)
     farmer(m)
-    workers(m, c)
+    par i in [0 for NUM_WORKERS] do
+      worker(i, c[i])

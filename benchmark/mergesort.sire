@@ -1,0 +1,130 @@
+val N := 16;
+val THRESHOLD := 4;
+val LENGTH := 1000;
+val LEAF_STORAGE := 1000/NUM_CORES;
+val D := 3;      % Tree depth
+val N := 1 << D; % Number of leaves
+
+proc mergePar(chanend cUp, var a[m], var b[n], var A[o] 
+    val m, val n, val o) is
+{ var i;
+  var j;
+  var k;
+  i:=0;
+  j:=0;
+  k:=0;
+  while (i < m) and (j < n) do 
+  { if(a[i] <= b[j])
+    then
+    { cUp ! a[i];
+      i := i+1
+    }
+    else 
+    { cUp ! b[j];
+      j := j+1 
+    };
+    k := k+1
+  };
+  if i<m then
+    while i<m do
+    { cUp ! a[i];
+      k := k+1;
+      i := i+1
+    }
+  else skip;
+  if j<n then 
+    while j<n do
+    { cUp ! b[j];
+      k := k+1;
+      j := j+1
+    }
+  else skip;
+}
+
+proc mergeSeq(var a[m], var b[n], var A[o], var S[o], 
+    val m, val n, val o) is
+{ var i;
+  var j;
+  var k;
+  i:=0;
+  j:=0;
+  k:=0;
+  while (i < m) and (j < n) do 
+  { if(a[i] <= b[j])
+    then
+    { S[k] := a[i];
+      i := i+1
+    }
+    else 
+    { S[k] := b[j];
+      j := j+1 
+    };
+    k := k+1
+  };
+  if i<m then
+    while i<m do
+    { S[k] := a[i] 
+    ; k := k+1
+    ; i := i+1
+    }
+  else skip;
+  if j<n then 
+    while j<n do
+    { S[k] := b[j] 
+    ; k := k+1
+    ; j := j+1
+    }
+  else skip;
+
+ % Copy scratch back into the array
+ for i in [0 for o] do A[i] := S[i]
+}
+
+% Merge sort
+proc sortSeq(var A[len], var S[len], val len) is
+{ var i;
+  var j;
+  if len > 1 then 
+  { i := len / 2;
+    j := len - i;
+    msort(t, n/2, A[0 for i], S[0 for i], i);
+    msort(t+(n/2), n/2, A[i for j], S[i for j], j) 
+    merge(A[0 for i], A[i for j], A, S, i, j, len)
+  }
+  else skip
+}
+
+% Send a token down, then sum values up.
+proc branch(chanend c, chanend left, chanend right) is
+{ var nLeft;
+  var nRight;
+  var i;
+  left ? nLeft;
+  for i in [0 for nLeft] do
+    left
+}
+
+% Receive a token and send back a 1.
+proc leaf(chanend c) is
+{ var data[LEAF_STORAGE];
+  var scratch[LEAF_STORAGE];
+  var i;
+  sortSeq(data, scratch, LEAF_STORAGE);
+  for i in [0 for LEAF_STORAGE] do
+    c ! data;
+}
+
+proc main() is
+{ chan c[(2*N)-1];
+  var v;
+  var i;
+  { c[0] ! 0; 
+    c[0] ? v;
+    assert v = N
+  } &
+  par i in [0 for N] do 
+    leaf(c[(N-1) + i]) &
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2])
+}$
+

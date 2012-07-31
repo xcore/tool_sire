@@ -112,7 +112,6 @@ proc compute(
 }
 
 proc worker(val id, chanend req, chanend c) is
-  % Request some work from the farmer
 { var dx;
   var dy;
   var xn;
@@ -138,8 +137,7 @@ proc worker(val id, chanend req, chanend c) is
   % Main loop
   running := true;
   while running do
-  { % Get work
-    req ! CT_WORK;
+  { req ! CT_WORK;
     c ? running;
     if running
     then

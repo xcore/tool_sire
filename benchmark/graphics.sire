@@ -155,13 +155,13 @@ proc shaders(chanend cIn, chanend frmBufReq, chanend frmBuf) is
 }
 
 proc main() is
-{ chan c[5];
+{ chan c[3];
   server$(chan req, chan p)
     displayBuffer(req, p)
   { objectStore(c[0]) &
     zClipTransform(c[0], c[1]) &
     xyClip(c[1], c[2]) &
-    shaders(c[4], req, p) &
+    shaders(c[2], req, p) &
   }$
 }
 
