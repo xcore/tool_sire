@@ -1,3 +1,6 @@
+% An array of processes to provide distributed access to a world model with a
+% client array of worker processes to access this which are farmed out work to
+% render part of the scene.
 val NUM_LEAVES := 10;
 val NUM_WORKERS := NUM_LEAVES;
 val XDIM := 80;
