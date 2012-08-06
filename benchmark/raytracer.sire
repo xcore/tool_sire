@@ -1,17 +1,39 @@
 % An array of processes to provide distributed access to a world model with a
 % client array of worker processes to access this which are farmed out work to
 % render part of the scene.
+
 val NUM_LEAVES := 10;
 val NUM_WORKERS := NUM_LEAVES;
 val XDIM := 80;
 val YDIM := 80;
 
-proc control(val id, chanend c) is
-{ skip
-}
+val ct_WRITE := 0;
+val ct_READ := 1;
+val ct_END := 2;
 
 proc leaf(val id, chanend c) is
-{ skip
+{ var request;
+  var running;
+  running := true;
+  while running do
+  { c ? request;
+    if request = ct_READ
+    then skip
+    else if request = ct_WRITE
+    then skip
+    else if request = ct_HALT
+    then
+      running := false
+  }
+}
+
+proc control(val id, server chanend leaves[N]) is
+{ var i;
+  chanend c;
+  for i in [0 for N] do
+  { connect c to leaves[i]
+    % Do something with leaf i
+  }
 }
 
 proc worldmodel(chanend c[N]) is
@@ -20,7 +42,7 @@ proc worldmodel(chanend c[N]) is
     par i in [0 for NUM_LEAVES] do
       leaf(i, c[i], d[i])
     par i in [0 for NUM_WORKERS] do
-      control(i, c[i], d[i])
+      control(i, c[i], d)
 }
 
 proc worker(val id, chanend req, chanend c) is

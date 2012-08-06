@@ -1,0 +1,201 @@
+val N := 16;
+val THRESHOLD := 4;
+val LENGTH := 1000;
+val LEAF_STORAGE := 1000/NUM_CORES;
+val D := 3;      % Tree depth
+val N := 1 << D; % Number of leaves
+
+val ct_NEXT := 0;
+val ct_END := 1;
+val LEFT := 0;
+val RIGHT := 1;
+
+% Partition
+func partition(var array[len], val len) is
+{ var storeIndex;
+  var pivot;
+  var pivotValue;
+  var hold;
+  var i;
+  pivot      := len/2;
+  pivotValue := array[pivot];
+  storeIndex := 0;
+  
+  % Move pivot to end
+  array[pivot] := array[len-1];
+  array[len-1] := pivotValue;
+
+  % Reorder list (upto the pivot)
+  for i in [0 for len-1] do 
+    if array[i] <= pivotValue then 
+    { hold := array[i];
+      array[i] := array[storeIndex];
+      array[storeIndex] := hold;
+      storeIndex := storeIndex + 1
+    }
+    else skip;
+
+  % Move pivot to its final place: swap(storeIndex,pivot)
+  hold := array[storeIndex];
+  array[storeIndex] := array[len-1];
+  array[len-1] := hold;
+
+  return storeIndex
+}
+
+% Quicksort
+proc quicksort(var array[len], val len) is
+{ var pivot;
+  if len > 1 then 
+  { pivot := partition(array, len);
+    quicksort(array[0 for pivot+1], pivot);
+    quicksort(array[pivot+1 for len-(pivot+1)], len-(pivot+1))
+  }
+  else skip
+}
+
+proc distribute(chanend parent, chanend left, chanend right) is
+{ var type;
+  var value;
+  var child;
+  var more;
+  child := 1;
+  more := true;
+  while more do
+  { parent ? type;
+    if type = ct_NEXT
+    then
+    { parent ? value;
+      if child
+      then
+      { left ! ct_NEXT;
+        child := ~child
+      }
+      else
+      { right ! ct_NEXT;
+        child := ~child
+      }
+    }
+    else if type = ct_END
+    then
+      more := false
+    else skip
+  }
+  left ! ct_END;
+  right ! ct_END
+}
+
+proc gather(chanend parent, chanend left, chanend right) is
+{ var type;
+  var child;
+  var more[2];
+  var min[2];
+  left ? type;
+  if type = ct_NEXT
+  then
+  { left ? min[0];
+    more[0] := true
+  }
+  else if type = ct_NEXT
+  then
+    more[0] := false
+  else skip;
+  right ? type;
+  if type = ct_NEXT
+  then
+  { right ? min[0];
+    more[1] := true
+  }
+  else if type = ct_NEXT
+  then
+    more[1] := false
+  else skip;
+  while more[LEFT] or more[RIGHT] do
+  { if more[LEFT] and (~more[RIGHT] or (min[LEFT] <= min[RIGHT]))
+    then
+    { parent ! ct_NEXT;
+      parent ! min[LEFT]
+      left ? type;
+      if type = ct_NEXT
+      then
+        left ? min[LEFT]
+      else if type = ct_END
+      then
+        more[LEFT] := false
+      else skip
+    };
+    if more[RIGHT] and (~more[LEFT] or (min[RIGHT] <= min[LEFT]))
+    then
+    { parent ! ct_NEXT;
+      parent ! min[RIGHT]
+      left ? type;
+      if type = ct_NEXT
+      then
+        left ? min[RIGHT]
+      else if type = ct_END
+      then
+        more[RIGHT] := false
+      else skip
+    }
+  }
+}
+
+proc branch(chanend parent, chanend left, chanend right) is
+{ distribute(parent, left, right);
+  gather(parent, left, right)
+}
+
+% Receive a token and send back a 1.
+proc leaf(chanend parent) is
+{ var data[LEAF_STORAGE];
+  var num;
+  var i;
+  var type;
+  var value;
+  var more;
+  more := true;
+  num := 0; 
+  % Receive data
+  while more do
+  { parent ? type;
+    if type = ct_NEXT
+    then
+    { parent ? data[num];
+      num := num + 1
+    }
+    else if type = ct_END
+    then
+      more := false
+    else skip
+  }
+  quicksort(data, LEAF_STORAGE);
+  for i in [0 for num] do
+    parent ! data[i];
+}
+
+proc controller(chanend tree) is
+{ var i;
+  var type;
+  var value;
+  for i in [0 for LENGTH] do
+  { tree ! ct_NEXT;
+    tree ! LENGTH-i-1
+  };
+  for i in [0 for LENGTH] do
+  { tree ? type;
+    tree ? value;
+    printvalln(value)
+  }
+} 
+
+proc main() is
+{ chan c[(2*N)-1];
+  var v;
+  var i;
+  controller(c[0]) &
+  par i in [0 for N] do 
+    leaf(c[(N-1) + i]) &
+  par i in [0 for N-1] do
+    branch(c[i], c[(2*i)+1], c[(2*i)+2])
+}$
+

@@ -1,7 +1,8 @@
 val hIMG is 16;  % Image width/height
-val wIMG is hIMG;  % Image width/height
+val wIMG is 16;  % Image width/height
+val sIMG is hIMG*wIMG; % Image size
 val hKERNEL is 5; % Kernel width/height
-val wKERNEL is hKERNEL; % Kernel width/height
+val wKERNEL is 5; % Kernel width/height
 val hGRID is NUM_CORES_SQRT; % Length of square processor array
 val wGRID is NUM_CORES_SQRT; % Length of square processor array
 val sGRID is hGRID*wGRID; % Length of square processor array
@@ -9,10 +10,19 @@ val hHALO is hKERNEL/2; % Halo width/height
 val wHALO is wKERNEL/2; % Halo width/height
 val hSEG is hIMG / hGRID; % Image segment width/height
 val wSEG is wIMG / wGRID; % Image segment width/height
+val sSEG is hSEG * wSEG; % Image segment size
 val hSEGH is hSEG + (hHALO*2); % Image segement width/height with halo
 val wSEGH is wSEG + (wHALO*2); % Image segement width/height with halo
 val sSEGH is hSEGH*hSEGH; % Segment with halo size
 val sKERNEL is hKERNEL*hKERNEL; % Kernel size
+
+func plot(val i) is
+  if i > 32      then printchar(' ')
+  else if i > 16 then printchar('.')
+  else if i > 8  then printchar(':')
+  else if i > 3  then printchar('+')
+  else if i > 1  then printchar('%')
+  else                printchar('#')
 
 proc sendVertHalo(chanend c, var I[sSEGH], val xOff, val yOff) is
 { var i;
@@ -72,11 +82,39 @@ proc convolve(var I[sSEGH], var K[sKERNEL]) is
     }
 }
 
-proc p(val idX, val idY, chanend n, chanend s, chanend e, chanend w) is
+proc cell(val idX, val idY, 
+    chanend n, chanend s, chanend e, chanend w,
+    chanend pipeIn, chanend pipeOut) is
 { var I[sSEGH];
   var K[sKERNEL];
+  var i;
+  var value;
+  var id;
+  var offset;
+  id := (idY*wGRID) + idX;
+
+  % Set kernel
+  K[0]:=-1;K[1]:=-2;K[2]:=-1;
+  K[3]:= 0;K[4]:= 0;K[5]:= 0;
+  K[6]:= 1;K[7]:= 2;K[8]:= 1;
 
   % Load image
+  for y in [0 for wIMG] do % Image segment y (row)
+    for x in [0 for hIMG] do % Image segment x (col)
+    { pipeIn ? value;
+      i := (wIMG*y)+x;
+      offset := i - (id*sSEG);
+      % Store the correct image segment
+      if (i>=0) and (i<sSEG)
+      then
+        I[(wSEGH*(y+hHALO))+(wHALO+x)] := value
+      else skip
+      % Pass the rest of the image on
+      if (idX+1 ~= wGRID) and (idY+1 ~= hGRID)
+      then
+        pipeOut ! value
+      else skip
+    }
 
   % Distribute halos
   % 1. Circular shift left
@@ -124,16 +162,42 @@ proc p(val idX, val idY, chanend n, chanend s, chanend e, chanend w) is
   convolve(I, K);
 
   % Return results
-  skip
+  for y in [hHALO for hSEG] do % Image segment y (row)
+    for x in [wHALO for wSEG] do % Image segment x (col)
+      pipeOut ! I[(wSEGH*y)+(wHALO+x)];
+  for i in [0 for id*sSEG] do
+  { pipeIn ? value;
+    pipeOut ! value
+  }
+}
+
+proc controller(chanend pipeIn, chanend pipeOut) is
+{ var i;
+  var j;
+  var value;
+  % Load image
+  for i in [0 for sIMG] do
+    pipeIn ! 0;
+  % Display image
+  for i in [0 for hIMG] do
+  { for j in [0 for wIMG] do
+    { pipeIn ? value;
+      plot(value)
+    };
+    println()
+  }
 }
 
 proc main() is
 { chan x[sGRID];
   chan y[sGRID];
+  chan p[sGRID+1];
   var i;
   var j;
+  controller(p[0], p[sGRID]) &
   par i in [0 for wGRID], j in [0 for hGRID] do
-    p(i, j, y[(j*hGRID)+i], y[(j*hGRID)+((i+1) rem hGRID)],
-            x[(i*wGRID)+j], x[(i*wGRID)+((j+1) rem wGRID)])
+    cell(i, j, y[(j*hGRID)+i], y[(j*hGRID)+((i+1) rem hGRID)],
+               x[(i*wGRID)+j], x[(i*wGRID)+((j+1) rem wGRID)],
+               p[(i*wGRID)+j], p[(i*wGRID)+j+1])
 }
 
