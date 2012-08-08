@@ -50,7 +50,11 @@ proc compute(
   var workCount;
   var outstandingWork;
   var activeWorkers;
- 
+  var t1;
+  var t2;
+  
+  time(t1);
+
   i := memalloc(data, YDIM*XDIM*4);
   outstandingWork := XDIM * YDIM;
   workCount := outstandingWork;
@@ -102,6 +106,9 @@ proc compute(
   { req ? request;
     c ! false
   };
+  
+  time(t2);
+  printvalln(t2-t1);
 
   % Print the result
   for y in [0 for YDIM] do

@@ -1,137 +1,239 @@
 % An implementation of Cannon's algorithm for matrix multiplication.
 % Notation: 
 %  - (i, j) denotes (row, col)
-%  - A, B, C and N*N matrices
-%  - Matrices are distributed with submatrices of size (N/R)^2
+%  - A, B, C and dMAT*dMAT matrices
+%  - Matrices are distributed with submatrices of size (dMAT/dARRAY)^2
 
-val N is 80; % Dimension of square matrix
-val R is 8;  % Num partitions per dimension
-val M is N/R; % Submatrix dimension
-val X is R*R; % Num channels in a dimension
-val MATRIX_STORAGE is M*M;
+val dMAT is 16; % Dimension of square matrix
+val dARRAY is NUM_CORES_SQRT;  % Num partitions per dimension
+val dSUB is dMAT/dARRAY; % Submatrix dimension
+val sMAT is dMAT*dMAT;
+val sARRAY is dARRAY*dARRAY; % Num channels in a dimension
+val sSUB is dSUB*dSUB;
 
-proc zeromatrix(var A[MATRIX_STORAGE]) is
+proc zeromatrix(var A[sSUB]) is
 { var x;
   var y;
-  for x in [0 for M] do % Row
-    for y in [0 for M] do % Col
-      A[(x*M)+y] := 0
+  for x in [0 for dSUB] do % Row
+    for y in [0 for sSUB] do % Col
+      A[(x*dSUB)+y] := 0
+}
+
+% Receive a particular submatrix in a pipeline
+proc recvMatrix(val i, val j, var M[sSUB],
+    chanend pipeIn, chanend pipeOut) is
+{ var x;
+  var y;
+  var id;
+  var index;
+  var offset;
+  var value;
+  id := (i*dARRAY) + j;
+  offset := id * sSUB;
+  for y in [0 for dMAT] do % Row
+    for x in [0 for dMAT] do % Col
+    { index := (y*dMAT)+x;
+      pipeIn ? value;
+      % Store the correct submatrix
+      if (index >= offset) and (index < (offset+sSUB))
+      then
+        M[index-offset] := value
+      else skip;
+      % Pass on the value
+      if (id+1) < sARRAY
+      then
+        pipeOut ! value
+      else skip
+    }
+}
+
+% Send a particular submatrix in a pipeline
+proc sendMatrix(val i, val j, var M[sSUB],
+    chanend pipeIn, chanend pipeOut) is
+{ var x;
+  var y;
+  var id;
+  var index;
+  var offset;
+  var value;
+  id := (i*dARRAY) + j;
+  offset := id * sSUB;
+  for y in [0 for dMAT] do % Row
+    for x in [0 for dMAT] do % Col
+    { index := (y*dMAT)+x;
+      % Pass on preceeding submatrices
+      if index < offset
+      then
+      { pipeIn ? value;
+        pipeOut ! value
+      }
+      % Pass on the local submatrix
+      else if (index >= offset) and (index < (offset+sSUB))
+      then
+        pipeOut ! M[index-offset]
+      else skip
+    }
 }
 
 % C = C + A*B
 proc muladd(
-    var A[MATRIX_STORAGE], 
-    var B[MATRIX_STORAGE], 
-    var C[MATRIX_STORAGE]) is
+    var A[sSUB], 
+    var B[sSUB], 
+    var C[sSUB]) is
 { var x;
   var y;
   var z;
-  for x in [0 for M] do % Row
-    for y in [0 for M] do % Col1
-      for z in [0 for M] do % Col2
-        C[(x*M)+y] := C[(x*M)+y] + (A[(x*M)+y] * B[(y*M)+z])
+  for x in [0 for dSUB] do % Row
+    for y in [0 for dSUB] do % Col1
+      for z in [0 for sSUB] do % Col2
+        C[(x*dSUB)+y] := C[(x*dSUB)+y] + (A[(x*dSUB)+y] * B[(y*dSUB)+z])
 }
 
-proc send_submatrix(chanend c, var X[MATRIX_STORAGE]) is
+proc sendSubMatrix(chanend c, var M[sSUB]) is
 { var i;
-  for i in [0 for MATRIX_STORAGE] do 
-    c ! X[i]
+  for i in [0 for sSUB] do 
+    c ! M[i]
 }
 
-proc recv_submatrix(chanend c, var X[MATRIX_STORAGE]) is
+proc recvSubMatrix(chanend c, var M[sSUB]) is
 { var i;
-  for i in [0 for MATRIX_STORAGE] do 
-    c ? X[i]
+  for i in [0 for sSUB] do 
+    c ? M[i]
 }
 
-proc cell(val i, val j, chanend n, chanend s, chanend e, chanend w) is
+proc cell(val i, val j, 
+    chanend n, chanend s, chanend e, chanend w,
+    chanend pipeIn, chanend pipeOut) is
 { var A[];
   var B[];
   var C[];
   var k;
 
-  memalloc(A, MATRIX_STORAGE);
-  memalloc(B, MATRIX_STORAGE);
-  memalloc(C, MATRIX_STORAGE);
-  zeromatrix(A);
-  zeromatrix(B);
+  memalloc(A, sSUB);
+  memalloc(B, sSUB);
+  memalloc(C, sSUB);
+  
+  % Load sub matrices
+  recvMatrix(i, j, A, pipeIn, pipeOut);
+  recvMatrix(i, j, B, pipeIn, pipeOut);
   zeromatrix(C);
   
   % Circularly shift west each matrix A_{i,j} by i columns
   for k in [0 for i] do
     if j = 0
     then
-    { send_submatrix(w, A);
-      recv_submatrix(e, A)
+    { sendSubMatrix(w, A);
+      recvSubMatrix(e, A)
     }
     else
-    { recv_submatrix(e, A);
-      send_submatrix(w, A)
+    { recvSubMatrix(e, A);
+      sendSubMatrix(w, A)
     };
 
   % Circularly shift north each matrix B_{i,j} by j rows
   for k in [0 for j] do
     if i = 0
     then
-    { send_submatrix(s, B);
-      recv_submatrix(n, B)
+    { sendSubMatrix(s, B);
+      recvSubMatrix(n, B)
     }
     else
-    { recv_submatrix(n, B);
-      send_submatrix(s, B)
+    { recvSubMatrix(n, B);
+      sendSubMatrix(s, B)
     };
   
   % Compute C_{i,j}=A_{i,j}*B_{i,j}+C_{,j},
   % circularly shift east A_{i,j} and north B_{i,j} by one.
-  for k in [0 for R] do
+  for k in [0 for dARRAY] do
     if (i = 0) and (j = 0)
     then
     { muladd(A, B, C);
-      send_submatrix(w, A);
-      recv_submatrix(e, A);
+      sendSubMatrix(w, A);
+      recvSubMatrix(e, A);
       
-      send_submatrix(n, B);
-      recv_submatrix(s, B)
+      sendSubMatrix(n, B);
+      recvSubMatrix(s, B)
     }
     else if i = 0
     then
     { muladd(A, B, C);
-      recv_submatrix(e, A);
-      send_submatrix(w, A);
+      recvSubMatrix(e, A);
+      sendSubMatrix(w, A);
 
-      send_submatrix(n, B);
-      recv_submatrix(s, B)
+      sendSubMatrix(n, B);
+      recvSubMatrix(s, B)
     }
     else if j = 0
     then
     { muladd(A, B, C);
-      send_submatrix(w, A);
-      recv_submatrix(e, A);
+      sendSubMatrix(w, A);
+      recvSubMatrix(e, A);
 
-      recv_submatrix(s, B);
-      send_submatrix(n, B)
+      recvSubMatrix(s, B);
+      sendSubMatrix(n, B)
     }
     else
     { muladd(A, B, C);
-      recv_submatrix(e, A);
-      send_submatrix(w, A);
+      recvSubMatrix(e, A);
+      sendSubMatrix(w, A);
 
-      recv_submatrix(s, B);
-      send_submatrix(n, B)
+      recvSubMatrix(s, B);
+      sendSubMatrix(n, B)
     };
+  
+  sendMatrix(i, j, C, pipeIn, pipeOut);
 
   memfree(A);
   memfree(B);
   memfree(C)
 }
 
+proc controller(chanend pipeIn, chanend pipeOut) is
+{ var i;
+  var j;
+  var value;
+
+  % Load matrices
+  for i in [0 for dMAT] do
+  { for j in [0 for dMAT] do
+    { if i=j
+      then 
+        pipeIn ! 1
+      else
+        pipeIn ! 0
+    }
+  };
+  for i in [0 for dMAT] do
+  { for j in [0 for dMAT] do
+    { if i=j
+      then 
+        pipeIn ! 1
+      else
+        pipeIn ! 0
+    }
+  };
+  
+  %% Display result
+  for i in [0 for dMAT] do
+  { for j in [0 for dMAT] do
+    { pipeOut ? value;
+      printval(value);
+      printstr(" ")
+    };
+    println()
+  }
+}
+
 proc main() is
-{ chan x[X];
-  chan y[X];
+{ chan x[sARRAY];
+  chan y[sARRAY];
+  chan p[sARRAY+1];
   var i;
   var j;
-  par i in [0 for R], j in [0 for R] do
-    cell(i, j, y[(j*R)+i], y[(j*R)+((i+1) rem R)], 
-               x[(i*R)+j], x[(i*R)+((j+1) rem R)])
+  controller(p[0], p[sARRAY]) &
+  par i in [0 for dARRAY], j in [0 for dARRAY] do
+    cell(i, j, y[(j*dARRAY)+i], y[(j*dARRAY)+((i+1) rem dARRAY)], 
+               x[(i*dARRAY)+j], x[(i*dARRAY)+((j+1) rem dARRAY)],
+               p[(i*dARRAY)+j], p[(i*dARRAY)+(j+1)])
 }
 

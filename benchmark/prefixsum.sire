@@ -1,22 +1,33 @@
 % Based on 'Prefix Sums and Their Applications' by Guy E. Blelloch
 
-val N       is 128; % Number of leaves (storage units)
-val EXP     is 12; % 4096
-val LENGTH  is 1 << EXP;
-val STORAGE is LENGTH/N; % Storage per leaf
+val nLEAVES is NUM_CORES; % Number of leaves (storage units)
+val LENGTH  is 16;
+val STORAGE is LENGTH/nLEAVES; % Storage per leaf
 
-proc leaf(chanend c) is
+proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
 { var data[];
   var total;
   var sum;
   var i;
+  var value;
   
   % Allocate storage
   memalloc(data, STORAGE);
 
   % Initialise
-  for i in [0 for STORAGE] do
-    data[i] := 1;
+  for i in [0 for LENGTH] do
+  { pipeIn ? value;
+    % Store subset of values
+    if (i >= (id*STORAGE)) and (i < ((id+1)*STORAGE))
+    then
+      data[i] := value
+    else skip;
+    % Pass on the value
+    if (id + 1) < nLEAVES
+    then
+      pipeOut ! value
+    else skip
+  };
 
   % Sum segment
   total := 0;
@@ -34,6 +45,19 @@ proc leaf(chanend c) is
   for i in [0 for STORAGE] do
   { total := total + data[i];
     data[i] := total
+  };
+
+  % Send results
+  for i in [0 for LENGTH] do
+  { if i < (id*STORAGE)
+    then
+    { pipeIn ? value;
+      pipeOut ! value
+    }
+    else if i < ((id+1)*STORAGE)
+    then
+      pipeOut ! data[i-(id*STORAGE)]
+    else skip
   };
 
   % Deallocate storage
@@ -73,15 +97,28 @@ proc root(chanend root) is
   root ? v
 }
 
-proc main() is
-{ chan c[(2*N)-1];
-  var i;
-  server() 
-    par i in [0 for N] do 
-      leaf(c[(N-1)+i])
-  { root(c[0]) &
-    par i in [0 for N-1] do
-      branch(c[i], c[(2*i)+1], c[(2*i)+2])
+proc controller(chanend pipeIn, chanend pipeOut) is
+{ var i;
+  var value;
+  % Load values
+  for i in [0 for LENGTH] do
+    pipeIn ! 1;
+  % Display result
+  for i in [0 for LENGTH] do
+  { pipeOut ? value;
+    printvalln(value)
   }
+}
+
+proc main() is
+{ chan c[(2*nLEAVES)-1];
+  chan p[nLEAVES+1];
+  var x;
+  controller(p[0], p[nLEAVES]) &
+  par x in [0 for nLEAVES] do 
+    leaf(x, c[(nLEAVES-1)+x], p[x], p[x+1]) &
+  root(c[0]) &
+  par x in [0 for nLEAVES-1] do
+    branch(c[x], c[(2*x)+1], c[(2*x)+2])
 }
 
