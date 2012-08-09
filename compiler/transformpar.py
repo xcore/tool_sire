@@ -67,14 +67,14 @@ class TransformPar(NodeWalker):
     elif elem.symbol.type == T_REF_ARRAY:
       return ast.VarDecl(elem.name, T_REF_ARRAY, None)
     
-    #elif elem.symbol.type == T_CHANEND_SINGLE:
-    # return ast.VarDecl(elem.name, T_CHANEND_SINGLE, None)
+    elif elem.symbol.type == T_CHANEND_SINGLE:
+     return ast.VarDecl(elem.name, T_CHANEND_SINGLE, None)
   
-    #elif elem.symbol.type == T_CHANEND_SERVER_SINGLE:
-    #  return ast.VarDecl(elem.name, T_CHANEND_SERVER_SINGLE, None)
+    elif elem.symbol.type == T_CHANEND_SERVER_SINGLE:
+      return ast.VarDecl(elem.name, T_CHANEND_SERVER_SINGLE, None)
   
-    #elif elem.symbol.type == T_CHANEND_CLIENT_SINGLE:
-    #  return ast.VarDecl(elem.name, T_CHANEND_CLIENT_SINGLE, None)
+    elif elem.symbol.type == T_CHANEND_CLIENT_SINGLE:
+      return ast.VarDecl(elem.name, T_CHANEND_CLIENT_SINGLE, None)
   
     else:
       print (elem.symbol.type)
