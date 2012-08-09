@@ -494,6 +494,8 @@ class TranslateXS1(NodeWalker):
         self.asm('ldw %0, %1[%2]', outop=tmp,
             inops=[node.elem.name, self.expr(node.elem.expr)])
         return '({}{})'.format(op_conversion[node.op], tmp)
+      else:
+        return '({}{})'.format(op_conversion[node.op], self.elem(node.elem))
     
     # Otherwise, just return the regular syntax
     else:
@@ -508,6 +510,9 @@ class TranslateXS1(NodeWalker):
         self.asm('ldw %0, %1[%2]', outop=tmp,
             inops=[node.elem.name, self.expr(node.elem.expr)])
         return '{} {} {}'.format(tmp,
+            op_conversion[node.op], self.expr(node.right))
+      else:
+        return '{} {} {}'.format(self.elem(node.elem), 
             op_conversion[node.op], self.expr(node.right))
     
     # Otherwise, just return the regular syntax

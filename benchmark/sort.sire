@@ -1,14 +1,14 @@
-val N := 16;
-val THRESHOLD := 4;
-val LENGTH := 1000;
-val LEAF_STORAGE := 1000/NUM_CORES;
-val D := 3;      % Tree depth
-val N := 1 << D; % Number of leaves
+val N is 16;
+val THRESHOLD is 4;
+val LENGTH is 128;
+val LEAF_STORAGE is 1000/NUM_CORES;
+val DEPTH is NUM_CORES_LOG-1;      % Tree depth
+val LEAVES is 1 << DEPTH; % Number of leaves
 
-val ct_NEXT := 0;
-val ct_END := 1;
-val LEFT := 0;
-val RIGHT := 1;
+val ct_NEXT is 0;
+val ct_END is 1;
+val LEFT is 0;
+val RIGHT is 1;
 
 % Partition
 func partition(var array[len], val len) is
@@ -69,10 +69,12 @@ proc distribute(chanend parent, chanend left, chanend right) is
       if child
       then
       { left ! ct_NEXT;
+        left ! value;
         child := ~child
       }
       else
       { right ! ct_NEXT;
+        right ! value;
         child := ~child
       }
     }
@@ -80,41 +82,43 @@ proc distribute(chanend parent, chanend left, chanend right) is
     then
       more := false
     else skip
-  }
+  };
   left ! ct_END;
   right ! ct_END
 }
 
 proc gather(chanend parent, chanend left, chanend right) is
 { var type;
-  var child;
   var more[2];
   var min[2];
+  % Initial left
   left ? type;
   if type = ct_NEXT
   then
-  { left ? min[0];
-    more[0] := true
+  { left ? min[LEFT];
+    more[LEFT] := true
   }
-  else if type = ct_NEXT
+  else if type = ct_END
   then
-    more[0] := false
+    more[LEFT] := false
   else skip;
+  % Initial right
   right ? type;
   if type = ct_NEXT
   then
-  { right ? min[0];
-    more[1] := true
+  { right ? min[RIGHT];
+    more[RIGHT] := true
   }
-  else if type = ct_NEXT
+  else if type = ct_END
   then
-    more[1] := false
+    more[RIGHT] := false
   else skip;
+  % Gather
   while more[LEFT] or more[RIGHT] do
-  { if more[LEFT] and (~more[RIGHT] or (min[LEFT] <= min[RIGHT]))
+  { if more[LEFT] and ((~more[RIGHT]) or (min[LEFT] <= min[RIGHT]))
     then
     { parent ! ct_NEXT;
-      parent ! min[LEFT]
+      parent ! min[LEFT];
       left ? type;
       if type = ct_NEXT
       then
@@ -123,21 +127,23 @@ proc gather(chanend parent, chanend left, chanend right) is
       then
         more[LEFT] := false
       else skip
-    };
-    if more[RIGHT] and (~more[LEFT] or (min[RIGHT] <= min[LEFT]))
+    }
+    else if more[RIGHT] and ((~more[LEFT]) or (min[RIGHT] <= min[LEFT]))
     then
     { parent ! ct_NEXT;
-      parent ! min[RIGHT]
-      left ? type;
+      parent ! min[RIGHT];
+      right ? type;
       if type = ct_NEXT
       then
-        left ? min[RIGHT]
+        right ? min[RIGHT]
       else if type = ct_END
       then
         more[RIGHT] := false
       else skip
     }
-  }
+    else skip
+  };
+  parent ! ct_END
 }
 
 proc branch(chanend parent, chanend left, chanend right) is
@@ -151,10 +157,9 @@ proc leaf(chanend parent) is
   var num;
   var i;
   var type;
-  var value;
   var more;
-  more := true;
   num := 0; 
+  more := true;
   % Receive data
   while more do
   { parent ? type;
@@ -167,35 +172,49 @@ proc leaf(chanend parent) is
     then
       more := false
     else skip
-  }
-  quicksort(data, LEAF_STORAGE);
+  };
+  % Sort it locally
+  quicksort(data, num);
+  % Sent it back
   for i in [0 for num] do
-    parent ! data[i];
+  { parent ! ct_NEXT;
+    parent ! data[i]
+  };
+  parent ! ct_END
 }
 
 proc controller(chanend tree) is
 { var i;
   var type;
   var value;
+  var running;
   for i in [0 for LENGTH] do
   { tree ! ct_NEXT;
     tree ! LENGTH-i-1
   };
-  for i in [0 for LENGTH] do
+  tree ! ct_END;
+  running := true;
+  while running do
   { tree ? type;
-    tree ? value;
-    printvalln(value)
+    if type = ct_NEXT
+    then
+    { tree ? value;
+      printvalln(value)
+    }
+    else if type = ct_END
+    then 
+      running := false
+    else skip
   }
 } 
 
 proc main() is
 { chan c[(2*N)-1];
-  var v;
   var i;
   controller(c[0]) &
-  par i in [0 for N] do 
-    leaf(c[(N-1) + i]) &
-  par i in [0 for N-1] do
+  par i in [0 for LEAVES] do 
+    leaf(c[(LEAVES-1) + i]) &
+  par i in [0 for LEAVES-1] do
     branch(c[i], c[(2*i)+1], c[(2*i)+2])
 }$
 
