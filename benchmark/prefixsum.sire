@@ -1,7 +1,7 @@
 % Based on 'Prefix Sums and Their Applications' by Guy E. Blelloch
 
 val nLEAVES is NUM_CORES; % Number of leaves (storage units)
-val LENGTH  is 16;
+val LENGTH  is 128; % Must divide by nLEAVES
 val STORAGE is LENGTH/nLEAVES; % Storage per leaf
 
 proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
@@ -20,7 +20,7 @@ proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
     % Store subset of values
     if (i >= (id*STORAGE)) and (i < ((id+1)*STORAGE))
     then
-      data[i] := value
+      data[i-(id*STORAGE)] := value
     else skip;
     % Pass on the value
     if (id + 1) < nLEAVES
@@ -43,8 +43,8 @@ proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
 
   % Update segment to have prefix sums
   for i in [0 for STORAGE] do
-  { total := total + data[i];
-    data[i] := total
+  { sum := sum + data[i];
+    data[i] := sum
   };
 
   % Send results
@@ -79,10 +79,10 @@ proc branch(chanend root, chanend left, chanend right) is
 
   % Distribute
   root ? sum;
-  left ! v;
-  left ? v;
-  right ! v + total;
-  right ? v;
+  left ! sum;
+  left ? v1;
+  right ! v1 + sum;
+  right ? v2;
   root ! total
 }
 
