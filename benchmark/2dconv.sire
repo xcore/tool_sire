@@ -85,13 +85,17 @@ proc convolve(var I[sSEGH], var K[sKERNEL]) is
 proc cell(val idX, val idY, 
     chanend n, chanend s, chanend e, chanend w,
     chanend pipeIn, chanend pipeOut) is
-{ var I[sSEGH];
+{ var I[];
   var K[sKERNEL];
   var value;
   var id;
   var index;
   var x;
   var y;
+  var t1;
+  var t2;
+
+  memalloc(I, sSEGH);
   id := (idY*wGRID) + idX;
 
   % Set kernel
@@ -120,6 +124,8 @@ proc cell(val idX, val idY,
         pipeOut ! value
       else skip
     };
+
+  time(t1);
 
   % Distribute halos
   % 1. Circular shift left
@@ -165,6 +171,16 @@ proc cell(val idX, val idY,
 
   % Perform convolution
   convolve(I, K);
+  
+  time(t2);
+
+  % Return maximum time taken
+  pipeIn ? value;
+  if (t2-t1) > value
+  then
+    pipeOut ! t2-t1
+  else
+    pipeOut ! value;
 
   % Return results
   for x in [0 for id*sSEG] do
@@ -173,7 +189,9 @@ proc cell(val idX, val idY,
   };
   for y in [hHALO for hSEG] do % Image segment y (row)
     for x in [wHALO for wSEG] do % Image segment x (col)
-      pipeOut ! I[(wSEGH*y)+x]
+      pipeOut ! I[(wSEGH*y)+x];
+
+  memfree(I)
 }
 
 proc controller(chanend pipeIn, chanend pipeOut) is
@@ -184,6 +202,10 @@ proc controller(chanend pipeIn, chanend pipeOut) is
   for y in [0 for hIMG] do
     for x in [0 for wIMG] do
       pipeIn ! 10;
+  % Receive time
+  pipeIn ! 0;
+  pipeOut ? value;
+  printvalln(value);
   % Display image
   for y in [0 for hIMG] do
   { for x in [0 for wIMG] do

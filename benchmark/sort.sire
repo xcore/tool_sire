@@ -188,14 +188,24 @@ proc controller(chanend tree) is
   var type;
   var value;
   var running;
+  var t1;
+  var t2;
   for i in [0 for LENGTH] do
   { tree ! ct_NEXT;
     tree ! LENGTH-i-1
   };
   tree ! ct_END;
+  time(t1);
   running := true;
+  i := 0;
   while running do
   { tree ? type;
+    if i = 0
+    then
+    { time(t2);
+      i := 1
+    }
+    else skip;
     if type = ct_NEXT
     then
     { tree ? value;
@@ -205,7 +215,8 @@ proc controller(chanend tree) is
     then 
       running := false
     else skip
-  }
+  };
+  printvalln(t2-t1)
 } 
 
 proc main() is

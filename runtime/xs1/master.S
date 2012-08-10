@@ -13,7 +13,6 @@
   .extern initThreads
   .extern initChanends
   .extern initPorts
-  .extern initTimers
   .extern initConnections
   .extern initJumpTable
   .extern masterSync
@@ -54,7 +53,6 @@ _master:
   bl initThreads
   bl initChanends
   bl initPorts
-  bl initTimers
   bl initConnections
   bl initJumpTable
   bl __alloc_libc_hwlock

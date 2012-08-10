@@ -108,6 +108,9 @@ proc cell(val i, val j,
   var B[];
   var C[];
   var k;
+  var t1;
+  var t2;
+  var value;
 
   memalloc(A, sSUB);
   memalloc(B, sSUB);
@@ -117,7 +120,9 @@ proc cell(val i, val j,
   recvMatrix(i, j, A, pipeIn, pipeOut);
   recvMatrix(i, j, B, pipeIn, pipeOut);
   zeromatrix(C);
-  
+ 
+  time(t1);
+
   % Circularly shift west each matrix A_{i,j} by i columns
   for k in [0 for i] do
     if j = 0
@@ -180,7 +185,18 @@ proc cell(val i, val j,
       recvSubMatrix(s, B);
       sendSubMatrix(n, B)
     };
+ 
+  time(t2);
   
+  % Return maximum time taken
+  pipeIn ? value;
+  if (t2-t1) > value
+  then
+    pipeOut ! t2-t1
+  else
+    pipeOut ! value;
+
+  % Send result
   sendMatrix(i, j, C, pipeIn, pipeOut);
 
   memfree(A);
@@ -193,7 +209,7 @@ proc controller(chanend pipeIn, chanend pipeOut) is
   var j;
   var value;
 
-  % Load matrices
+  % Load matrices A and B
   for i in [0 for dMAT] do
   { for j in [0 for dMAT] do
     { if i=j
@@ -213,7 +229,12 @@ proc controller(chanend pipeIn, chanend pipeOut) is
     }
   };
   
-  %% Display result
+  % Receive time
+  pipeIn ! 0;
+  pipeOut ? value;
+  printvalln(value);
+  
+  % Display result
   for i in [0 for dMAT] do
   { for j in [0 for dMAT] do
     { pipeOut ? value;

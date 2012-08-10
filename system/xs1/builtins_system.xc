@@ -3,7 +3,9 @@
 
 #define _TIME(v) \
 do {\
-  asm("in %0, res[%1]" : "=r"(v) : "r"(system_timer));\
+  asm("getr r11, " S(XS1_RES_TYPE_TIMER) ";" \
+    "in %0, res[r11];" \
+    "freer res[r11]" : "=r"(v) :: "r11");\
 } while(0)
 
 int crc(int x) {

@@ -88,13 +88,6 @@ void initPorts() {
 }
 
 /*
- * Initialise timers.
- */
-void initTimers() {
-  GETR_TIMER(system_timer);
-}
-
-/*
  * Initialise memory: zero-initialise .bss section
  */
 void initMemory() {

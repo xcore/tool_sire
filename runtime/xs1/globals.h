@@ -52,9 +52,5 @@ extern conn_srv conn_server[MAX_OPEN_CONNS];
 
 extern unsigned chan_mem_access; // Channel ID 2
 
-/* A pre-allocated timer ==============================*/
-
-extern unsigned system_timer;
-
 #endif
 

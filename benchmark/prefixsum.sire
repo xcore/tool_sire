@@ -10,6 +10,8 @@ proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
   var sum;
   var i;
   var value;
+  var t1;
+  var t2;
   
   % Allocate storage
   memalloc(data, STORAGE);
@@ -29,6 +31,8 @@ proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
     else skip
   };
 
+  time(t1);
+
   % Sum segment
   total := 0;
   for i in [0 for STORAGE] do
@@ -46,6 +50,16 @@ proc leaf(val id, chanend c, chanend pipeIn, chanend pipeOut) is
   { sum := sum + data[i];
     data[i] := sum
   };
+
+  time(t2);
+
+  % Return maximum time taken
+  pipeIn ? value;
+  if (t2-t1) > value
+  then
+    pipeOut ! t2-t1
+  else
+    pipeOut ! value;
 
   % Send results
   for i in [0 for LENGTH] do
@@ -103,6 +117,10 @@ proc controller(chanend pipeIn, chanend pipeOut) is
   % Load values
   for i in [0 for LENGTH] do
     pipeIn ! 1;
+  % Receive time
+  pipeIn ! 0;
+  pipeOut ? value;
+  printvalln(value);
   % Display result
   for i in [0 for LENGTH] do
   { pipeOut ? value;
@@ -121,4 +139,3 @@ proc main() is
   par x in [0 for nLEAVES-1] do
     branch(c[x], c[(2*x)+1], c[(2*x)+2])
 }
-

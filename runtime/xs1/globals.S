@@ -19,8 +19,6 @@
 
   .globl chan_mem_access, "ui"
  
-  .globl system_timer, "ui"
-
 .section .dp.data, "awd", @progbits
   .align BYTES_PER_WORD
 
@@ -82,12 +80,4 @@ chan_mem_access:
   .space BYTES_PER_WORD
   .globl chan_mem_access.globound
   .set chan_mem_access.globound, BYTES_PER_WORD
-
-/*
- * A pre-allocated timer
- */
-system_timer:
-  .space BYTES_PER_WORD
-  .globl system_timer.globound
-  .set system_timer.globound, BYTES_PER_WORD
 
