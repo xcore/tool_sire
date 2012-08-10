@@ -29,11 +29,10 @@ proc objectStore(chanend cOut) is
   % Generate visable triangles from a BSP representation
   % 3-D space (x, y, z)
   for i in [0 for NUM_TRIANGLES] do
-  { for j in [0 for WORK_BSPTREE] do
-      skip;
+  { for j in [0 for WORK_BSPTREE] do skip;
     cOut ! CT_NEXT;
     sendTri(cOut, tri)
-    ;printstr(".")
+    %;printstr(".")
   };
   cOut ! CT_END
 }
@@ -56,8 +55,7 @@ proc zClipTransform(chanend cIn, chanend cOut) is
       % Perform z-clipping and perspective projection
       % (i.e. remove things behind the camera and convert to screen
       % coordinates)
-      for i in [0 for WORK_TRANSFORM] do
-        skip;
+      for i in [0 for WORK_TRANSFORM] do skip;
       cOut ! CT_NEXT;
       sendTri(cOut, tri)
     }
@@ -77,13 +75,13 @@ proc xyClip(chanend cIn, chanend shaderIn, chanend shaderOut) is
     if request = CT_END
     then
     { running := false;
-      shaderIn ! CT_END
+      shaderIn ! CT_END;
+      shaderOut ? request
     }
     else
     { recvTri(cIn, tri);
       % Perform x/y-clipping (screen)
-      for i in [0 for WORK_XYCLIP] do
-        skip;
+      for i in [0 for WORK_XYCLIP] do skip;
       shaderIn ! CT_NEXT;
       sendTri(shaderIn, tri)
     }
@@ -106,11 +104,11 @@ proc shader(val id, chanend cIn, chanend cOut,
     if request = CT_END
     then
     { running := false;
-      %frmBufReq ! CT_END;
-      if id < NUM_SHADERS-1
-      then
+      frmBufReq ! CT_END;
+      %if id < NUM_SHADERS-1
+      %then
         cOut ! CT_END
-      else skip
+      %else skip
     }
     else
     { recvTri(cIn, tri);
@@ -119,15 +117,14 @@ proc shader(val id, chanend cIn, chanend cOut,
       { cOut ! CT_NEXT;
         sendTri(cOut, tri)
       }
-      else skip%;
+      else skip;
       % Perform scan conversion
-      %for i in [0 for WORK_SHADER] do
-      %  skip;
-      %x := 0;
-      %y := 0;
-      %frmBufReq ! CT_NEXT;
-      %frmBuf ! (XDIM*y) + x;
-      %frmBuf ! 0
+      for i in [0 for WORK_SHADER] do skip;
+      x := 0;
+      y := 0;
+      frmBufReq ! CT_NEXT;
+      frmBuf ! (XDIM*y) + x;
+      frmBuf ! 0
     }
   }
 }
@@ -139,19 +136,24 @@ proc displayBuffer(chanend req, chanend pixels) is
   var p;
   var count;
   count := 0;
-  running := false;
+  running := true;
   while running do
   { req ? request;
     if request = CT_END
     then
     { count := count + 1;
+      %printstr("Got END ");
+      %printvalln(count);
       if count = NUM_SHADERS
       then
+      { %printstrln("Halt");
         running := false
+      }
       else skip
     }
     else
-    { pixels ? p;
+    { %printstrln("Got pixels");
+      pixels ? p;
       pixels ? buffer[p]
     }
   }
@@ -162,9 +164,9 @@ proc shaders(chanend cIn, chanend cOut, chanend frmBufReq, chanend frmBuf) is
 { var i;
   chan p[NUM_SHADERS];
   { shader(0, cIn, p[1], frmBufReq, frmBuf) &
-    shader(NUM_SHADERS-1, p[NUM_SHADERS-1], cOut, frmBufReq, frmBuf) &
     par i in [1 for NUM_SHADERS-2] do
-      shader(i, p[i], p[i+1], frmBufReq, frmBuf)
+      shader(i, p[i], p[i+1], frmBufReq, frmBuf) &
+    shader(NUM_SHADERS-1, p[NUM_SHADERS-1], cOut, frmBufReq, frmBuf)
   }$
 }
 

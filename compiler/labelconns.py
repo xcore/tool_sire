@@ -4,6 +4,7 @@
 # LICENSE.txt and at <http://github.xcore.com/>
 
 from walker import NodeWalker
+from typedefs import *
 
 class LabelConns(NodeWalker):
   """
@@ -22,13 +23,15 @@ class LabelConns(NodeWalker):
 
   def assign(self, tab, scope, chans):
     for x in chans:
-      x.connid = self.connid_count
-      self.connid_count += 1
-      for y in x.elems:
-        chan_item = tab.lookup(x.name, y.index, scope)
-        if chan_item.connid != x.connid:
-          chanset = tab.lookup_chanset(x, y, scope)
-          self.fill(tab, scope, chanset, x.connid)
+      if x.symbol.type == T_CHAN_SINGLE or \
+          x.symbol.type == T_CHAN_ARRAY:
+        x.connid = self.connid_count
+        self.connid_count += 1
+        for y in x.elems:
+          chan_item = tab.lookup(x.name, y.index, scope)
+          if chan_item.connid != x.connid:
+            chanset = tab.lookup_chanset(x, y, scope)
+            self.fill(tab, scope, chanset, x.connid)
 
   # Program ============================================
 

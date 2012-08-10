@@ -52,6 +52,10 @@ class RenameChans(NodeWalker):
           #print('renamed {} to {} as type {}'.format(x.name, x.chanend, t))
           return ast.ExprSingle(e)
     
+    else:
+      # Don't worry about chanends
+      return ast.ExprSingle(elem)
+    
     #if isinstance(elem, ast.ElemId) and elem.symbol.type == T_CHANEND_SINGLE:
     #  for x in chans:
     #    if elem.name == x.name:
@@ -83,8 +87,6 @@ class RenameChans(NodeWalker):
     #      e = ast.ElemId(x.chanend)
     #      e.symbol = s
     #      return ast.ExprSingle(e)
-    else:
-      assert 0
 
   def remove_chan_decls(self, decls):
     """

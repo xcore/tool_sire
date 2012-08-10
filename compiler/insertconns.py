@@ -69,21 +69,29 @@ class InsertConns(NodeWalker):
     ChanElemSet with one element.
     """
     elem = chan.elems[0]
-    master = tab.lookup_is_master(chan, elem, scope)
-    location = None
-    if master:
-      location = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_slave_location(chan.name, elem.index, scope)))
-    else:
-      location = ast.ExprSingle(ast.ElemNumber(
-          tab.lookup_master_location(chan.name, elem.index, scope)))
     chanend = ast.ElemId(chan.chanend)
     chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
         None, scope=T_SCOPE_PROC)
     connid = tab.lookup_connid(chan.name, elem.index, scope)
     chanid = ast.ExprSingle(ast.ElemNumber(connid))
-    return ast.StmtConnect(chanend, chanid, location, 
-        self.connect_type(chan, master))
+    # Server-end connections don't need targets
+    if chan.symbol.scope == T_SCOPE_SERVER:
+      return ast.StmtConnect(chanend, chanid, ast.ExprSingle(ast.ElemNumber(0)), 
+          self.connect_type(chan, False))
+    # All other connections do
+    else: 
+      master = tab.lookup_is_master(chan, elem, scope)
+      if master:
+        location = ast.ExprSingle(ast.ElemNumber(
+            tab.lookup_slave_location(chan.name, elem.index, scope)))
+      else:
+        location = ast.ExprSingle(ast.ElemNumber(
+            tab.lookup_master_location(chan.name, elem.index, scope)))
+      chanend = ast.ElemId(chan.chanend)
+      chanend.symbol = Symbol(chan.chanend, self.chanend_type(chan), 
+          None, scope=T_SCOPE_PROC)
+      return ast.StmtConnect(chanend, chanid, location, 
+          self.connect_type(chan, master))
 
   def gen_array_conn(self, tab, scope, chan):
     """
@@ -391,7 +399,8 @@ class InsertConns(NodeWalker):
     if len(chans) > 0:
       conns = []
       for x in chans:
-        if len(x.elems) == 1:
+        if x.symbol.scope == T_SCOPE_SERVER or \
+            len(x.elems) == 1:
           conns.append(self.gen_single_conn(tab, scope, x))
         else:
           conns.append(self.gen_array_conn(tab, scope, x))

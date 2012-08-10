@@ -129,15 +129,17 @@ class LabelChans(NodeWalker):
     """
     chans = []
     for x in chan_uses.uses:
-      chanend = tab.new_chanend()
-      chan_set = ChanElemSet(x.name, x.expr, x.symbol, indices, chanend)
-      if x.expr == None:
-        chan_set.elems = self.single_channel(
-            indices, tab, stmt, x.name, chanend, chan_set)
-      else:
-        chan_set.elems = self.subscript_channel(
-            indices, tab, stmt, x.name, x.expr, chanend, chan_set)
-      chans.append(chan_set)
+      if x.symbol.type == T_CHAN_SINGLE or \
+          x.symbol.type == T_CHAN_ARRAY:
+        chanend = tab.new_chanend()
+        chan_set = ChanElemSet(x.name, x.expr, x.symbol, indices, chanend)
+        if x.expr == None:
+          chan_set.elems = self.single_channel(
+              indices, tab, stmt, x.name, chanend, chan_set)
+        else:
+          chan_set.elems = self.subscript_channel(
+              indices, tab, stmt, x.name, x.expr, chanend, chan_set)
+        chans.append(chan_set)
 
     # Sort them by chanend
     return sorted(chans, key=lambda x: x.chanend)
