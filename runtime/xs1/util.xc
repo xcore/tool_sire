@@ -20,7 +20,7 @@ void memFree(unsigned p) {
   freeWrapper(p);
 }
 
-void readSSwitchReg(int coreId, int reg, unsigned &data) {
+/*void readSSwitchReg(int coreId, int reg, unsigned &data) {
 
   // Get and set a chanend
   unsigned switchCRI; 
@@ -86,5 +86,5 @@ void writeSSwitchReg(int coreId, int reg, unsigned data) {
 
   // Free the channel end
   asm("freer res[%0]" :: "r"(c));
-}
+}*/
 

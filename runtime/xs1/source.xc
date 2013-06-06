@@ -119,7 +119,7 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
       OUTS(c, closure[index+1]);
       for(int j=0; j<(int) closure[index+1]; j++) {
         unsigned value;
-        asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+2]), "r"(j));
+        asm volatile("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+2]), "r"(j));
         OUTS(c, value);
       }
       index += 3;
@@ -127,7 +127,7 @@ int sendArguments(unsigned c, int numArgs, unsigned closure[]) {
     
     case t_arg_VAR:
       {unsigned value;
-      asm("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+1]), "r"(0));
+      asm volatile("ldw %0, %1[%2]" : "=r"(value) : "r"(closure[index+1]), "r"(0));
       OUTS(c, value);}
       index += 2;
       break;
@@ -156,7 +156,7 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
   unsigned cp;
 
   // Load the address of the constant pointer
-  asm("ldaw r11, cp[0] ; mov %0, r11" : "=r"(cp) :: "r11");
+  asm volatile("ldaw r11, cp[0] ; mov %0, r11" : "=r"(cp) :: "r11");
 
   for(int i=0; i<numProcs; i++) {
 
@@ -176,11 +176,11 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
       OUTS(c, procSize);
     
       // Instructions
-      asm("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
+      asm volatile("ldw %0, %1[%2]" : "=r"(procAddr) : "r"(cp), "r"(procIndex));
       
       for(int j=0; j<procSize/4; j++) {
         unsigned inst;
-        asm("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
+        asm volatile("ldw %0, %1[%2]" : "=r"(inst) : "r"(procAddr), "r"(j));
         OUTS(c, inst);
       }
     }
@@ -193,8 +193,8 @@ void sendProcedures(unsigned c, int numProcs, int procOff, unsigned closure[]) {
 void waitForCompletion(unsigned c) {
   
   // (wait to) Acknowledge completion
-  asm("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));  
-  asm("outct res[%0], " S(CT_COMPLETED) :: "r"(c));  
+  asm volatile("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));  
+  asm volatile("outct res[%0], " S(CT_COMPLETED) :: "r"(c));  
       
   // Acknowledge end
   CHKCT_END(c);
@@ -219,7 +219,7 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
       for(int j=0; j<(int) closure[index+1]; j++) {
         unsigned value;
         INS(c, value);
-        asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
+        asm volatile("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+2]), "r"(j));
       }
       index += 3;
       break;
@@ -227,7 +227,7 @@ void receiveResults(unsigned c, int numArgs, unsigned closure[]) {
     case t_arg_VAR:
       {unsigned value;
       INS(c, value);
-      asm("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+1]), "r"(0));}
+      asm volatile("stw %0, %1[%2]" :: "r"(value), "r"(closure[index+1]), "r"(0));}
       index += 2;
       break;
     

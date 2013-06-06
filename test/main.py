@@ -14,7 +14,7 @@ from mpi.tests import generate_mpi_feature_tests
 from xs1.tests import generate_xs1_example_tests
 from xs1.tests import generate_xs1_feature_tests
 
-INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
+INSTALL_PATH_ENV = 'SIRE_HOME'
 EXAMPLES_DIR   = '/test/examples' 
 FEATURES_DIR   = '/test/features' 
 

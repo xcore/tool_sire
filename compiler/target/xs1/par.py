@@ -142,15 +142,19 @@ def master_unset(t, index, pcall):
   # Hack to ensure the compiler knows the value of each referenced variable may
   # have been updated as it happens 'invisibly' by passing a pointer to the
   # thread.
+  # *** are work-arounds for a bug in the XC compiler that compains 'use of
+  # `_cX' causes an ambiguous evaluation'
   for (i, (x, y)) in enumerate(zip(pcall.args, params)):
     if y.symbol.type == T_REF_SINGLE:
       value = '_pointerInt({})'.format(t.expr(x))
-      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=[value])
+      t.out('_addr = '+value+';') # ***
+      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=['_addr'])
     elif y.symbol.type == T_CHANEND_SINGLE or \
       y.symbol.type == T_CHANEND_SERVER_SINGLE or \
       y.symbol.type == T_CHANEND_CLIENT_SINGLE:
       value = '_pointerUnsigned({})'.format(t.expr(x))
-      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=[value])
+      t.out('_addr = '+value+';') # ***
+      t.asm('ldw %0, %1[0]', outop=t.expr(x), inops=['_addr'])
 
   # Load referenced variable values back
   #j = 0
@@ -191,6 +195,7 @@ def gen_par(t, node, chans):
   t.out('unsigned _tsp;'.format(num_slaves))
   t.out('unsigned _dp;')
   t.out('unsigned _cp;')
+  t.out('unsigned _addr;')
 
   # Get a thread synchroniser
   t.comment('Get a sync, sp base, _spLock and claim num threads')

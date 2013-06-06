@@ -20,7 +20,7 @@
 void initMaster() {
 
   // Branch to main procedure
-  asm("ldap r11, " MAIN_PROC "\n\t"
+  asm volatile("ldap r11, " MAIN_PROC "\n\t"
     "bla r11" ::: "r11");
 
   idle();
@@ -37,25 +37,25 @@ void initMain() {
   GETR_ASYNC_THREAD(t);
   
   // Load the address of '_main'
-  asm("ldap r11, " LABEL_MAIN "; init t[%0]:pc, r11" :: "r"(t) : "r11");
-  asm("ldap r11, masterYeild ; init t[%0]:lr, r11" :: "r"(t) : "r11");
+  asm volatile("ldap r11, " LABEL_MAIN "; init t[%0]:pc, r11" :: "r"(t) : "r11");
+  asm volatile("ldap r11, masterYeild ; init t[%0]:lr, r11" :: "r"(t) : "r11");
   
   // Touch GPRs
-  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
-  asm("set t[%0]:r11, %1" :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r0, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r1, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r2, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r3, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r10, %1" :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r11, %1" :: "r"(t), "r"(0));
   
   // Start the thread
-  asm("start t[%0]" :: "r"(t));
+  asm volatile("start t[%0]" :: "r"(t));
 
   /*
   timer tmr;
@@ -68,8 +68,8 @@ void initMain() {
   elapsed = (end-begin); /// 100;
 
   // Move the elapsed time to r11 and pause
-  asm("mov r11, %0" :: "r"(elapsed));
-  //asm("waiteu");
+  asm volatile("mov r11, %0" :: "r"(elapsed));
+  //asm volatile("waiteu");
   
   //idle();
   _exit(0);

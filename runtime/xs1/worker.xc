@@ -7,6 +7,6 @@
 
 // Yeild execution of a slave thread (only 1-7)
 void workerYeild() {
-  asm("freet");
+  asm volatile("freet");
 }
 

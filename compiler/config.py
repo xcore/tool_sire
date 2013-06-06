@@ -6,7 +6,7 @@
 import sys
 import os
 
-INSTALL_PATH_ENV = 'SIRE_INSTALL_PATH'
+INSTALL_PATH_ENV = 'SIRE_HOME'
 
 def init():
   """

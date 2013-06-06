@@ -1,4 +1,4 @@
 #! /usr/bin/env sh
 
-export XCC_DEVICE_PATH=$XCC_DEVICE_PATH:$SIRE_INSTALL_PATH/device/xs1
-$SIRE_INSTALL_PATH/compiler/main.py "$@"
+export XCC_DEVICE_PATH=$SIRE_HOME/device/xs1
+$SIRE_HOME/compiler/main.py "$@"

@@ -18,11 +18,11 @@
 void resetChanends() {
   unsigned c = 1;
   unsigned c0;
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
+  asm volatile("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c0));
 
   // Get all remaining channels
   while(c) {
-    asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+    asm volatile("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
   }
    
   // Free all channels
@@ -42,17 +42,17 @@ void initThreads() {
   unsigned t;
   unsigned tsp;
   GETR_SYNC(sync);
-  asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
+  asm volatile("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   while (t) {
     tsp = _sp() - (TID_MASK(t)*THREAD_STACK_SPACE);
-    asm("init t[%0]:sp, %1"::"r"(t), "r"(tsp));
-    asm("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
-    asm("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
-    asm("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
-    asm("getst %0, res[%1]" : "=r"(t) : "r"(sync));
+    asm volatile("init t[%0]:sp, %1"::"r"(t), "r"(tsp));
+    asm volatile("ldaw r11, dp[0]; init t[%0]:dp, r11" :: "r"(t) : "r11");
+    asm volatile("ldaw r11, cp[0]; init t[%0]:cp, r11" :: "r"(t) : "r11");
+    asm volatile("ldap r11, initThread; init t[%0]:pc, r11" :: "r"(t) : "r11");
+    asm volatile("getst %0, res[%1]" : "=r"(t) : "r"(sync));
   }
-  asm("msync res[%0]" :: "r"(sync));
-  asm("mjoin res[%0]" :: "r"(sync));
+  asm volatile("msync res[%0]" :: "r"(sync));
+  asm volatile("mjoin res[%0]" :: "r"(sync));
   FREER(sync);
 }
 
@@ -66,11 +66,11 @@ void initChanends() {
   // Get the migration channel and set the event vector
   // ASSERT: channel resource counter must be 0 
   GETR_CHANEND(spawn_master);
-  asm("eeu res[%0]" :: "r"(spawn_master));
+  asm volatile("eeu res[%0]" :: "r"(spawn_master));
   
   // Allocate a channel end for setting up connections
   GETR_CHANEND(conn_master);
-  asm("eeu res[%0]" :: "r"(conn_master));
+  asm volatile("eeu res[%0]" :: "r"(conn_master));
 
   // Allocate a channel end for setting up connections
   GETR_CHANEND(chan_mem_access);
@@ -84,7 +84,7 @@ void initChanends() {
  * Initialise ports: setup XMP-64 led port.
  */
 void initPorts() {
-  asm("setc res[%0], 8 ; setclk res[%0], %1" :: "r"(LED_PORT), "r"(6));
+  asm volatile("setc res[%0], 8 ; setclk res[%0], %1" :: "r"(LED_PORT), "r"(6));
 }
 
 /*
@@ -95,14 +95,14 @@ void initMemory() {
   unsigned end;
   int size;
 
-  asm("ldap r11, " LABEL_BEGIN_BSS
+  asm volatile("ldap r11, " LABEL_BEGIN_BSS
     "\n\tmov %0, r11" : "=r"(begin) :: "r11");
-  asm("ldap r11, " LABEL_END_BSS
+  asm volatile("ldap r11, " LABEL_END_BSS
     "\n\tmov %0, r11" : "=r"(end) :: "r11");
   size = (end - begin) / BYTES_PER_WORD;
 
   for (int i=0; i<size; i++)
-    asm("stw %0, %1[%2]" :: "r"(0), "r"(begin), "r"(i));
+    asm volatile("stw %0, %1[%2]" :: "r"(0), "r"(begin), "r"(i));
 }
 
 /* 
@@ -118,12 +118,6 @@ void masterSync() {
     do {
       read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
     } while (v != NUM_CORES);
-    /*unsigned v;
-    writeSSwitchReg(0, SWITCH_SCRATCH_REG, 1);
-    readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
-    do {
-      readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
-    } while (v != NUM_CORES);*/
   }
 #endif
 }
@@ -140,11 +134,6 @@ void slaveSync() {
     read_sswitch_reg(0, SWITCH_SCRATCH_REG, v);
   } while (v != coreId);
   write_sswitch_reg(0, SWITCH_SCRATCH_REG, coreId+1);
-  /*readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
-  do {
-    readSSwitchReg(0, SWITCH_SCRATCH_REG, v);
-  } while (v != coreId);
-  writeSSwitchReg(0, SWITCH_SCRATCH_REG, coreId+1);*/
 #endif
 }
 
@@ -154,10 +143,10 @@ void slaveSync() {
  */
 int _procId() {
   unsigned c, v;
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
-  asm("bitrev %0, %1" : "=r"(v) : "r"(c));
+  asm volatile("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(c));
+  asm volatile("bitrev %0, %1" : "=r"(v) : "r"(c));
   v = ((v & 0xFF) * NUM_CORES_PER_NODE) + ((c >> 16) & 0xFF);
-  asm("freer res[%0]" :: "r"(c));
+  asm volatile("freer res[%0]" :: "r"(c));
   return v;
 }
 
@@ -166,7 +155,7 @@ int _procId() {
  */
 unsigned _sp() {
   unsigned v;
-  asm("ldw %0, dp[_spValue]" : "=r"(v));
+  asm volatile("ldw %0, dp[_spValue]" : "=r"(v));
   return v;
 }
 
@@ -197,26 +186,26 @@ void newAsyncThread(unsigned pc, unsigned arg1,
   GETR_ASYNC_THREAD(t);
   
   // Initialise pc, lr
-  asm("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
-  asm("ldap r11, workerYeild" 
+  asm volatile("init t[%0]:pc, %1" :: "r"(t), "r"(pc));
+  asm volatile("ldap r11, workerYeild" 
     "; init t[%0]:lr, r11" :: "r"(t) : "r11");
                
   // Set register arguments
-  asm("set t[%0]:r0, %1"  :: "r"(t), "r"(arg1));
-  asm("set t[%0]:r1, %1"  :: "r"(t), "r"(arg2));
-  asm("set t[%0]:r2, %1"  :: "r"(t), "r"(arg3));
-  asm("set t[%0]:r3, %1"  :: "r"(t), "r"(arg4));
+  asm volatile("set t[%0]:r0, %1"  :: "r"(t), "r"(arg1));
+  asm volatile("set t[%0]:r1, %1"  :: "r"(t), "r"(arg2));
+  asm volatile("set t[%0]:r2, %1"  :: "r"(t), "r"(arg3));
+  asm volatile("set t[%0]:r3, %1"  :: "r"(t), "r"(arg4));
 
   // Touch remaining GPRs
-  asm("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
-  asm("set t[%0]:r10, %1" :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r4, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r5, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r6, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r7, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r8, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r9, %1"  :: "r"(t), "r"(0));
+  asm volatile("set t[%0]:r10, %1" :: "r"(t), "r"(0));
 
   // Start the thread
-  asm("start t[%0]" :: "r"(t));
+  asm volatile("start t[%0]" :: "r"(t));
 }
 

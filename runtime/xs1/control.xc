@@ -15,18 +15,18 @@
 void controlIdle() {
 
   // Disable interrupts and events, switch to event mode
-  asm("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
-  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(spawn_master));
-  asm("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(conn_master));
+  asm volatile("clrsr " S(SR_IEBLE) " | " S(SR_EEBLE));
+  asm volatile("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(spawn_master));
+  asm volatile("setc res[%0], " S(XS1_SETC_IE_MODE_EVENT) :: "r"(conn_master));
   
   // Set event vector to idle handler
-  asm("ldap r11, " LABEL_HOST_HANDLER "\n\t"
+  asm volatile("ldap r11, " LABEL_HOST_HANDLER "\n\t"
     "setv res[%0], r11" :: "r"(spawn_master) : "r11");
-  asm("ldap r11, " LABEL_CONN_HANDLER "\n\t"
+  asm volatile("ldap r11, " LABEL_CONN_HANDLER "\n\t"
     "setv res[%0], r11" :: "r"(conn_master) : "r11");
 
   // Wait for an event on spawn_master
-  asm("waiteu");
+  asm volatile("waiteu");
 }
 
 // Yeild execution of the master thread (of a slave node), and enter idle state.

@@ -7,9 +7,7 @@
     XS1-L2A
   </Name>
   <Declarations>
-    <Declaration>
-      core stdcore[2]
-    </Declaration>
+    <Declaration>core stdcore[2]</Declaration>
   </Declarations>
   <Packages>
     <Package ID="0" Type="XS1-L2A">

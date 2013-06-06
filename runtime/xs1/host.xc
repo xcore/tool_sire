@@ -86,7 +86,7 @@ void spawnHost() {
   OUTCT_END(spawn_master);
 
   // Give the next thread some space and launch it
-  asm("ldap r11, runThread ; mov %0, r11" : "=r"(pc) :: "r11");
+  asm volatile("ldap r11, runThread ; mov %0, r11" : "=r"(pc) :: "r11");
   newAsyncThread(pc, senderId, 0, 0, 0);
 }
 
@@ -161,7 +161,7 @@ void receiveArguments(unsigned c, int numArgs,
       for(int j=0; j<argLengths[i]; j++) {
         unsigned value;
         INS(c, value);
-        asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(j));
+        asm volatile("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(j));
       }
       break;
     
@@ -170,7 +170,7 @@ void receiveArguments(unsigned c, int numArgs,
       argValues[i] = memAlloc(BYTES_PER_WORD);
       {unsigned value;
       INS(c, value);
-      asm("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
+      asm volatile("stw %0, %1[%2]" :: "r"(value), "r"(argValues[i]), "r"(0));}
       break;
     
     case t_arg_CHANEND:
@@ -195,7 +195,7 @@ int receiveProcedures(unsigned c, int numProcs) {
   unsigned jumpTable;
 
   // Load jump table address
-  asm("ldaw r11, cp["LABEL_JUMP_TABLE"] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
+  asm volatile("ldaw r11, cp["LABEL_JUMP_TABLE"] ; mov %0, r11" : "=r"(jumpTable) :: "r11");
 
   for(int i=0; i<numProcs; i++) {
     
@@ -218,11 +218,11 @@ int receiveProcedures(unsigned c, int numProcs) {
       for(int j=0; j<procSize/4; j++) {
         unsigned inst;
         INS(c, inst);
-        asm("stw %0, %1[%2]" :: "r"(inst), "r"(ptr), "r"(j));
+        asm volatile("stw %0, %1[%2]" :: "r"(inst), "r"(ptr), "r"(j));
       }
      
       // Patch jump table entry
-      asm("stw %0, %1[%2]" :: "r"(ptr), "r"(jumpTable), "r"(procIndex));
+      asm volatile("stw %0, %1[%2]" :: "r"(ptr), "r"(jumpTable), "r"(procIndex));
 
       // Update the procSize entry
       SIZE_TABLE[procIndex] = procSize;
@@ -245,8 +245,8 @@ void informCompleted(unsigned c, unsigned senderId) {
   SETD(c, senderId);
 
   // Signal the completion of execution
-  asm("outct res[%0], " S(CT_COMPLETED) :: "r"(c));
-  asm("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));
+  asm volatile("outct res[%0], " S(CT_COMPLETED) :: "r"(c));
+  asm volatile("chkct res[%0], " S(CT_COMPLETED) :: "r"(c));
   
   // End
   OUTCT_END(c);
@@ -269,14 +269,14 @@ void sendResults(unsigned c, int numArgs,
     
     case t_arg_ALIAS:
       for(int j=0; j<argLengths[i]; j++) {
-        asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(j));
+        asm volatile("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(j));
         OUTS(c, value);
       }
       memFree(argValues[i]);
       break;
     
     case t_arg_VAR:
-      asm("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
+      asm volatile("ldw %0, %1[%2]" : "=r"(value) : "r"(argValues[i]), "r"(0));
       OUTS(c, value);
       memFree(argValues[i]);
       break;

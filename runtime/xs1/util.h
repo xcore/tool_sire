@@ -21,86 +21,86 @@ typedef char bool;
 // Raise a runtime exception
 #define EXCEPTION(value) \
 do { \
-  asm("add r0, r0, %0" :: "r"(value)); \
-  asm("ldc r11, 0 ; ecallf r11" ::: "r11"); \
+  asm volatile("add r0, r0, %0" :: "r"(value)); \
+  asm volatile("ldc r11, 0 ; ecallf r11" ::: "r11"); \
 } while(0)
 
 // Assert a value is true (!=0)
 #define ASSERT(value) \
 do { \
-  asm("ecallf %0" :: "r"(value)); \
+  asm volatile("ecallf %0" :: "r"(value)); \
 } while(0)
 
 // Set channel destination
 #define SETD(c, destID) \
 do { \
-  asm("setd res[%0], %1" :: "r"(c), "r"(destID)); \
+  asm volatile("setd res[%0], %1" :: "r"(c), "r"(destID)); \
 } while(0)
 
 // OUTCT
 #define OUTCT(c, value) \
 do { \
-  asm("outct res[%0], %1" :: "r"(c), "r"(value)); \
+  asm volatile("outct res[%0], %1" :: "r"(c), "r"(value)); \
 } while(0)
 
 // CHKCT
 #define CHKCT(c, value) \
 do { \
-  asm("chkct res[%0], %1" :: "r"(c), "r"(value)); \
+  asm volatile("chkct res[%0], %1" :: "r"(c), "r"(value)); \
 } while(0)
 
 // OUTCT CT_END
 #define OUTCT_END(c) \
 do { \
-  asm("outct res[%0], " S(XS1_CT_END) :: "r"(c)); \
+  asm volatile("outct res[%0], " S(XS1_CT_END) :: "r"(c)); \
 } while(0)
 
 // CHKCT CT_END
 #define CHKCT_END(c) \
 do { \
-  asm("chkct res[%0], " S(XS1_CT_END) :: "r"(c)); \
+  asm volatile("chkct res[%0], " S(XS1_CT_END) :: "r"(c)); \
 } while(0)
 
 // OUTCT CT_ACK
 #define OUTCT_ACK(c) \
 do { \
-  asm("outct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
+  asm volatile("outct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
 } while(0)
 
 // CHKCT CT_ACK
 #define CHKCT_ACK(c) \
 do { \
-  asm("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
+  asm volatile("chkct res[%0], " S(XS1_CT_ACK) :: "r"(c)); \
 } while(0)
 
 // Asynchronous out
 #define OUT(c, value) \
 do { \
-  asm("out res[%0], %1" :: "r"(c), "r"(value)); \
+  asm volatile("out res[%0], %1" :: "r"(c), "r"(value)); \
 } while(0)
 
 // Asynchronous in
 #define IN(c, value) \
 do { \
-  asm("in %0, res[%1]" : "=r"(value) : "r"(c)); \
+  asm volatile("in %0, res[%1]" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Asynchronous out
 #define OUT_TAG(c, value) \
 do { \
-  asm("outct res[%0], " S(value) :: "r"(c)); \
+  asm volatile("outct res[%0], " S(value) :: "r"(c)); \
 } while(0)
 
 // Asynchronous in
 #define IN_TAG(c, value) \
 do { \
-  asm("inct %0, res[%1]" : "=r"(value) : "r"(c)); \
+  asm volatile("inct %0, res[%1]" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Synchronised out
 #define OUTS(c, value) \
 do { \
-  asm("outct res[%0], " S(XS1_CT_END) ";" \
+  asm volatile("outct res[%0], " S(XS1_CT_END) ";" \
       "chkct res[%0], " S(XS1_CT_END) ";" \
       "out   res[%0], %1;" \
       "outct res[%0], " S(XS1_CT_END) ";" \
@@ -111,11 +111,11 @@ do { \
 // Synchronised in
 #define INS(c, value) \
 do {\
-  asm("chkct  res[%1], " S(XS1_CT_END) ";" \
+  asm volatile("chkct  res[%1], " S(XS1_CT_END) ";" \
       "outct  res[%1], " S(XS1_CT_END) ";" \
       "in %0, res[%1];" \
       : "=r"(value) : "r"(c)); \
-  asm("chkct  res[%0], " S(XS1_CT_END) ";" \
+  asm volatile("chkct  res[%0], " S(XS1_CT_END) ";" \
       "outct  res[%0], " S(XS1_CT_END) ";" \
       :: "r"(c)); \
 } while(0)
@@ -124,9 +124,9 @@ do {\
 //#define SERVER_OUTS(c, value) \
 //do { \
 //  unsigned _clientCRI; \
-//  asm("in %0, res[%1];" \
+//  asm volatile("in %0, res[%1];" \
 //      "setd   res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-//  asm("out    res[%0], %1;" \
+//  asm volatile("out    res[%0], %1;" \
 //      "outct  res[%0]," S(XS1_CT_END) ";" \
 //      "chkct  res[%0]," S(XS1_CT_END) \
 //      :: "r"(c), "r"(value)); \
@@ -136,11 +136,11 @@ do {\
 //#define SERVER_INS(c, value) \
 //do { \
 //  unsigned _clientCRI; \
-//  asm("in %0, res[%1];" \
+//  asm volatile("in %0, res[%1];" \
 //      "setd   res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-//  asm("outct  res[%1]," S(XS1_CT_END) ";" \
+//  asm volatile("outct  res[%1]," S(XS1_CT_END) ";" \
 //      "in     %0, res[%1];" : "=r"(value) : "r"(c)); \
-//  asm("chkct  res[%0]," S(XS1_CT_END) ";" \
+//  asm volatile("chkct  res[%0]," S(XS1_CT_END) ";" \
 //      "outct  res[%0]," S(XS1_CT_END) \
 //      :: "r"(c)); \
 //} while(0)
@@ -148,7 +148,7 @@ do {\
 //// Synchronised client out
 //#define CLIENT_OUTS(c, value) \
 //do { \
-//asm("out   res[%0], %0;" \
+//asm volatile("out   res[%0], %0;" \
 //    "chkct res[%0]," S(XS1_CT_END) ";" \
 //    "out   res[%0], %1;" \
 //    "outct res[%0]," S(XS1_CT_END) ";" \
@@ -159,9 +159,9 @@ do {\
 //// Synchronised client in
 //#define CLIENT_INS(c, value) \
 //do { \
-//asm("out   res[%1], %1;" \
+//asm volatile("out   res[%1], %1;" \
 //    "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-//asm("chkct res[%0]," S(XS1_CT_END) ";" \
+//asm volatile("chkct res[%0]," S(XS1_CT_END) ";" \
 //    "outct res[%0]," S(XS1_CT_END) \
 //    :: "r"(c)); \
 //} while(0)
@@ -170,9 +170,9 @@ do {\
 #define SERVER_OUTS(c, value) \
 do { \
   unsigned _clientCID; \
-  asm("in %0, res[%1];" \
+  asm volatile("in %0, res[%1];" \
       "setd   res[%1], %0" : "=&r"(_clientCID) : "r"(c)); \
-  asm("out    res[%0], %1;" \
+  asm volatile("out    res[%0], %1;" \
       "outct  res[%0]," S(XS1_CT_END) ";" \
       "chkct  res[%0]," S(XS1_CT_END) \
       :: "r"(c), "r"(value)); \
@@ -182,10 +182,10 @@ do { \
 #define SERVER_INS(c, value) \
 do { \
   unsigned _clientCID; \
-  asm("in     %0, res[%1];" \
+  asm volatile("in     %0, res[%1];" \
       "setd   res[%1], %0" : "=&r"(_clientCID) : "r"(c)); \
-  asm("in     %0, res[%1];" : "=r"(value) : "r"(c)); \
-  asm("chkct  res[%0]," S(XS1_CT_END) ";" \
+  asm volatile("in     %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm volatile("chkct  res[%0]," S(XS1_CT_END) ";" \
       "outct  res[%0]," S(XS1_CT_END) \
       :: "r"(c)); \
 } while(0)
@@ -193,7 +193,7 @@ do { \
 // Synchronised client out
 #define CLIENT_OUTS(c, value) \
 do { \
-  asm("out   res[%0], %0;" \
+  asm volatile("out   res[%0], %0;" \
       "out   res[%0], %1;" \
       "outct res[%0]," S(XS1_CT_END) ";" \
       "chkct res[%0]," S(XS1_CT_END) \
@@ -203,9 +203,9 @@ do { \
 // Synchronised client in
 #define CLIENT_INS(c, value) \
 do { \
-  asm("out   res[%1], %1;" \
+  asm volatile("out   res[%1], %1;" \
       "in    %0, res[%1];" : "=r"(value) : "r"(c)); \
-  asm("chkct res[%0]," S(XS1_CT_END) ";" \
+  asm volatile("chkct res[%0]," S(XS1_CT_END) ";" \
       "outct res[%0]," S(XS1_CT_END) \
       :: "r"(c)); \
 } while(0)
@@ -213,22 +213,22 @@ do { \
 // Server out
 #define SERVER_OUT(c, value) \
 do { \
-  asm("out res[%0], %1;" :: "r"(c), "r"(value)); \
+  asm volatile("out res[%0], %1;" :: "r"(c), "r"(value)); \
 } while(0)
 
 // Server in
 #define SERVER_IN(c, value) \
 do { \
   unsigned _clientCRI; \
-  asm("in %0, res[%1];" \
+  asm volatile("in %0, res[%1];" \
       "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("in %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm volatile("in %0, res[%1];" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Client out
 #define CLIENT_OUT(c, value) \
 do { \
-  asm("out res[%0], %0;" \
+  asm volatile("out res[%0], %0;" \
       "out res[%0], %1" \
       :: "r"(c), "r"(value)); \
 } while(0)
@@ -236,28 +236,28 @@ do { \
 // Client in
 #define CLIENT_IN(c, value) \
 do { \
-  asm("in %0, res[%1]" : "=r"(value) : "r"(c)); \
+  asm volatile("in %0, res[%1]" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Server out tag
 #define SERVER_OUT_TAG(c, value) \
 do { \
-  asm("outct res[%0], " S(value) :: "r"(c)); \
+  asm volatile("outct res[%0], " S(value) :: "r"(c)); \
 } while(0)
 
 // Server in tag
 #define SERVER_IN_TAG(c, value) \
 do { \
   unsigned _clientCRI; \
-  asm("in %0, res[%1];" \
+  asm volatile("in %0, res[%1];" \
       "setd res[%1], %0" : "=&r"(_clientCRI) : "r"(c)); \
-  asm("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm volatile("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Client out tag
 #define CLIENT_OUT_TAG(c, value) \
 do { \
-  asm("out   res[%0], %0;" \
+  asm volatile("out   res[%0], %0;" \
       "outct res[%0], " S(value) \
       :: "r"(c), "r"(value)); \
 } while(0)
@@ -265,13 +265,13 @@ do { \
 // Client in tag
 #define CLIENT_IN_TAG(c, value) \
 do { \
-  asm("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
+  asm volatile("inct %0, res[%1];" : "=r"(value) : "r"(c)); \
 } while(0)
 
 // Get a chanend
 #define GETR_CHANEND(resID) \
 do { \
-  asm("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(resID)); \
+  asm volatile("getr %0, " S(XS1_RES_TYPE_CHANEND) : "=r"(resID)); \
   if (resID == 0) { \
     EXCEPTION(et_INSUFFICIENT_CHANNELS); \
   } \
@@ -279,7 +279,7 @@ do { \
 
 #define GETR_TIMER(resID) \
 do { \
-  asm("getr %0, " S(XS1_RES_TYPE_TIMER) : "=r"(resID)); \
+  asm volatile("getr %0, " S(XS1_RES_TYPE_TIMER) : "=r"(resID)); \
   if (resID == 0) { \
     EXCEPTION(et_INSUFFICIENT_TIMERS); \
   } \
@@ -288,7 +288,7 @@ do { \
 // Get a synchroniser
 #define GETR_SYNC(resID) \
 do { \
-  asm("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(resID)); \
+  asm volatile("getr %0, " S(XS1_RES_TYPE_SYNC) : "=r"(resID)); \
   if (resID == 0) { \
     EXCEPTION(et_INSUFFICIENT_SYNCS); \
   } \
@@ -297,7 +297,7 @@ do { \
 // Get an asynchronous thread
 #define GETR_ASYNC_THREAD(resID) \
 do { \
-  asm("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(resID)); \
+  asm volatile("getr %0, " S(XS1_RES_TYPE_THREAD) : "=r"(resID)); \
   if (resID == 0) { \
     EXCEPTION(et_INSUFFICIENT_THREADS); \
   } \
@@ -306,7 +306,7 @@ do { \
 // Get a synchronous thread
 #define GETR_SYNC_THREAD(sync, resID) \
 do { \
-  asm("getst %0, res[%1]" : "=r"(resID) : "r"(sync)); \
+  asm volatile("getst %0, res[%1]" : "=r"(resID) : "r"(sync)); \
   if (resID == 0) { \
     EXCEPTION(et_INSUFFICIENT_THREADS); \
   } \
@@ -315,7 +315,7 @@ do { \
 // Free a resource
 #define FREER(resID) \
 do { \
-  asm("freer res[%0]" :: "r"(resID)); \
+  asm volatile("freer res[%0]" :: "r"(resID)); \
 } while(0)
 
 // Create the channel identifier (for channel 0) for a given destination
@@ -324,7 +324,7 @@ do { \
 #define CHAN_RI_0(destID, resID) \
 do { \
   unsigned __n = destID / NUM_CORES_PER_NODE; \
-  asm("bitrev %0, %1" : "=r"(__n) : "r"(__n)); \
+  asm volatile("bitrev %0, %1" : "=r"(__n) : "r"(__n)); \
   resID = __n | (destID % NUM_CORES_PER_NODE) << 16 | XS1_RES_TYPE_CHANEND; \
 } while(0)
 #elif defined(XS1_L)
@@ -352,7 +352,7 @@ do { \
 // Get the current thread id
 #define THREAD_ID(threadID) \
 do { \
-   asm("get r11, id ; mov %0, r11" : "=r"(threadID) :: "r11"); \
+   asm volatile("get r11, id ; mov %0, r11" : "=r"(threadID) :: "r11"); \
 } while(0)
 
 // Return the stack pointer for a specific thread given a thread resource
@@ -362,7 +362,7 @@ do { \
 //#define THREAD_SP(threadID, threadSP) \
 //do { \
 //  unsigned __sp; \
-//  asm("ldw %0, dp[_sp]" : "=r"(__sp)); \
+//  asm volatile("ldw %0, dp[_sp]" : "=r"(__sp)); \
 //  threadSP = __sp - (threadID * THREAD_STACK_SPACE); \
 //} while(0)
 
@@ -371,7 +371,7 @@ do { \
 #define GET_NODE_ID(resID, nodeID) \
 do { \
   unsigned int __n; \
-  asm("bitrev %0, %1" : "=r"(__n) : "r"(resID)); \
+  asm volatile("bitrev %0, %1" : "=r"(__n) : "r"(resID)); \
   nodeID = __n & 0xFF; \
 } while(0)
 #elif defined(XS1_L)
@@ -410,13 +410,13 @@ do { \
 // Disable interrupts
 #define DISABLE_INTERRUPTS() \
 do { \
-  asm("clrsr " S(SR_IEBLE)); \
+  asm volatile("clrsr " S(SR_IEBLE)); \
 } while(0)
 
 // Enable interrupts
 #define ENABLE_INTERRUPTS() \
 do { \
-  asm("setsr " S(SR_IEBLE)); \
+  asm volatile("setsr " S(SR_IEBLE)); \
 } while(0)
 
 // Synchronised output
@@ -425,7 +425,7 @@ do { \
 unsigned memAlloc(unsigned int size);
 void memFree(unsigned p);
 
-void readSSwitchReg(int coreId, int reg, unsigned &data);
-void writeSSwitchReg(int coreId, int reg, unsigned data);
+//void readSSwitchReg(int coreId, int reg, unsigned &data);
+//void writeSSwitchReg(int coreId, int reg, unsigned data);
 
 #endif

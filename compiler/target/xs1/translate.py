@@ -104,7 +104,7 @@ class TranslateXS1(NodeWalker):
     """ 
     Write an inline assembly statement.
     """
-    self.out('asm("{}"{}{}{}{}{}{});'.format(
+    self.out('asm volatile("{}"{}{}{}{}{}{});'.format(
       #template.replace('\n', ' ; '),
       template,
       ':' if outop or inops or clobber else '',
