@@ -159,6 +159,7 @@ class RenameChans(NodeWalker):
   def stmt_out_tag(self, node, chans):
     self.stmt_out(node, chans)
 
+  # Channels and channel ends can appear as arguments to procedures
   def stmt_pcall(self, node, chans):
     for (i, x) in enumerate(node.args):
       if isinstance(x, ast.ExprSingle):

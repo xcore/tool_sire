@@ -57,6 +57,8 @@ inct       = proc_decl('inct',     [CHANEND_PARAM, SREF_PARAM])
 outct      = proc_decl('outct',    [CHANEND_PARAM, SVAL_PARAM])
 chkctend   = proc_decl('chkctend', [CHANEND_PARAM])
 outctend   = proc_decl('outctend', [CHANEND_PARAM])
+setd       = proc_decl('setd',     [CHANEND_PARAM, SVAL_PARAM])
+getcid     = proc_decl('getcid',   [CHANEND_PARAM, SREF_PARAM])
 
 # Remote memory access
 rread      = proc_decl('rread',    [SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
@@ -95,6 +97,8 @@ builtins = {
   'outct'         : outct,
   'chkctend'      : chkctend,
   'outctend'      : outctend,
+  'setd'          : setd,
+  'getcid'        : getcid,
   'rread'         : rread,
   'rwrite'        : rwrite,
   'mulf8_24'      : mulf8_24,

@@ -3,7 +3,7 @@
 
 #define _TIME(v) \
 do {\
-  asm("getr r11, " S(XS1_RES_TYPE_TIMER) ";" \
+  asm volatile("getr r11, " S(XS1_RES_TYPE_TIMER) ";" \
     "in %0, res[r11];" \
     "freer res[r11]" : "=r"(v) :: "r11");\
 } while(0)

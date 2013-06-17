@@ -307,7 +307,7 @@ def transform_ast(sem, sym, sig, ast, errorlog, device, v):
   # 14. Flatten nested calls
   vmsg(v, "Flattening nested calls")
   FlattenCalls(sig).walk_program(ast)
-   
+  
   # 15. Remove unused declarations
   vmsg(v, "Removing unused declarations")
   RemoveDecls().walk_program(ast)
