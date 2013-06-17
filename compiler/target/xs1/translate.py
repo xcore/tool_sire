@@ -58,6 +58,8 @@ builtin_conversion = {
   'out'        : '_OUT',
   'inct'       : '_INCT',
   'outct'      : '_OUTCT',
+  'chkctack'   : '_CHKCTACK',
+  'outctack'   : '_OUTCTACK',
   'chkctend'   : '_CHKCTEND',
   'outctend'   : '_OUTCTEND',
   'setd'       : '_SETD',
