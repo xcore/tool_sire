@@ -56,6 +56,8 @@ builtin_conversion = {
   # Channel communication
   'inp'        : '_INP',
   'out'        : '_OUT',
+  'inpt'       : '_INPT',
+  'outt'       : '_OUTT',
   'inct'       : '_INCT',
   'outct'      : '_OUTCT',
   'chkctack'   : '_CHKCTACK',
