@@ -8,3 +8,4 @@
 #define _OUTCTEND(c)  asm volatile("outct res[%0]," S(XS1_CT_END) :: "r"(c))
 #define _SETD(c, v)   asm volatile("setd  res[%0], %1" :: "r"(c), "r"(v))
 #define _GETCID(c, v) do { v = c; } while(0);
+#define _FREER(c)     asm volatile("freer res[%0]" :: "r"(c))

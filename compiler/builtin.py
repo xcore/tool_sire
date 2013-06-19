@@ -61,6 +61,7 @@ chkctend   = proc_decl('chkctend', [CHANEND_PARAM])
 outctend   = proc_decl('outctend', [CHANEND_PARAM])
 setd       = proc_decl('setd',     [CHANEND_PARAM, SVAL_PARAM])
 getcid     = proc_decl('getcid',   [CHANEND_PARAM, SREF_PARAM])
+freer      = proc_decl('freer',    [CHANEND_PARAM])
 
 # Remote memory access
 rread      = proc_decl('rread',    [SVAL_PARAM, SVAL_PARAM, SREF_PARAM])
@@ -101,6 +102,7 @@ builtins = {
   'outctend'      : outctend,
   'setd'          : setd,
   'getcid'        : getcid,
+  'freer'         : freer,
   'rread'         : rread,
   'rwrite'        : rwrite,
   'mulf8_24'      : mulf8_24,

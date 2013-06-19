@@ -64,6 +64,7 @@ builtin_conversion = {
   'outctend'   : '_OUTCTEND',
   'setd'       : '_SETD',
   'getcid'     : '_GETCID',
+  'freer'      : '_FREER',
   # Remote memory access
   'rwrite'     : '_RWRITE',
   'rread'      : '_RREAD',
